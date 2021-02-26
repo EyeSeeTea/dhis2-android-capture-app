@@ -4,12 +4,12 @@ package org.dhis2.utils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.apache.commons.text.WordUtils;
 import org.dhis2.data.forms.section.viewmodels.date.DatePickerDialogFragment;
 import org.dhis2.usescases.general.ActivityGlobalAbstract;
 import org.dhis2.utils.customviews.RxDateDialog;
 import org.dhis2.utils.filters.FilterManager;
 import org.hisp.dhis.android.core.dataset.DataInputPeriod;
-import org.hisp.dhis.android.core.event.Event;
 import org.hisp.dhis.android.core.event.EventStatus;
 import org.hisp.dhis.android.core.period.DatePeriod;
 import org.hisp.dhis.android.core.period.PeriodType;
@@ -26,10 +26,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.reactivex.disposables.Disposable;
 import timber.log.Timber;
-
-/**
- * QUADRAM. Created by ppajuelo on 16/01/2018.
- */
 
 public class DateUtils {
 
@@ -213,7 +209,7 @@ public class DateUtils {
         return new SimpleDateFormat(DATABASE_FORMAT_EXPRESSION_NO_SECONDS, Locale.US);
     }
 
-   @NonNull
+    @NonNull
     public static Boolean dateHasNoSeconds(String dateTime) {
         try {
             databaseDateFormatNoSeconds().parse(dateTime);
@@ -753,7 +749,7 @@ public class DateUtils {
                 break;
         }
 
-        return formattedDate;
+        return WordUtils.capitalize(formattedDate);
     }
 
     /**
@@ -807,7 +803,7 @@ public class DateUtils {
                 calendar.add(Calendar.DAY_OF_YEAR, expDays);
                 expDate = calendar.getTime();
             }
-            expiredBecouseOfPeriod = expDate != null && expDate.compareTo(currentDate)<=0;
+            expiredBecouseOfPeriod = expDate != null && expDate.compareTo(currentDate) <= 0;
 
             return expiredBecouseOfPeriod || expiredBecouseOfCompletion;
         } else
@@ -832,28 +828,6 @@ public class DateUtils {
 
         return dataInputPeriodModel.openingDate().getTime() < Calendar.getInstance().getTime().getTime()
                 && Calendar.getInstance().getTime().getTime() < dataInputPeriodModel.closingDate().getTime();
-    }
-
-    public String generateId(PeriodType periodType, Date date, Locale locale) {
-
-        String formattedDate;
-        Date initDate = getNextPeriod(periodType, date, 0);
-
-        switch (periodType) {
-            case Monthly:
-                formattedDate = new SimpleDateFormat("yyyyMM", locale).format(initDate);
-                break;
-            case Yearly:
-                formattedDate = new SimpleDateFormat("yyyy", locale).format(initDate);
-                break;
-            case Daily:
-                formattedDate = new SimpleDateFormat("yyyyMMdd", locale).format(initDate);
-                break;
-            default:
-                formattedDate = new SimpleDateFormat("yyyy", locale).format(initDate);
-                break;
-        }
-        return formattedDate;
     }
 
     public List<DatePeriod> getDatePeriodListFor(List<Date> selectedDates, Period period) {
@@ -904,7 +878,6 @@ public class DateUtils {
 
     public void showPeriodDialog(ActivityGlobalAbstract activity, OnFromToSelector fromToListener, boolean fromOtherPeriod) {
         DatePickerDialogFragment fromCalendar = DatePickerDialogFragment.create(true, "Daily", fromOtherPeriod);
-//        fromCalendar.setOpeningClosingDates(null, null); TODO: MAX 1 year in the future?
         if (!FilterManager.getInstance().getPeriodFilters().isEmpty())
             fromCalendar.setInitialDate(FilterManager.getInstance().getPeriodFilters().get(0).startDate());
         fromCalendar.setFormattedOnDateSetListener(new DatePickerDialogFragment.FormattedOnDateSetListener() {
@@ -926,36 +899,6 @@ public class DateUtils {
         });
         fromCalendar.show(activity.getSupportFragmentManager(), "DAILY");
 
-    }
-
-    public static Date yearsBeforeNow(int years) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        if (years > 0) {
-            calendar.add(Calendar.YEAR, -years);
-        } else {
-            calendar.add(Calendar.YEAR, years);
-        }
-        return calendar.getTime();
-    }
-
-    public static Date yearsAfterNow(int years) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-
-        calendar.add(Calendar.YEAR, years);
-
-        return calendar.getTime();
-    }
-
-    public static long timeToDate(Date finaLDate) {
-        return finaLDate.getTime() - new Date().getTime();
     }
 
     public interface OnFromToSelector {

@@ -7,25 +7,22 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.paging.PagedList;
 
-import org.dhis2.data.forms.dataentry.fields.RowAction;
+import org.dhis2.data.forms.dataentry.fields.FieldViewModel;
 import org.dhis2.uicomponents.map.model.EventUiComponentModel;
 import org.dhis2.uicomponents.map.model.StageStyle;
 import org.dhis2.usescases.general.AbstractActivityContracts;
 import org.dhis2.usescases.searchTrackEntity.adapters.SearchTeiModel;
+import org.dhis2.utils.filters.FilterItem;
 import org.dhis2.utils.filters.FilterManager;
 import org.dhis2.utils.filters.Filters;
 import org.hisp.dhis.android.core.arch.call.D2Progress;
-import org.hisp.dhis.android.core.common.FeatureType;
-import org.hisp.dhis.android.core.common.ValueTypeDeviceRendering;
 import org.hisp.dhis.android.core.organisationunit.OrganisationUnit;
 import org.hisp.dhis.android.core.program.Program;
-import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttribute;
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityType;
 
 import java.util.HashMap;
 import java.util.List;
 
-import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import kotlin.Pair;
@@ -37,10 +34,6 @@ import kotlin.Pair;
 public class SearchTEContractsModule {
 
     public interface View extends AbstractActivityContracts.View {
-        void setForm(List<TrackedEntityAttribute> trackedEntityAttributes,
-                     @Nullable Program program,
-                     HashMap<String, String> queryData,
-                     List<ValueTypeDeviceRendering> renderingTypes);
 
         void setPrograms(List<Program> programModels);
 
@@ -48,17 +41,11 @@ public class SearchTEContractsModule {
 
         void clearList(String uid);
 
-        Flowable<RowAction> rowActionss();
-
         void clearData();
 
         void showFilterProgress();
 
         void setTutorial();
-
-        void showAssignmentFilter();
-
-        void hideAssignmentFilter();
 
         void setProgramColor(String data);
 
@@ -92,11 +79,21 @@ public class SearchTEContractsModule {
 
         void openDashboard(String teiUid, String programUid, String enrollmentUid);
 
+        void showBreakTheGlass(String teiUid, String enrollmentUid);
+
         void goToEnrollment(String enrollmentUid, String programUid);
 
         void onBackClicked();
 
         void couldNotDownload(String typeName);
+
+        void setFormData(List<FieldViewModel> data);
+
+        void setFilters(List<FilterItem> filtersToDisplay);
+
+        void showClearSearch(boolean empty);
+
+        void hideFilter();
     }
 
     public interface Presenter {
@@ -126,6 +123,8 @@ public class SearchTEContractsModule {
         void addRelationship(@NonNull String teiUid, @Nullable String relationshipTypeUid, boolean online);
 
         void downloadTei(String teiUid, String enrollmentUid);
+
+        void downloadTeiWithReason(String teiUid, String enrollmentUid, String reason);
 
         void downloadTeiForRelationship(String TEIuid, String relationshipTypeUid);
 
@@ -162,8 +161,6 @@ public class SearchTEContractsModule {
         int getTEIColor();
 
         int getEnrollmentColor();
-
-        void initAssignmentFilter();
 
         void checkFilters(boolean listResultIsOk);
 

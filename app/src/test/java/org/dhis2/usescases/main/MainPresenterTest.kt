@@ -10,6 +10,7 @@ import io.reactivex.Flowable
 import io.reactivex.Single
 import io.reactivex.processors.BehaviorProcessor
 import io.reactivex.processors.FlowableProcessor
+import org.dhis2.data.filter.FilterRepository
 import org.dhis2.data.prefs.Preference.Companion.DEFAULT_CAT_COMBO
 import org.dhis2.data.prefs.Preference.Companion.PIN
 import org.dhis2.data.prefs.Preference.Companion.PREF_DEFAULT_CAT_OPTION_COMBO
@@ -42,11 +43,20 @@ class MainPresenterTest {
     private val preferences: PreferenceProvider = mock()
     private val workManagerController: WorkManagerController = mock()
     private val filterManager: FilterManager = mock()
+    private val filterRepository: FilterRepository = mock()
 
     @Before
     fun setUp() {
         presenter =
-            MainPresenter(view, d2, schedulers, preferences, workManagerController, filterManager)
+            MainPresenter(
+                view,
+                d2,
+                schedulers,
+                preferences,
+                workManagerController,
+                filterManager,
+                filterRepository
+            )
     }
 
     @Test
@@ -72,6 +82,20 @@ class MainPresenterTest {
 
         verify(view).updateFilters(any())
         verify(view).showPeriodRequest(periodRequest.blockingFirst().first)
+    }
+
+    @Test
+    fun `Should hide filter icon when is list is empty`() {
+        val periodRequest: FlowableProcessor<Pair<FilterManager.PeriodRequest, Filters?>> =
+            BehaviorProcessor.create()
+        whenever(filterManager.asFlowable()) doReturn Flowable.just(filterManager)
+        whenever(filterManager.periodRequest) doReturn periodRequest
+        periodRequest.onNext(Pair(FilterManager.PeriodRequest.FROM_TO, null))
+        whenever(filterRepository.homeFilters()) doReturn emptyList()
+
+        presenter.initFilters()
+
+        verify(view).hideFilters()
     }
 
     @Test

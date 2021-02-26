@@ -40,6 +40,10 @@
             type="androidx.databinding.ObservableBoolean" />
 
         <variable
+            name="showClear"
+            type="androidx.databinding.ObservableBoolean" />
+
+        <variable
             name="totalFilters"
             type="Integer" />
 
@@ -86,17 +90,6 @@
                 android:visibility="gone"
                 app:layout_constraintStart_toEndOf="@id/back_button"
                 tools:ignore="RelativeOverlap" />
-
-            <ImageView
-                android:id="@+id/clear_button"
-                style="@style/ActionIcon"
-                android:onClick="@{()->presenter.onClearClick()}"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/moreOptions"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_refresh"
-                tools:ignore="ContentDescription" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/filterCounter"
@@ -241,7 +234,7 @@
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 app:layout_constraintEnd_toStartOf="@id/backdropGuideDiv"
                 app:layout_constraintStart_toStartOf="parent"
-                tools:listitem="@layout/item_filter" />
+                tools:listitem="@layout/item_header_filter" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/form_recycler"
@@ -263,23 +256,33 @@
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/filterOpen"
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:paddingTop="8dp"
+                    android:layout_height="48dp"
                     android:visibility="gone"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     tools:visibility="visible">
 
+                    <View
+                        android:id="@+id/view"
+                        android:layout_width="24dp"
+                        android:layout_height="4dp"
+                        android:background="@drawable/ic_bottom_sheet_thumb"
+                        android:layout_marginTop="8dp"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent" />
 
                     <ImageView
                         android:id="@+id/clear_filter"
                         android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_marginEnd="16dp"
-                        android:layout_marginBottom="8dp"
+                        android:layout_height="wrap_content"
+                        android:padding="4dp"
+                        android:layout_marginEnd="12dp"
                         android:onClick="@{()->presenter.clearFilterClick()}"
-                        app:layout_constraintBottom_toTopOf="@+id/view"
+                        android:visibility="@{totalFilters>0?View.VISIBLE:View.GONE}"
+                        android:background="?selectableItemBackgroundBorderless"
+                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toStartOf="@id/close_filter"
                         app:layout_constraintTop_toTopOf="parent"
                         app:srcCompat="@drawable/ic_refresh"
@@ -288,24 +291,16 @@
                     <ImageView
                         android:id="@+id/close_filter"
                         android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_marginEnd="16dp"
-                        android:layout_marginBottom="8dp"
+                        android:layout_height="wrap_content"
+                        android:padding="4dp"
+                        android:layout_marginEnd="12dp"
                         android:onClick="@{()->presenter.closeFilterClick()}"
-                        app:layout_constraintBottom_toTopOf="@+id/view"
+                        android:background="?selectableItemBackgroundBorderless"
+                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
                         app:srcCompat="@drawable/ic_arrow_up"
                         app:tint="?colorPrimary" />
-
-                    <View
-                        android:id="@+id/view"
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="@color/greyish"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
@@ -313,7 +308,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:clipToPadding="false"
-                    android:paddingTop="12dp"
                     android:paddingBottom="56dp"
                     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                     app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
@@ -321,14 +315,15 @@
                     app:layout_constraintTop_toBottomOf="@id/progressLayout"
                     tools:listitem="@layout/item_search_tracked_entity" />
 
-
                 <com.mapbox.mapboxsdk.maps.MapView
                     android:id="@+id/mapView"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginBottom="48dp"
+                    android:layout_height="0dp"
+                    android:paddingBottom="48dp"
                     android:visibility="gone"
-                    app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior" />
+                    app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
+                    app:layout_constraintTop_toBottomOf="@+id/filterOpen"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
 
                 <org.dhis2.uicomponents.map.views.CarouselView
                     android:id="@+id/map_carousel"
@@ -337,21 +332,20 @@
                     android:clipToPadding="false"
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp"
-                    android:paddingBottom="34dp"
+                    android:paddingBottom="82dp"
                     app:layout_constraintBottom_toBottomOf="@id/mapView"
                     tools:listitem="@layout/item_carousel_tei" />
 
                 <ImageView
                     android:id="@+id/mapLayerButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="10dp"
-                    android:padding="5dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="8dp"
                     android:visibility="gone"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_layers" />
+                    app:layout_constraintTop_toBottomOf="@id/progressLayout"
+                    app:srcCompat="@drawable/ic_map_layers" />
 
                 <RelativeLayout
                     android:id="@+id/messageContainer"
@@ -401,15 +395,27 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
+                app:srcCompat="@drawable/ic_refresh"
+                android:id="@+id/clearFilterSearchButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:onClick="@{()->presenter.clearFilterClick()}"
+                android:visibility="@{showClear?View.VISIBLE:View.GONE}"
+                app:backgroundTint="@color/white"
+                app:fabSize="mini"
+                app:tint="?colorPrimary"
+                app:elevation="12dp"
+                app:layout_constraintBottom_toTopOf="@id/enrollmentButton"
+                app:layout_constraintEnd_toEndOf="@id/enrollmentButton"
+                app:layout_constraintStart_toStartOf="@id/enrollmentButton"/>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/enrollmentButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentBottom="true"
-                android:layout_gravity="end|bottom"
-                android:layout_margin="15dp"
-                android:layout_marginEnd="8dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp"
                 android:focusableInTouchMode="true"
                 android:onClick="@{(view)->presenter.onFabClick(needsSearch)}"
                 app:backgroundTint="@color/white"

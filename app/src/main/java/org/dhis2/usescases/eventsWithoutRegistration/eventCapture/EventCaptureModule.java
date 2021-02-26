@@ -11,18 +11,23 @@ import org.dhis2.data.forms.EventRepository;
 import org.dhis2.data.forms.FormRepository;
 import org.dhis2.data.forms.RulesRepository;
 import org.dhis2.data.forms.dataentry.DataEntryStore;
+import org.dhis2.data.forms.dataentry.RuleEngineRepository;
 import org.dhis2.data.forms.dataentry.ValueStore;
 import org.dhis2.data.forms.dataentry.ValueStoreImpl;
 import org.dhis2.data.forms.dataentry.fields.FieldViewModelFactory;
 import org.dhis2.data.forms.dataentry.fields.FieldViewModelFactoryImpl;
+import org.dhis2.data.forms.dataentry.fields.RowAction;
 import org.dhis2.data.prefs.PreferenceProvider;
 import org.dhis2.data.schedulers.SchedulerProvider;
 import org.dhis2.utils.RulesUtilsProvider;
+import org.dhis2.utils.resources.ResourceManager;
 import org.hisp.dhis.android.core.D2;
 import org.hisp.dhis.rules.RuleExpressionEvaluator;
 
 import dagger.Module;
 import dagger.Provides;
+import io.reactivex.processors.FlowableProcessor;
+import io.reactivex.processors.PublishProcessor;
 
 @PerActivity
 @Module
@@ -45,30 +50,45 @@ public class EventCaptureModule {
                                                     SchedulerProvider schedulerProvider,
                                                     PreferenceProvider preferences,
                                                     GetNextVisibleSection getNextVisibleSection,
-                                                    EventFieldMapper fieldMapper) {
+                                                    EventFieldMapper fieldMapper,
+                                                    FlowableProcessor<RowAction> onFieldActionProcessor,
+                                                    FieldViewModelFactory fieldFactory) {
         return new EventCapturePresenterImpl(view, eventUid, eventCaptureRepository, ruleUtils, valueStore, schedulerProvider,
-                preferences, getNextVisibleSection, fieldMapper);
+                preferences, getNextVisibleSection, fieldMapper, onFieldActionProcessor, fieldFactory.sectionProcessor());
     }
 
     @Provides
     @PerActivity
-    EventFieldMapper provideFieldMapper(Context context){
-        return new EventFieldMapper(context.getString(R.string.field_is_mandatory));
+    EventFieldMapper provideFieldMapper(Context context, FieldViewModelFactory fieldFactory) {
+        return new EventFieldMapper(fieldFactory, context.getString(R.string.field_is_mandatory));
     }
 
     @Provides
     @PerActivity
-    EventCaptureContract.EventCaptureRepository provideRepository(Context context,
-                                                                  FormRepository formRepository,
-                                                                  D2 d2) {
-        FieldViewModelFactory fieldFactory = new FieldViewModelFactoryImpl(ValueTypeExtensionsKt.valueTypeHintMap(context));
-        return new EventCaptureRepositoryImpl(fieldFactory, formRepository, eventUid, d2);
+    EventCaptureContract.EventCaptureRepository provideRepository(FieldViewModelFactory fieldFactory,
+                                                                  RuleEngineRepository ruleEngineRepository,
+                                                                  D2 d2,
+                                                                  ResourceManager resourceManager
+    ) {
+        return new EventCaptureRepositoryImpl(fieldFactory, ruleEngineRepository, eventUid, d2, resourceManager);
+    }
+
+    @Provides
+    @PerActivity
+    FieldViewModelFactory fieldFactory(Context context) {
+        return new FieldViewModelFactoryImpl(ValueTypeExtensionsKt.valueTypeHintMap(context), false);
     }
 
     @Provides
     @PerActivity
     RulesRepository rulesRepository(@NonNull D2 d2) {
         return new RulesRepository(d2);
+    }
+
+    @Provides
+    @PerActivity
+    RuleEngineRepository ruleEngineRepository(D2 d2, FormRepository formRepository) {
+        return new EventRuleEngineRepository(d2, formRepository, eventUid);
     }
 
     @Provides
@@ -89,5 +109,11 @@ public class EventCaptureModule {
     @PerActivity
     GetNextVisibleSection getNextVisibleSection() {
         return new GetNextVisibleSection();
+    }
+
+    @Provides
+    @PerActivity
+    FlowableProcessor<RowAction> getProcessor() {
+        return PublishProcessor.create();
     }
 }

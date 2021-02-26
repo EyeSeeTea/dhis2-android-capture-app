@@ -1,7 +1,6 @@
 package org.dhis2.data.server
 
 import android.content.Context
-import com.facebook.stetho.okhttp3.StethoInterceptor
 import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.Module
 import dagger.Provides
@@ -12,6 +11,7 @@ import okhttp3.Interceptor
 import org.dhis2.App
 import org.dhis2.BuildConfig
 import org.dhis2.data.dagger.PerServer
+import org.dhis2.data.filter.GetFiltersApplyingWebAppConfig
 import org.dhis2.data.prefs.PreferenceProviderImpl
 import org.dhis2.utils.RulesUtilsProvider
 import org.dhis2.utils.RulesUtilsProviderImpl
@@ -54,18 +54,26 @@ class ServerModule {
         return DhisAnalyticCharts.Provider.get(serverComponent)
     }
 
+    @Provides
+    @PerServer
+    fun provideGetFiltersApplyingWebAppConfig(): GetFiltersApplyingWebAppConfig {
+        return GetFiltersApplyingWebAppConfig()
+    }
+
     companion object {
         @JvmStatic
         fun getD2Configuration(context: Context): D2Configuration {
             val interceptors: MutableList<Interceptor> =
                 ArrayList()
-            interceptors.add(StethoInterceptor())
+            if ((context as App).flipperInterceptor != null) {
+                interceptors.add(context.flipperInterceptor)
+            }
             interceptors.add(
                 AnalyticsInterceptor(
                     AnalyticsHelper(
                         FirebaseAnalytics.getInstance(context),
                         PreferenceProviderImpl(context),
-                        (context as App).appComponent().matomoController()
+                        context.appComponent().matomoController()
                     )
                 )
             )

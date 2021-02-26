@@ -11,15 +11,14 @@ import android.transition.Transition;
 import android.transition.TransitionManager;
 import android.util.SparseBooleanArray;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.PopupMenu;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.view.ViewCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.LiveData;
 import androidx.paging.PagedList;
@@ -27,7 +26,6 @@ import androidx.paging.PagedList;
 import com.mapbox.geojson.Feature;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.plugins.markerview.MarkerView;
 
 import org.dhis2.App;
 import org.dhis2.Bindings.ExtensionsKt;
@@ -36,7 +34,6 @@ import org.dhis2.R;
 import org.dhis2.animations.CarouselViewAnimations;
 import org.dhis2.data.tuples.Pair;
 import org.dhis2.databinding.ActivityProgramEventDetailBinding;
-import org.dhis2.databinding.InfoWindowEventBinding;
 import org.dhis2.uicomponents.map.carousel.CarouselAdapter;
 import org.dhis2.uicomponents.map.layer.LayerType;
 import org.dhis2.uicomponents.map.layer.MapLayer;
@@ -53,6 +50,7 @@ import org.dhis2.utils.EventMode;
 import org.dhis2.utils.HelpManager;
 import org.dhis2.utils.analytics.AnalyticsConstants;
 import org.dhis2.utils.category.CategoryDialog;
+import org.dhis2.utils.filters.FilterItem;
 import org.dhis2.utils.filters.FilterManager;
 import org.dhis2.utils.filters.FiltersAdapter;
 import org.dhis2.utils.granularsync.SyncStatusDialog;
@@ -71,6 +69,7 @@ import javax.inject.Inject;
 import kotlin.Unit;
 import timber.log.Timber;
 
+import static android.view.View.GONE;
 import static org.dhis2.R.layout.activity_program_event_detail;
 import static org.dhis2.uicomponents.map.geometry.mapper.featurecollection.MapEventToFeatureCollection.EVENT;
 import static org.dhis2.utils.Constants.ORG_UNIT;
@@ -97,7 +96,6 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
     private ProgramEventDetailLiveAdapter liveAdapter;
     private boolean backDropActive;
     private String programUid;
-    private MarkerView currentMarker;
     private FeatureType featureType;
     private EventMapManager eventMapManager;
 
@@ -126,18 +124,12 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
         binding.setTotalFilters(FilterManager.getInstance().getTotalFilters());
 
         ViewExtensionsKt.clipWithRoundedCorners(binding.recycler, ExtensionsKt.getDp(16));
+        ViewExtensionsKt.clipWithRoundedCorners(binding.mapView, ExtensionsKt.getDp(16));
         liveAdapter = new ProgramEventDetailLiveAdapter(presenter.getProgram(), presenter);
         binding.recycler.setAdapter(liveAdapter);
 
-        filtersAdapter.addEventStatus();
-        if (presenter.hasAssignment()) {
-            filtersAdapter.addAssignedToMe();
-        } else {
-            filtersAdapter.removeAssignedToMe();
-        }
         try {
             binding.filterLayout.setAdapter(filtersAdapter);
-
         } catch (Exception e) {
             Timber.e(e);
         }
@@ -179,7 +171,6 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
         }
         binding.addEventButton.setEnabled(true);
         binding.setTotalFilters(FilterManager.getInstance().getTotalFilters());
-        filtersAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -201,6 +192,7 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
 
         FilterManager.getInstance().clearEventStatus();
         FilterManager.getInstance().clearCatOptCombo();
+        FilterManager.getInstance().clearWorkingList(false);
     }
 
 
@@ -243,13 +235,13 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
     @Override
     public void setLiveData(LiveData<PagedList<EventViewModel>> pagedListLiveData) {
         pagedListLiveData.observe(this, pagedList -> {
-            binding.programProgress.setVisibility(View.GONE);
+            binding.programProgress.setVisibility(GONE);
             liveAdapter.submitList(pagedList, () -> {
                 if (binding.recycler.getAdapter() != null && binding.recycler.getAdapter().getItemCount() == 0) {
                     binding.emptyTeis.setVisibility(View.VISIBLE);
-                    binding.recycler.setVisibility(View.GONE);
+                    binding.recycler.setVisibility(GONE);
                 } else {
-                    binding.emptyTeis.setVisibility(View.GONE);
+                    binding.emptyTeis.setVisibility(GONE);
                     binding.recycler.setVisibility(View.VISIBLE);
                 }
             });
@@ -262,10 +254,10 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
     public void setOptionComboAccess(Boolean canCreateEvent) {
         switch (binding.addEventButton.getVisibility()) {
             case View.VISIBLE:
-                binding.addEventButton.setVisibility(canCreateEvent ? View.VISIBLE : View.GONE);
+                binding.addEventButton.setVisibility(canCreateEvent ? View.VISIBLE : GONE);
                 break;
-            case View.GONE:
-                binding.addEventButton.setVisibility(View.GONE);
+            case GONE:
+                binding.addEventButton.setVisibility(GONE);
                 break;
         }
 
@@ -290,6 +282,7 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
         ConstraintSet initSet = new ConstraintSet();
         initSet.clone(binding.backdropLayout);
         binding.filterOpen.setVisibility(backDropActive ? View.VISIBLE : View.GONE);
+        ViewCompat.setElevation(binding.eventsLayout, backDropActive ? 20 : 0);
 
         if (backDropActive) {
             initSet.connect(R.id.eventsLayout, ConstraintSet.TOP, R.id.filterLayout, ConstraintSet.BOTTOM, 50);
@@ -298,11 +291,6 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
         }
 
         initSet.applyTo(binding.backdropLayout);
-    }
-
-    @Override
-    public void clearFilters() {
-        filtersAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -323,10 +311,10 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
     public void setWritePermission(Boolean canWrite) {
         switch (binding.addEventButton.getVisibility()) {
             case View.VISIBLE:
-                binding.addEventButton.setVisibility(canWrite ? View.VISIBLE : View.GONE);
+                binding.addEventButton.setVisibility(canWrite ? View.VISIBLE : GONE);
                 break;
-            case View.GONE:
-                binding.addEventButton.setVisibility(View.GONE);
+            case GONE:
+                binding.addEventButton.setVisibility(GONE);
                 break;
         }
         if (binding.addEventButton.getVisibility() == View.VISIBLE) {
@@ -355,9 +343,7 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
 
     @Override
     public void setCatOptionComboFilter(Pair<CategoryCombo, List<CategoryOptionCombo>> categoryOptionCombos) {
-        if (!categoryOptionCombos.val0().isDefault()) {
-            filtersAdapter.addCatOptCombFilter(categoryOptionCombos);
-        }
+
     }
 
     @Override
@@ -383,7 +369,6 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == FilterManager.OU_TREE && resultCode == Activity.RESULT_OK) {
-            filtersAdapter.notifyDataSetChanged();
             updateFilters(FilterManager.getInstance().getTotalFilters());
         }
         super.onActivityResult(requestCode, resultCode, data);
@@ -417,7 +402,8 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
                     })
                     .build();
             binding.mapCarousel.setAdapter(carouselAdapter);
-            binding.mapCarousel.attachToMapManager(eventMapManager, (feature, found) -> true);
+            binding.mapCarousel.setCallback((feature, found) -> true);
+            binding.mapCarousel.attachToMapManager(eventMapManager);
             carouselAdapter.addItems(mapData.getEvents());
         } else {
             ((CarouselAdapter) binding.mapCarousel.getAdapter()).updateAllData(mapData.getEvents(), eventMapManager.mapLayerManager);
@@ -428,26 +414,6 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
 
         animations.endMapLoading(binding.mapCarousel);
         binding.toolbarProgress.hide();
-    }
-
-    @Override
-    public void setEventInfo(Pair<ProgramEventViewModel, LatLng> eventInfo) {
-        if (currentMarker != null) {
-            eventMapManager.getMarkerViewManager().removeMarker(currentMarker);
-        }
-        InfoWindowEventBinding binding = InfoWindowEventBinding.inflate(LayoutInflater.from(this));
-        binding.setEvent(eventInfo.val0());
-        binding.setPresenter(presenter);
-        View view = binding.getRoot();
-        view.setOnClickListener(viewClicked ->
-                eventMapManager.getMarkerViewManager().removeMarker(currentMarker));
-        view.setOnLongClickListener(view1 -> {
-            presenter.onEventClick(eventInfo.val0().uid(), eventInfo.val0().orgUnitUid());
-            return true;
-        });
-        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        currentMarker = new MarkerView(eventInfo.val1(), view);
-        eventMapManager.getMarkerViewManager().addMarker(currentMarker);
     }
 
     @Override
@@ -494,11 +460,11 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
             }
             return false;
         });
-        boolean mapVisible = binding.mapView.getVisibility() != View.GONE;
-        boolean listVisible = binding.recycler.getVisibility() != View.GONE;
+        boolean mapVisible = binding.mapView.getVisibility() != GONE;
+        boolean listVisible = binding.recycler.getVisibility() != GONE;
         boolean emptyVisible = !mapVisible && !listVisible;
         popupMenu.getMenu().getItem(0).setVisible(!emptyVisible && !mapVisible && featureType != FeatureType.NONE);
-        popupMenu.getMenu().getItem(1).setVisible(!emptyVisible && binding.recycler.getVisibility() == View.GONE && featureType != FeatureType.NONE);
+        popupMenu.getMenu().getItem(1).setVisible(!emptyVisible && binding.recycler.getVisibility() == GONE && featureType != FeatureType.NONE);
         popupMenu.show();
     }
 
@@ -536,10 +502,10 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
     }
 
     private void showMap(boolean showMap) {
-        binding.recycler.setVisibility(showMap ? View.GONE : View.VISIBLE);
-        binding.mapView.setVisibility(showMap ? View.VISIBLE : View.GONE);
-        binding.mapCarousel.setVisibility(showMap ? View.VISIBLE : View.GONE);
-        binding.addEventButton.setVisibility(showMap ? View.GONE : View.VISIBLE);
+        binding.recycler.setVisibility(showMap ? GONE : View.VISIBLE);
+        binding.mapView.setVisibility(showMap ? View.VISIBLE : GONE);
+        binding.mapCarousel.setVisibility(showMap ? View.VISIBLE : GONE);
+        binding.addEventButton.setVisibility(showMap ? GONE : View.VISIBLE);
 
         if (showMap) {
             binding.toolbarProgress.setVisibility(View.VISIBLE);
@@ -552,7 +518,7 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
                 return Unit.INSTANCE;
             });
         } else {
-            binding.mapLayerButton.setVisibility(View.GONE);
+            binding.mapLayerButton.setVisibility(GONE);
         }
     }
 
@@ -589,5 +555,15 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
                 getSupportFragmentManager(),
                 CategoryDialog.Companion.getTAG()
         );
+    }
+
+    @Override
+    public void setFilterItems(List<FilterItem> programFilters) {
+        filtersAdapter.submitList(programFilters);
+    }
+
+    @Override
+    public void hideFilters() {
+        binding.filter.setVisibility(GONE);
     }
 }
