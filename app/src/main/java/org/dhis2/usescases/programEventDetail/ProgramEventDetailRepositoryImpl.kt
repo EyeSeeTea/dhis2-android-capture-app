@@ -1,15 +1,12 @@
 package org.dhis2.usescases.programEventDetail
 
-import androidx.lifecycle.LiveData
-import androidx.paging.DataSource
-import androidx.paging.LivePagedListBuilder
-import androidx.paging.PagedList
+import androidx.paging.PagingData
 import com.mapbox.geojson.FeatureCollection
 import dhis2.org.analytics.charts.Charts
 import io.reactivex.Flowable
 import io.reactivex.Observable
 import io.reactivex.Single
-import org.dhis2.commons.data.EventViewModel
+import kotlinx.coroutines.flow.Flow
 import org.dhis2.commons.data.ProgramEventViewModel
 import org.dhis2.commons.filters.data.FilterPresenter
 import org.dhis2.commons.filters.data.TextFilter
@@ -47,22 +44,11 @@ class ProgramEventDetailRepositoryImpl internal constructor(
         filterPresenter.filteredEventProgram(it)
     }
 
-    override fun filteredProgramEvents(textFilter: TextFilter?): LiveData<PagedList<EventViewModel>> {
+    override fun filteredProgramEvents(): Flow<PagingData<Event>> {
         val program = program().blockingGet() ?: throw NullPointerException()
-        val dataSource = filterPresenter
-            .filteredEventProgram(program, textFilter)
-            .dataSource
-            .map { event ->
-                mapper.eventToEventViewModel(event)
-            }
-        return LivePagedListBuilder(
-            object : DataSource.Factory<Event, EventViewModel>() {
-                override fun create(): DataSource<Event, EventViewModel> {
-                    return dataSource
-                }
-            },
-            20,
-        ).build()
+        return filterPresenter
+            .filteredEventProgram(program)
+            .getPagingData(10)
     }
 
     override fun filteredEventsForMap(): Flowable<ProgramEventMapData> {
@@ -149,11 +135,17 @@ class ProgramEventDetailRepositoryImpl internal constructor(
     }
 
     override fun programHasAnalytics(): Boolean {
-        return charts != null && charts.getProgramVisualizations(null, programUid).isNotEmpty()
+        return charts?.getVisualizationGroups(programUid)?.isNotEmpty() == true
     }
 
     override fun isEventEditable(eventUid: String): Boolean {
         return d2.eventModule().eventService().blockingIsEditable(eventUid)
+    }
+
+    override fun displayOrganisationUnit(programUid: String): Boolean {
+        return d2.organisationUnitModule().organisationUnits()
+            .byProgramUids(listOf(programUid))
+            .blockingGet().size > 1
     }
 
     override fun textTypeDataElements(): Observable<List<DataElement>> {

@@ -40,9 +40,8 @@ import org.hisp.dhis.android.core.program.Program
 import org.hisp.dhis.android.core.settings.DataSetFilter
 import org.hisp.dhis.android.core.settings.HomeFilter
 import org.hisp.dhis.android.core.settings.ProgramFilter
-import org.hisp.dhis.android.core.trackedentity.search.TrackedEntityInstanceQueryCollectionRepository
-import timber.log.Timber
 import org.hisp.dhis.android.core.trackedentity.search.TrackedEntitySearchCollectionRepository
+import timber.log.Timber
 import javax.inject.Inject
 
 data class TextFilter(val dataElement: String, val text: String)
@@ -196,29 +195,14 @@ class FilterRepository @Inject constructor(
     }
 
     fun eventsByProgramAndTextFilter(
-        programUid: String,
-        textFilter: TextFilter?
+        programUid: String
     ): EventQueryCollectionRepository {
-
-        if (textFilter != null && textFilter.dataElement.isNotBlank() && textFilter.text.isNotBlank()) {
-            val uidsByTextFilter =
-                getEventUIdsFilteredByValue(textFilter.dataElement, textFilter.text)
-
-            return d2.eventModule()
-                .eventQuery()
-                .byIncludeDeleted()
-                .eq(false)
-                .byProgram()
-                .eq(programUid)
-                .byUid().`in`(if (uidsByTextFilter.isNotEmpty()) uidsByTextFilter else listOf(textFilter.text))
-        } else {
-            return d2.eventModule()
-                .eventQuery()
-                .byIncludeDeleted()
-                .eq(false)
-                .byProgram()
-                .eq(programUid)
-        }
+        return d2.eventModule()
+            .eventQuery()
+            .byIncludeDeleted()
+            .eq(false)
+            .byProgram()
+            .eq(programUid)
     }
 
     fun applyOrgUnitFilter(
@@ -569,7 +553,7 @@ class FilterRepository @Inject constructor(
             observableSortingInject,
             observableOpenFilter,
             program.enrollmentDateLabel() ?: resources
-                .filterEnrollmentDateLabel(),
+                .filterEnrollmentDateLabel(program.uid()),
         )
         defaultTrackerFilters[ProgramFilter.ORG_UNIT] = OrgUnitFilter(
             FilterManager.getInstance().observeOrgUnitFilters(),
@@ -588,7 +572,7 @@ class FilterRepository @Inject constructor(
             ProgramType.TRACKER,
             observableSortingInject,
             observableOpenFilter,
-            resources.filterEnrollmentStatusLabel(),
+            resources.filterEnrollmentStatusLabel(program.uid()),
         )
         defaultTrackerFilters[ProgramFilter.EVENT_STATUS] = EventStatusFilter(
             ProgramType.TRACKER,

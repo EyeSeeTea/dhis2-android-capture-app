@@ -22,6 +22,7 @@ import androidx.core.view.ViewCompat
 import androidx.databinding.DataBindingUtil
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import org.dhis2.bindings.hasPermissions
 import org.dhis2.BuildConfig
 import org.dhis2.R
@@ -307,6 +308,14 @@ class MainActivity :
                     }
                 },
             )
+            .onNoConnectionListener {
+                val contextView = findViewById<View>(R.id.navigationBar)
+                Snackbar.make(
+                    contextView,
+                    R.string.sync_offline_check_connection,
+                    Snackbar.LENGTH_SHORT,
+                ).show()
+            }
             .show("ALL_SYNC")
     }
 
