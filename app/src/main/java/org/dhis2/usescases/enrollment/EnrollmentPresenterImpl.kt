@@ -28,6 +28,7 @@ import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.RowAction
 import org.dhis2.form.model.biometrics.BiometricsAttributeUiModelImpl
 import org.dhis2.usescases.biometrics.BIOMETRICS_ENABLED
+import org.dhis2.usescases.biometrics.duplicates.LastPossibleDuplicates
 import org.dhis2.usescases.biometrics.getAgeInMonthsByFieldUiModel
 import org.dhis2.usescases.biometrics.getOrgUnitAsModuleId
 import org.dhis2.usescases.biometrics.isUnderAgeThreshold
@@ -80,6 +81,7 @@ class EnrollmentPresenterImpl(
         BiometricsPreference.LAST_DECLINED_ENROL_DURATION, 0
     )
     private var resetBiometricsFailureAfterTimeDisposable: Disposable? = null
+    private var lastPossibleDuplicates: LastPossibleDuplicates? = null
 
     fun init() {
         view.setSaveButtonVisible(false)
@@ -285,13 +287,23 @@ class EnrollmentPresenterImpl(
     }
 
     fun onBiometricsCompleted(guid: String) {
+        lastPossibleDuplicates = null
         saveBiometricValue(guid)
     }
 
     fun onBiometricsFailure() {
-        val uuid: UUID = UUID.randomUUID()
         pendingSave = false
-        saveBiometricValue("${BIOMETRICS_FAILURE_PATTERN}_${uuid}")
+
+        if (lastPossibleDuplicates != null) {
+            onBiometricsPossibleDuplicates(
+                lastPossibleDuplicates!!.guids,
+                lastPossibleDuplicates!!.sessionId,
+                enrollNewVisible = false
+            )
+        } else {
+            val uuid: UUID = UUID.randomUUID()
+            saveBiometricValue("${BIOMETRICS_FAILURE_PATTERN}_${uuid}")
+        }
     }
 
     fun checkIfBiometricValueValid() {
@@ -321,7 +333,7 @@ class EnrollmentPresenterImpl(
         }
     }
 
-    fun onBiometricsPossibleDuplicates(guids: List<String>, sessionId: String) {
+    fun onBiometricsPossibleDuplicates(guids: List<String>, sessionId: String, enrollNewVisible:Boolean = true) {
         val program = getProgram()!!.uid()
         val biometricsAttUid = biometricsUiModel!!.uid
         val teiUid = getEnrollment()!!.trackedEntityInstance()
@@ -337,13 +349,16 @@ class EnrollmentPresenterImpl(
         } else {
             val finalGuids = guids.filter { it != biometricsUiModel!!.value }
 
+            lastPossibleDuplicates = LastPossibleDuplicates(finalGuids, sessionId)
+
             view.hideProgress()
             view.showPossibleDuplicatesDialog(
                 finalGuids,
                 sessionId,
                 program,
                 teiTypeUid,
-                biometricsAttUid
+                biometricsAttUid,
+                enrollNewVisible
             )
         }
     }
