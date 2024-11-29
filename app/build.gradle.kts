@@ -319,6 +319,8 @@ dependencies {
     testImplementation(libs.test.truth)
     testImplementation(libs.test.kotlinCoroutines)
     testImplementation(libs.test.turbine)
+    testImplementation("androidx.compose.ui:ui-test-junit4:1.5.4")
+    testImplementation("io.kotest:kotest-assertions-core:5.8.0")
 
     androidTestUtil(libs.test.orchestrator)
 

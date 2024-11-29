@@ -262,6 +262,13 @@ class BiometricsDuplicatesDialog : DialogFragment(), BiometricsDuplicatesDialogV
             .inject(this)
     }
 
+    /**
+     * Configures the buttons in the dialog using Jetpack Compose.
+     * Sets up the composition strategy and renders the buttons based on enrollment visibility.
+     *
+     * @param buttonsContainer The ComposeView that will host the buttons
+     * @param enrollNewVisible Controls whether the "Enroll New" button should be shown
+     */
     @ExperimentalAnimationApi
     private fun configureButtons(buttonsContainer: ComposeView, enrollNewVisible: Boolean) {
         buttonsContainer.apply {
@@ -369,6 +376,13 @@ inline fun <reified T : Parcelable> Intent.extractParcelableArrayListExtra(key: 
     }
 
 
+/**
+ * Composable function that renders the action buttons for the biometrics duplicates dialog.
+ * 
+ * @param enrollNewVisible Controls the visibility of the "Enroll New" button
+ * @param enrolWithoutBiometrics Callback invoked when user chooses to enroll without biometrics
+ * @param enrolNewBiometrics Callback invoked when user chooses to enroll with new biometrics
+ */
 @Composable
 fun DialogActions(
     enrollNewVisible: Boolean,
