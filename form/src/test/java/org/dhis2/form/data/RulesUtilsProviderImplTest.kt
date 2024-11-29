@@ -41,6 +41,7 @@ class RulesUtilsProviderImplTest {
 
     private lateinit var ruleUtils: RulesUtilsProvider
     private lateinit var testFieldViewModels: MutableMap<String, FieldUiModel>
+    private val testUrl = "http://test.url"
     private lateinit var fieldFactory: FieldViewModelFactory
     private val d2: D2 = Mockito.mock(D2::class.java, Mockito.RETURNS_DEEP_STUBS)
     private val valueStore: FormValueStore = mock()
