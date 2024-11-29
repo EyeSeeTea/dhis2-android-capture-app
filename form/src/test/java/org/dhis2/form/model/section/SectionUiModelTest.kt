@@ -197,6 +197,3 @@ class SectionUiModelTest {
         ObservableField(),
     )
 }
-package org.dhis2.form.model.section
-
-[... rest of the file content ...]
