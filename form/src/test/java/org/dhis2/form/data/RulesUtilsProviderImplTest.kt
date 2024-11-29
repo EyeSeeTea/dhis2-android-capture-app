@@ -973,3 +973,6 @@ class RulesUtilsProviderImplTest {
         assertTrue(testFieldViewModels[booleanUid]?.value == "true")
     }
 }
+package org.dhis2.form.data
+
+[... rest of the file content ...]

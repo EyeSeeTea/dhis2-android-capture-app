@@ -430,3 +430,6 @@ fun DialogActionsWithoutNewPreview() {
         enrolWithoutBiometrics = {},
         enrolNewBiometrics = {})
 }
+package org.dhis2.usescases.biometrics.duplicates
+
+[... rest of the file content ...]

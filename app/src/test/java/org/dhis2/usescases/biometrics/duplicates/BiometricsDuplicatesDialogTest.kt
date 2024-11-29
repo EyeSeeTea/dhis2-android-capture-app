@@ -48,3 +48,6 @@ class BiometricsDuplicatesDialogTest {
         withoutBiometricsClicked shouldBe true
     }
 }
+package org.dhis2.usescases.biometrics.duplicates
+
+[... rest of the file content ...]

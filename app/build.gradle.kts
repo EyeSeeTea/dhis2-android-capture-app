@@ -352,3 +352,5 @@ dependencies {
     implementation(libs.eyeseetea.coroutinesAndroid)
     implementation(libs.eyeseetea.libsimprints)
 }
+import java.io.ByteArrayOutputStream
+[... rest of the file content ...]
