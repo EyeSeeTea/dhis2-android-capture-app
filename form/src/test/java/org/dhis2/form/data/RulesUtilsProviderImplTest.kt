@@ -82,7 +82,7 @@ class RulesUtilsProviderImplTest {
 
     private fun getTestingFieldViewModels(): MutableList<FieldUiModel> {
         return arrayListOf(
-            randomFieldViewModel("uid1", ValueType.TEXT, "section1", null),
+            randomFieldViewModel("uid1", ValueType.TEXT, "section1", null, testUrl),
             randomFieldViewModel("uid2", ValueType.TEXT, "section1"),
             randomFieldViewModel("uid3", ValueType.TEXT, "section2"),
             randomFieldViewModel("uid4", ValueType.TEXT, "section2"),

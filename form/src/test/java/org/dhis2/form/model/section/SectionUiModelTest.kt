@@ -71,7 +71,7 @@ class SectionUiModelTest {
 
     private fun givenClosingSectionUiModel() = SectionUiModelImpl(
         CLOSING_SECTION_UID,
-        1,
+        "1",
         null,
         false,
         null,
@@ -98,7 +98,7 @@ class SectionUiModelTest {
         0,
         0,
         "",
-        ObservableField(),
+        ObservableField(""),
     )
 
     private fun givenSectionUiModelWithNullDescription() = SectionUiModelImpl(
