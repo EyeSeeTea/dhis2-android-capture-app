@@ -687,6 +687,14 @@ public class SearchTEPresenter implements SearchTEContractsModule.Presenter {
     }
 
     @Override
+    public void onBiometricsNoneOfTheAboveClick() {
+        if (sessionId != null) {
+            biometricsSearchStatus = false;
+            view.sendBiometricsNoneSelected(sessionId);
+        }
+    }
+
+    @Override
     public void trackSearchAnalytics() {
         matomoAnalyticsController.trackEvent(SEARCH, OPEN_ANALYTICS, CLICK);
     }

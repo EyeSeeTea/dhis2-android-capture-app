@@ -228,6 +228,8 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
                     presenter.onBiometricsClick();
                 } else if (action instanceof SequentialSearchAction.SearchWithAttributes) {
                     viewModel.openSearchForm();
+
+                    callBiometricsNoneOfAboveIfRequired();
                 } else {
                     presenter.onEnrollClick(new HashMap<>(viewModel.getQueryData()),
                             viewModel.getSequentialSearch().getValue());
@@ -265,6 +267,14 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
             openSyncDialog();
         }
 
+    }
+
+    private void callBiometricsNoneOfAboveIfRequired() {
+        SequentialSearch sequentialSearch = viewModel.getSequentialSearch().getValue();
+
+        if (sequentialSearch instanceof SequentialSearch.BiometricsSearch) {
+            presenter.onBiometricsNoneOfTheAboveClick();
+        }
     }
 
     private void initializeVariables(Bundle savedInstanceState) {
@@ -470,6 +480,11 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
             BiometricsClientFactory.INSTANCE.get(this).confirmIdentify(this, sessionId, guid, extras);
             viewModel.clearQueryData();
         }
+    }
+
+    @Override
+    public void sendBiometricsNoneSelected(String sessionId) {
+        BiometricsClientFactory.INSTANCE.get(this).noneSelected(this, sessionId);
     }
 
     @Override
