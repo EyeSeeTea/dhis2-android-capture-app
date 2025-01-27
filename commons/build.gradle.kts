@@ -66,11 +66,14 @@ dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     api(project(":ui-components"))
 
+    api(project(":core"))
+    /*
     api(libs.dhis2.android.sdk) {
-        exclude("org.hisp.dhis", "core-rules")
-        exclude("com.facebook.flipper")
-        this.isChanging = true
-    }
+         exclude("org.hisp.dhis", "core-rules")
+         exclude("com.facebook.flipper")
+         this.isChanging = true
+     }
+     */
 
     api(libs.dhis2.ruleengine) {
         exclude("junit", "junit")
@@ -78,8 +81,8 @@ dependencies {
 
     api(libs.dhis2.expressionparser)
 
-    api(libs.google.autoValue)
-    kapt(libs.google.autoValue)
+    api(libs.google.auto.value)
+    kapt(libs.google.auto.value)
     api(libs.androidx.coreKtx)
     api(libs.androidx.appcompat)
     api(libs.androidx.fragmentKtx)
