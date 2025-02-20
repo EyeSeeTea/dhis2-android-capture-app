@@ -194,7 +194,7 @@ class ServerModule {
                 .networkInterceptors(interceptors)
                 .writeTimeoutInSeconds(10 * 60)
                 .context(context)
-                .fileResizerDimension(FileResizerHelper.Dimension.MEDIUM)
+                .fileResizerDimension(FileResizerHelper.Dimension.ORIGINAL)
                 .build()
         }
     }
