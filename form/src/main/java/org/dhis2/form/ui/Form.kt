@@ -29,6 +29,7 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.dhis2.commons.resources.ResourceManager
 import org.dhis2.form.R
@@ -127,8 +128,17 @@ fun Form(
                         if (section.fields.isNotEmpty()) {
                             section.fields.forEachIndexed { index, fieldUiModel ->
                                 fieldUiModel.setCallback(callback)
+
+                                // EyeSeeTea customization - Remove UPG field from the form
+                                // removing is not saved, so change height
+                                val modifier = if (fieldUiModel.visible) {
+                                    Modifier
+                                } else {
+                                    Modifier.height(0.dp)
+                                }
+
                                 FieldProvider(
-                                    modifier = Modifier.animateItemPlacement(
+                                    modifier = modifier.animateItemPlacement(
                                         animationSpec = tween(
                                             durationMillis = 500,
                                             easing = LinearOutSlowInEasing,

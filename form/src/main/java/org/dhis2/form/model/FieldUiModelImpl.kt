@@ -39,7 +39,7 @@ data class FieldUiModelImpl(
 ) : FieldUiModel {
 
     private var callback: FieldUiModel.Callback? = null
-    private var onFocusCallback: (() -> Unit)? = null
+    private var onOverrideFocusCallback: (() -> Unit)? = null
 
     override val formattedLabel: String
         get() = if (mandatory) "$label *" else label
@@ -48,13 +48,16 @@ data class FieldUiModelImpl(
         this.callback = callback
     }
 
-    fun setFocusCallback(callback: () -> Unit){
-        this.onFocusCallback = callback
+    fun setOverrideFocusCallback(callback: () -> Unit) {
+        this.onOverrideFocusCallback = callback
     }
 
     override fun onItemClick() {
+        // EyeSeeTea customization
+        //callback?.intent(FormIntent.OnFocus(uid, value))
+
         callback?.intent(FormIntent.OnFocus(uid, value))
-        onFocusCallback?.invoke()
+        onOverrideFocusCallback?.invoke()
     }
 
     override fun onClear() {
@@ -102,7 +105,7 @@ data class FieldUiModelImpl(
     override fun setError(error: String?) = this.copy(error = error)
 
     override fun setEditable(editable: Boolean) = this.copy(editable = editable)
-    override fun setVisible(visible: Boolean)= this.copy(visible = visible)
+    override fun setVisible(visible: Boolean) = this.copy(visible = visible)
 
     override fun setLegend(legendValue: LegendValue?) = this.copy(legend = legendValue)
 

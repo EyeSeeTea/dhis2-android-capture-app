@@ -7,15 +7,9 @@ import org.dhis2.commons.resources.ResourceManager
 import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.data.dhislogic.AUTH_ALL
 import org.dhis2.data.dhislogic.AUTH_UNCOMPLETE_EVENT
-import org.dhis2.usescases.eventsWithoutRegistration.EventIdlingResourceSingleton
-import org.dhis2.form.data.DataIntegrityCheckResult
-import org.dhis2.form.data.FieldsWithErrorResult
-import org.dhis2.form.data.FieldsWithWarningResult
-import org.dhis2.form.data.MissingMandatoryResult
-import org.dhis2.form.data.NotSavedResult
-import org.dhis2.form.data.SuccessfulResult
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.FieldUiModelImpl
+import org.dhis2.usescases.eventsWithoutRegistration.EventIdlingResourceSingleton
 import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureContract
 import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.domain.ReOpenEventUseCase
 import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.eventCaptureFragment.upg.domain.UPGItem
@@ -37,7 +31,8 @@ private const val endOfSeasonReportUPGUId = "e3m1f3pdLAl"
 
 private val programsWithUPG = listOf(
     UPGProgram(seasonPlanProgramUid, seasonPlanUPGName, seasonPlanUPGUId),
-    UPGProgram(endOfSeasonReportProgramUid, endOfSeasonReportUPGName, endOfSeasonReportUPGUId))
+    UPGProgram(endOfSeasonReportProgramUid, endOfSeasonReportUPGName, endOfSeasonReportUPGUId)
+)
 
 
 class EventCaptureFormPresenter(
@@ -49,7 +44,8 @@ class EventCaptureFormPresenter(
     private val reOpenEventUseCase: ReOpenEventUseCase,
     private val dispatcherProvider: DispatcherProvider,
 ) {
-    var programUid: String = d2.eventModule().events().byUid().eq(eventUid).one().blockingGet()?.program() ?: ""
+    var programUid: String =
+        d2.eventModule().events().byUid().eq(eventUid).one().blockingGet()?.program() ?: ""
 
     fun showOrHideSaveButton() {
         val isEditable =
@@ -133,15 +129,12 @@ class EventCaptureFormPresenter(
     fun onFieldsLoading(fields: List<FieldUiModel>): List<FieldUiModel> {
         val programWithUPG = programsWithUPG.find { it.programUid == programUid } ?: return fields
 
-        //Eyeseetea customization - Remove UPG field from the form
+        //EyeSeeTea customization - Remove UPG field from the form
         val finalFields = fields
             .map { field ->
-                if (field.uid == programWithUPG.upgName) {
-                    field.setEditable(false)
-                } else if (field.uid == programWithUPG.upgUid){
+                if (field.uid == programWithUPG.upgUid) {
                     field.setVisible(false)
-                }
-                else {
+                } else {
                     field
                 }
             }
@@ -149,10 +142,10 @@ class EventCaptureFormPresenter(
         upgUidUIModel = finalFields.find { it.uid == programWithUPG.upgUid }
         upgNameUIModel = finalFields.find { it.uid == programWithUPG.upgName }
 
-        if(upgUidUIModel != null && upgNameUIModel != null){
+        if (upgUidUIModel != null && upgNameUIModel != null) {
             val event = d2.eventModule().events().byUid().eq(eventUid).one().blockingGet()
 
-            (upgNameUIModel as FieldUiModelImpl).setFocusCallback {
+            (upgNameUIModel as FieldUiModelImpl).setOverrideFocusCallback {
                 if (event?.organisationUnit() != null && !savingSelectedUPG) {
                     view.selectUPG(event.organisationUnit()!!)
                 }
@@ -165,7 +158,7 @@ class EventCaptureFormPresenter(
     fun onUPGSelected(upg: UPGItem) {
         savingSelectedUPG = true
 
-        if (upg.guid.isNotBlank()){
+        if (upg.guid.isNotBlank()) {
             upgUidUIModel?.onSave(upg.guid)
         }
 
