@@ -49,6 +49,7 @@ import org.dhis2.commons.prefs.Preference.Companion.CURRENT_ORG_UNIT
 import org.dhis2.commons.sync.OnDismissListener
 import org.dhis2.commons.sync.SyncContext
 import org.dhis2.commons.team.ValidationData
+import org.dhis2.commons.team.dateToYearlyPeriod
 import org.dhis2.databinding.ActivityProgramEventDetailBinding
 import org.dhis2.form.model.EventMode
 import org.dhis2.ui.ThemeManager
@@ -435,6 +436,7 @@ class ProgramEventDetailActivity :
                         enableAddEventButton(true)
                     }
                 }
+                .withTeamValidationData(programUid, dateToYearlyPeriod(Date()))
                 .build()
                 .show(supportFragmentManager, "ORG_UNIT_DIALOG")
         }

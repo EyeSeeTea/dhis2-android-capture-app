@@ -4,6 +4,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.dhis2.R
 import org.dhis2.commons.resources.ResourceManager
+import org.dhis2.commons.team.ValidationData
+import org.dhis2.commons.team.dateToYearlyPeriod
 import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.data.dhislogic.AUTH_ALL
 import org.dhis2.data.dhislogic.AUTH_UNCOMPLETE_EVENT
@@ -138,7 +140,7 @@ class EventCaptureFormPresenter(
 
         val isEventFromEnrolment = event?.enrollment() != null
 
-        return if (isEventFromEnrolment){
+        return if (isEventFromEnrolment) {
             fields.map {
                 if (it.uid == EVENT_ORG_UNIT_UID) {
                     it.setEditable(false)
@@ -146,8 +148,18 @@ class EventCaptureFormPresenter(
                     it
                 }
             }
-        } else{
-            fields
+        } else {
+            fields.map {
+                if (it.uid == EVENT_ORG_UNIT_UID) {
+                    val period = event?.eventDate()?.let { date ->
+                        dateToYearlyPeriod(date) ?: ""
+                    } ?: ""
+
+                    it.setOrgUnitDataValidation(ValidationData(programUid, period))
+                } else {
+                    it
+                }
+            }
         }
     }
 
