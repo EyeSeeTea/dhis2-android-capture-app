@@ -7,6 +7,7 @@ import org.dhis2.commons.resources.ResourceManager
 import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.data.dhislogic.AUTH_ALL
 import org.dhis2.data.dhislogic.AUTH_UNCOMPLETE_EVENT
+import org.dhis2.form.data.EventRepository.Companion.EVENT_ORG_UNIT_UID
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.FieldUiModelImpl
 import org.dhis2.usescases.eventsWithoutRegistration.EventIdlingResourceSingleton
@@ -127,6 +128,30 @@ class EventCaptureFormPresenter(
     private var savingSelectedUPG = false
 
     fun onFieldsLoading(fields: List<FieldUiModel>): List<FieldUiModel> {
+        val fieldsWithOrgUnitValidation = mapWithOrgUnitValidation(fields)
+
+        return mapUPGFields(fieldsWithOrgUnitValidation)
+    }
+
+    private fun mapWithOrgUnitValidation(fields: List<FieldUiModel>): List<FieldUiModel> {
+        val event = d2.eventModule().events().byUid().eq(eventUid).one().blockingGet()
+
+        val isEventFromEnrolment = event?.enrollment() != null
+
+        return if (isEventFromEnrolment){
+            fields.map {
+                if (it.uid == EVENT_ORG_UNIT_UID) {
+                    it.setEditable(false)
+                } else {
+                    it
+                }
+            }
+        } else{
+            fields
+        }
+    }
+
+    private fun mapUPGFields(fields: List<FieldUiModel>): List<FieldUiModel> {
         val programWithUPG = programsWithUPG.find { it.programUid == programUid } ?: return fields
 
         //EyeSeeTea customization - Remove UPG field from the form

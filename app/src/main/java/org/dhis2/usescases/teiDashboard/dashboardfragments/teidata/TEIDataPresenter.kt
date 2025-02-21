@@ -368,7 +368,13 @@ class TEIDataPresenter(
         if (stage != null) {
             when (eventCreationType) {
                 EventCreationType.ADDNEW -> programUid?.let { program ->
-                    checkOrgUnitCount(program, stage.uid())
+                    // EyeSeeTea customization - assign directly TEI org unit
+                    // it's not possible assign different org unit in event
+                   // checkOrgUnitCount(program, stage.uid())
+
+                    teiDataRepository.getEnrollment().blockingGet()?.organisationUnit()?.let { orgUnitUid ->
+                        onOrgUnitForNewEventSelected(orgUnitUid, stage.uid())
+                    }
                 }
 
                 EventCreationType.SCHEDULE -> {
