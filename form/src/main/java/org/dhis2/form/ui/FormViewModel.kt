@@ -343,7 +343,7 @@ class FormViewModel(
     private fun saveLastFocusedItem(rowAction: RowAction) = getLastFocusedTextItem()?.let {
         if (previousActionItem == null) previousActionItem = rowAction
         if (previousActionItem?.value != it.value && previousActionItem?.id == it.uid) {
-            val error = checkFieldError(it.valueType, it.value, it.fieldMask)
+            val error = checkFieldError(it.valueType, it.value, it.fieldMask, fieldError = it.error)
             if (error != null) {
                 val action = rowActionFromIntent(
                     FormIntent.OnSave(it.uid, it.value, it.valueType, it.fieldMask),
@@ -407,7 +407,8 @@ class FormViewModel(
             ) || it.valueType == ValueType.AGE ||
                 it.valueType == ValueType.DATETIME ||
                 it.valueType == ValueType.DATE ||
-                it.valueType == ValueType.TIME
+                it.valueType == ValueType.TIME ||
+                    it.valueType == ValueType.ORGANISATION_UNIT
             )
     }
 
@@ -461,7 +462,7 @@ class FormViewModel(
                     intent.valueType,
                     intent.value,
                     intent.fieldMask,
-                    intent.allowFutureDates,
+                    intent.allowFutureDates
                 )
 
                 createRowAction(
@@ -570,6 +571,7 @@ class FormViewModel(
         fieldValue: String?,
         fieldMask: String? = null,
         allowFutureDates: Boolean? = null,
+        fieldError: String? = null,
     ): Throwable? {
         if (fieldValue.isNullOrEmpty()) {
             return null
@@ -591,6 +593,14 @@ class FormViewModel(
 
                 ValueType.AGE -> {
                     validateDateFormats(fieldValue, valueType, allowFutureDates)
+                }
+                ValueType.ORGANISATION_UNIT -> {
+                    // EyeSeeTea customization - Can set error in the model to include in error list
+                    if (fieldError != null) {
+                        Result.Failure(Throwable(fieldError))
+                    } else {
+                        Result.Success(value)
+                    }
                 }
 
                 else -> {

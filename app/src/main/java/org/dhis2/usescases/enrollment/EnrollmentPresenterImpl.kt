@@ -4,6 +4,7 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.processors.FlowableProcessor
 import io.reactivex.processors.PublishProcessor
 import org.dhis2.bindings.profilePicturePath
+import org.dhis2.bindings.toDate
 import org.dhis2.commons.bindings.trackedEntityTypeForTei
 import org.dhis2.commons.data.TeiAttributesInfo
 import org.dhis2.commons.date.DateUtils
@@ -13,6 +14,11 @@ import org.dhis2.commons.matomo.Labels.Companion.CLICK
 import org.dhis2.commons.matomo.MatomoAnalyticsController
 import org.dhis2.commons.schedulers.SchedulerProvider
 import org.dhis2.commons.schedulers.defaultSubscribe
+import org.dhis2.commons.team.ValidationData
+import org.dhis2.commons.team.dateToYearlyPeriod
+import org.dhis2.form.data.EnrollmentRepository.Companion.ENROLLMENT_DATE_UID
+import org.dhis2.form.data.EnrollmentRepository.Companion.ORG_UNIT_UID
+import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.RowAction
 import org.dhis2.usescases.teiDashboard.TeiAttributesProvider
 import org.dhis2.utils.analytics.AnalyticsHelper
@@ -238,17 +244,19 @@ class EnrollmentPresenterImpl(
     fun isEventScheduleOrSkipped(eventUid: String): Boolean {
         val event = eventCollectionRepository.uid(eventUid).blockingGet()
         return event?.status() == EventStatus.SCHEDULE ||
-            event?.status() == EventStatus.SKIPPED ||
-            event?.status() == EventStatus.OVERDUE
+                event?.status() == EventStatus.SKIPPED ||
+                event?.status() == EventStatus.OVERDUE
     }
 
     fun suggestedReportDateIsNotFutureDate(eventUid: String): Boolean {
         return try {
             val event = eventCollectionRepository.uid(eventUid).blockingGet()
-            val programStage = d2.programModule().programStages().uid(event?.programStage()).blockingGet()
+            val programStage =
+                d2.programModule().programStages().uid(event?.programStage()).blockingGet()
             val enrollment = enrollmentObjectRepository.blockingGet()
             val generatedByEnrollment = programStage?.generatedByEnrollmentDate() ?: false
-            val startDate = if (generatedByEnrollment) enrollment?.enrollmentDate() else enrollment?.incidentDate()
+            val startDate =
+                if (generatedByEnrollment) enrollment?.enrollmentDate() else enrollment?.incidentDate()
             val calendar = DateUtils.getInstance().getCalendarByDate(startDate)
             calendar.add(DAY_OF_YEAR, programStage?.minDaysFromStart() ?: 0)
             val minStartReportEventDate = calendar.time
@@ -257,6 +265,24 @@ class EnrollmentPresenterImpl(
         } catch (e: Exception) {
             Timber.d(e.message)
             true
+        }
+    }
+
+    // EyeSeeTea customization - validate org unit by period
+    fun onFieldsLoading(fields: List<FieldUiModel>): List<FieldUiModel> {
+        val enrollmentDate = fields.find { it.uid == ENROLLMENT_DATE_UID }
+        val enrollmentOrgUnit = fields.find { it.uid == ORG_UNIT_UID }
+
+        val date = enrollmentDate?.value?.toDate()
+        val period = dateToYearlyPeriod(date) ?: ""
+        val programUid = programRepository.blockingGet()?.uid() ?: ""
+
+        return fields.map {
+            if (it.uid == enrollmentOrgUnit?.uid ) {
+                it.setOrgUnitDataValidation(ValidationData(programUid, period))
+            } else {
+                it
+            }
         }
     }
 }

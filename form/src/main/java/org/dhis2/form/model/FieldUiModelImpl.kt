@@ -1,6 +1,7 @@
 package org.dhis2.form.model
 
 import org.dhis2.commons.orgunitselector.OrgUnitSelectorScope
+import org.dhis2.commons.team.ValidationData
 import org.dhis2.form.ui.event.UiEventFactory
 import org.dhis2.form.ui.intent.FormIntent
 import org.hisp.dhis.android.core.common.ValueType
@@ -36,6 +37,7 @@ data class FieldUiModelImpl(
     override val periodSelector: PeriodSelector? = null,
     override val url: String? = null,
     override val visible: Boolean = true,
+    override val  orgUnitDataValidation: ValidationData? = null
 ) : FieldUiModel {
 
     private var callback: FieldUiModel.Callback? = null
@@ -100,6 +102,7 @@ data class FieldUiModelImpl(
     override fun setKeyBoardActionDone() = this.copy(keyboardActionType = KeyboardActionType.DONE)
     override fun isSectionWithFields(): Boolean = false
 
+
     override fun setFocus() = this.copy(focused = true)
 
     override fun setError(error: String?) = this.copy(error = error)
@@ -140,4 +143,7 @@ data class FieldUiModelImpl(
 
         return true
     }
+
+    override fun setOrgUnitDataValidation(data: ValidationData) = this.copy(orgUnitDataValidation = data)
+
 }

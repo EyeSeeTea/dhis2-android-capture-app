@@ -52,7 +52,7 @@ class OURepositoryConfiguration(
                 orgUnitRepository
         }
 
-        //Eyeseetea customization - filter by active team
+        //EyeSeeTea customization - filter by active team
         //return orgUnitRepository.blockingGet()
 
         val nonActiveOrgUnits = if (validationData == null) listOf() else nonActiveOrgUnits(d2, validationData)

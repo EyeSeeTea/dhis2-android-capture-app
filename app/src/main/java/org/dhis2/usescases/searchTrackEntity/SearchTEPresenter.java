@@ -51,6 +51,7 @@ import org.hisp.dhis.android.core.trackedentity.TrackedEntityType;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -312,6 +313,7 @@ public class SearchTEPresenter implements SearchTEContractsModule.Presenter {
                                             return Unit.INSTANCE;
                                         })
                                         .orgUnitScope(new OrgUnitSelectorScope.ProgramCaptureScope(programUid))
+                                        .withTeamValidationData(programUid, dateToYearlyPeriod(new Date()))
                                         .build()
                                         .show(view.getAbstracContext().getSupportFragmentManager(), "OrgUnitEnrollment");
                             } else if (allOrgUnits.size() == 1)
@@ -322,7 +324,7 @@ public class SearchTEPresenter implements SearchTEContractsModule.Presenter {
         );
     }
 
-    private void enrollInOrgUnit(String orgUnitUid, String programUid, String uid,  HashMap<String, String> queryData) {
+    private void enrollInOrgUnit(String orgUnitUid, String programUid, String uid, HashMap<String, String> queryData) {
         compositeDisposable.add(
                 searchRepository.saveToEnroll(trackedEntity.uid(), orgUnitUid, programUid, uid, queryData, view.fromRelationshipTEI())
                         .subscribeOn(schedulerProvider.computation())

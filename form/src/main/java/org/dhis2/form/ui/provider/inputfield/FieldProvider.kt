@@ -1129,6 +1129,7 @@ private fun ProvideOrgUnitInput(
                     fieldUiModel.label,
                     fieldUiModel.value,
                     fieldUiModel.orgUnitSelectorScope,
+                    fieldUiModel.orgUnitDataValidation
                 ),
             )
         },

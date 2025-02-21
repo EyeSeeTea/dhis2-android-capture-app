@@ -364,7 +364,7 @@ class EventDetailsFragment : FragmentGlobalAbstract() {
             .onSelection { selectedOrgUnits ->
                 viewModel.setUpOrgUnit(selectedOrgUnit = selectedOrgUnits.firstOrNull()?.uid())
             }
-            //Eyeseetea customization- filter by active team
+            //EyeSeeTea customization- filter by active team
             .withTeamValidationData(
                 viewModel.eventDetails.value.program!!,
                 dateToYearlyPeriod(viewModel.eventDate.value.currentDate)

@@ -1,6 +1,7 @@
 package org.dhis2.form.model
 
 import org.dhis2.commons.orgunitselector.OrgUnitSelectorScope
+import org.dhis2.commons.team.ValidationData
 import org.dhis2.form.ui.event.RecyclerViewUiEvents
 import org.dhis2.form.ui.event.UiEventFactory
 import org.dhis2.form.ui.intent.FormIntent
@@ -73,6 +74,8 @@ interface FieldUiModel {
 
     val url: String?
 
+    val orgUnitDataValidation: ValidationData?
+
     fun setCallback(callback: Callback)
 
     fun equals(item: FieldUiModel): Boolean
@@ -119,4 +122,6 @@ interface FieldUiModel {
     fun isSection() = valueType == null
 
     fun isSectionWithFields(): Boolean
+
+    fun setOrgUnitDataValidation(data: ValidationData): FieldUiModel
 }

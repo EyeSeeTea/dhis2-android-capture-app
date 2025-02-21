@@ -69,7 +69,7 @@ class OUTreeFragment : BottomSheetDialogFragment() {
                 this.selectionListener = selectionListener
             }
 
-        fun withTeamValidationData(programOrDataSetToValidate:String, period: String?) = apply {
+        fun withTeamValidationData(programOrDataSetToValidate:String?, period: String?) = apply {
             this.period = period
             this.programOrDataSetToValidate = programOrDataSetToValidate
         }

@@ -835,6 +835,7 @@ class FormView : Fragment() {
                 )
             }
             .orgUnitScope(uiEvent.orgUnitSelectorScope ?: OrgUnitSelectorScope.UserSearchScope())
+            .withTeamValidationData(uiEvent.orgUnitValidationData?.programOrDataSetUid ,uiEvent.orgUnitValidationData?.period)
             .build()
             .show(childFragmentManager, uiEvent.label)
     }

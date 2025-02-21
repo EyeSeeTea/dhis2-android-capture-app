@@ -130,6 +130,7 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
             locationProvider = locationProvider,
             dateEditionWarningHandler = dateEditionWarningHandler,
             enrollmentResultDialogProvider = enrollmentResultDialogProvider,
+            onFieldsLoadingListener = presenter::onFieldsLoading,
         ) {
             presenter.finish(enrollmentMode)
         }

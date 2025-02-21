@@ -2,6 +2,7 @@ package org.dhis2.form.model
 
 import androidx.databinding.ObservableField
 import org.dhis2.commons.orgunitselector.OrgUnitSelectorScope
+import org.dhis2.commons.team.ValidationData
 import org.dhis2.form.ui.event.UiEventFactory
 import org.dhis2.form.ui.intent.FormIntent
 import org.dhis2.form.ui.intent.FormIntent.OnFocus
@@ -45,6 +46,7 @@ data class SectionUiModelImpl(
     override val eventCategories: List<EventCategory>? = null,
     override val periodSelector: PeriodSelector? = null,
     override val visible: Boolean = true,
+    override val orgUnitDataValidation: ValidationData? = null,
 ) : FieldUiModel {
 
     private var sectionNumber: Int = 0
@@ -130,6 +132,7 @@ data class SectionUiModelImpl(
     override fun setFieldMandatory() = this.copy(mandatory = true)
 
     override fun isSectionWithFields() = totalFields > 0
+    override fun setOrgUnitDataValidation(data: ValidationData) = this.copy(orgUnitDataValidation = data)
 
     override fun setVisible(editable: Boolean) = this.copy(visible = true)
 

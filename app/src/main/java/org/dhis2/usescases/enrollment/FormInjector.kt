@@ -9,6 +9,7 @@ import org.dhis2.R
 import org.dhis2.commons.locationprovider.LocationProvider
 import org.dhis2.form.model.EnrollmentMode
 import org.dhis2.form.model.EnrollmentRecords
+import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.ui.FormView
 import org.dhis2.form.ui.provider.FormResultDialogProvider
 
@@ -28,6 +29,7 @@ fun AppCompatActivity.buildEnrollmentForm(
     locationProvider: LocationProvider,
     dateEditionWarningHandler: DateEditionWarningHandler,
     enrollmentResultDialogProvider: FormResultDialogProvider,
+    onFieldsLoadingListener: ((fields: List<FieldUiModel>) -> List<FieldUiModel>) = { it },
     onFinish: () -> Unit,
 ): FormView {
     return FormView.Builder()
@@ -59,6 +61,9 @@ fun AppCompatActivity.buildEnrollmentForm(
         )
         .openErrorLocation(config.openErrorLocation)
         .setProgramUid(config.programUid)
+        .onFieldsLoadingListener {
+            onFieldsLoadingListener?.invoke(it) ?: it
+        }
         .build().also { formView ->
 
             config.saveButton.setOnClickListener { formView.onSaveClick() }
