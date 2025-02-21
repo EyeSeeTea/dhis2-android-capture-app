@@ -261,6 +261,7 @@ class TEIDataPresenter(
         bundle.putString(Constants.ENROLLMENT_UID, enrollmentUid)
         bundle.putString(Constants.EVENT_CREATION_TYPE, eventCreationType.name)
         bundle.putInt(Constants.EVENT_SCHEDULE_INTERVAL, scheduleIntervalDays)
+
         val intent = Intent(view.context, ProgramStageSelectionActivity::class.java)
         intent.putExtras(bundle)
         contractHandler.createEvent(intent).observe(view.viewLifecycleOwner()) {
@@ -372,9 +373,7 @@ class TEIDataPresenter(
                     // it's not possible assign different org unit in event
                    // checkOrgUnitCount(program, stage.uid())
 
-                    teiDataRepository.getEnrollment().blockingGet()?.organisationUnit()?.let { orgUnitUid ->
-                        onOrgUnitForNewEventSelected(orgUnitUid, stage.uid())
-                    }
+                    selectOrgUnitAsTEIOrgUnit(stage)
                 }
 
                 EventCreationType.SCHEDULE -> {
@@ -402,6 +401,12 @@ class TEIDataPresenter(
                 }
             }*/
             createEventInEnrollment(eventCreationType)
+        }
+    }
+
+    private fun selectOrgUnitAsTEIOrgUnit(stage: ProgramStage) {
+        teiDataRepository.getEnrollment().blockingGet()?.organisationUnit()?.let { orgUnitUid ->
+            onOrgUnitForNewEventSelected(orgUnitUid, stage.uid())
         }
     }
 

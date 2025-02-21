@@ -74,13 +74,22 @@ class ProgramStageSelectionActivity : ActivityGlobalAbstract(), ProgramStageSele
         val eventCreationType = intent.getStringExtra(Constants.EVENT_CREATION_TYPE)
         val programUid = intent.getStringExtra(Constants.PROGRAM_UID)
         val enrollmentUid = intent.getStringExtra(Constants.ENROLLMENT_UID)
+        val teiOrgUnit = intent.getStringExtra(Constants.ORG_UNIT) ?: ""
 
         when (eventCreationType) {
             EventCreationType.ADDNEW.name -> {
                 programUid?.let { program ->
-                    displayOrgUnitSelectorForNewEvent(
+                // EyeSeeTea customization - assign directly TEI org unit
+                // it's not possible assign different org unit in event
+                    /*  displayOrgUnitSelectorForNewEvent(
                         programUid = program,
                         programStageUid = programStageUid,
+                        enrollmentUid = enrollmentUid,
+                    )*/
+                    presenter.onOrgUnitForNewEventSelected(
+                        programStageUid = programStageUid,
+                        programUid = program,
+                        orgUnitUid = teiOrgUnit,
                         enrollmentUid = enrollmentUid,
                     )
                 }
