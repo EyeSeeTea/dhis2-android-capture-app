@@ -102,7 +102,6 @@ data class FieldUiModelImpl(
     override fun setKeyBoardActionDone() = this.copy(keyboardActionType = KeyboardActionType.DONE)
     override fun isSectionWithFields(): Boolean = false
 
-
     override fun setFocus() = this.copy(focused = true)
 
     override fun setError(error: String?) = this.copy(error = error)
