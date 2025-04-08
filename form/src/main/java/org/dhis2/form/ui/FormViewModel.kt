@@ -301,9 +301,22 @@ class FormViewModel(
             val intent = getSaveIntent(it)
             val action = rowActionFromIntent(intent)
             val result = repository.save(it.uid, it.value, action.extraData)
-            repository.updateValueOnList(it.uid, it.value, it.valueType)
+
+            //EyeSeeTea customization - Show unique error result as validation error
+           /* repository.updateValueOnList(it.uid, it.value, it.valueType)
             repository.updateErrorList(action)
-            result
+            result*/
+            if (result?.valueStoreResult == ValueStoreResult.VALUE_NOT_UNIQUE) {
+                repository.updateErrorList(action.copy(error = ValueNotUniqueFailure))
+                StoreResult(
+                    rowAction.id,
+                    ValueStoreResult.VALUE_HAS_NOT_CHANGED,
+                )
+            } else {
+                repository.updateValueOnList(it.uid, it.value, it.valueType)
+                repository.updateErrorList(action)
+                result
+            }
         }
     } ?: StoreResult(
         rowAction.id,
@@ -778,3 +791,6 @@ class FormViewModel(
         const val TAG = "FormViewModel"
     }
 }
+
+//EyeSeeTea customization - Show unique error as validation error
+object ValueNotUniqueFailure : Throwable()

@@ -2,6 +2,7 @@ package org.dhis2.form.ui.validation
 
 import android.content.Context
 import org.dhis2.form.R
+import org.dhis2.form.ui.ValueNotUniqueFailure
 import org.dhis2.form.ui.validation.failures.FieldMaskFailure
 import org.hisp.dhis.android.core.common.valuetype.validation.failures.BooleanFailure
 import org.hisp.dhis.android.core.common.valuetype.validation.failures.CoordinateFailure
@@ -47,6 +48,7 @@ class FieldErrorMessageProvider(private val context: Context) {
         is NumberFailure -> getNumberError(error)
         is FieldMaskFailure -> getFieldMaskError(error)
         is CoordinateFailure -> getCoordinateError(error)
+        is ValueNotUniqueFailure -> R.string.value_not_unique
         else -> R.string.invalid_field
     }
 
