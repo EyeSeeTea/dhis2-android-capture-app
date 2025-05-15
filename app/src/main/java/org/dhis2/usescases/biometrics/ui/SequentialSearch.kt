@@ -54,6 +54,7 @@ sealed class SequentialSearch(
         val biometricUid: String,
         val sessionId: String?,
         val isAgeNotSupported: Boolean,
+        val useCardID: Boolean
     ) : SequentialSearch(previousSearch, nextActions)
 
     data class AttributeSearch(

@@ -597,8 +597,10 @@ class SearchTEActivity : ActivityGlobalAbstract(), SearchTEContractsModule.View 
                 when (legacyInteraction.id) {
                     LegacyInteractionID.ON_ENROLL_CLICK -> {
                         val interaction = legacyInteraction as OnEnrollClick
-                        presenter.onEnrollClick(HashMap(interaction.queryData),
-                            viewModel.sequentialSearch.value)
+                        presenter.onEnrollClick(
+                            HashMap(interaction.queryData),
+                            viewModel.sequentialSearch.value
+                        )
                     }
 
                     LegacyInteractionID.ON_ADD_RELATIONSHIP -> {
@@ -633,6 +635,7 @@ class SearchTEActivity : ActivityGlobalAbstract(), SearchTEContractsModule.View 
                             interaction.online,
                         )*/
                     }
+
                     LegacyInteractionID.ON_SEARCH_TEI_MODEL_CLICK -> {
                         val interaction = legacyInteraction as OnSearchTeiModelClick
                         presenter.onSearchTEIModelClick(
@@ -807,7 +810,12 @@ class SearchTEActivity : ActivityGlobalAbstract(), SearchTEContractsModule.View 
         }
     }
 
-    override fun openDashboard(teiUid: String, programUid: String?, enrollmentUid: String?, sessionId: String?) {
+    override fun openDashboard(
+        teiUid: String,
+        programUid: String?,
+        enrollmentUid: String?,
+        sessionId: String?
+    ) {
         searchNavigator.openDashboard(teiUid, programUid, enrollmentUid, sessionId)
         viewModel.resetSequentialSearch()
         viewModel.clearQueryData()
@@ -872,16 +880,28 @@ class SearchTEActivity : ActivityGlobalAbstract(), SearchTEContractsModule.View 
     }
 
     override fun sendBiometricsConfirmIdentity(
-        sessionId: String, guid: String, teiUid: String,
-        enrollmentUid: String, isOnline: Boolean
+        sessionId: String, guid: String, teiUid: String
     ) {
-        if (lastSelection != null) {
-            BiometricsClientFactory.get(this).confirmIdentify(
-                this,
-                sessionId, guid, lastSelection!!.tei.uid()
-            )
-            viewModel.clearQueryData()
-        }
+        BiometricsClientFactory.get(this).confirmIdentify(
+            this,
+            sessionId, guid, teiUid
+        )
+        viewModel.clearQueryData()
+    }
+
+    override fun sendAutomaticBiometricsConfirmIdentity(
+        sessionId: String,
+        guid: String,
+        item: SearchTeiModel
+    ) {
+        viewModel.resetSequentialSearch()
+        lastSelection = item
+
+        BiometricsClientFactory.get(this).confirmIdentify(
+            this,
+            sessionId, guid, item.tei.uid()
+        )
+        viewModel.clearQueryData()
     }
 
     public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -896,8 +916,14 @@ class SearchTEActivity : ActivityGlobalAbstract(), SearchTEContractsModule.View 
 
                     presenter.searchOnBiometrics(
                         completedResult.items,
-                        completedResult.sessionId, false
+                        completedResult.sessionId, false, false
                     )
+                } else if (result is IdentifyResult.CompletedByCardID) {
+                    presenter.searchOnBiometrics(
+                        listOf(result.item),
+                        result.sessionId, false, true
+                    )
+
                 } else if (result is BiometricsDeclined) {
                     Toast.makeText(
                         context, R.string.biometrics_declined,
@@ -946,7 +972,7 @@ class SearchTEActivity : ActivityGlobalAbstract(), SearchTEContractsModule.View 
     private fun simulateNotFoundBiometricsSearch(sessionId: String?) {
         presenter.searchOnBiometrics(
             listOf<SimprintsItem>(SimprintsItem(BIOMETRICS_USER_NOT_FOUND, 0f)),
-            sessionId, false
+            sessionId, false, false
         )
     }
 

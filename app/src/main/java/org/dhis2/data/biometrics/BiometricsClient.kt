@@ -40,6 +40,7 @@ data class SimprintsItem(
 
 sealed class IdentifyResult {
     data class Completed(val items: List<SimprintsItem>, val sessionId: String) : IdentifyResult()
+    data class CompletedByCardID(val item: SimprintsItem, val sessionId: String) : IdentifyResult()
     data object BiometricsDeclined : IdentifyResult()
     data class UserNotFound(val sessionId: String) : IdentifyResult()
     data object Failure : IdentifyResult()
@@ -211,7 +212,13 @@ class BiometricsClient(
                         identifyResponse.sessionId
                     )
                 }
-
+                is IdentifyResult.CompletedByCardID -> {
+                    Timber.d("Possible duplicate: ${identifyResponse.item}")
+                    RegisterResult.PossibleDuplicates(
+                        listOf(identifyResponse.item),
+                        identifyResponse.sessionId
+                    )
+                }
                 is IdentifyResult.BiometricsDeclined -> {
                     RegisterResult.Failure
                 }
@@ -279,20 +286,33 @@ class BiometricsClient(
             } else if (identifications.isNullOrEmpty()) {
                 IdentifyResult.UserNotFound(sessionId)
             } else {
-                val finalIdentifications =
-                    identifications.filter { it.confidence >= confidenceScoreFilter }
 
-                if (finalIdentifications.isEmpty()) {
-                    Timber.w("Identify returns data but no match with confidence score filter")
-                    IdentifyResult.UserNotFound(sessionId)
+                //TODO: Review Remove this hardcoded solution
+                val identification = identifications.firstOrNull()
+
+                if (identification != null) {
+
+                    IdentifyResult.CompletedByCardID( SimprintsItem(
+                        identification.guid,
+                        identification.confidence
+                    ), sessionId)
                 } else {
-                    IdentifyResult.Completed(finalIdentifications.map {
-                        SimprintsItem(
-                            it.guid,
-                            it.confidence
-                        )
-                    }, sessionId)
+                    IdentifyResult.UserNotFound(sessionId)
                 }
+                /*                val finalIdentifications =
+                                    identifications.filter { it.confidence >= confidenceScoreFilter }
+
+                                if (finalIdentifications.isEmpty()) {
+                                    Timber.w("Identify returns data but no match with confidence score filter")
+                                    IdentifyResult.UserNotFound(sessionId)
+                                } else {
+                                    IdentifyResult.Completed(finalIdentifications.map {
+                                        SimprintsItem(
+                                            it.guid,
+                                            it.confidence
+                                        )
+                                    }, sessionId)
+                                }*/
             }
         } else {
             return IdentifyResult.Failure

@@ -401,6 +401,8 @@ class SearchTEList : FragmentGlobalAbstract() {
                 it?.takeIf { view != null }?.collectLatest {
                     liveAdapter.addOnPagesUpdatedListener {
                         onInitDataLoaded()
+
+                        viewModel.verifyAutonavigateToTEI(liveAdapter.snapshot().items)
                     }
 
                     val pagingData = it.map { searchResult ->

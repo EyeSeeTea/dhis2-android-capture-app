@@ -66,10 +66,12 @@ public class SearchTEContractsModule {
 
         void showSyncDialog(String teiUid);
 
-        void sendBiometricsConfirmIdentity(String sessionId, String guid, String teiUid,
-                String enrollmentUid, boolean isOnline);
+        void sendBiometricsConfirmIdentity(String sessionId, String guid, String teiUid);
+
+        void sendAutomaticBiometricsConfirmIdentity(String sessionId, String guid, SearchTeiModel item );
 
         void showBiometricsSearchConfirmation(SearchTeiModel item);
+
         void launchBiometricsIdentify(String moduleId, List<String> userOrgUnits);
     }
 
@@ -90,6 +92,7 @@ public class SearchTEContractsModule {
         void enroll(String programUid, String teiUid, HashMap<String, String> queryData);
 
         void onTEIClick(String teiUid, String enrollmentUid, boolean isOnline);
+
         void onSearchTEIModelClick(SearchTeiModel item, SequentialSearch sequentialSearch);
 
         TrackedEntityType getTrackedEntityName();
@@ -140,13 +143,15 @@ public class SearchTEContractsModule {
 
         void trackSearchMapVisualization();
 
-        void searchOnBiometrics(List <SimprintsItem> simprintsItems, String sessionId, Boolean ageNotSupported);
+        void searchOnBiometrics(List<SimprintsItem> simprintsItems, String sessionId, Boolean ageNotSupported, Boolean useCardID);
 
         boolean getBiometricsSearchStatus();
 
         void setBiometricListener(SearchTEPresenter.BiometricsSearchListener biometricsSearchListener);
 
         void sendBiometricsConfirmIdentity(String teiUid, String enrollmentUid, boolean isOnline);
+
+        void sendAutomaticBiometricsConfirmIdentity(SearchTeiModel item);
 
         String getLastBiometricsSessionId();
 

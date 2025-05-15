@@ -147,7 +147,7 @@ class SearchTEIViewModel(
 
     private val biometricsMode = getBiometricsConfig(basicPreferenceProvider).biometricsMode
 
-    private val _isDataLoaded = MutableLiveData<Boolean?> (false)
+    private val _isDataLoaded = MutableLiveData<Boolean?>(false)
     val isDataLoaded: MutableLiveData<Boolean?> = _isDataLoaded
 
     init {
@@ -162,7 +162,7 @@ class SearchTEIViewModel(
             )
         }
 
-        presenter.setBiometricListener { simprintsItems, biometricAttributeUid, filterValue, sessionId, ageNotSupported ->
+        presenter.setBiometricListener { simprintsItems, biometricAttributeUid, filterValue, sessionId, ageNotSupported, useCardID ->
             val previousSearch = when (sequentialSearch.value) {
                 is SequentialSearch.BiometricsSearch -> null
                 is SequentialSearch.AttributeSearch -> sequentialSearch.value
@@ -181,7 +181,8 @@ class SearchTEIViewModel(
                     isAgeNotSupported = ageNotSupported,
                     biometricUid = filterValue,
                     previousSearch = previousSearch,
-                    nextActions = nextActions
+                    nextActions = nextActions,
+                    useCardID = useCardID,
                 )
             )
 
@@ -255,9 +256,9 @@ class SearchTEIViewModel(
         val displayFrontPageList =
             searchRepository.getProgram(initialProgramUid)?.displayFrontPageList() ?: true
         val shouldOpenSearch = !displayFrontPageList &&
-            !searchRepository.canCreateInProgramWithoutSearch() &&
-            !searching &&
-            _filtersActive.value == false
+                !searchRepository.canCreateInProgramWithoutSearch() &&
+                !searching &&
+                _filtersActive.value == false
 
         createButtonScrollVisibility.postValue(
             if (searching) {
@@ -339,7 +340,7 @@ class SearchTEIViewModel(
         )
     }
 
-    fun setSearchScreen(fromRelationship:Boolean? = null) {
+    fun setSearchScreen(fromRelationship: Boolean? = null) {
         _screenState.postValue(
             SearchList(
                 previousSate = _screenState.value?.screenState ?: SearchScreenState.NONE,
@@ -631,7 +632,9 @@ class SearchTEIViewModel(
 
             _sequentialSearch.postValue(
                 SequentialSearch.AttributeSearch(
-                    previousSearch = previousSearch, nextActions = nextActions, queryData = queryData.toMap()
+                    previousSearch = previousSearch,
+                    nextActions = nextActions,
+                    queryData = queryData.toMap()
                 )
             )
         }
@@ -1224,10 +1227,6 @@ class SearchTEIViewModel(
 
 
     // EyeSeeTea customization
-    fun getBiometricsSearchStatus(): Boolean {
-        return presenter.biometricsSearchStatus
-    }
-
     fun openSearchForm() {
         _screenState.value.takeIf { it is SearchList }?.let {
             val currentScreen = (it as SearchList)
@@ -1322,6 +1321,16 @@ class SearchTEIViewModel(
                 message,
             ),
         )
+    }
+
+    fun verifyAutonavigateToTEI(items: List<SearchTeiModel>) {
+        val sequentialSearch = _sequentialSearch.value
+
+        if (items.size == 1 && sequentialSearch is SequentialSearch.BiometricsSearch && sequentialSearch.useCardID) {
+            val item = items.first()
+
+            presenter.sendAutomaticBiometricsConfirmIdentity(item)
+        }
     }
 
 }

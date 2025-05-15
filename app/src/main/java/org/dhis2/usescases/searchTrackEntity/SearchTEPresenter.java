@@ -394,15 +394,18 @@ public class SearchTEPresenter implements SearchTEContractsModule.Presenter {
     @Override
     public void sendBiometricsConfirmIdentity(String teiUid, String enrollmentUid, boolean isOnline) {
         if (sessionId != null) {
-            TrackedEntityInstance tei =
-                    d2.trackedEntityModule().trackedEntityInstances()
-                            .withTrackedEntityAttributeValues().uid(teiUid).blockingGet();
+            String guid = updateBiometricsAttributeValue(teiUid);
 
-            String guid = getBiometricsValueFromTEI(tei);
+            view.sendBiometricsConfirmIdentity(sessionId, guid, teiUid);
+        }
+    }
 
-            searchRepository.updateAttributeValue(teiUid, biometricUid, guid);
+    @Override
+    public void sendAutomaticBiometricsConfirmIdentity(SearchTeiModel item) {
+        if (sessionId != null) {
+            String guid = updateBiometricsAttributeValue(item.uid());
 
-            view.sendBiometricsConfirmIdentity(sessionId, guid, teiUid, enrollmentUid, isOnline);
+            view.sendAutomaticBiometricsConfirmIdentity(sessionId, guid, item);
         }
     }
 
@@ -653,7 +656,7 @@ public class SearchTEPresenter implements SearchTEContractsModule.Presenter {
     }
 
     @Override
-    public void searchOnBiometrics(List<SimprintsItem> simprintsItems, String sessionId, Boolean ageNotSupported) {
+    public void searchOnBiometrics(List<SimprintsItem> simprintsItems, String sessionId, Boolean ageNotSupported, Boolean useCardID) {
         if (biometricsSearchListener != null) {
             this.sessionId = sessionId;
             List<String> guids = simprintsItems.stream().map(SimprintsItem::getGuid).collect(Collectors.toList());
@@ -675,7 +678,7 @@ public class SearchTEPresenter implements SearchTEContractsModule.Presenter {
 
             biometricsSearchStatus = true;
 
-            biometricsSearchListener.onBiometricsSearch(simprintsItems, biometricUid, sb.toString(), sessionId, ageNotSupported);
+            biometricsSearchListener.onBiometricsSearch(simprintsItems, biometricUid, sb.toString(), sessionId, ageNotSupported, useCardID);
         }
     }
 
@@ -724,6 +727,18 @@ public class SearchTEPresenter implements SearchTEContractsModule.Presenter {
     }
 
     public interface BiometricsSearchListener {
-        void onBiometricsSearch(List<SimprintsItem> simprintsItems, String biometricAttributeUid, String filterValue, @Nullable String sessionId, Boolean ageNotSupported);
+        void onBiometricsSearch(List<SimprintsItem> simprintsItems, String biometricAttributeUid, String filterValue, @Nullable String sessionId, Boolean ageNotSupported, Boolean useCardID);
+    }
+
+    private String updateBiometricsAttributeValue(String teiUid) {
+        TrackedEntityInstance tei =
+                d2.trackedEntityModule().trackedEntityInstances()
+                        .withTrackedEntityAttributeValues().uid(teiUid).blockingGet();
+
+        String guid = getBiometricsValueFromTEI(tei);
+
+        searchRepository.updateAttributeValue(teiUid, biometricUid, guid);
+
+        return guid;
     }
 }
