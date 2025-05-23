@@ -55,6 +55,8 @@ sealed class VerifyResult {
     data object AgeGroupNotSupported : VerifyResult()
 }
 
+// TODO: this constant should be in the simprints library.
+// Review future versions of the library to see if this is still needed
 const val SIMPRINTS_SEARCH_VERIFY_MATCHED = "searchAndVerifyMatched"
 
 class BiometricsClient(
