@@ -55,6 +55,8 @@ sealed class VerifyResult {
     data object AgeGroupNotSupported : VerifyResult()
 }
 
+const val SIMPRINTS_SEARCH_VERIFY_MATCHED = "searchAndVerifyMatched"
+
 class BiometricsClient(
     projectId: String,
     user: String,
@@ -287,32 +289,31 @@ class BiometricsClient(
                 IdentifyResult.UserNotFound(sessionId)
             } else {
 
+                val searchAndVerifyMatched = data.getBooleanExtra(SIMPRINTS_SEARCH_VERIFY_MATCHED,false)
                 //TODO: Review Remove this hardcoded solution
                 val identification = identifications.firstOrNull()
 
-                if (identification != null) {
-
+                if (identification != null && searchAndVerifyMatched) {
                     IdentifyResult.CompletedByCardID( SimprintsItem(
                         identification.guid,
                         identification.confidence
                     ), sessionId)
                 } else {
-                    IdentifyResult.UserNotFound(sessionId)
-                }
-                /*                val finalIdentifications =
-                                    identifications.filter { it.confidence >= confidenceScoreFilter }
+                    val finalIdentifications =
+                        identifications.filter { it.confidence >= confidenceScoreFilter }
 
-                                if (finalIdentifications.isEmpty()) {
-                                    Timber.w("Identify returns data but no match with confidence score filter")
-                                    IdentifyResult.UserNotFound(sessionId)
-                                } else {
-                                    IdentifyResult.Completed(finalIdentifications.map {
-                                        SimprintsItem(
-                                            it.guid,
-                                            it.confidence
-                                        )
-                                    }, sessionId)
-                                }*/
+                    if (finalIdentifications.isEmpty()) {
+                        Timber.w("Identify returns data but no match with confidence score filter")
+                        IdentifyResult.UserNotFound(sessionId)
+                    } else {
+                        IdentifyResult.Completed(finalIdentifications.map {
+                            SimprintsItem(
+                                it.guid,
+                                it.confidence
+                            )
+                        }, sessionId)
+                    }
+                }
             }
         } else {
             return IdentifyResult.Failure
