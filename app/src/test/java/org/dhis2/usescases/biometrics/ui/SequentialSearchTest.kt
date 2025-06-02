@@ -73,7 +73,7 @@ class SequentialSearchTest {
 
     @Test
     fun `Should return query data with biometrics and normal attributes if it's biometrics search and exist previous attributes search`() {
-        val biometricsSearch =givenABiometricsSearch( givenAnAttributeSearch(null))
+        val biometricsSearch = givenABiometricsSearch(givenAnAttributeSearch(null))
 
         val queryData = biometricsSearch.finalQueryData
 
@@ -85,7 +85,7 @@ class SequentialSearchTest {
 
     @Test
     fun `Should return query data with normal attributes if it's failed biometrics search and exist previous attributes search`() {
-        val biometricsSearch =givenAFailedBiometricsSearch( givenAnAttributeSearch(null))
+        val biometricsSearch = givenAFailedBiometricsSearch(givenAnAttributeSearch(null))
 
         val queryData = biometricsSearch.finalQueryData
 
@@ -101,7 +101,8 @@ class SequentialSearchTest {
             nextActions = emptyList(),
             sessionId = sessionId,
             biometricUid = biometricUid,
-            isAgeNotSupported = false
+            isAgeNotSupported = false,
+            useCardID = false
         )
         return biometricsSearch
     }
@@ -112,7 +113,8 @@ class SequentialSearchTest {
             nextActions = emptyList(),
             sessionId = null,
             biometricUid = biometricUid,
-            isAgeNotSupported = false
+            isAgeNotSupported = false,
+            useCardID = false
         )
         return biometricsSearch
     }
