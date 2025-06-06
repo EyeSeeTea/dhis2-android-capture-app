@@ -488,9 +488,9 @@ class MainActivity :
             R.id.delete_account -> {
                 confirmAccountDelete()
             }
-            R.id.change_url -> {
-                onChangeServerURL()
-            }
+//            R.id.change_url -> {
+//                onChangeServerURL()
+//            }
         }
     }
 

@@ -146,7 +146,9 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="*" />
+                <data
+                    android:scheme="msauth"
+                    android:host="com.eyeseetea.widp" />
             </intent-filter>
         </activity>
         <activity android:name=".usescases.login.accounts.AccountsActivity" />
