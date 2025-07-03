@@ -17,7 +17,7 @@ class OURepositoryConfiguration(
             .orderByDisplayName(RepositoryScope.OrderByDirection.ASC)
 
         orgUnitRepository = when {
-            !name.isNullOrEmpty() -> orgUnitRepository.byDisplayName().like("%$name%")
+            !name.isNullOrEmpty() -> orgUnitRepository.byDisplayName().like(name)
             else -> orgUnitRepository
         }
 
@@ -52,7 +52,7 @@ class OURepositoryConfiguration(
                 orgUnitRepository
         }
 
-        //Eyeseetea customization - filter by active team
+        //EyeSeeTea customization - filter by active team
         //return orgUnitRepository.blockingGet()
 
         val nonActiveOrgUnits = if (validationData == null) listOf() else nonActiveOrgUnits(d2, validationData)

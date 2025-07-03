@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.flowOf
 import org.dhis2.commons.data.EventCreationType
 import org.dhis2.commons.data.EventCreationType.REFERAL
 import org.dhis2.commons.team.dateToYearlyPeriod
+import org.dhis2.commons.resources.MetadataIconProvider
+import org.dhis2.ui.toColor
 import org.dhis2.usescases.eventsWithoutRegistration.eventDetails.data.EventDetailsRepository
 import org.dhis2.usescases.eventsWithoutRegistration.eventDetails.models.EventDetails
 import org.dhis2.usescases.eventsWithoutRegistration.eventDetails.providers.EventDetailResourcesProvider
@@ -14,6 +16,7 @@ import org.hisp.dhis.android.core.event.Event
 import org.hisp.dhis.android.core.event.EventEditableStatus.Editable
 import org.hisp.dhis.android.core.event.EventEditableStatus.NonEditable
 import org.hisp.dhis.android.core.event.EventStatus.OVERDUE
+import org.hisp.dhis.mobile.ui.designsystem.theme.SurfaceColor
 import java.util.Date
 
 class ConfigureEventDetails(
@@ -21,6 +24,7 @@ class ConfigureEventDetails(
     private val resourcesProvider: EventDetailResourcesProvider,
     private val creationType: EventCreationType,
     private val enrollmentStatus: EnrollmentStatus?,
+    private val metadataIconProvider: MetadataIconProvider,
 ) {
 
     operator fun invoke(
@@ -29,16 +33,15 @@ class ConfigureEventDetails(
         catOptionComboUid: String?,
         isCatComboCompleted: Boolean,
         coordinates: String?,
-        tempCreate: String?,
     ): Flow<EventDetails> {
         val isEventCompleted = isCompleted(
             selectedDate = selectedDate,
             selectedOrgUnit = selectedOrgUnit,
             isCatComboCompleted = isCatComboCompleted,
-            tempCreate = tempCreate,
         )
         val storedEvent = repository.getEvent()
         val programStage = repository.getProgramStage()
+        val program = repository.getProgram()
 
         val isOrgUnitActive = if (selectedDate == null || selectedOrgUnit == null) true
         else dateToYearlyPeriod(selectedDate)?.let {
@@ -51,11 +54,15 @@ class ConfigureEventDetails(
             EventDetails(
                 name = programStage?.displayName(),
                 description = programStage?.displayDescription(),
-                style = repository.getObjectStyle(),
+                metadataIconData = programStage?.style()?.let {
+                    metadataIconProvider(
+                        programStage.style(),
+                        program?.style()?.color()?.toColor() ?: SurfaceColor.Primary,
+                    )
+                },
                 enabled = isEnable(storedEvent),
                 isEditable = isEditable(),
                 editableReason = getEditableReason(),
-                temCreate = tempCreate,
                 selectedDate = selectedDate,
                 selectedOrgUnit = selectedOrgUnit,
                 catOptionComboUid = catOptionComboUid,
@@ -92,7 +99,7 @@ class ConfigureEventDetails(
         } else {
             storedEvent?.let {
                 !(it.status() == OVERDUE && enrollmentStatus == CANCELLED) &&
-                        repository.getEditableStatus() !is NonEditable
+                    repository.getEditableStatus() !is NonEditable
             } ?: true
         }
     }
@@ -103,11 +110,9 @@ class ConfigureEventDetails(
         selectedDate: Date?,
         selectedOrgUnit: String?,
         isCatComboCompleted: Boolean,
-        tempCreate: String?,
     ) = selectedDate != null &&
-            !selectedOrgUnit.isNullOrEmpty() &&
-            isCatComboCompleted &&
-            (creationType != REFERAL || tempCreate != null)
+        !selectedOrgUnit.isNullOrEmpty() &&
+        isCatComboCompleted
 
     private fun isEditable(): Boolean {
         return getEditableReason() == null

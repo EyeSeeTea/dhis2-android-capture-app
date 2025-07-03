@@ -1,12 +1,12 @@
 package org.dhis2.usescases.eventsWithoutRegistration.eventDetails.models
 
-import org.hisp.dhis.android.core.common.ObjectStyle
+import org.dhis2.ui.MetadataIconData
 import java.util.Date
 
 data class EventDetails(
     val name: String? = null,
     val description: String? = null,
-    val style: ObjectStyle? = null,
+    val metadataIconData: MetadataIconData? = null,
     val enabled: Boolean = true,
     val isEditable: Boolean = true,
     val editableReason: String? = null,
@@ -21,4 +21,6 @@ data class EventDetails(
     val canReopen: Boolean = false,
     val isOrgUnitActive: Boolean = true ,
     val program: String? = null,
-)
+) {
+    fun getIcon() = metadataIconData
+}

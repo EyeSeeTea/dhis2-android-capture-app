@@ -13,10 +13,11 @@ import com.google.android.material.textfield.TextInputEditText;
 import org.dhis2.App;
 import org.dhis2.R;
 import org.dhis2.commons.Constants;
+import org.dhis2.commons.dialogs.PeriodDialog;
+import org.dhis2.commons.extensions.CategoryOptionExtensionsKt;
 import org.dhis2.commons.orgunitselector.OUTreeFragment;
 import org.dhis2.commons.orgunitselector.OrgUnitSelectorScope;
-import org.dhis2.data.dhislogic.CategoryOptionExtensionsKt;
-import org.dhis2.data.dhislogic.DhisPeriodUtils;
+import org.dhis2.commons.resources.DhisPeriodUtils;
 import org.dhis2.data.dhislogic.OrganisationUnitExtensionsKt;
 import org.dhis2.databinding.ActivityDatasetInitialBinding;
 import org.dhis2.databinding.ItemCategoryComboBinding;
@@ -24,7 +25,6 @@ import org.dhis2.usescases.datasets.dataSetTable.DataSetTableActivity;
 import org.dhis2.usescases.general.ActivityGlobalAbstract;
 import org.dhis2.utils.category.CategoryDialog;
 import org.dhis2.utils.customviews.CategoryOptionPopUp;
-import org.dhis2.utils.customviews.PeriodDialog;
 import org.dhis2.utils.customviews.PeriodDialogInputPeriod;
 import org.hisp.dhis.android.core.category.Category;
 import org.hisp.dhis.android.core.category.CategoryOption;
@@ -71,7 +71,9 @@ public class DataSetInitialActivity extends ActivityGlobalAbstract implements Da
     @Override
     protected void onResume() {
         super.onResume();
-        presenter.init();
+        if(sessionManagerServiceImpl.isUserLoggedIn()){
+            presenter.init();
+        }
     }
 
     @Override
@@ -114,7 +116,6 @@ public class DataSetInitialActivity extends ActivityGlobalAbstract implements Da
         }
 
         new OUTreeFragment.Builder()
-                .showAsDialog()
                 .singleSelection()
                 .withPreselectedOrgUnits(preselectedOrgUnits)
                 .orgUnitScope(new OrgUnitSelectorScope.DataSetCaptureScope(dataSetUid))

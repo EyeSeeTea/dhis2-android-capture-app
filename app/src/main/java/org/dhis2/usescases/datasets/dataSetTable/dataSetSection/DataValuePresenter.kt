@@ -16,6 +16,7 @@ import org.dhis2.commons.schedulers.SchedulerProvider
 import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.composetable.TableConfigurationState
 import org.dhis2.composetable.TableScreenState
+import org.dhis2.composetable.TableState
 import org.dhis2.composetable.actions.Validator
 import org.dhis2.composetable.model.TableCell
 import org.dhis2.composetable.model.TableModel
@@ -26,6 +27,7 @@ import org.dhis2.data.forms.dataentry.tablefields.spinner.SpinnerViewModel
 import org.dhis2.form.model.ValueStoreResult.ERROR_UPDATING_VALUE
 import org.dhis2.form.model.ValueStoreResult.VALUE_CHANGED
 import org.dhis2.form.model.ValueStoreResult.VALUE_HAS_NOT_CHANGED
+import org.dhis2.usescases.datasets.dataSetTable.dataSetSection.TableDataToTableModelMapper.Companion.INDICATORS_TABLE_ID
 import org.hisp.dhis.android.core.arch.helpers.Result
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.dataelement.DataElement
@@ -102,7 +104,7 @@ class DataValuePresenter(
                 .subscribe(
                     {
                         screenState.update { currentScreenState ->
-                            currentScreenState.copy(tables = it.tables)
+                            currentScreenState.copy(tables = it.tables, state = TableState.SUCCESS)
                         }
                     },
                     { Timber.e(it) },
@@ -111,7 +113,7 @@ class DataValuePresenter(
     }
 
     private fun replaceOrgUnitUIdsByDisplayName(value: String?): String? {
-       val orgUitUIds = value?.split(",") ?: emptyList()
+        val orgUitUIds = value?.split(",") ?: emptyList()
         return orgUitUIds.joinToString(",") { repository.getOrgUnitById(it).toString() }
     }
 
@@ -138,10 +140,13 @@ class DataValuePresenter(
         val updatedTableModel = mapper(tableData)
 
         val updatedTables = screenState.value.tables.map { tableModel ->
-            if (tableModel.id == catComboUid) {
-                updatedTableModel.copy(overwrittenValues = tableModel.overwrittenValues)
-            } else {
-                indicatorTables() ?: tableModel
+            when (tableModel.id) {
+                catComboUid -> updatedTableModel.copy(
+                    overwrittenValues = tableModel.overwrittenValues,
+                )
+
+                INDICATORS_TABLE_ID -> indicatorTables() ?: tableModel
+                else -> tableModel
             }
         }
 
@@ -177,28 +182,29 @@ class DataValuePresenter(
         val dataElement = getDataElement(dataElementUid)
         dataElement?.let { handleElementInteraction(dataElement, cell, updateCellValue) }
         return dataElement.takeIf { it?.optionSetUid() == null }
-                ?.valueType()?.toKeyBoardInputType()?.let { inputType ->
-                    //EyeSeeTea customizations - multiple SDS org unit selection
-                 /*   TextInputModel(
+            ?.valueType()?.toKeyBoardInputType()?.let { inputType ->
+                //EyeSeeTea customizations - multiple SDS org unit selection
+                /*  TextInputModel(
+                   id = cell.id ?: "",
+                   mainLabel = dataElement?.displayFormName() ?: "-",
+                   secondaryLabels = repository.getCatOptComboOptions(ids[1]),
+                   helperText = dataElement?.description(),
+                   currentValue = cell.value,
+                   keyboardInputType = inputType,
+                   error = errors[cell.id],
+                )*/
+                if (cell.id!!.contains(teamSDSUid)) {
+                    null
+                } else {
+                    TextInputModel(
                         id = cell.id ?: "",
                         mainLabel = dataElement?.displayFormName() ?: "-",
                         secondaryLabels = repository.getCatOptComboOptions(ids[1]),
                         currentValue = cell.value,
                         keyboardInputType = inputType,
                         error = errors[cell.id],
-                    )*/
-                    if (cell.id!!.contains(teamSDSUid)) {
-                        null
-                    } else {
-                        TextInputModel(
-                            id = cell.id ?: "",
-                            mainLabel = dataElement?.displayFormName() ?: "-",
-                            secondaryLabels = repository.getCatOptComboOptions(ids[1]),
-                            currentValue = cell.value,
-                            keyboardInputType = inputType,
-                            error = errors[cell.id],
-                        )
-                    }
+                    )
+                }
             }
     }
 
@@ -235,7 +241,6 @@ class DataValuePresenter(
                     repository.orgUnits(),
                     updateCellValue,
                 )
-
                 ValueType.TEXT -> {
                     //EyeSeeTea customizations - multiple SDS org unit selection
                     if (dataElement.uid() == teamSDSUid) {
@@ -248,7 +253,6 @@ class DataValuePresenter(
                         )
                     }
                 }
-
                 ValueType.AGE -> view.showAgeDialog(dataElement, cell, updateCellValue)
                 else -> {}
             }
@@ -309,10 +313,7 @@ class DataValuePresenter(
             } else {
                 errors.remove(cell.id!!)
             }
-
-            if (catComboUid != null){
-                updateData(catComboUid)
-            }
+            updateData(catComboUid!!)
         }
     }
 
