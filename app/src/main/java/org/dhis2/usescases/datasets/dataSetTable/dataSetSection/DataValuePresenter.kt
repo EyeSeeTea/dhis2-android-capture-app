@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.dhis2.commons.schedulers.SchedulerProvider
 import org.dhis2.commons.viewmodel.DispatcherProvider
@@ -333,18 +334,31 @@ class DataValuePresenter(
 
     // EyeSeeTea customizations
     fun createTeamChangeRequest() {
+        repository.refreshDataValues()
+
         val teamParentCell = screenState.value.tables[0].findCell(teamParentUId)
 
         if (teamParentCell != null) {
             val parentOrgUnit = repository.getParentOrgUnit()
 
-            onSaveValueChange(teamParentCell.copy(value = parentOrgUnit))
+            val ids = teamParentCell.id?.split("_")
+            val dataElementUid = ids!![0]
+            val catOptCombUid = ids[1]
+
+            repository.saveValue(dataElementUid, catOptCombUid, parentOrgUnit)
         }
 
-        val requestStatusCell = TableCell(id= "${teamRequestStatusUId}_HllvX50cXC0", value = "REQUESTED", column = 0, row = 0)
-        onSaveValueChange(requestStatusCell)
+        repository.saveValue(teamRequestStatusUId, "HllvX50cXC0", "REQUESTED")
     }
 
+    private fun onSaveValueChangeBlocking(cell: TableCell) {
+        runBlocking (
+            dispatcherProvider.io(),
+        ) {
+            saveValue(cell)
+            view.onValueProcessed()
+        }
+    }
 
 }
 

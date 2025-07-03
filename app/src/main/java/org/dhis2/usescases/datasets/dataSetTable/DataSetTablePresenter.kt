@@ -121,19 +121,20 @@ class DataSetTablePresenter(
             } else {
                 view.showValidationRuleDialog()
             }
-        } else if (!isComplete()) {
+        } else  {
             // Eyeseetea customization - Create Team change request
             // view.showSuccessValidationDialog()
-
             val dataset = tableRepository.getDataSet().blockingGet()
 
             if (dataset?.uid() == TEAM_REQUEST_DATASET) {
                 view.showTeamChangeRequestDialog()
             } else {
-                view.showSuccessValidationDialog()
+                if (!isComplete()){
+                    view.showSuccessValidationDialog()
+                } else {
+                    view.saveAndFinish()
+                }
             }
-        } else {
-            view.saveAndFinish()
         }
     }
 
@@ -233,11 +234,19 @@ class DataSetTablePresenter(
         //Create change request
         onCreateTeamChangeRequestListener?.invoke()
 
-        view.showSuccessValidationDialog()
+        if (!isComplete()){
+            view.showSuccessValidationDialog()
+        } else {
+            view.saveAndFinish()
+        }
     }
 
     fun cancelChangeRequest() {
-        view.showSuccessValidationDialog()
+        if (!isComplete()){
+            view.showSuccessValidationDialog()
+        } else {
+            view.saveAndFinish()
+        }
     }
 
     fun setCreateTeamChangeRequestListener(listener: () -> Unit) {

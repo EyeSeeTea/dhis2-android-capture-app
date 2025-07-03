@@ -61,6 +61,7 @@ class DataValueRepository(
                             ?.categoryComboUid()
                 }?.distinct()
             }
+
             else -> {
                 val dataElementsSectionUid = d2.dataSetModule().sections().withDataElements()
                     .byDataSetUid().eq(dataSetUid)
@@ -290,6 +291,7 @@ class DataValueRepository(
                 .get()
                 .map { section -> section.greyedFields() }
                 .toFlowable()
+
         else -> Flowable.just(ArrayList())
     }
 
@@ -403,6 +405,7 @@ class DataValueRepository(
                                     .blockingIsEmpty()
                                 hasDataValueAuthority && canWriteCatOption && canWriteOrgUnit
                             }
+
                     else -> Flowable.just(false)
                 }
             }
@@ -491,33 +494,34 @@ class DataValueRepository(
 
     fun getDataTableModel(categoryCombo: CategoryCombo): Observable<DataTableModel> {
         return Flowable.zip<
-            List<DataElement>,
-            Map<String, List<List<Pair<CategoryOption, Category>>>>,
-            List<DataSetTableModel>,
-            List<DataElementOperand>,
-            List<DataElementOperand>,
-            DataTableModel,
-            >(
+                List<DataElement>,
+                Map<String, List<List<Pair<CategoryOption, Category>>>>,
+                List<DataSetTableModel>,
+                List<DataElementOperand>,
+                List<DataElementOperand>,
+                DataTableModel,
+                >(
             getDataElements(categoryCombo),
             getCatOptions(categoryCombo.uid()),
             getDataValues(),
             getGreyFields(),
             getCompulsoryDataElements(),
-        ) { dataElements: List<DataElement>,
-            optionsWithCategory: Map<
-                String,
-                List<
-                    List<
-                        Pair<
-                            CategoryOption,
-                            Category,
-                            >,
+        ) {
+                dataElements: List<DataElement>,
+                optionsWithCategory: Map<
+                        String,
+                        List<
+                                List<
+                                        Pair<
+                                                CategoryOption,
+                                                Category,
+                                                >,
+                                        >,
+                                >,
                         >,
-                    >,
-                >,
-            dataValues: List<DataSetTableModel>,
-            disabledDataElements: List<DataElementOperand>,
-            compulsoryCells: List<DataElementOperand>,
+                dataValues: List<DataSetTableModel>,
+                disabledDataElements: List<DataElementOperand>,
+                compulsoryCells: List<DataElementOperand>,
             ->
             var options: List<List<String>> = ArrayList()
             for ((_, value) in optionsWithCategory) {
@@ -632,12 +636,12 @@ class DataValueRepository(
                 val mandatory = dataTableModel.compulsoryCells?.find { compulsoryDataElement ->
                     compulsoryDataElement.categoryOptionCombo()
                         ?.uid() == categoryOptionCombo.uid() &&
-                        compulsoryDataElement.dataElement()?.uid() == dataElement.uid()
+                            compulsoryDataElement.dataElement()?.uid() == dataElement.uid()
                 }?.let { true } ?: false
 
                 val fieldValue = dataTableModel.dataValues?.find { dataSetTableModel ->
                     dataSetTableModel.dataElement == dataElement.uid() &&
-                        dataSetTableModel.categoryOptionCombo == categoryOptionCombo.uid()
+                            dataSetTableModel.categoryOptionCombo == categoryOptionCombo.uid()
                 }?.value
 
                 var fieldViewModel = fieldFactory.create(
@@ -678,6 +682,7 @@ class DataValueRepository(
                             State.ERROR,
                             State.WARNING,
                             -> true
+
                             else -> false
                         }
                     }?.filter {
@@ -688,20 +693,24 @@ class DataValueRepository(
 
                 val errorList = when {
                     valueStateSyncState == State.ERROR &&
-                        conflictInField != null &&
-                        error != null ->
+                            conflictInField != null &&
+                            error != null ->
                         conflictInField + listOf(error)
+
                     valueStateSyncState == State.ERROR && conflictInField != null ->
                         conflictInField
+
                     error != null ->
                         listOf(error)
+
                     else -> null
                 }
 
                 val warningList = when {
                     valueStateSyncState == State.WARNING &&
-                        conflictInField != null ->
+                            conflictInField != null ->
                         conflictInField
+
                     else ->
                         null
                 }
@@ -767,16 +776,16 @@ class DataValueRepository(
         }
 
         val isEditable = canWriteAny().blockingFirst() &&
-            !isExpired(getDataSet().blockingFirst()) &&
-            (
-                getDataInputPeriod() == null || (
-                    getDataInputPeriod() != null && DateUtils.getInstance()
-                        .isInsideInputPeriod(
-                            getDataInputPeriod(),
-                        )
-                    )
-                ) &&
-            !isApproval().blockingFirst()
+                !isExpired(getDataSet().blockingFirst()) &&
+                (
+                        getDataInputPeriod() == null || (
+                                getDataInputPeriod() != null && DateUtils.getInstance()
+                                    .isInsideInputPeriod(
+                                        getDataInputPeriod(),
+                                    )
+                                )
+                        ) &&
+                !isApproval().blockingFirst()
 
         val hasDataElementDecoration = getDataSet().blockingFirst()?.dataElementDecoration() == true
 
@@ -1041,5 +1050,33 @@ class DataValueRepository(
         val path = orgUnit!!.path()!!.split("/")
 
         return path[path.size - 2]
+    }
+
+    fun refreshDataValues() {
+        val dataValues =
+            d2.dataValueModule().dataValues().byDataSetUid(dataSetUid).byOrganisationUnitUid().eq(orgUnitUid)
+                .byPeriod().eq(periodId).blockingGet()
+
+        dataValues.forEach { dataValue ->
+            d2.dataValueModule().dataValues()
+                .value(
+                    period = dataValue.period() ?: "",
+                    organisationUnit = dataValue.organisationUnit() ?: "",
+                    dataElement = dataValue.dataElement()?: "",
+                    categoryOptionCombo = dataValue.categoryOptionCombo()?: "",
+                    attributeOptionCombo = attributeOptionComboUid
+                ).blockingSet(dataValue.value())
+        }
+    }
+
+    fun saveValue(dataElement: String, categoryOptionCombo: String, value: String) {
+        d2.dataValueModule().dataValues()
+            .value(
+                period = periodId,
+                organisationUnit = orgUnitUid,
+                dataElement = dataElement,
+                categoryOptionCombo = categoryOptionCombo,
+                attributeOptionCombo = attributeOptionComboUid
+            ).blockingSet(value)
     }
 }
