@@ -213,7 +213,7 @@ class RelationshipPresenterTest {
     private fun getMockedTei(state: State): TrackedEntityInstance {
         return TrackedEntityInstance.builder()
             .uid("teiUid")
-            .state(state)
+            .aggregatedSyncState(state)
             .build()
     }
 

@@ -155,52 +155,30 @@ class RelationshipPresenter internal constructor(
     }
 
     fun addRelationship(selectedTei: String, relationshipTypeUid: String) {
-        if (teiUid != null) {
-            addTeiToTeiRelationship(teiUid, selectedTei, relationshipTypeUid)
-        } else if (eventUid != null) {
-            addEventToTeiRelationship(eventUid, selectedTei, relationshipTypeUid)
-        }
-    }
-
-    private fun addTeiToTeiRelationship(
-        teiUid: String,
-        selectedTei: String,
-        relationshipTypeUid: String,
-    ) {
         try {
-            val relationship =
-                RelationshipHelper.teiToTeiRelationship(teiUid, selectedTei, relationshipTypeUid)
-            d2.relationshipModule().relationships().blockingAdd(relationship)
-        } catch (e: D2Error) {
-            view.displayMessage(e.errorDescription())
-        } finally {
-            updateRelationships.onNext(true)
-        }
-    }
-
-    private fun addEventToTeiRelationship(
-        eventUid: String,
-        selectedTei: String,
-        relationshipTypeUid: String,
-    ) {
-        try {
-            val relationship =
+            val relationship = if (teiUid != null) {
+                RelationshipHelper.teiToTeiRelationship(selectedTei, teiUid, relationshipTypeUid)
+            } else if (eventUid != null) {
                 RelationshipHelper.eventToTeiRelationship(
-                    eventUid,
                     selectedTei,
-                    relationshipTypeUid,
+                    eventUid,
+                    relationshipTypeUid
                 )
-            d2.relationshipModule().relationships().blockingAdd(relationship)
+            } else {
+                null
+            }
+            relationship?.let {
+                d2.relationshipModule().relationships().blockingAdd(it)
+                updateRelationships.onNext(true)
+            }
         } catch (e: D2Error) {
             view.displayMessage(e.errorDescription())
-        } finally {
-            updateRelationships.onNext(true)
         }
     }
 
     fun openDashboard(teiUid: String) {
         if (d2.trackedEntityModule()
-                .trackedEntityInstances().uid(teiUid).blockingGet()!!.state() !=
+                .trackedEntityInstances().uid(teiUid).blockingGet()?.aggregatedSyncState() !=
             State.RELATIONSHIP
         ) {
             if (d2.enrollmentModule().enrollments()
