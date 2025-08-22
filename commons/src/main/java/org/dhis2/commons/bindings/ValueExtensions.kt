@@ -9,29 +9,25 @@ import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttributeValue
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttributeValueObjectRepository
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValue
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValueObjectRepository
+import java.text.ParseException
 
 fun TrackedEntityAttributeValue.userFriendlyValue(
     d2: D2,
     addPercentageSymbol: Boolean = true,
 ): String? {
-    if (value().isNullOrEmpty()) {
-        return value()
-    }
-
-    val attribute = d2.trackedEntityModule().trackedEntityAttributes()
-        .uid(trackedEntityAttribute())
-        .blockingGet()
-
-    if (attribute == null) {
-        return value()
-    }
-
-    if (check(d2, attribute.valueType(), attribute.optionSet()?.uid(), value()!!)) {
-        attribute.optionSet()?.takeIf { attribute.valueType() != ValueType.MULTI_TEXT }?.let {
-            return checkOptionSetValue(d2, it.uid(), value()!!)
-        } ?: return checkValueTypeValue(d2, attribute.valueType(), value()!!, addPercentageSymbol)
-    } else {
-        return null
+    return when {
+        value().isNullOrEmpty() -> value()
+        else -> {
+            val attribute = d2.trackedEntityModule().trackedEntityAttributes()
+                .uid(trackedEntityAttribute())
+                .blockingGet()
+            value()!!.userFriendlyValue(
+                d2,
+                attribute?.valueType(),
+                attribute?.optionSet()?.uid(),
+                addPercentageSymbol,
+            )
+        }
     }
 }
 
@@ -39,22 +35,36 @@ fun TrackedEntityDataValue?.userFriendlyValue(
     d2: D2,
     addPercentageSymbol: Boolean = true,
 ): String? {
-    if (this == null) return null
+    return when {
+        this == null -> null
+        value().isNullOrEmpty() -> value()
+        else -> {
+            val dataElement = d2.dataElementModule().dataElements()
+                .uid(dataElement())
+                .blockingGet()
 
-    if (value().isNullOrEmpty()) {
-        return value()
+            value()!!.userFriendlyValue(
+                d2,
+                dataElement?.valueType(),
+                dataElement?.optionSetUid(),
+                addPercentageSymbol,
+            )
+        }
     }
+}
 
-    val dataElement = d2.dataElementModule().dataElements()
-        .uid(dataElement())
-        .blockingGet()
-
-    if (dataElement == null) {
+fun String.userFriendlyValue(
+    d2: D2,
+    valueType: ValueType?,
+    optionSetUid: String?,
+    addPercentageSymbol: Boolean = true,
+): String? {
+    if (valueType == null) {
         return null
-    } else if (check(d2, dataElement.valueType(), dataElement.optionSet()?.uid(), value()!!)) {
-        dataElement.optionSet()?.takeIf { dataElement.valueType() != ValueType.MULTI_TEXT }?.let {
-            return checkOptionSetValue(d2, it.uid(), value()!!)
-        } ?: return checkValueTypeValue(d2, dataElement.valueType(), value()!!, addPercentageSymbol)
+    } else if (check(d2, valueType, optionSetUid, this)) {
+        optionSetUid?.takeIf { valueType != ValueType.MULTI_TEXT }?.let {
+            return checkOptionSetValue(d2, optionSetUid, this)
+        } ?: return checkValueTypeValue(d2, valueType, this, addPercentageSymbol)
     } else {
         return null
     }
@@ -127,19 +137,31 @@ fun checkValueTypeValue(
             d2.fileResourceModule().fileResources().uid(value).blockingGet()?.path() ?: ""
 
         ValueType.DATE, ValueType.AGE ->
-            DateUtils.uiDateFormat().format(
-                DateUtils.oldUiDateFormat().parse(value) ?: "",
-            )
+            try {
+                DateUtils.uiDateFormat().format(
+                    DateUtils.oldUiDateFormat().parse(value) ?: "",
+                )
+            } catch (exception: ParseException) {
+                value
+            }
 
         ValueType.DATETIME ->
-            DateUtils.uiDateTimeFormat().format(
-                DateUtils.databaseDateFormatNoSeconds().parse(value) ?: "",
-            )
+            try {
+                DateUtils.uiDateTimeFormat().format(
+                    DateUtils.databaseDateFormatNoSeconds().parse(value) ?: "",
+                )
+            } catch (exception: ParseException) {
+                value
+            }
 
         ValueType.TIME ->
-            DateUtils.timeFormat().format(
-                DateUtils.timeFormat().parse(value) ?: "",
-            )
+            try {
+                DateUtils.timeFormat().format(
+                    DateUtils.timeFormat().parse(value) ?: "",
+                )
+            } catch (exception: ParseException) {
+                value
+            }
 
         ValueType.PERCENTAGE -> {
             if (addPercentageSymbol) {
@@ -261,6 +283,7 @@ private fun check(d2: D2, valueType: ValueType?, optionSetUid: String?, value: S
                 .byDisplayName().eq(value).one().blockingExists()
             optionByCodeExist || optionByNameExist
         }
+
         valueType != null -> {
             if (valueType.isNumeric) {
                 try {

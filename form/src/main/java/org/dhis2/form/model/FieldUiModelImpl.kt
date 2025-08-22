@@ -68,13 +68,15 @@ data class FieldUiModelImpl(
     }
 
     override fun onSave(value: String?) {
-        onItemClick()
         callback?.intent(FormIntent.OnSave(uid, value, valueType))
+        onItemClick()
     }
 
     override fun invokeUiEvent(uiEventType: UiEventType) {
         callback?.intent(FormIntent.OnRequestCoordinates(uid))
-
+        if (!focused) {
+            onItemClick()
+        }
         uiEventFactory?.generateEvent(value, uiEventType, renderingType, this)?.let {
             callback?.recyclerViewUiEvents(it)
         }

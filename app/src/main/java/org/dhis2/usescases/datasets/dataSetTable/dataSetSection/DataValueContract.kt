@@ -1,3 +1,4 @@
+/*
 package org.dhis2.usescases.datasets.dataSetTable.dataSetSection
 
 import org.dhis2.composetable.model.TableCell
@@ -57,3 +58,4 @@ class DataValueContract {
         )
     }
 }
+*/

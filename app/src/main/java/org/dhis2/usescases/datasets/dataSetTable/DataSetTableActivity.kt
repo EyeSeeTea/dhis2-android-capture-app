@@ -1,3 +1,4 @@
+/*
 package org.dhis2.usescases.datasets.dataSetTable
 
 import android.content.Context
@@ -362,7 +363,9 @@ class DataSetTableActivity : ActivityGlobalAbstract(), DataSetTableContract.View
             }
 
             override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                /*UnUsed*/
+                */
+/*UnUsed*//*
+
             }
 
             private fun animateArrowDown() {
@@ -576,3 +579,4 @@ enum class DataSetMenuItem {
     SHOW_HELP,
     RE_OPEN,
 }
+*/

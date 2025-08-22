@@ -7,6 +7,7 @@ import org.dhis2.commons.data.tuples.Pair
 import org.dhis2.commons.extensions.inDateRange
 import org.dhis2.commons.extensions.inOrgUnit
 import org.dhis2.commons.schedulers.SchedulerProvider
+import org.dhis2.mobile.commons.coroutine.CoroutineTracker
 import org.dhis2.commons.team.dateToYearlyPeriod
 import org.dhis2.commons.team.isActiveOrgUnit
 import org.hisp.dhis.android.core.D2
@@ -67,24 +68,11 @@ class DataSetInitialPresenter(
     }
 
     override fun onReportPeriodClick(periodType: PeriodType) {
-        compositeDisposable.add(
-            dataSetInitialRepository.dataInputPeriod
-                .subscribeOn(schedulerProvider.io())
-                .observeOn(schedulerProvider.ui())
-                .subscribe(
-                    { data: List<DateRangeInputPeriodModel?>? ->
-                        view.showPeriodSelector(
-                            periodType,
-                            data,
-                            openFuturePeriods,
-                        )
-                    },
-                    Timber::d,
-                ),
-        )
+        view.showPeriodSelector(periodType, openFuturePeriods)
     }
 
     override fun onCatOptionClick(catOptionUid: String) {
+        CoroutineTracker.increment()
         compositeDisposable.add(
             dataSetInitialRepository.catCombo(catOptionUid)
                 .subscribeOn(schedulerProvider.io())
@@ -99,6 +87,7 @@ class DataSetInitialPresenter(
                                     it.inOrgUnit(view.selectedOrgUnit?.uid())
                             },
                         )
+                        CoroutineTracker.decrement()
                     },
                     Timber::d,
                 ),

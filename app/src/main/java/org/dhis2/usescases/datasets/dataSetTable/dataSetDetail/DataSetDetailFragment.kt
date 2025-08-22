@@ -1,3 +1,4 @@
+/*
 package org.dhis2.usescases.datasets.dataSetTable.dataSetDetail
 
 import android.content.Context
@@ -158,4 +159,4 @@ class DataSetDetailFragment private constructor() : FragmentGlobalAbstract(), Da
     override fun observeReopenChanges(): Flowable<Boolean> {
         return activity.observeReopenChanges()!!
     }
-}
+}*/

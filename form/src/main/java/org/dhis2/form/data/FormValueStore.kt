@@ -6,7 +6,6 @@ import org.dhis2.commons.bindings.withValueTypeCheck
 import org.dhis2.commons.data.EntryMode
 import org.dhis2.commons.extensions.toDate
 import org.dhis2.commons.network.NetworkUtils
-import org.dhis2.commons.reporting.CrashReportController
 import org.dhis2.commons.resources.ResourceManager
 import org.dhis2.form.R
 import org.dhis2.form.data.EventRepository.Companion.EVENT_CATEGORY_COMBO_UID
@@ -16,6 +15,9 @@ import org.dhis2.form.data.EventRepository.Companion.EVENT_REPORT_DATE_UID
 import org.dhis2.form.model.EnrollmentDetail
 import org.dhis2.form.model.StoreResult
 import org.dhis2.form.model.ValueStoreResult
+import org.dhis2.mobile.commons.files.FileController
+import org.dhis2.mobile.commons.files.FileControllerImpl
+import org.dhis2.mobile.commons.reporting.CrashReportController
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.Geometry
@@ -35,7 +37,7 @@ class FormValueStore(
     private val crashReportController: CrashReportController,
     private val networkUtils: NetworkUtils,
     private val resourceManager: ResourceManager,
-    private val fileController: FileController = FileController(),
+    private val fileController: FileController = FileControllerImpl(),
     private val uniqueAttributeController: UniqueAttributeController = UniqueAttributeController(
         d2,
         crashReportController,

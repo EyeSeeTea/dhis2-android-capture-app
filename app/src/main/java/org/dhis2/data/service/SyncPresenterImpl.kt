@@ -10,6 +10,7 @@ import kotlinx.coroutines.runBlocking
 import org.dhis2.bindings.toSeconds
 import org.dhis2.commons.bindings.enrollment
 import org.dhis2.commons.bindings.program
+import org.dhis2.commons.date.DateUtils
 import org.dhis2.commons.prefs.Preference.Companion.DATA
 import org.dhis2.commons.prefs.Preference.Companion.EVENT_MAX
 import org.dhis2.commons.prefs.Preference.Companion.EVENT_MAX_DEFAULT
@@ -26,7 +27,6 @@ import org.dhis2.data.service.workManager.WorkManagerController
 import org.dhis2.data.service.workManager.WorkerItem
 import org.dhis2.data.service.workManager.WorkerType
 import org.dhis2.usescases.notifications.domain.NotificationRepository
-import org.dhis2.utils.DateUtils
 import org.dhis2.utils.analytics.AnalyticsHelper
 import org.dhis2.utils.analytics.matomo.DEFAULT_EXTERNAL_TRACKER_NAME
 import org.hisp.dhis.android.core.D2
@@ -188,7 +188,8 @@ class SyncPresenterImpl(
     }
 
     override fun syncAndDownloadDataValues() {
-        if (!d2.dataSetModule().dataSets().blockingIsEmpty()) {
+        val dataSetUids = d2.dataSetModule().dataSets().blockingGetUids()
+        if (dataSetUids.isNotEmpty()) {
             syncStatusController.startDownloadingDataSets()
             Completable.fromObservable(d2.dataValueModule().dataValues().upload())
                 .andThen(
@@ -201,10 +202,14 @@ class SyncPresenterImpl(
                         d2.aggregatedModule().data().download()
                             .doOnNext {
                                 syncStatusController.updateDownloadProcess(it.dataSets())
-                            }.doOnComplete {
-                                syncStatusController.finishDownloadingDataSets()
                             },
-                    ),
+                    ).doOnError { Timber.d("error while downloading TEIs") }
+                        .onErrorComplete()
+                        .doOnComplete {
+                            syncStatusController.finishDownloadingTracker(
+                                dataSetUids,
+                            )
+                        },
                 ).blockingAwait()
         }
     }
@@ -221,15 +226,19 @@ class SyncPresenterImpl(
                     setUpSMS()
                     syncNotifications()
                 },
-        ).andThen(
-            d2.mapsModule().mapLayersDownloader().downloadMetadata(),
-        ).andThen(
-            Completable.fromObservable(
-                d2.fileResourceModule().fileResourceDownloader()
-                    .byDomainType().eq(FileResourceDomainType.ICON)
-                    .download(),
-            ),
-        ).blockingAwait()
+        ).doOnError {
+            Timber.d("error while downloading Metadata")
+        }
+            .onErrorComplete()
+            .andThen(
+                d2.mapsModule().mapLayersDownloader().downloadMetadata(),
+            ).andThen(
+                Completable.fromObservable(
+                    d2.fileResourceModule().fileResourceDownloader()
+                        .byDomainType().eq(FileResourceDomainType.ICON)
+                        .download(),
+                ),
+            ).blockingAwait()
     }
 
     private fun setUpSMS() {

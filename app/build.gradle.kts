@@ -1,4 +1,3 @@
-
 import com.android.build.api.variant.impl.VariantOutputImpl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.ByteArrayOutputStream
@@ -10,14 +9,14 @@ plugins {
     kotlin("android")
     kotlin("kapt")
     id("kotlin-parcelize")
-    id("kotlinx-serialization")
+    alias(libs.plugins.kotlin.serialization)
     id("dagger.hilt.android.plugin")
     alias(libs.plugins.kotlin.compose.compiler)
 }
 apply(from = "${project.rootDir}/jacoco/jacoco.gradle.kts")
 
 repositories {
-    maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
+    maven { url = uri("https://central.sonatype.com/repository/maven-snapshots") }
     mavenCentral()
 }
 
@@ -48,6 +47,14 @@ android {
                 storeFile = file(path)
             }
             storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+        }
+        create("training") {
+            keyAlias = System.getenv("TRAINING_KEY_ALIAS")
+            keyPassword = System.getenv("TRAINING_KEY_PASSWORD")
+            System.getenv("TRAINING_STORE_FILE")?.let { path ->
+                storeFile = file(path)
+            }
+            storePassword = System.getenv("TRAINING_STORE_PASSWORD")
         }
     }
 
@@ -135,9 +142,6 @@ android {
             // install debug and release builds at the same time
             applicationIdSuffix = ".debug"
 
-            // Using dataentry.jks to sign debug build type.
-            signingConfig = signingConfigs.getByName("debug")
-
             buildConfigField("int", "MATOMO_ID", "2")
             buildConfigField("String", "BUILD_DATE", "\"" + getBuildDate() + "\"")
             buildConfigField("String", "GIT_SHA", "\"" + getCommitHash() + "\"")
@@ -148,7 +152,7 @@ android {
                 getDefaultProguardFile("proguard-android.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+
             buildConfigField("int", "MATOMO_ID", "1")
             buildConfigField("String", "BUILD_DATE", "\"" + getBuildDate() + "\"")
             buildConfigField("String", "GIT_SHA", "\"" + getCommitHash() + "\"")
@@ -157,26 +161,16 @@ android {
     flavorDimensions += listOf("default")
 
     productFlavors {
-        create("dhis") {
-            applicationId = "com.dhis2"
-            dimension = "default"
-            versionCode = libs.versions.vCode.get().toInt()
-            versionName = libs.versions.vName.get()
+        create("dhis2") {
+            signingConfig = signingConfigs.getByName("release")
+        }
+        create("dhis2PlayServices") {
+            signingConfig = signingConfigs.getByName("release")
+        }
+        create("dhis2Training") {
+            signingConfig = signingConfigs.getByName("training")
         }
 
-        create("dhisPlayServices") {
-            applicationId = "com.dhis2"
-            dimension = "default"
-            versionCode = libs.versions.vCode.get().toInt()
-            versionName = libs.versions.vName.get()
-        }
-
-        create("dhisUITesting") {
-            applicationId = "com.dhis2"
-            dimension = "default"
-            versionCode = libs.versions.vCode.get().toInt()
-            versionName = libs.versions.vName.get()
-        }
         create("widp") {
             applicationId = "com.eyeseetea.widp"
             dimension = "default"
@@ -239,11 +233,17 @@ android {
         onVariants { variant ->
             val buildType = variant.buildType
             val flavorName = variant.flavorName
+
+            // Apply suffix only for training flavor in release buildType
+            if (buildType == "release" && flavorName == "dhis2Training") {
+                variant.applicationId.set("${variant.applicationId.get()}.training")
+            }
+
             variant.outputs.forEach { output ->
                 if (output is VariantOutputImpl) {
                     val suffix = when {
-                        buildType == "debug" && flavorName == "dhis" -> "-training"
-                        buildType == "release" && flavorName == "dhisPlayServices" -> "-googlePlay"
+                        buildType == "release" && flavorName == "dhis2Training" -> "-training"
+                        buildType == "release" && flavorName == "dhis2PlayServices" -> "-googlePlay"
                         else -> ""
                     }
 
@@ -263,7 +263,6 @@ kotlin {
 
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-    implementation(project(":viewpagerdotsindicator"))
     implementation(project(":dhis_android_analytics"))
     implementation(project(":form"))
     implementation(project(":commons"))
@@ -272,6 +271,8 @@ dependencies {
     implementation(project(":stock-usecase"))
     implementation(project(":dhis2-mobile-program-rules"))
     implementation(project(":tracker"))
+    implementation(project(":aggregates"))
+    implementation(project(":commonskmm"))
 
     implementation(libs.security.conscrypt)
     implementation(libs.security.rootbeer)
@@ -300,20 +301,13 @@ dependencies {
     implementation(libs.analytics.customactivityoncrash)
     implementation(platform(libs.dispatcher.dispatchBOM))
     implementation(libs.dispatcher.dispatchCore)
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
 
     coreLibraryDesugaring(libs.desugar)
 
-    debugImplementation(libs.analytics.flipper)
-    debugImplementation(libs.analytics.soloader)
-    debugImplementation(libs.analytics.flipper.network)
-    debugImplementation(libs.analytics.flipper.leak)
-    debugImplementation(libs.analytics.leakcanary)
-
-    releaseImplementation(libs.analytics.leakcanary.noop)
-    releaseImplementation(libs.analytics.flipper.noop)
-
-    "dhisPlayServicesImplementation"(libs.google.auth)
-    "dhisPlayServicesImplementation"(libs.google.auth.apiphone)
+    "dhis2PlayServicesImplementation"(libs.google.auth)
+    "dhis2PlayServicesImplementation"(libs.google.auth.apiphone)
 
     kapt(libs.dagger.compiler)
     kapt(libs.dagger.hilt.android.compiler)
@@ -327,7 +321,7 @@ dependencies {
     testImplementation(libs.test.truth)
     testImplementation(libs.test.kotlinCoroutines)
     testImplementation(libs.test.turbine)
-
+    testImplementation(libs.test.androidx.paging)
     androidTestUtil(libs.test.orchestrator)
 
     androidTestImplementation(libs.test.testRunner)
@@ -352,5 +346,4 @@ dependencies {
     implementation(libs.eyeseetea.markwon)
     implementation(libs.eyeseetea.coroutinesCore)
     implementation(libs.eyeseetea.coroutinesAndroid)
-
 }

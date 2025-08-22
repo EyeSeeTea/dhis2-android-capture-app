@@ -1,3 +1,4 @@
+/*
 package org.dhis2.usescases.datasets.dataSetTable.dataSetSection
 
 import android.content.Context
@@ -85,6 +86,7 @@ class DataSetSectionFragment : FragmentGlobalAbstract(), DataValueContract.View 
         activity = context as DataSetTableActivity
         presenter = activity.presenter
 
+        //EyeSeeTea customizations - createTeamChangeRequest
         presenter.setCreateTeamChangeRequestListener {
             presenterFragment.createTeamChangeRequest()
         }
@@ -499,11 +501,13 @@ class DataSetSectionFragment : FragmentGlobalAbstract(), DataValueContract.View 
         dialog.create(requireContext())
         dialog.optionSetTable = spinnerViewModel
 
-        /**
+        */
+/**
          * This code is commented because I can't find a way to anchor PopUpMenu to compose item
          * I have created a issue() to refactor OptionSetCellPopUp to compose in order to use it in both sides
          * After implement new menu, please, uncomment this code
-         */
+         *//*
+
         if (dialog.showDialog()) {
             dialog.listener = OptionSetOnClickListener {
                 val updatedCellValue = cell.copy(value = it.code())
@@ -546,3 +550,4 @@ class DataSetSectionFragment : FragmentGlobalAbstract(), DataValueContract.View 
         }
     }
 }
+*/

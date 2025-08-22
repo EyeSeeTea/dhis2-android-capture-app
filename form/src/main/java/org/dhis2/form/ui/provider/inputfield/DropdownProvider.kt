@@ -1,6 +1,7 @@
 package org.dhis2.form.ui.provider.inputfield
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -8,6 +9,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.paging.compose.collectAsLazyPagingItems
+import org.dhis2.commons.dialogs.bottomsheet.bottomSheetInsets
+import org.dhis2.commons.dialogs.bottomsheet.bottomSheetLowerPadding
 import org.dhis2.form.extensions.inputState
 import org.dhis2.form.extensions.legend
 import org.dhis2.form.extensions.supportingText
@@ -27,23 +30,22 @@ fun ProvideDropdownInput(
         mutableStateOf(DropdownItem(fieldUiModel.displayName ?: ""))
     }
 
-    val optionSetConfiguration by remember(fieldUiModel) {
-        mutableStateOf(fieldUiModel.optionSetConfiguration)
-    }
+    val optionSetConfiguration = fieldUiModel.optionSetConfiguration
 
     val optionsData = optionSetConfiguration?.optionFlow?.collectAsLazyPagingItems()
+        ?.also { LaunchedEffect(optionSetConfiguration) { it.refresh() } }
 
     val useDropdown by remember {
         derivedStateOf {
-            optionSetConfiguration?.searchEmitter?.value?.isEmpty() == true && (
-                optionsData?.itemCount
-                    ?: 0
-                ) < 15
+            optionSetConfiguration?.searchEmitter?.value?.isEmpty() == true &&
+                (optionsData?.itemCount ?: 0) < 15
         }
     }
 
     InputDropDown(
         modifier = modifier,
+        windowInsets = { bottomSheetInsets() },
+        bottomSheetLowerPadding = bottomSheetLowerPadding(),
         inputStyle = inputStyle,
         title = fieldUiModel.label,
         state = fieldUiModel.inputState(),

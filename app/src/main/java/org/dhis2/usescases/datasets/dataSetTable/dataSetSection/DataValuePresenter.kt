@@ -1,3 +1,4 @@
+/*
 package org.dhis2.usescases.datasets.dataSetTable.dataSetSection
 
 import androidx.annotation.VisibleForTesting
@@ -168,10 +169,12 @@ class DataValuePresenter(
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     fun errors() = errors
 
-    /**
+    */
+/**
      * Returns an TextInputModel if the current cell requires text input, null otherwise.
      * TODO: Refactor once we migrate all other value types inputs to compose.
-     * */
+     * *//*
+
     fun onCellClick(
         tableId: String,
         cell: TableCell,
@@ -184,7 +187,8 @@ class DataValuePresenter(
         return dataElement.takeIf { it?.optionSetUid() == null }
             ?.valueType()?.toKeyBoardInputType()?.let { inputType ->
                 //EyeSeeTea customizations - multiple SDS org unit selection
-                /*  TextInputModel(
+                */
+/*  TextInputModel(
                    id = cell.id ?: "",
                    mainLabel = dataElement?.displayFormName() ?: "-",
                    secondaryLabels = repository.getCatOptComboOptions(ids[1]),
@@ -192,7 +196,8 @@ class DataValuePresenter(
                    currentValue = cell.value,
                    keyboardInputType = inputType,
                    error = errors[cell.id],
-                )*/
+                )*//*
+
                 if (cell.id!!.contains(teamSDSUid)) {
                     null
                 } else {
@@ -367,4 +372,4 @@ private fun TableModel.findCell(dataElementUid: String): TableCell? {
     return this.tableRows.find {
         it.values[0]?.id?.contains(dataElementUid) ?: false
     }?.values?.get(0)
-}
+}*/

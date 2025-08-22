@@ -41,11 +41,12 @@ import org.dhis2.maps.managers.RelationshipMapManager
 import org.dhis2.maps.views.LocationIcon
 import org.dhis2.maps.views.MapScreen
 import org.dhis2.maps.views.OnMapClickListener
-import org.dhis2.tracker.relationships.model.RelationshipTopBarIconState
 import org.dhis2.tracker.relationships.ui.DeleteRelationshipsConfirmation
 import org.dhis2.tracker.relationships.ui.RelationShipsScreen
-import org.dhis2.tracker.relationships.ui.RelationshipsUiState
 import org.dhis2.tracker.relationships.ui.RelationshipsViewModel
+import org.dhis2.tracker.relationships.ui.state.RelationshipSectionUiState
+import org.dhis2.tracker.relationships.ui.state.RelationshipTopBarIconState
+import org.dhis2.tracker.relationships.ui.state.RelationshipsUiState
 import org.dhis2.ui.ThemeManager
 import org.dhis2.ui.avatar.AvatarProvider
 import org.dhis2.ui.theme.Dhis2Theme
@@ -53,7 +54,6 @@ import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureAc
 import org.dhis2.usescases.general.FragmentGlobalAbstract
 import org.dhis2.usescases.teiDashboard.TeiDashboardMobileActivity
 import org.dhis2.utils.OnDialogClickListener
-import org.hisp.dhis.android.core.relationship.RelationshipType
 import org.hisp.dhis.mobile.ui.designsystem.component.AdditionalInfoItem
 import org.hisp.dhis.mobile.ui.designsystem.component.IconButton
 import org.hisp.dhis.mobile.ui.designsystem.component.IconButtonStyle
@@ -81,7 +81,7 @@ class RelationshipFragment : FragmentGlobalAbstract(), RelationshipView {
     @Inject
     lateinit var relationShipsViewModel: RelationshipsViewModel
 
-    private var relationshipType: RelationshipType? = null
+    private var relationshipSection: RelationshipSectionUiState? = null
     private var relationshipMapManager: RelationshipMapManager? = null
     private lateinit var mapButtonObservable: MapButtonObservable
 
@@ -92,7 +92,13 @@ class RelationshipFragment : FragmentGlobalAbstract(), RelationshipView {
             }
 
             is RelationshipResult.Success -> {
-                presenter.addRelationship(it.teiUidToAddAsRelationship, relationshipType!!.uid())
+                relationshipSection?.let { relationshipSection ->
+                    relationShipsViewModel.onAddRelationship(
+                        selectedTeiUid = it.teiUidToAddAsRelationship,
+                        relationshipTypeUid = relationshipSection.uid,
+                        relationshipSide = relationshipSection.side,
+                    )
+                }
             }
         }
     }
@@ -141,12 +147,11 @@ class RelationshipFragment : FragmentGlobalAbstract(), RelationshipView {
                             uiState = uiState,
                             relationshipSelectionState = relationshipSelectionState,
                             onCreateRelationshipClick = {
-                                it.teiTypeUid?.let { teiTypeUid ->
-                                    goToRelationShip(
-                                        relationshipTypeModel = it.relationshipType,
-                                        teiTypeUid = teiTypeUid,
-                                    )
-                                }
+                                relationshipSection = it
+                                presenter.goToAddRelationship(
+                                    it.uid,
+                                    it.entityToAdd,
+                                )
                             },
                             onRelationshipClick = {
                                 presenter.onRelationshipClicked(
@@ -214,6 +219,7 @@ class RelationshipFragment : FragmentGlobalAbstract(), RelationshipView {
 
         val clickedItem by presenter.mapItemClicked.observeAsState(initial = null)
         val locationState = relationshipMapManager?.locationState?.collectAsState()
+        val mapDataFinishedLoading = relationshipMapManager?.dataFinishedLoading?.collectAsState()
 
         LaunchedEffect(key1 = items) {
             mapData?.let { data ->
@@ -254,23 +260,27 @@ class RelationshipFragment : FragmentGlobalAbstract(), RelationshipView {
                 }
             },
             actionButtons = {
-                IconButton(
-                    style = IconButtonStyle.TONAL,
-                    icon = {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_layers),
-                            contentDescription = "",
-                            tint = TextColor.OnPrimaryContainer,
-                        )
-                    },
-                ) {
-                    relationshipMapManager?.let {
-                        MapLayerDialog(it, programUid()) { layersVisibility ->
-                            presenter.filterVisibleMapItems(layersVisibility)
-                        }.show(
-                            childFragmentManager,
-                            MapLayerDialog::class.java.name,
-                        )
+                mapDataFinishedLoading?.let {
+                    if (it.value) {
+                        IconButton(
+                            style = IconButtonStyle.TONAL,
+                            icon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_layers),
+                                    contentDescription = "",
+                                    tint = TextColor.OnPrimaryContainer,
+                                )
+                            },
+                        ) {
+                            relationshipMapManager?.let {
+                                val dialog = MapLayerDialog.newInstance(programUid())
+                                dialog.mapManager = it
+                                dialog.setOnLayersVisibilityListener { layersVisibility ->
+                                    presenter.filterVisibleMapItems(layersVisibility)
+                                }
+                                    .show(childFragmentManager, MapLayerDialog::class.java.name)
+                            }
+                        }
                     }
                 }
                 locationState?.let {
@@ -381,6 +391,9 @@ class RelationshipFragment : FragmentGlobalAbstract(), RelationshipView {
         super.onResume()
         presenter.init()
         relationShipsViewModel.refreshRelationships()
+        val exists = childFragmentManager
+            .findFragmentByTag(MapLayerDialog::class.java.name) as MapLayerDialog?
+        exists?.dismiss()
     }
 
     override fun onPause() {
@@ -400,11 +413,6 @@ class RelationshipFragment : FragmentGlobalAbstract(), RelationshipView {
                 teiTypeUidToAdd,
             ),
         )
-    }
-
-    private fun goToRelationShip(relationshipTypeModel: RelationshipType, teiTypeUid: String) {
-        relationshipType = relationshipTypeModel
-        presenter.goToAddRelationship(teiTypeUid, relationshipType!!)
     }
 
     override fun showPermissionError() {

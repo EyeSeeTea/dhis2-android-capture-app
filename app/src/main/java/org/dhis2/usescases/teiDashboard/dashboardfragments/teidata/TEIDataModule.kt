@@ -8,8 +8,6 @@ import org.dhis2.commons.data.ProgramConfigurationRepository
 import org.dhis2.commons.date.DateUtils
 import org.dhis2.commons.di.dagger.PerFragment
 import org.dhis2.commons.network.NetworkUtils
-import org.dhis2.commons.reporting.CrashReportController
-import org.dhis2.commons.reporting.CrashReportControllerImpl
 import org.dhis2.commons.resources.D2ErrorUtils
 import org.dhis2.commons.resources.DhisPeriodUtils
 import org.dhis2.commons.resources.MetadataIconProvider
@@ -21,6 +19,8 @@ import org.dhis2.data.forms.dataentry.SearchTEIRepository
 import org.dhis2.data.forms.dataentry.SearchTEIRepositoryImpl
 import org.dhis2.form.data.FormValueStore
 import org.dhis2.form.data.OptionsRepository
+import org.dhis2.mobile.commons.reporting.CrashReportController
+import org.dhis2.mobile.commons.reporting.CrashReportControllerImpl
 import org.dhis2.mobileProgramRules.RuleEngineHelper
 import org.dhis2.tracker.events.CreateEventUseCase
 import org.dhis2.tracker.events.CreateEventUseCaseRepository
@@ -28,6 +28,7 @@ import org.dhis2.usescases.teiDashboard.DashboardRepository
 import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.teievents.ui.mapper.TEIEventCardMapper
 import org.dhis2.usescases.teiDashboard.domain.GetNewEventCreationTypeOptions
 import org.dhis2.usescases.teiDashboard.ui.mapper.InfoBarMapper
+import org.dhis2.usescases.teiDashboard.ui.mapper.QuickActionsMapper
 import org.dhis2.usescases.teiDashboard.ui.mapper.TeiDashboardCardMapper
 import org.dhis2.utils.analytics.AnalyticsHelper
 import org.hisp.dhis.android.core.D2
@@ -92,6 +93,7 @@ class TEIDataModule(
         d2: D2,
         periodUtils: DhisPeriodUtils,
         metadataIconProvider: MetadataIconProvider,
+        dateUtils: DateUtils,
     ): TeiDataRepository {
         return TeiDataRepositoryImpl(
             d2,
@@ -100,6 +102,7 @@ class TEIDataModule(
             enrollmentUid,
             periodUtils,
             metadataIconProvider,
+            dateUtils,
         )
     }
 
@@ -131,13 +134,6 @@ class TEIDataModule(
     }
 
     @Provides
-    fun provideProgramConfigurationRepository(
-        d2: D2,
-    ): ProgramConfigurationRepository {
-        return ProgramConfigurationRepository(d2)
-    }
-
-    @Provides
     fun provideEventCreationsOptionsMapper(
         resourceManager: ResourceManager,
     ): EventCreationOptionsMapper {
@@ -159,14 +155,22 @@ class TEIDataModule(
     }
 
     @Provides
+    fun provideQuickActionMapper(
+        resourceManager: ResourceManager,
+    ): QuickActionsMapper {
+        return QuickActionsMapper(programUid, resourceManager)
+    }
+
+    @Provides
     fun provideContractHandler() = TeiDataContractHandler(registry)
 
     @Provides
     @PerFragment
     fun providesTEIEventCardMapper(
         resourceManager: ResourceManager,
+        dateUtils: DateUtils,
     ): TEIEventCardMapper {
-        return TEIEventCardMapper(resourceManager)
+        return TEIEventCardMapper(resourceManager, dateUtils)
     }
 
     @Provides
@@ -191,5 +195,5 @@ class TEIDataModule(
     fun provideD2ErrorUtils() = D2ErrorUtils(view.context, NetworkUtils(view.context))
 
     @Provides
-    fun provideDateUtils() = DateUtils.getInstance()
+    fun provideDateUtils(): DateUtils = DateUtils.getInstance()
 }

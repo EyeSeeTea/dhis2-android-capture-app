@@ -7,11 +7,11 @@ import org.dhis2.commons.bindings.userFriendlyValue
 import org.dhis2.commons.data.EventViewModel
 import org.dhis2.commons.data.EventViewModelType
 import org.dhis2.commons.data.StageSection
+import org.dhis2.commons.date.DateUtils
 import org.dhis2.commons.resources.DhisPeriodUtils
 import org.dhis2.commons.resources.MetadataIconProvider
 import org.dhis2.ui.toColor
 import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.getProgramStageName
-import org.dhis2.utils.DateUtils
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.arch.repositories.scope.RepositoryScope
 import org.hisp.dhis.android.core.category.CategoryCombo
@@ -34,6 +34,7 @@ class TeiDataRepositoryImpl(
     private val enrollmentUid: String?,
     private val periodUtils: DhisPeriodUtils,
     private val metadataIconProvider: MetadataIconProvider,
+    private val dateUtils: DateUtils,
 ) : TeiDataRepository {
 
     override fun getTEIEnrollmentEvents(
@@ -402,7 +403,7 @@ class TeiDataRepositoryImpl(
     private fun checkEventStatus(events: List<Event>): List<Event> {
         return events.mapNotNull { event ->
             if (event.status() == EventStatus.SCHEDULE &&
-                event.dueDate()?.before(DateUtils.getInstance().today) == true
+                dateUtils.isEventDueDateOverdue(event.dueDate())
             ) {
                 d2.eventModule().events().uid(event.uid()).setStatus(EventStatus.OVERDUE)
                 d2.eventModule().events().uid(event.uid()).blockingGet()
