@@ -95,4 +95,37 @@ internal class DataSetModalDialogProvider(
             canComplete = canComplete,
         )
     }
+
+    // EyeSeeTea Customization - Team Change Request
+    suspend fun provideAskTeamChangeRequestDialog(
+        onDismiss: () -> Unit,
+        onNoClick: () -> Unit,
+        onYesClick: () -> Unit,
+    ): DataSetModalDialogUIState {
+        return DataSetModalDialogUIState(
+            contentDialogUIState = BottomSheetShellUIState(
+                title = resourceManager.provideCompletionDialogTitle(),
+                subtitle = resourceManager.provideTeamChangeRequestDialogDescription(),
+                showBottomSectionDivider = false,
+                headerTextAlignment = TextAlign.Start,
+            ),
+            onDismiss = onDismiss,
+            onPrimaryButtonClick = onNoClick,
+            onSecondaryButtonClick = onYesClick,
+            type = DataSetModalType.STANDARD,
+        )
+    }
+
+/*    override fun showTeamChangeRequestDialog() {
+        instance
+            //.setTitle(getString(R.string.validation_success_title))
+            .setMessage(getString(R.string.team_change_request))
+            .setPositiveButton(getString(R.string.yes)) {
+                presenter.createTeamChangeRequest()
+            }
+            .setNegativeButton(getString(R.string.no)) {
+                presenter.cancelChangeRequest()
+            }
+            .show(supportFragmentManager, AlertBottomDialog::class.java.simpleName)
+    }*/
 }

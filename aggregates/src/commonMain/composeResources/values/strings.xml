@@ -75,4 +75,8 @@
     <string name="dataset_closed">This data is not editable because it is marked as closed</string>
     <string name="dataset_expired">This data is not editable because its edition time has expired</string>
 
+    <string name="team_change_request">Do you want to create a change request for this team profile?</string>
+
+<!--    EyeSeeTea customization - Create change team request -->
+    <string name="create">Create</string>
 </resources>

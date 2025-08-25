@@ -16,6 +16,7 @@ import org.dhis2.mobile.aggregates.domain.CheckCompletionStatus
 import org.dhis2.mobile.aggregates.domain.CheckValidationRulesConfiguration
 import org.dhis2.mobile.aggregates.domain.CompleteDataSet
 import org.dhis2.mobile.aggregates.domain.ComputeResizeAction
+import org.dhis2.mobile.aggregates.domain.CreateChangeTeamRequest
 import org.dhis2.mobile.aggregates.domain.GetDataSetInstanceData
 import org.dhis2.mobile.aggregates.domain.GetDataSetSectionData
 import org.dhis2.mobile.aggregates.domain.GetDataSetSectionIndicators
@@ -68,6 +69,9 @@ import org.hisp.dhis.mobile.ui.designsystem.component.table.model.TableCell
 import org.hisp.dhis.mobile.ui.designsystem.component.table.model.TableModel
 import org.hisp.dhis.mobile.ui.designsystem.component.table.ui.TableSelection
 
+// EyeSeeTea customization - Create Team change request
+private const val TEAM_REQUEST_DATASET = "seT5Zh1Egnj"
+
 internal class DataSetTableViewModel(
     private val onClose: () -> Unit,
     private val getDataSetInstanceData: GetDataSetInstanceData,
@@ -89,6 +93,7 @@ internal class DataSetTableViewModel(
     private val uiActionHandler: UiActionHandler,
     private val inputDataUiStateMapper: InputDataUiStateMapper,
     private val fieldErrorMessageProvider: FieldErrorMessageProvider,
+    private val createChangeTeamRequest: CreateChangeTeamRequest
 ) : ViewModel() {
 
     private var sectionChangeJob: Job? = null
@@ -637,11 +642,21 @@ internal class DataSetTableViewModel(
             val result = withContext(dispatcher.io()) {
                 checkValidationRulesConfiguration()
             }
+
+            // EyeSeeTea customization - Create Team change request
+            val dataSetInstanceData = getDataSetInstanceData(this)
+
             CoroutineTracker.decrement()
 
             when (result) {
                 NONE -> {
-                    attemptToFinish()
+                    // EyeSeeTea customization - Create Team change request
+                    //attemptToFinish()
+                    if (dataSetInstanceData.dataSetDetails.dataSetUid == TEAM_REQUEST_DATASET) {
+                        askCreateTeamChangeRequest()
+                    } else {
+                        attemptToFinish()
+                    }
                 }
 
                 MANDATORY -> {
@@ -880,6 +895,39 @@ internal class DataSetTableViewModel(
             } else {
                 it
             }
+        }
+    }
+
+    // EyeSeeTea customization - - Create Team change request
+    private fun askCreateTeamChangeRequest() {
+        viewModelScope.launch {
+            _dataSetScreenState.update {
+                if (it is DataSetScreenState.Loaded ) {
+                    it.copy(
+                        modalDialog = datasetModalDialogProvider.provideAskTeamChangeRequestDialog(
+                            onDismiss = { onModalDialogDismissed() },
+                            onNoClick = { attemptToFinish() },
+                            onYesClick = { createTeamChange() },
+                        ),
+                    )
+                } else {
+                    it
+                }
+            }
+            CoroutineTracker.decrement()
+        }
+    }
+
+    // EyeSeeTea customization - Create Team change request
+    private fun createTeamChange() {
+        viewModelScope.launch {
+            CoroutineTracker.increment()
+
+            createChangeTeamRequest()
+
+            attemptToFinish()
+
+            CoroutineTracker.decrement()
         }
     }
 }

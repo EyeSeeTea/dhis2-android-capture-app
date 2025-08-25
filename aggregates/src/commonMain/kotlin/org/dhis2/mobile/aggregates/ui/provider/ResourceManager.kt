@@ -17,6 +17,7 @@ import org.dhis2.mobile.aggregates.resources.indicators_label
 import org.dhis2.mobile.aggregates.resources.mark_dataset_complete
 import org.dhis2.mobile.aggregates.resources.run_validation_rules
 import org.dhis2.mobile.aggregates.resources.saved
+import org.dhis2.mobile.aggregates.resources.team_change_request
 import org.dhis2.mobile.aggregates.resources.total_header_label
 import org.dhis2.mobile.aggregates.resources.validation_success_title
 import org.jetbrains.compose.resources.getString
@@ -63,4 +64,8 @@ internal class ResourceManager {
     suspend fun provideFileDownloadError() = getString(Res.string.file_download_error)
 
     suspend fun indicatorsLabel() = getString(Res.string.indicators_label)
+
+    // EyeSeeTea Customization - Team Change Request
+    suspend fun provideTeamChangeRequestDialogDescription() = getString(Res.string.team_change_request)
+
 }

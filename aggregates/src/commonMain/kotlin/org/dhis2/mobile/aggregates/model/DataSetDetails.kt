@@ -8,6 +8,9 @@ internal data class DataSetDetails(
     val catOptionComboLabel: String?,
     val isCompleted: Boolean,
     val edition: DataSetEdition,
+
+    // EyeSeeTea customization - Create Change Team Request
+    val dataSetUid: String,
 )
 
 data class DataSetCustomTitle(

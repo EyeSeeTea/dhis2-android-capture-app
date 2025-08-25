@@ -160,6 +160,7 @@ internal class DataSetInstanceRepositoryImpl(
                 isCompleted = isComplete(dataSetUid, periodId, orgUnitUid, attrOptionComboUid),
                 edition = edition,
             ) ?: DataSetDetails(
+            dataSetUid = dataSetUid,
             customTitle = dataSetDTOCustomTitle.toCustomTitle(),
             dataSetTitle = dataSet?.displayName()!!,
             dateLabel = periodLabel,
@@ -1137,5 +1138,13 @@ internal class DataSetInstanceRepositoryImpl(
         } else {
             (listOf(dataElementLabel) + categoryOptionNames).joinToString(" / ")
         }
+    }
+
+    //EyeSeeTea customization - Create Change Team Request
+    override suspend fun getParentOrgUnit(orgUnitUid:String): String {
+        val orgUnit = d2.organisationUnitModule().organisationUnits().uid(orgUnitUid).blockingGet()
+        val path = orgUnit!!.path()!!.split("/")
+
+        return path[path.size - 2]
     }
 }

@@ -15,6 +15,7 @@ internal fun DataSetInstance.toDataSetDetails(
     isCompleted: Boolean,
     edition: DataSetEdition,
 ) = DataSetDetails(
+    dataSetUid = this.dataSetUid(),
     customTitle = customText?.toCustomTitle() ?: DataSetCustomTitle(
         header = null,
         subHeader = null,

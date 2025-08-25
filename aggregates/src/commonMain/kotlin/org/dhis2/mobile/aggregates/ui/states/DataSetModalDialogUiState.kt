@@ -19,4 +19,7 @@ internal enum class DataSetModalType {
     MANDATORY_FIELDS,
     VALIDATION_RULES,
     VALIDATION_RULES_ERROR,
+
+    // EyeSeeTea customization - Create Change Team Request
+    STANDARD
 }

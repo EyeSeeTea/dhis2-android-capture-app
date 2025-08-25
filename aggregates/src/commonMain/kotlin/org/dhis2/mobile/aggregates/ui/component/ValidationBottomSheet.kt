@@ -12,6 +12,7 @@ import org.dhis2.mobile.aggregates.model.Violation
 import org.dhis2.mobile.aggregates.resources.Res
 import org.dhis2.mobile.aggregates.resources.complete
 import org.dhis2.mobile.aggregates.resources.complete_anyway
+import org.dhis2.mobile.aggregates.resources.create
 import org.dhis2.mobile.aggregates.resources.no
 import org.dhis2.mobile.aggregates.resources.not_now
 import org.dhis2.mobile.aggregates.resources.ok
@@ -109,6 +110,7 @@ private fun provideButtonBlock(
     canComplete: Boolean,
 ) {
     when (type) {
+
         COMPLETION -> {
             ButtonBlock(
                 modifier = Modifier.padding(
@@ -203,6 +205,34 @@ private fun provideButtonBlock(
                         text = stringResource(Res.string.review),
                         onClick = onSecondaryButtonClick,
                     )
+                },
+            )
+        }
+
+        // EyeSeeTea Customization - Team Change Request
+        DataSetModalType.STANDARD -> {
+            ButtonBlock(
+                modifier = Modifier.padding(
+                    BottomSheetShellDefaults.buttonBlockPaddings(),
+                ),
+                primaryButton = {
+                    Button(
+                        style = ButtonStyle.OUTLINED,
+                        text = stringResource(Res.string.not_now),
+                        onClick = onPrimaryButtonClick,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                },
+                secondaryButton = {
+                    if (canComplete) {
+                        Button(
+                            style = ButtonStyle.FILLED,
+                            text = stringResource(Res.string.create),
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            onClick = onSecondaryButtonClick,
+                        )
+                    }
                 },
             )
         }
