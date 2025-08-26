@@ -45,8 +45,10 @@ internal class InputDataUiStateMapper(
             id = cellId,
             label = cellInfo.label,
             value = cellInfo.value,
-            displayValue = valueWithError?.takeIf { valueWithError.isNotEmpty() }
-                ?: cellInfo.displayValue,
+            //EyeSeeTea customization - multiple SDS org unit selection
+//            displayValue = valueWithError?.takeIf { valueWithError.isNotEmpty() }
+//                ?: cellInfo.displayValue,
+            displayValue = cellInfo.displayValue,
             inputType = cellInfo.inputType,
             inputShellState = when {
                 validationError != null || cellInfo.errors.isNotEmpty() -> InputShellState.ERROR

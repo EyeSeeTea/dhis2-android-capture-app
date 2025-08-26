@@ -26,6 +26,7 @@ import org.dhis2.mobile.aggregates.domain.ReopenDataSet
 import org.dhis2.mobile.aggregates.domain.RunValidationRules
 import org.dhis2.mobile.aggregates.domain.SetDataValue
 import org.dhis2.mobile.aggregates.domain.UploadFile
+import org.dhis2.mobile.aggregates.domain.teamChangeRequestDataSet
 import org.dhis2.mobile.aggregates.model.DataSetCompletionStatus.COMPLETED
 import org.dhis2.mobile.aggregates.model.DataSetCompletionStatus.NOT_COMPLETED_EDITABLE
 import org.dhis2.mobile.aggregates.model.DataSetCompletionStatus.NOT_COMPLETED_NOT_EDITABLE
@@ -68,9 +69,6 @@ import org.hisp.dhis.mobile.ui.designsystem.component.UploadFileState
 import org.hisp.dhis.mobile.ui.designsystem.component.table.model.TableCell
 import org.hisp.dhis.mobile.ui.designsystem.component.table.model.TableModel
 import org.hisp.dhis.mobile.ui.designsystem.component.table.ui.TableSelection
-
-// EyeSeeTea customization - Create Team change request
-private const val TEAM_REQUEST_DATASET = "seT5Zh1Egnj"
 
 internal class DataSetTableViewModel(
     private val onClose: () -> Unit,
@@ -512,9 +510,17 @@ internal class DataSetTableViewModel(
                 }
 
                 is UiAction.OnOpenOrgUnitTree -> {
+
+                    // EyeSeeTea customization - multiple SDS org unit selection
+//                    val preselectedOrgUnits = uiAction.currentOrgUnitUid
+//                        ?.let { listOf(uiAction.currentOrgUnitUid) } ?: emptyList()
+
+                    val preselectedOrgUnits = uiAction.currentOrgUnitUid
+                        ?.let { uiAction.currentOrgUnitUid.split(",") } ?: emptyList()
+
                     uiActionHandler.onCaptureOrgUnit(
-                        uiAction.currentOrgUnitUid
-                            ?.let { listOf(uiAction.currentOrgUnitUid) } ?: emptyList(),
+                        preselectedOrgUnits,
+                        uiAction.singleSelection
                     ) {
                         onUiAction(
                             UiAction.OnValueChanged(
@@ -652,7 +658,7 @@ internal class DataSetTableViewModel(
                 NONE -> {
                     // EyeSeeTea customization - Create Team change request
                     //attemptToFinish()
-                    if (dataSetInstanceData.dataSetDetails.dataSetUid == TEAM_REQUEST_DATASET) {
+                    if (dataSetInstanceData.dataSetDetails.dataSetUid == teamChangeRequestDataSet) {
                         askCreateTeamChangeRequest()
                     } else {
                         attemptToFinish()

@@ -1147,4 +1147,12 @@ internal class DataSetInstanceRepositoryImpl(
 
         return path[path.size - 2]
     }
+
+    // EyeSeeTea customization - multiple SDS org unit selection
+    override suspend fun getOrgUnitById(orgUnitUid: String): String? {
+        return d2.organisationUnitModule().organisationUnits()
+            .uid(orgUnitUid)
+            .blockingGet()
+            ?.displayName()
+    }
 }

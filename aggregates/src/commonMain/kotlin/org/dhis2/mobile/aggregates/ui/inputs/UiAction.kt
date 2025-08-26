@@ -66,6 +66,7 @@ sealed class UiAction(open val cellId: String) {
     data class OnOpenOrgUnitTree(
         override val cellId: String,
         val currentOrgUnitUid: String?,
+        val singleSelection: Boolean = true,
     ) : UiAction(cellId)
 
     data class OnFetchOptions(

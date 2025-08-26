@@ -26,6 +26,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import org.dhis2.mobile.aggregates.domain.teamSDSUid
 import org.dhis2.mobile.aggregates.model.InputType
 import org.dhis2.mobile.aggregates.resources.Res
 import org.dhis2.mobile.aggregates.resources.action_done
@@ -46,6 +47,7 @@ import org.dhis2.mobile.aggregates.resources.input_not_supported
 import org.dhis2.mobile.aggregates.resources.no_results_found
 import org.dhis2.mobile.aggregates.resources.search_to_find_more
 import org.dhis2.mobile.aggregates.resources.take_photo
+import org.dhis2.mobile.aggregates.ui.provider.IdsProvider.getDataElementUid
 import org.dhis2.mobile.aggregates.ui.states.CellSelectionState.InputDataUiState
 import org.dhis2.mobile.commons.extensions.fileSizeLabel
 import org.dhis2.mobile.commons.extensions.getDateFromAge
@@ -838,7 +840,8 @@ internal fun InputProvider(
         }
 
         InputType.Text -> {
-            InputText(
+            // EyeSeeTea customization: multiple SDS org unit selection
+      /*      InputText(
                 title = inputData.label,
                 state = inputData.inputShellState,
                 supportingText = inputData.supportingText,
@@ -854,7 +857,49 @@ internal fun InputProvider(
                 imeAction = imeAction,
                 modifier = modifierWithFocus,
                 inputStyle = inputData.inputStyle,
-            )
+            )*/
+            val (rowIds, columnIds) = CellIdGenerator.getIdInfo(inputData.id)
+            val dataElementUid = getDataElementUid(rowIds, columnIds)
+
+            if (dataElementUid== teamSDSUid) {
+                InputOrgUnit(
+                    title = inputData.label,
+                    state = inputData.inputShellState,
+                    inputStyle = inputData.inputStyle,
+                    supportingText = inputData.supportingText,
+                    legendData = inputData.legendData,
+                    inputText = inputData.displayValue,
+                    isRequiredField = inputData.isRequired,
+                    onValueChanged = {
+                        textValue = (it ?: TextFieldValue()) as TextFieldValue
+                        onAction(UiAction.OnValueChanged(inputData.id, it))
+                    },
+                    onFocusChanged = { onAction.invoke(UiAction.OnFocusChanged(inputData.id, it)) },
+                    modifier = modifierWithFocus,
+                    onOrgUnitActionCLicked = {
+                        onAction(UiAction.OnOpenOrgUnitTree(inputData.id, inputData.value, singleSelection = false))
+                    },
+                )
+            } else {
+                InputText(
+                    title = inputData.label,
+                    state = inputData.inputShellState,
+                    supportingText = inputData.supportingText,
+                    legendData = inputData.legendData,
+                    inputTextFieldValue = textValue,
+                    isRequiredField = inputData.isRequired,
+                    onNextClicked = { onAction.invoke(UiAction.OnNextClick(inputData.id)) },
+                    onValueChanged = {
+                        textValue = it ?: TextFieldValue()
+                        onAction(UiAction.OnValueChanged(inputData.id, textValue.text))
+                    },
+                    onFocusChanged = { onAction.invoke(UiAction.OnFocusChanged(inputData.id, it)) },
+                    imeAction = imeAction,
+                    modifier = modifierWithFocus,
+                    inputStyle = inputData.inputStyle,
+                )
+            }
+
         }
 
         InputType.TrueOnly -> {

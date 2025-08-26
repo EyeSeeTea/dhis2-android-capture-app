@@ -10,6 +10,7 @@ interface UiActionHandler {
 
     fun onCaptureOrgUnit(
         preselectedOrgUnits: List<String>,
+        singleSelection:Boolean,
         callback: (result: String?) -> Unit,
     )
 

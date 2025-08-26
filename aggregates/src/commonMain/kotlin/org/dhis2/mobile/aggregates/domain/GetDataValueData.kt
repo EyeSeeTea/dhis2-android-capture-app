@@ -3,7 +3,6 @@ package org.dhis2.mobile.aggregates.domain
 import org.dhis2.mobile.aggregates.data.DataSetInstanceRepository
 import org.dhis2.mobile.aggregates.model.Conflicts
 import org.dhis2.mobile.aggregates.model.DataValueData
-import org.dhis2.mobile.commons.extensions.userFriendlyValue
 
 internal class GetDataValueData(
     private val datasetUid: String,
@@ -25,7 +24,9 @@ internal class GetDataValueData(
             pivotedCategoryUid = pivotedCategoryUid,
         ).associate { (key, value) ->
             key to DataValueData(
-                value = value?.userFriendlyValue(key.first),
+                // EyeSeeTea customization - multiple SDS org unit selection
+                //value = value?.userFriendlyValue(key.first),
+                value = createDisplayValue(dataSetInstanceRepository, key.first, value),
                 conflicts = conflicts(key.first, key.second),
                 legendColor = dataSetInstanceRepository.getLegend(
                     dataElementUid = key.first,

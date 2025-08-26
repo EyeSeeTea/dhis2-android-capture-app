@@ -175,4 +175,8 @@ internal interface DataSetInstanceRepository {
 
     // EyeSeeTea customization - Create Team change request
     suspend fun getParentOrgUnit(orgUnitUid: String): String
+
+    // EyeSeeTea customization - multiple SDS org unit selection
+    suspend fun getOrgUnitById(orgUnitUid: String): String?
+
 }

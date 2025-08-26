@@ -138,14 +138,32 @@ class UiActionHandlerImpl(
 
     override fun onCaptureOrgUnit(
         preselectedOrgUnits: List<String>,
+        singleSelection: Boolean,
         callback: (result: String?) -> Unit,
     ) {
         OUTreeFragment.Builder()
             .withPreselectedOrgUnits(preselectedOrgUnits)
-            .singleSelection()
+            //EyeSeeTea customization - multiple SDS org unit selection
+            //.singleSelection()
+            .let {
+                if (singleSelection) {
+                    it.singleSelection()
+                } else {
+                    it
+                }
+            }
             .onSelection { selectedOrgUnits ->
+                // EyeSeeTea customization - multiple SDS org unit selection
+                /*
                 if (selectedOrgUnits.isNotEmpty()) {
-                    callback(selectedOrgUnits.firstOrNull()?.uid())
+                   callback(selectedOrgUnits.firstOrNull()?.uid())
+                }
+                */
+                if (selectedOrgUnits.isNotEmpty()) {
+                    val value = if (singleSelection) selectedOrgUnits.firstOrNull()
+                        ?.uid() else selectedOrgUnits.joinToString(",") { it.uid() }
+
+                    callback(value)
                 }
             }
             .orgUnitScope(OrgUnitSelectorScope.DataSetCaptureScope(dataSetUid))

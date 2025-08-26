@@ -7,7 +7,6 @@ import org.dhis2.mobile.aggregates.model.CellInfo
 import org.dhis2.mobile.aggregates.model.CellValueExtra
 import org.dhis2.mobile.aggregates.model.InputType
 import org.dhis2.mobile.commons.extensions.getFormattedFileSize
-import org.dhis2.mobile.commons.extensions.userFriendlyValue
 
 internal class GetDataValueInput(
     private val dataSetUid: String,
@@ -63,7 +62,9 @@ internal class GetDataValueInput(
         CellInfo(
             label = dataElementInfo.label,
             value = value,
-            displayValue = value?.userFriendlyValue(dataElementUid),
+            // EyeSeeTea customization - multiple SDS org unit selection
+            //displayValue = value?.userFriendlyValue(dataElementUid),
+            displayValue = createDisplayValue(repository, dataElementUid, value),
             inputType = dataElementInfo.inputType,
             inputExtra = when (dataElementInfo.inputType) {
                 InputType.Coordinates -> value?.let {
