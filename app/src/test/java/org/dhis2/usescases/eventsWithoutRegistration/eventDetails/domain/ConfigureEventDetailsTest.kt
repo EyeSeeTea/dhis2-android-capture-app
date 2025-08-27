@@ -50,6 +50,8 @@ class ConfigureEventDetailsTest {
 
     @Test
     fun `action button should be visible on new event`() = runBlocking {
+        whenever(repository.isOrgUnitActive(any(), any())) doReturn true
+
         // Given user creates a new event
         configureEventDetails = ConfigureEventDetails(
             repository = repository,
@@ -109,6 +111,7 @@ class ConfigureEventDetailsTest {
     fun `action button should be visible on existing event`() = runBlocking {
         // Given user is in an existing event
         whenever(repository.getEvent()) doReturn event
+        whenever(repository.isOrgUnitActive(any(), any())) doReturn true
 
         configureEventDetails = ConfigureEventDetails(
             repository = repository,

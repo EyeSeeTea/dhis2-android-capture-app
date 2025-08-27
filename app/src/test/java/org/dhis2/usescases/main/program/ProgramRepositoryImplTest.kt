@@ -77,7 +77,7 @@ class ProgramRepositoryImplTest {
             resourceManager.defaultTeiLabel(),
         ) doReturn "tei"
         whenever(
-            d2.dataSetModule().dataSets().uid(anyString()).blockingGet(),
+            d2.dataSetModule().dataSets().byAccessDataWrite().isTrue.uid(anyString()).blockingGet(),
         ) doReturn DataSet.builder()
             .uid("dataSetUid")
             .description("description")
