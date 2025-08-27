@@ -7,6 +7,7 @@ import org.dhis2.usescases.datasets.datasetInitial.DataSetInitialContract
 import org.dhis2.usescases.datasets.datasetInitial.DataSetInitialModel
 import org.dhis2.usescases.datasets.datasetInitial.DataSetInitialPresenter
 import org.dhis2.usescases.datasets.datasetInitial.DataSetInitialRepository
+import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.category.CategoryOption
 import org.hisp.dhis.android.core.organisationunit.OrganisationUnit
 import org.hisp.dhis.android.core.period.PeriodType
@@ -28,13 +29,15 @@ class DataSetInitialPresenterTest {
     private val view: DataSetInitialContract.View = mock()
     private val repository: DataSetInitialRepository = mock()
     private val scheduler = TrampolineSchedulerProvider()
+    private val d2: D2 = mock()
 
     @Before
     fun setUp() {
-        presenter = DataSetInitialPresenter(view, repository, scheduler)
+        presenter = DataSetInitialPresenter(view, d2, repository, scheduler)
     }
 
     private fun dummyDataSetInitial() = DataSetInitialModel.create(
+        "uid",
         "name",
         "desc",
         "catComboUid",
