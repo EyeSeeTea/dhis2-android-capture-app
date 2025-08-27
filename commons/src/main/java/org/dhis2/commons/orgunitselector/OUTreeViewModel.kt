@@ -3,7 +3,10 @@ package org.dhis2.commons.orgunitselector
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.dhis2.commons.schedulers.SingleEventEnforcer
@@ -16,10 +19,17 @@ class OUTreeViewModel(
     private val repository: OUTreeRepository,
     private val selectedOrgUnits: MutableList<String>,
     private val singleSelection: Boolean,
+    private val model: OUTreeModel,
     private val dispatchers: DispatcherProvider,
 ) : ViewModel() {
     private val _treeNodes = MutableStateFlow(emptyList<OrgTreeItem>())
-    val treeNodes: StateFlow<List<OrgTreeItem>> = _treeNodes
+    val treeNodes: StateFlow<List<OrgTreeItem>> = _treeNodes.map { list ->
+        model.hideOrgUnits?.let { filterUnits ->
+            list.filterNot { orgUnit ->
+                filterUnits.any { filterUnit -> filterUnit.uid() == orgUnit.uid }
+            }
+        } ?: list
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _finalSelectedOrgUnits = MutableStateFlow(emptyList<OrganisationUnit>())
     val finalSelectedOrgUnits: StateFlow<List<OrganisationUnit>> = _finalSelectedOrgUnits
@@ -32,6 +42,7 @@ class OUTreeViewModel(
 
     private fun fetchInitialOrgUnits(name: String? = null) {
         viewModelScope.launch(dispatchers.io()) {
+            OrgUnitIdlingResource.increment()
             val orgUnits = repository.orgUnits(name)
             val treeNodes = ArrayList<OrgTreeItem>()
 
@@ -53,6 +64,7 @@ class OUTreeViewModel(
                     ),
                 )
             }
+            OrgUnitIdlingResource.decrement()
             _treeNodes.update { treeNodes }
         }
     }
@@ -70,6 +82,8 @@ class OUTreeViewModel(
             _treeNodes.update { openChildren(parentOrgUnitUid = parentOrgUnitUid) }
         }
     }
+
+    fun model() = model
 
     private fun openChildren(
         currentList: List<OrgTreeItem> = _treeNodes.value,
@@ -102,6 +116,7 @@ class OUTreeViewModel(
 
     fun onOrgUnitCheckChanged(orgUnitUid: String, isChecked: Boolean) {
         viewModelScope.launch(dispatchers.io()) {
+            OrgUnitIdlingResource.increment()
             if (singleSelection) {
                 selectedOrgUnits.clear()
             }
@@ -119,12 +134,14 @@ class OUTreeViewModel(
                     ),
                 )
             }
+            OrgUnitIdlingResource.decrement()
             _treeNodes.update { treeNodeList }
         }
     }
 
     fun clearAll() {
         viewModelScope.launch(dispatchers.io()) {
+            OrgUnitIdlingResource.increment()
             selectedOrgUnits.clear()
             val treeNodeList = treeNodes.value.map { currentTreeNode ->
                 currentTreeNode.copy(
@@ -132,6 +149,7 @@ class OUTreeViewModel(
                     selectedChildrenCount = 0,
                 )
             }
+            OrgUnitIdlingResource.decrement()
             _treeNodes.update { treeNodeList }
         }
     }

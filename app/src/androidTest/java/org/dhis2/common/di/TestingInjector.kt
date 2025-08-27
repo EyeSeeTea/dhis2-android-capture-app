@@ -1,12 +1,17 @@
 package org.dhis2.common.di
 
 import android.content.Context
+import androidx.test.platform.app.InstrumentationRegistry
 import org.dhis2.DBTestLoader
 import org.dhis2.common.FileReader
+import org.dhis2.common.featureConfig.FeatureConfigRobot
 import org.dhis2.common.keystore.KeyStoreRobot
 import org.dhis2.common.mockwebserver.MockWebServerRobot
 import org.dhis2.common.preferences.PreferenceTestingImpl
 import org.dhis2.common.preferences.PreferencesRobot
+import org.dhis2.commons.featureconfig.data.FeatureConfigRepository
+import org.dhis2.commons.featureconfig.data.FeatureConfigRepositoryImpl
+import org.hisp.dhis.android.core.D2Manager
 import org.hisp.dhis.android.core.arch.storage.internal.AndroidSecureStore
 import org.hisp.dhis.android.core.mockwebserver.Dhis2MockServer
 
@@ -28,8 +33,12 @@ class TestingInjector {
                     Context.MODE_PRIVATE
                 ))
         }
-        fun providesMockWebserverRobot(context: Context): MockWebServerRobot {
-            return MockWebServerRobot(Dhis2MockServer(FileReader(context), 8080))
+
+        fun providesFeatureConfigRobot(): FeatureConfigRobot {
+            return  FeatureConfigRobot(FeatureConfigRepositoryImpl(D2Manager.getD2()))
+        }
+        fun providesMockWebserverRobot(testContext: Context): MockWebServerRobot {
+            return MockWebServerRobot(Dhis2MockServer(FileReader(testContext), 8080))
         }
         fun provideDBImporter(context: Context): DBTestLoader {
             return DBTestLoader(context)

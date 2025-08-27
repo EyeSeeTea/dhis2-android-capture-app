@@ -10,12 +10,12 @@ import org.dhis2.commons.di.dagger.PerActivity
 import org.dhis2.commons.matomo.MatomoAnalyticsController
 import org.dhis2.commons.network.NetworkUtils
 import org.dhis2.commons.prefs.PreferenceProviderImpl
-import org.dhis2.commons.reporting.CrashReportController
 import org.dhis2.commons.resources.DhisPeriodUtils
 import org.dhis2.commons.resources.EventResourcesProvider
 import org.dhis2.commons.resources.MetadataIconProvider
 import org.dhis2.commons.resources.ResourceManager
 import org.dhis2.commons.schedulers.SchedulerProvider
+import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.data.dhislogic.DhisEnrollmentUtils
 import org.dhis2.data.forms.dataentry.SearchTEIRepository
 import org.dhis2.data.forms.dataentry.SearchTEIRepositoryImpl
@@ -39,7 +39,8 @@ import org.dhis2.form.ui.provider.HintProviderImpl
 import org.dhis2.form.ui.provider.KeyboardActionProviderImpl
 import org.dhis2.form.ui.provider.LegendValueProviderImpl
 import org.dhis2.form.ui.provider.UiEventTypesProviderImpl
-import org.dhis2.form.ui.validation.FieldErrorMessageProvider
+import org.dhis2.mobile.commons.providers.FieldErrorMessageProvider
+import org.dhis2.mobile.commons.reporting.CrashReportController
 import org.dhis2.usescases.teiDashboard.TeiAttributesProvider
 import org.dhis2.utils.analytics.AnalyticsHelper
 import org.hisp.dhis.android.core.D2
@@ -84,7 +85,8 @@ class EnrollmentModule(
     @PerActivity
     fun provideEnrollmentConfiguration(
         d2: D2,
-    ) = EnrollmentConfiguration(d2, enrollmentUid)
+        dispatcherProvider: DispatcherProvider,
+    ) = EnrollmentConfiguration(d2, enrollmentUid, dispatcherProvider)
 
     @Provides
     @PerActivity
@@ -194,7 +196,7 @@ class EnrollmentModule(
         searchTEIRepository: SearchTEIRepository,
         resourceManager: ResourceManager,
     ): ValueStore {
-        val fieldErrorMessageProvider = FieldErrorMessageProvider(activityContext)
+        val fieldErrorMessageProvider = FieldErrorMessageProvider()
         return ValueStoreImpl(
             d2,
             enrollmentRepository.blockingGet()?.trackedEntityInstance()!!,

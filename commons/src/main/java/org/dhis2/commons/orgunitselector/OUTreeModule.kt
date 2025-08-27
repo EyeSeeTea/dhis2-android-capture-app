@@ -35,6 +35,7 @@ import org.hisp.dhis.android.core.D2
 
 @Module
 class OUTreeModule(
+    private val model: OUTreeModel,
     private val preselectedOrgUnits: List<String>,
     private val singleSelection: Boolean,
     private val orgUnitSelectorScope: OrgUnitSelectorScope,
@@ -51,6 +52,7 @@ class OUTreeModule(
             dispatcherProvider,
             preselectedOrgUnits.toMutableList(),
             singleSelection,
+            model,
         )
     }
 

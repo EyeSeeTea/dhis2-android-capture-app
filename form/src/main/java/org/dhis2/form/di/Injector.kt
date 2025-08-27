@@ -3,10 +3,8 @@ package org.dhis2.form.di
 import android.content.Context
 import org.dhis2.commons.R
 import org.dhis2.commons.data.EntryMode
-import org.dhis2.commons.date.DateUtils
 import org.dhis2.commons.network.NetworkUtils
 import org.dhis2.commons.prefs.PreferenceProviderImpl
-import org.dhis2.commons.reporting.CrashReportControllerImpl
 import org.dhis2.commons.resources.ColorUtils
 import org.dhis2.commons.resources.DhisPeriodUtils
 import org.dhis2.commons.resources.EventResourcesProvider
@@ -40,7 +38,8 @@ import org.dhis2.form.ui.provider.HintProviderImpl
 import org.dhis2.form.ui.provider.KeyboardActionProviderImpl
 import org.dhis2.form.ui.provider.LegendValueProviderImpl
 import org.dhis2.form.ui.provider.UiEventTypesProviderImpl
-import org.dhis2.form.ui.validation.FieldErrorMessageProvider
+import org.dhis2.mobile.commons.providers.FieldErrorMessageProvider
+import org.dhis2.mobile.commons.reporting.CrashReportControllerImpl
 import org.dhis2.mobileProgramRules.EvaluationType
 import org.dhis2.mobileProgramRules.RuleEngineHelper
 import org.dhis2.mobileProgramRules.RulesRepository
@@ -92,7 +91,7 @@ object Injector {
                 recordUid = repositoryRecords.recordUid,
                 entryMode = repositoryRecords.entryMode,
             ),
-            fieldErrorMessageProvider = provideFieldErrorMessage(context),
+            fieldErrorMessageProvider = provideFieldErrorMessage(),
             displayNameProvider = provideDisplayNameProvider(context),
             dataEntryRepository = provideDataEntryRepository(
                 entryMode = repositoryRecords.entryMode,
@@ -141,6 +140,7 @@ object Injector {
             conf = EnrollmentConfiguration(
                 provideD2(),
                 enrollmentRecords.enrollmentUid,
+                provideDispatchers(),
             ),
             enrollmentMode = enrollmentRecords.enrollmentMode,
             enrollmentFormLabelsProvider = provideEnrollmentFormLabelsProvider(context),
@@ -162,8 +162,8 @@ object Injector {
                 provideD2(),
                 provideResourcesManager(context),
             ),
-            dateUtils = DateUtils.getInstance(),
             eventMode = eventRecords.eventMode,
+            dispatcherProvider = provideDispatchers(),
         )
     }
 
@@ -236,7 +236,7 @@ object Injector {
         provideColorUtils(),
     )
 
-    private fun provideFieldErrorMessage(context: Context) = FieldErrorMessageProvider(context)
+    private fun provideFieldErrorMessage() = FieldErrorMessageProvider()
 
     private fun provideDisplayNameProvider(context: Context) = DisplayNameProviderImpl(
         OptionSetConfiguration(provideD2()),

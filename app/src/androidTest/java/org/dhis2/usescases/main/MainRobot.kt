@@ -1,8 +1,11 @@
 package org.dhis2.usescases.main
 
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.espresso.Espresso.onView
@@ -49,6 +52,10 @@ class MainRobot : BaseRobot() {
     }
 
     fun checkViewIsNotEmpty(composeTestRule: ComposeTestRule) {
+        composeTestRule.waitUntil() {
+            composeTestRule.onNodeWithTag(HOME_ITEMS)
+                .fetchSemanticsNode().config.getOrNull(HasPrograms) == true
+        }
         composeTestRule.onNodeWithTag(HOME_ITEMS).assert(
             SemanticsMatcher.expectValue(HasPrograms, true)
         )
@@ -58,7 +65,9 @@ class MainRobot : BaseRobot() {
         Intents.intended(allOf(IntentMatchers.hasComponent(LoginActivity::class.java.name)))
     }
 
+    @OptIn(ExperimentalTestApi::class)
     fun checkHomeIsDisplayed(composeTestRule: ComposeTestRule) {
+        composeTestRule.waitUntilAtLeastOneExists(hasTestTag(HOME_ITEMS))
         composeTestRule.onNodeWithTag(HOME_ITEMS).assertIsDisplayed()
     }
 

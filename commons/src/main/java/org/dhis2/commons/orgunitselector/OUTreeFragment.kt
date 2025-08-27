@@ -20,6 +20,9 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 import org.dhis2.commons.R
+import org.dhis2.commons.dialogs.bottomsheet.bottomSheetInsets
+import org.dhis2.commons.dialogs.bottomsheet.bottomSheetLowerPadding
+import org.dhis2.mobile.commons.coroutine.CoroutineTracker
 import org.dhis2.commons.team.ValidationData
 import org.hisp.dhis.android.core.organisationunit.OrganisationUnit
 import org.hisp.dhis.mobile.ui.designsystem.component.OrgBottomSheet
@@ -79,6 +82,7 @@ class OUTreeFragment : BottomSheetDialogFragment() {
         }
 
         fun build(): OUTreeFragment {
+            CoroutineTracker.increment()
             return OUTreeFragment().apply {
                 selectionCallback = selectionListener
                 model = ouTreeModel
@@ -89,6 +93,7 @@ class OUTreeFragment : BottomSheetDialogFragment() {
                     putString(PERIOD, period)
                     putString(PROGRAM_OR_DATASET_TO_VALIDATE, programOrDataSetToValidate)
                 }
+                CoroutineTracker.decrement()
             }
         }
     }
@@ -100,7 +105,7 @@ class OUTreeFragment : BottomSheetDialogFragment() {
 
     var selectionCallback: ((selectedOrgUnits: List<OrganisationUnit>) -> Unit) = {}
 
-    private lateinit var model: OUTreeModel
+    private var model: OUTreeModel = OUTreeModel()
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -109,6 +114,7 @@ class OUTreeFragment : BottomSheetDialogFragment() {
 
         (context.applicationContext as OUTreeComponentProvider).provideOUTreeComponent(
             OUTreeModule(
+                model = model,
                 preselectedOrgUnits = requireArguments().getStringArrayList(ARG_PRE_SELECTED_OU)
                     ?.toList() ?: emptyList(),
                 singleSelection = requireArguments().getBoolean(ARG_SINGLE_SELECTION, false),
@@ -151,25 +157,22 @@ class OUTreeFragment : BottomSheetDialogFragment() {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 val list by viewmodel.treeNodes.collectAsState()
-                val filteredList = model.hideOrgUnits?.let { filterUnits ->
-                    list.filterNot { orgUnit ->
-                        filterUnits.any { filterUnit -> filterUnit.uid() == orgUnit.uid }
-                    }
-                } ?: list
 
                 OrgBottomSheet(
-                    title = model.title,
-                    subtitle = model.subtitle,
-                    headerTextAlignment = model.headerAlignment,
-                    doneButtonText = model.doneButtonText,
-                    doneButtonIcon = model.doneButtonIcon,
+                    title = viewmodel.model().title,
+                    windowInsets = { bottomSheetInsets() },
+                    bottomSheetLowerPadding = bottomSheetLowerPadding(),
+                    subtitle = viewmodel.model().subtitle,
+                    headerTextAlignment = viewmodel.model().headerAlignment,
+                    doneButtonText = viewmodel.model().doneButtonText,
+                    doneButtonIcon = viewmodel.model().doneButtonIcon,
                     clearAllButtonText = stringResource(id = R.string.action_clear_all),
-                    orgTreeItems = filteredList,
+                    orgTreeItems = list,
                     onSearch = viewmodel::searchByName,
                     onDismiss = { cancelOuSelection() },
                     onItemClick = viewmodel::onOpenChildren,
                     onItemSelected = viewmodel::onOrgUnitCheckChanged,
-                    onClearAll = if (model.showClearButton) viewmodel::clearAll else null,
+                    onClearAll = if (viewmodel.model().showClearButton) viewmodel::clearAll else null,
                     onDone = { confirmOuSelection() },
                 )
             }

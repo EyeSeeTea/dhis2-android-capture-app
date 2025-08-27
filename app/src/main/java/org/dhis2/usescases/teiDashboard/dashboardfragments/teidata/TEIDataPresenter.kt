@@ -261,7 +261,6 @@ class TEIDataPresenter(
         bundle.putString(Constants.ENROLLMENT_UID, enrollmentUid)
         bundle.putString(Constants.EVENT_CREATION_TYPE, eventCreationType.name)
         bundle.putInt(Constants.EVENT_SCHEDULE_INTERVAL, scheduleIntervalDays)
-
         val intent = Intent(view.context, ProgramStageSelectionActivity::class.java)
         intent.putExtras(bundle)
         contractHandler.createEvent(intent).observe(view.viewLifecycleOwner()) {
@@ -369,10 +368,10 @@ class TEIDataPresenter(
         if (stage != null) {
             when (eventCreationType) {
                 EventCreationType.ADDNEW -> programUid?.let { program ->
-                    // EyeSeeTea customization - assign directly TEI org unit
-                    // it's not possible assign different org unit in event
-                   // checkOrgUnitCount(program, stage.uid())
-
+                   // EyeSeeTea customization - assign directly TEI org unit
+                   // it's not possible assign different org unit in event
+                   // val orgUnitUid = d2.enrollment(enrollmentUid)?.organisationUnit()
+                   // orgUnitUid?.let { onNewEventSelected(orgUnitUid, stage.uid()) } ?: checkOrgUnitCount(program, stage.uid())
                     selectOrgUnitAsTEIOrgUnit(stage)
                 }
 
@@ -406,7 +405,7 @@ class TEIDataPresenter(
 
     private fun selectOrgUnitAsTEIOrgUnit(stage: ProgramStage) {
         teiDataRepository.getEnrollment().blockingGet()?.organisationUnit()?.let { orgUnitUid ->
-            onOrgUnitForNewEventSelected(orgUnitUid, stage.uid())
+            onNewEventSelected(orgUnitUid, stage.uid())
         }
     }
 
@@ -439,14 +438,14 @@ class TEIDataPresenter(
         CoroutineScope(dispatcher.io()).launch {
             val orgUnits = teiDataRepository.programOrgListInCaptureScope(programUid)
             if (orgUnits.count() == 1) {
-                onOrgUnitForNewEventSelected(orgUnits.first().uid(), programStageUid)
+                onNewEventSelected(orgUnits.first().uid(), programStageUid)
             } else {
                 view.displayOrgUnitSelectorForNewEvent(programUid, programStageUid)
             }
         }
     }
 
-    fun onOrgUnitForNewEventSelected(orgUnitUid: String, programStageUid: String) {
+    fun onNewEventSelected(orgUnitUid: String, programStageUid: String) {
         CoroutineScope(dispatcher.io()).launch {
             programUid?.let {
                 createEventUseCase(

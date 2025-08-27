@@ -28,12 +28,10 @@ import org.dhis2.commons.orgunitselector.OUTreeComponent;
 import org.dhis2.commons.orgunitselector.OUTreeModule;
 import org.dhis2.commons.prefs.Preference;
 import org.dhis2.commons.prefs.PreferenceModule;
-import org.dhis2.commons.reporting.CrashReportModule;
 import org.dhis2.commons.schedulers.SchedulerModule;
 import org.dhis2.commons.schedulers.SchedulersProviderImpl;
 import org.dhis2.commons.service.SessionManagerModule;
 import org.dhis2.commons.sync.SyncComponentProvider;
-import org.dhis2.data.appinspector.AppInspector;
 import org.dhis2.data.dispatcher.DispatcherModule;
 import org.dhis2.data.server.SSLContextInitializer;
 import org.dhis2.data.server.ServerComponent;
@@ -42,6 +40,7 @@ import org.dhis2.data.server.UserManager;
 import org.dhis2.data.service.workManager.WorkManagerModule;
 import org.dhis2.data.user.UserComponent;
 import org.dhis2.data.user.UserModule;
+import org.dhis2.di.KoinInitialization;
 import org.dhis2.maps.MapController;
 import org.dhis2.usescases.crash.CrashActivity;
 import org.dhis2.usescases.login.LoginComponent;
@@ -103,15 +102,12 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
 
     private boolean fromBackGround = false;
     private boolean recreated;
-    private AppInspector appInspector;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
-
-        appInspector = new AppInspector(this).init();
 
         MapController.Companion.init(this);
 
@@ -122,6 +118,9 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
 
         setUpSecurityProvider();
         setUpServerComponent();
+
+        KoinInitialization.INSTANCE.invoke(this, ServerModule.getD2Configuration(this));
+
         initCrashController();
         setUpRxPlugin();
         initCustomCrashActivity();
@@ -203,7 +202,6 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
                 .workManagerController(new WorkManagerModule())
                 .sessionManagerService(new SessionManagerModule())
                 .coroutineDispatchers(new DispatcherModule())
-                .crashReportModule(new CrashReportModule())
                 .customDispatcher(new CustomDispatcherModule())
                 .featureConfigModule(new FeatureConfigModule());
     }
@@ -360,10 +358,6 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
         });
     }
 
-    public AppInspector getAppInspector() {
-        return appInspector;
-    }
-
     @Override
     public FeatureConfigActivityComponent provideFeatureConfigActivityComponent() {
         return userComponent.plus(new FeatureConfigActivityModule());
@@ -389,7 +383,6 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
     public OUTreeComponent provideOUTreeComponent(@NotNull OUTreeModule module) {
         return serverComponent.plus(module);
     }
-
 
     @NonNull
     @Override

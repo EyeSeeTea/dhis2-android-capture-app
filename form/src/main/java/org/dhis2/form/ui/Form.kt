@@ -157,6 +157,15 @@ fun Form(
                                             onNextSection,
                                         )
                                     },
+                                    onFileSelected = { path ->
+                                        intentHandler.invoke(
+                                            FormIntent.OnStoreFile(
+                                                uid = fieldUiModel.uid,
+                                                filePath = path,
+                                                valueType = fieldUiModel.valueType,
+                                            ),
+                                        )
+                                    },
                                 )
                             }
                         }

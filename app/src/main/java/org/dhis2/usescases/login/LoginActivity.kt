@@ -24,9 +24,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.databinding.DataBindingUtil
-import com.google.android.material.composethemeadapter.MdcTheme
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.dhis2.App
 import org.dhis2.R
@@ -37,14 +34,14 @@ import org.dhis2.commons.Constants.ACCOUNT_RECOVERY
 import org.dhis2.commons.Constants.EXTRA_DATA
 import org.dhis2.commons.Constants.SESSION_DIALOG_RQ
 import org.dhis2.commons.dialogs.CustomDialog
+import org.dhis2.commons.dialogs.bottomsheet.BottomSheetDialog
+import org.dhis2.commons.dialogs.bottomsheet.BottomSheetDialogUiModel
+import org.dhis2.commons.dialogs.bottomsheet.DialogButtonStyle
 import org.dhis2.commons.extensions.closeKeyboard
 import org.dhis2.commons.resources.ResourceManager
 import org.dhis2.data.server.OpenIdSession
 import org.dhis2.data.server.UserManager
 import org.dhis2.databinding.ActivityLoginBinding
-import org.dhis2.ui.dialogs.bottomsheet.BottomSheetDialog
-import org.dhis2.ui.dialogs.bottomsheet.BottomSheetDialogUiModel
-import org.dhis2.ui.dialogs.bottomsheet.DialogButtonStyle
 import org.dhis2.ui.theme.Dhis2Theme
 import org.dhis2.usescases.about.PolicyView
 import org.dhis2.usescases.general.ActivityGlobalAbstract
@@ -56,7 +53,6 @@ import org.dhis2.usescases.main.MainActivity
 import org.dhis2.usescases.qrScanner.ScanActivity
 import org.dhis2.usescases.sync.SyncActivity
 import org.dhis2.utils.NetworkUtils
-import org.dhis2.utils.TestingCredential
 import org.dhis2.utils.WebViewActivity
 import org.dhis2.utils.WebViewActivity.Companion.WEB_VIEW_URL
 import org.dhis2.utils.analytics.CLICK
@@ -64,13 +60,12 @@ import org.dhis2.utils.analytics.FORGOT_CODE
 import org.dhis2.utils.session.PIN_DIALOG_TAG
 import org.dhis2.utils.session.PinDialog
 import org.hisp.dhis.android.core.user.openid.IntentWithRequestCode
+import org.hisp.dhis.mobile.ui.designsystem.component.ButtonStyle
+import org.hisp.dhis.mobile.ui.designsystem.theme.DHIS2Theme
 import timber.log.Timber
-import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.io.InputStreamReader
-import java.io.StringWriter
 import javax.inject.Inject
 
 const val EXTRA_SKIP_SYNC = "SKIP_SYNC"
@@ -99,7 +94,6 @@ class LoginActivity : ActivityGlobalAbstract(), LoginContracts.View {
     private var isPinScreenVisible = false
     private var qrUrl: String? = null
 
-    private var testingCredentials: List<TestingCredential> = ArrayList()
     private var skipSync = false
     private var openIDRequestCode = -1
 
@@ -202,7 +196,7 @@ class LoginActivity : ActivityGlobalAbstract(), LoginContracts.View {
 
         binding.topbar.setContent {
             val displayMoreActions by presenter.displayMoreActions().observeAsState(true)
-            MdcTheme {
+            DHIS2Theme {
                 LoginTopBar(
                     version = buildInfo(),
                     displayMoreActions = displayMoreActions,
@@ -270,7 +264,6 @@ class LoginActivity : ActivityGlobalAbstract(), LoginContracts.View {
             showLoginProgress(show, getString(R.string.authenticating))
         }
 
-        setTestingCredentials()
         setAutocompleteAdapters()
         checkMessage()
         presenter.apply {
@@ -311,33 +304,6 @@ class LoginActivity : ActivityGlobalAbstract(), LoginContracts.View {
     private fun checkUrl(urlString: String): Boolean {
         return URLUtil.isValidUrl(urlString) &&
             Patterns.WEB_URL.matcher(urlString).matches() && urlString.toHttpUrlOrNull() != null
-    }
-
-    override fun setTestingCredentials() {
-        val testingCredentialsIdentifier =
-            resources.getIdentifier("testing_credentials", "raw", packageName)
-        if (testingCredentialsIdentifier != -1) {
-            val writer = StringWriter()
-            val buffer = CharArray(1024)
-            try {
-                resources.openRawResource(testingCredentialsIdentifier).use { resource ->
-                    val reader = BufferedReader(InputStreamReader(resource, "UTF-8"))
-                    var n: Int = reader.read(buffer)
-                    while (n != -1) {
-                        writer.write(buffer, 0, n)
-                        n = reader.read(buffer)
-                    }
-                }
-            } catch (e: Exception) {
-                Timber.e(e)
-            }
-
-            testingCredentials = Gson().fromJson(
-                writer.toString(),
-                object : TypeToken<List<TestingCredential>>() {}.type,
-            )
-            presenter.setTestingCredentials(testingCredentials)
-        }
     }
 
     override fun onPause() {
@@ -429,7 +395,10 @@ class LoginActivity : ActivityGlobalAbstract(), LoginContracts.View {
                 iconResource = R.drawable.ic_line_chart,
                 headerTextAlignment = TextAlign.Start,
                 mainButton = DialogButtonStyle.MainButton(textResource = R.string.yes),
-                secondaryButton = DialogButtonStyle.SecondaryButton(textResource = R.string.not_now),
+                secondaryButton = DialogButtonStyle.SecondaryButton(
+                    textResource = R.string.not_now,
+                    buttonStyle = ButtonStyle.OUTLINED,
+                ),
             ),
             onMainButtonClicked = {
                 presenter.grantTrackingPermissions(true)
@@ -443,6 +412,8 @@ class LoginActivity : ActivityGlobalAbstract(), LoginContracts.View {
             onMessageClick = {
                 navigateToPrivacyPolicy()
             },
+            showTopDivider = false,
+            showBottomDivider = true,
         ).show(supportFragmentManager, BottomSheetDialog::class.simpleName)
     }
 
@@ -470,16 +441,17 @@ class LoginActivity : ActivityGlobalAbstract(), LoginContracts.View {
         binding.serverUrlEdit.dropDownWidth = resources.displayMetrics.widthPixels
         binding.userNameEdit.dropDownWidth = resources.displayMetrics.widthPixels
 
-        val (urls, users) = presenter.getAutocompleteData(testingCredentials)
+        presenter.autoCompleteData.observe(this) { (urls, users) ->
+            urls.let {
+                val urlAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, it)
+                binding.serverUrlEdit.setAdapter(urlAdapter)
+            }
 
-        urls.let {
-            val urlAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, it)
-            binding.serverUrlEdit.setAdapter(urlAdapter)
-        }
-
-        users.let {
-            val userAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, it)
-            binding.userNameEdit.setAdapter(userAdapter)
+            users.let {
+                val userAdapter =
+                    ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, it)
+                binding.userNameEdit.setAdapter(userAdapter)
+            }
         }
     }
 
@@ -507,8 +479,12 @@ class LoginActivity : ActivityGlobalAbstract(), LoginContracts.View {
                 message = getString(R.string.biometrics_login_text),
                 iconResource = R.drawable.ic_fingerprint,
                 mainButton = DialogButtonStyle.MainButton(textResource = R.string.yes),
-                secondaryButton = DialogButtonStyle.SecondaryButton(textResource = R.string.not_now),
+                secondaryButton = DialogButtonStyle.SecondaryButton(
+                    textResource = R.string.not_now,
+                    buttonStyle = ButtonStyle.OUTLINED,
+                ),
             ),
+            showTopDivider = true,
             onMainButtonClicked = {
                 presenter.saveUserCredentials(binding.userPassEdit.text.toString())
                 onLoginDataUpdated(false)

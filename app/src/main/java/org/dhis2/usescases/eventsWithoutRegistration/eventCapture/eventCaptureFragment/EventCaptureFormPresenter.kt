@@ -47,9 +47,6 @@ class EventCaptureFormPresenter(
     private val reOpenEventUseCase: ReOpenEventUseCase,
     private val dispatcherProvider: DispatcherProvider,
 ) {
-    var programUid: String =
-        d2.eventModule().events().byUid().eq(eventUid).one().blockingGet()?.program() ?: ""
-
     fun showOrHideSaveButton() {
         val isEditable =
             d2.eventModule().eventService().getEditableStatus(eventUid = eventUid).blockingGet()
@@ -136,6 +133,9 @@ class EventCaptureFormPresenter(
     }
 
     private fun mapWithOrgUnitValidation(fields: List<FieldUiModel>): List<FieldUiModel> {
+        val programUid: String =
+            d2.eventModule().events().byUid().eq(eventUid).one().blockingGet()?.program() ?: ""
+
         val event = d2.eventModule().events().byUid().eq(eventUid).one().blockingGet()
 
         val isEventFromEnrolment = event?.enrollment() != null
@@ -164,6 +164,9 @@ class EventCaptureFormPresenter(
     }
 
     private fun mapUPGFields(fields: List<FieldUiModel>): List<FieldUiModel> {
+        val programUid: String =
+            d2.eventModule().events().byUid().eq(eventUid).one().blockingGet()?.program() ?: ""
+
         val programWithUPG = programsWithUPG.find { it.programUid == programUid } ?: return fields
 
         //EyeSeeTea customization - Remove UPG field from the form

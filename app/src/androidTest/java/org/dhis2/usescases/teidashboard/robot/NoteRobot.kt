@@ -5,6 +5,8 @@ import androidx.test.espresso.action.TypeTextAction
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.RecyclerViewActions.actionOnItemAtPosition
+import androidx.test.espresso.intent.Intents
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent
 import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
@@ -14,6 +16,7 @@ import org.dhis2.common.BaseRobot
 import org.dhis2.common.matchers.RecyclerviewMatchers.Companion.atPosition
 import org.dhis2.common.matchers.RecyclerviewMatchers.Companion.isNotEmpty
 import org.dhis2.usescases.notes.NotesViewHolder
+import org.dhis2.usescases.notes.noteDetail.NoteDetailActivity
 import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.not
 
@@ -27,6 +30,10 @@ class NoteRobot : BaseRobot() {
 
     fun clickOnFabAddNewNote() {
         onView(withId(R.id.addNoteButton)).check(matches(isDisplayed())).perform(click())
+    }
+
+    fun verifyNoteDetailActivityIsLaunched() {
+        Intents.intended(allOf(hasComponent(NoteDetailActivity::class.java.name)))
     }
 
     fun clickOnNoteWithPosition(position: Int) {
@@ -79,6 +86,6 @@ class NoteRobot : BaseRobot() {
 
     fun checkNoteDetails(user: String, noteText: String) {
         onView(withId(R.id.storeBy)).check(matches(withText(user)))
-        onView(withId(R.id.note)).check(matches(withText(noteText)))
+        onView(withId(R.id.note_text)).check(matches(withText(noteText)))
     }
 }
