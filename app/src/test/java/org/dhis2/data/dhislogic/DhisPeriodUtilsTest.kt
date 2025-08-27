@@ -387,7 +387,7 @@ class DhisPeriodUtilsTest {
             .build()
 
         Assert.assertEquals(
-            "2019",
+            "2019-2020",
             periodUtils.getPeriodUIString(
                 PeriodType.Yearly,
                 testDate,
