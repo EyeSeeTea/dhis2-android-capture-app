@@ -49,6 +49,7 @@ class DataSetInitialRepositoryImplTest {
         ) doReturn categoryCombo
 
         val dataSetInitialModel = DataSetInitialModel.create(
+            dataSetUid,
             dataSet.displayName()!!,
             null,
             dataSet.categoryCombo()!!.uid(),
@@ -140,6 +141,7 @@ class DataSetInitialRepositoryImplTest {
 
         testObserver.dispose()
     }
+
     private fun dummyDataSet(): DataSet = DataSet.builder()
         .uid(UUID.randomUUID().toString())
         .displayName("dataSet")
