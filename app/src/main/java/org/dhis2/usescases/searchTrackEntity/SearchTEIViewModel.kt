@@ -53,7 +53,6 @@ import org.dhis2.tracker.NavigationBarUIState
 import org.dhis2.usescases.biometrics.biometricAttributeId
 import org.dhis2.usescases.biometrics.containsAgeFilterAndIsUnderAgeThreshold
 import org.dhis2.usescases.biometrics.entities.BiometricsMode
-import org.dhis2.usescases.biometrics.personTrackedEntityType
 import org.dhis2.usescases.biometrics.ui.SequentialSearch
 import org.dhis2.usescases.biometrics.ui.SequentialSearchAction
 import org.dhis2.usescases.searchTrackEntity.listView.SearchResult
@@ -148,7 +147,7 @@ class SearchTEIViewModel(
     private var searchChildren: Boolean = false
     private val uIds = mutableListOf<String>()
 
-    private val biometricsMode = getBiometricsConfig(basicPreferenceProvider).biometricsMode
+    private val biometricsConfig = getBiometricsConfig(basicPreferenceProvider)
 
     private val _isDataLoaded = MutableLiveData<Boolean?>(false)
     val isDataLoaded: MutableLiveData<Boolean?> = _isDataLoaded
@@ -290,7 +289,7 @@ class SearchTEIViewModel(
                     hasActiveFilters = hasActiveFilters(),
                     isOpened = filterIsOpen(),
                 ),
-                biometricsMode
+                biometricsConfig.biometricsMode
             )
         )
     }
@@ -357,7 +356,7 @@ class SearchTEIViewModel(
                     hasActiveFilters = hasActiveFilters(),
                     isOpened = false,
                 ),
-                biometricsMode
+                biometricsConfig.biometricsMode
             ),
         )
     }
@@ -613,7 +612,7 @@ class SearchTEIViewModel(
             )
 
             val nextActions = if (previousSearch == null && !queryDataContainsAgeUnderThreadsHold &&
-                biometricsMode == BiometricsMode.full
+                biometricsConfig.biometricsMode == BiometricsMode.full
             ) {
                 listOf(
                     SequentialSearchAction.SearchWithBiometrics
@@ -1277,8 +1276,9 @@ class SearchTEIViewModel(
     }
 
     fun isSearchByBiometricsEnabled(): Boolean {
-        return biometricsMode == BiometricsMode.full ||
-                (biometricsMode == BiometricsMode.limited && teType.uid() == personTrackedEntityType)
+        return biometricsConfig.biometricsMode == BiometricsMode.full ||
+                (biometricsConfig.biometricsMode == BiometricsMode.limited &&
+                        teType.uid() == biometricsConfig.enableIdentificationForTET)
     }
 }
 
