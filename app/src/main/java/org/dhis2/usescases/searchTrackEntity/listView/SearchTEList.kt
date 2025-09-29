@@ -258,9 +258,8 @@ class SearchTEList : FragmentGlobalAbstract() {
 
                 if (seqSearch == null && !teTypeName.isNullOrBlank() && isLoaded == true) {
 
-                    val isBiometricsFull =
-                        screenState is SearchList && (screenState as SearchList).biometricsMode == BiometricsMode.full
-
+                    val isSearchByBiometrics =
+                        if (screenState is SearchList) viewModel.isSearchByBiometricsEnabled() else false
 
                     val isFilterOpened by viewModel.filtersOpened.observeAsState(false)
                     val createButtonVisibility by viewModel
@@ -274,12 +273,12 @@ class SearchTEList : FragmentGlobalAbstract() {
                         modifier = Modifier,
                         createButtonVisible = createButtonVisibility,
                         closeFilterVisibility = isFilterOpened,
-                        isLandscape = isLandscape() && !isBiometricsFull,
+                        isLandscape = isLandscape() && !isSearchByBiometrics,
                         queryData = queryData,
                         onSearchClick = {
-                            if (isBiometricsFull) viewModel.sequentialSearchNextAction(
+                            if (isSearchByBiometrics) viewModel.sequentialSearchNextAction(
                                 SequentialSearchAction.SearchWithBiometrics
-                            ) else viewModel.setSearchScreen(fromRelationship)
+                            ) else viewModel.setSearchScreen()
                         },
                         onEnrollClick = { viewModel.onEnrollClick() },
                         onCloseFilters = { viewModel.onFiltersClick(isLandscape()) },
@@ -331,7 +330,7 @@ class SearchTEList : FragmentGlobalAbstract() {
                         extended = !isScrollingDown,
                         onClick = { viewModel.sequentialSearchNextAction(newPatientAction) },
                         teTypeName = teTypeName!!,
-                        )
+                    )
                 }
             }
         }

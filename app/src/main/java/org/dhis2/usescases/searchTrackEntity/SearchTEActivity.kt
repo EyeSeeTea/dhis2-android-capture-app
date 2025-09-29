@@ -233,7 +233,7 @@ class SearchTEActivity : ActivityGlobalAbstract(), SearchTEContractsModule.View 
                 if (action is SearchWithBiometrics) {
                     presenter.onBiometricsClick()
                 } else if (action is SearchWithAttributes) {
-                    viewModel.openSearchForm()
+                    viewModel.setSearchScreen()
                 } else {
                     presenter.onEnrollClick(
                         java.util.HashMap(viewModel.queryData),
@@ -947,7 +947,7 @@ class SearchTEActivity : ActivityGlobalAbstract(), SearchTEContractsModule.View 
         if (viewModel.sequentialSearch.value == null ||
             viewModel.sequentialSearch.value!!.nextActions.isEmpty()
         ) {
-            Handler(Looper.getMainLooper()).postDelayed({ viewModel.openSearchForm() }, 100)
+            Handler(Looper.getMainLooper()).postDelayed({ viewModel.setSearchScreen() }, 100)
         }
     }
 

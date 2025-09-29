@@ -53,6 +53,7 @@ import org.dhis2.tracker.NavigationBarUIState
 import org.dhis2.usescases.biometrics.biometricAttributeId
 import org.dhis2.usescases.biometrics.containsAgeFilterAndIsUnderAgeThreshold
 import org.dhis2.usescases.biometrics.entities.BiometricsMode
+import org.dhis2.usescases.biometrics.personTrackedEntityType
 import org.dhis2.usescases.biometrics.ui.SequentialSearch
 import org.dhis2.usescases.biometrics.ui.SequentialSearchAction
 import org.dhis2.usescases.searchTrackEntity.listView.SearchResult
@@ -60,14 +61,14 @@ import org.dhis2.usescases.searchTrackEntity.searchparameters.model.SearchParame
 import org.dhis2.usescases.searchTrackEntity.ui.UnableToSearchOutsideData
 import org.dhis2.utils.customviews.navigationbar.NavigationPage
 import org.dhis2.utils.customviews.navigationbar.NavigationPageConfigurator
+import org.dhis2.utils.isLandscape
 import org.hisp.dhis.android.core.arch.helpers.Result
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.maintenance.D2ErrorCode
 import org.hisp.dhis.mobile.ui.designsystem.component.navigationBar.NavigationBarItem
 import timber.log.Timber
-import org.dhis2.utils.isLandscape
 
-const val TEI_TYPE_SEARCH_MAX_RESULTS = 5
+const val TEI_TYPE_SEARCH_MAX_RESULTS = 10
 
 class SearchTEIViewModel(
     val initialProgramUid: String?,
@@ -135,6 +136,7 @@ class SearchTEIViewModel(
 
     private val _teTypeName = MutableLiveData("")
     val teTypeName: LiveData<String> = _teTypeName
+    var teType = searchRepository.trackedEntityType
 
     private val _sequentialSearch = MutableLiveData<SequentialSearch?>(null)
     val sequentialSearch: LiveData<SequentialSearch?> = _sequentialSearch
@@ -260,7 +262,6 @@ class SearchTEIViewModel(
                 !searching &&
                 _filtersActive.value == false
 
-
         createButtonScrollVisibility.postValue(
             if (searching) {
                 true
@@ -283,7 +284,7 @@ class SearchTEIViewModel(
                         ?.minAttributesRequiredToSearch()
                         ?: 1,
                     isForced = shouldOpenSearch,
-                    isOpened = shouldOpenSearch || (biometricsMode != BiometricsMode.full && isLandscape()),
+                    isOpened = shouldOpenSearch || (!isSearchByBiometricsEnabled() && isLandscape()),
                 ),
                 searchFilters = SearchFilters(
                     hasActiveFilters = hasActiveFilters(),
@@ -334,7 +335,7 @@ class SearchTEIViewModel(
         )
     }
 
-    fun setSearchScreen(fromRelationship: Boolean? = null) {
+    fun setSearchScreen() {
         _screenState.postValue(
             SearchList(
                 previousSate = _screenState.value?.screenState ?: SearchScreenState.NONE,
@@ -350,7 +351,7 @@ class SearchTEIViewModel(
                         ?.minAttributesRequiredToSearch()
                         ?: 1,
                     isForced = false,
-                    isOpened = biometricsMode != BiometricsMode.full || fromRelationship == true,
+                    isOpened = true,
                 ),
                 searchFilters = SearchFilters(
                     hasActiveFilters = hasActiveFilters(),
@@ -1211,19 +1212,6 @@ class SearchTEIViewModel(
         return presenter.biometricsSearchStatus
     }
 
-    fun openSearchForm() {
-        _screenState.value.takeIf { it is SearchList }?.let {
-            val currentScreen = (it as SearchList)
-            currentScreen.copy(
-                searchForm = currentScreen.searchForm.copy(
-                    isOpened = true,
-                ),
-            )
-        }?.let {
-            _screenState.value = it
-        }
-    }
-
     private var onSequentialSearchActionCallback: ((helperAction: SequentialSearchAction) -> Unit)? =
         null
 
@@ -1288,5 +1276,9 @@ class SearchTEIViewModel(
         )
     }
 
+    fun isSearchByBiometricsEnabled(): Boolean {
+        return biometricsMode == BiometricsMode.full ||
+                (biometricsMode == BiometricsMode.limited && teType.uid() == personTrackedEntityType)
+    }
 }
 
