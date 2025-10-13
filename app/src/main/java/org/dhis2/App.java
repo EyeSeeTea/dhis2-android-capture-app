@@ -115,17 +115,25 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
 
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
 
-        MapController.Companion.init(this);
-
         setUpAppComponent();
         if (BuildConfig.DEBUG) {
             Timber.plant(new DebugTree());
         }
 
         setUpSecurityProvider();
-        setUpServerComponent();
 
-        KoinInitialization.INSTANCE.invoke(this, ServerModule.getD2Configuration(this));
+        if (BuildConfig.FLAVOR.equals("sports")) {
+            // Sports: initialize D2 via ServerComponent as in default flavor
+            // but defer Mapbox and skip Koin to reduce startup work.
+            setUpServerComponent();
+            new android.os.Handler(Looper.getMainLooper()).post(() -> {
+                try { MapController.Companion.init(this); } catch (Throwable ignored) {}
+            });
+        } else {
+            MapController.Companion.init(this);
+            setUpServerComponent();
+            KoinInitialization.INSTANCE.invoke(this, ServerModule.getD2Configuration(this));
+        }
 
         initCrashController();
         setUpRxPlugin();

@@ -185,6 +185,14 @@ android {
             versionCode = libs.versions.vCode.get().toInt()
             versionName = libs.versions.vName.get()
         }
+
+        // Sports tracking fork flavor
+        create("sports") {
+            applicationId = "com.eyeseetea.sports"
+            dimension = "default"
+            versionCode = libs.versions.vCode.get().toInt()
+            versionName = libs.versions.vName.get()
+        }
     }
 
     compileOptions {

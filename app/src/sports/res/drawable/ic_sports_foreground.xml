@@ -1,0 +1,17 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Simple dumbbell icon: two weights and a bar -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M16,38 H32 V70 H16 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,50 H76 V58 H32 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M76,38 H92 V70 H76 Z" />
+</vector>
+
