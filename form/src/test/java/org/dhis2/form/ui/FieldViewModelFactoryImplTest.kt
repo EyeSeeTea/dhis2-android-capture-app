@@ -69,6 +69,7 @@ class FieldViewModelFactoryImplTest {
             featureType = null,
             autoCompleteList = null,
             orgUnitSelectorScope = null,
+            url = null
         )
         verify(trackedEntityAttribute).displayFormName()
         verify(programTrackedEntityAttribute, never()).displayName()
