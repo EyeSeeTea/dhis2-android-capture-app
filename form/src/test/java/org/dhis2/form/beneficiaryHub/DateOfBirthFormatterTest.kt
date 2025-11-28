@@ -1,5 +1,6 @@
-package org.dhis2.form.utils
+package org.dhis2.form.beneficiaryHub
 
+import org.dhis2.form.ui.beneficiaryHub.DateOfBirthFormatter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
