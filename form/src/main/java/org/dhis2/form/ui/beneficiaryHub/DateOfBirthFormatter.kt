@@ -11,6 +11,7 @@ object DateOfBirthFormatter {
     }
 
     private val defaultFormat = DateFormat.YYYYMMDD
+    private val MIN_DOB = "1900-01-01"
 
     private val YYYY_MM_DD_REGEX = Regex("^\\d{4}-\\d{2}-\\d{2}$")
     private val MM_DD_YYYY_REGEX = Regex("^\\d{2}-\\d{2}-\\d{4}$")
@@ -97,6 +98,21 @@ object DateOfBirthFormatter {
         return try {
             val date = LocalDate.parse(dateString, DateTimeFormatter.ISO_DATE)
             date.isAfter(LocalDate.now())
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Checks if a date is before the minimum allowed date of birth (1900-01-01).
+     * @param dateString - date in YYYY-MM-DD format
+     * @return true if the date is before 1900-01-01, false otherwise
+     */
+    fun isBeforeMinDate(dateString: String): Boolean {
+        return try {
+            val date = LocalDate.parse(dateString, DateTimeFormatter.ISO_DATE)
+            val minDate = LocalDate.parse(MIN_DOB, DateTimeFormatter.ISO_DATE)
+            date.isBefore(minDate)
         } catch (e: Exception) {
             false
         }

@@ -51,6 +51,12 @@ class DateOfBirthProcessor(
             )
         }
 
+        if (DateOfBirthFormatter.isBeforeMinDate(formattedDate)) {
+            return action.copy(
+                error = Throwable("Date of Birth cannot be previous to 1900-01-01")
+            )
+        }
+
         val processedAction = action.copy(value = formattedDate)
 
         updateAgeFieldFromDateOfBirth(action.id, formattedDate)

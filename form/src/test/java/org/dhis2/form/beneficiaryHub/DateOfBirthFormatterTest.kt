@@ -81,5 +81,27 @@ class DateOfBirthFormatterTest {
         assertNull(DateOfBirthFormatter.formatAndValidate("2025-02-29", DateOfBirthFormatter.DateFormat.MMDDYYYY))
         assertNull(DateOfBirthFormatter.formatAndValidate("2025-04-31", DateOfBirthFormatter.DateFormat.MMDDYYYY))
     }
+
+    @Test
+    fun `isBeforeMinDate should return true for dates before 1900-01-01`() {
+        org.junit.Assert.assertTrue(DateOfBirthFormatter.isBeforeMinDate("1899-12-31"))
+        org.junit.Assert.assertTrue(DateOfBirthFormatter.isBeforeMinDate("1800-01-01"))
+        org.junit.Assert.assertTrue(DateOfBirthFormatter.isBeforeMinDate("1899-01-01"))
+    }
+
+    @Test
+    fun `isBeforeMinDate should return false for dates equal to or after 1900-01-01`() {
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isBeforeMinDate("1900-01-01"))
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isBeforeMinDate("1900-01-02"))
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isBeforeMinDate("2000-01-01"))
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isBeforeMinDate("2025-01-01"))
+    }
+
+    @Test
+    fun `isBeforeMinDate should return false for invalid dates`() {
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isBeforeMinDate("invalid-date"))
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isBeforeMinDate(""))
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isBeforeMinDate("1899-13-01"))
+    }
 }
 
