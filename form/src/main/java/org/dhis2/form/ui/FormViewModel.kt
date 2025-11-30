@@ -35,6 +35,7 @@ import org.dhis2.form.model.RowAction
 import org.dhis2.form.model.StoreResult
 import org.dhis2.form.model.UiRenderType
 import org.dhis2.form.model.ValueStoreResult
+import org.dhis2.form.ui.beneficiaryHub.DateOfBirthProcessor
 import org.dhis2.form.ui.event.RecyclerViewUiEvents
 import org.dhis2.form.ui.intent.FormIntent
 import org.dhis2.form.ui.validation.validators.FieldMaskValidator
@@ -94,9 +95,19 @@ class FormViewModel(
 
     private val handler = Handler(Looper.getMainLooper())
 
+    // EyeSeeTea customization: processor for date of birth fields
+    private var dateOfBirthProcessor: DateOfBirthProcessor
+
     var filePath: String? = null
 
     init {
+        // EyeSeeTea customization: processor for date of birth fields
+        dateOfBirthProcessor = DateOfBirthProcessor(
+            repository = repository,
+            handler = handler,
+            createRowActionFromIntent = ::rowActionFromIntent,
+        )
+
         viewModelScope.launch {
             _pendingIntents
                 .distinctUntilChanged { old, new ->
@@ -344,11 +355,16 @@ class FormViewModel(
     private fun saveLastFocusedItem(rowAction: RowAction) = getLastFocusedTextItem()?.let {
         if (previousActionItem == null) previousActionItem = rowAction
         if (previousActionItem?.value != it.value && previousActionItem?.id == it.uid) {
-            val error = checkFieldError(it.valueType, it.value, it.fieldMask)
+            // EyeSeeTea customization: Validate and format
+            val processesAction = dateOfBirthProcessor.process(it)
+
+            // Check for date of birth error first, then standard field errors
+            val error = processesAction.error ?: checkFieldError(it.valueType, processesAction.value, it.fieldMask)
+            
             if (error != null) {
                 val action = rowActionFromIntent(
-                    FormIntent.OnSave(it.uid, it.value, it.valueType, it.fieldMask),
-                )
+                    FormIntent.OnSave(it.uid, processesAction.value, it.valueType, it.fieldMask),
+                ).copy(error = error)
                 repository.updateErrorList(action)
                 StoreResult(
                     rowAction.id,
@@ -356,10 +372,10 @@ class FormViewModel(
                 )
             } else {
                 checkAutoCompleteForLastFocusedItem(it)
-                val intent = FormIntent.OnSave(it.uid, it.value, it.valueType, it.fieldMask)
+                val intent = FormIntent.OnSave(it.uid, processesAction.value, it.valueType, it.fieldMask)
                 val action = rowActionFromIntent(intent)
-                val result = repository.save(it.uid, it.value, action.extraData)
-                repository.updateValueOnList(it.uid, it.value, it.valueType)
+                val result = repository.save(it.uid, processesAction.value, action.extraData)
+                repository.updateValueOnList(it.uid, processesAction.value, it.valueType)
                 repository.updateErrorList(action)
                 result
             }

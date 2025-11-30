@@ -24,8 +24,15 @@ import org.hisp.dhis.android.core.common.valuetype.validation.failures.UrlFailur
 
 class FieldErrorMessageProvider(private val context: Context) {
 
-    fun getFriendlyErrorMessage(error: Throwable) =
-        context.getString(parseErrorToMessageResource(error))
+    fun getFriendlyErrorMessage(error: Throwable): String {
+        val resourceId = parseErrorToMessageResource(error)
+        // If it's the default "invalid_field" and the error has a custom message, use it
+        return if (resourceId == R.string.invalid_field && error.message != null) {
+            error.message!!
+        } else {
+            context.getString(resourceId)
+        }
+    }
 
     private fun parseErrorToMessageResource(error: Throwable) = when (error) {
         is BooleanFailure -> getBooleanError(error)

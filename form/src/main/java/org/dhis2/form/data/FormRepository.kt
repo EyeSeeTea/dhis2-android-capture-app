@@ -33,4 +33,5 @@ interface FormRepository {
     fun saveListToPreferences(uid: String, list: List<String>)
     fun activateEvent()
     fun fetchOptions(id: String, optionSetUid: String)
+    fun getField(fieldUid: String): FieldUiModel?
 }

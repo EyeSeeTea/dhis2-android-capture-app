@@ -877,4 +877,8 @@ class FormRepositoryImpl(
         val json = gson.toJson(list)
         preferenceProvider.sharedPreferences().edit().putString(uid, json).apply()
     }
+
+    override fun getField(fieldUid: String): FieldUiModel? {
+        return itemList.find { it.uid == fieldUid }
+    }
 }
