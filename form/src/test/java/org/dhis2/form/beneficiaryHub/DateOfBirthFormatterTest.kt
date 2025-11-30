@@ -4,6 +4,8 @@ import org.dhis2.form.ui.beneficiaryHub.DateOfBirthFormatter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class DateOfBirthFormatterTest {
 
@@ -102,6 +104,37 @@ class DateOfBirthFormatterTest {
         org.junit.Assert.assertFalse(DateOfBirthFormatter.isBeforeMinDate("invalid-date"))
         org.junit.Assert.assertFalse(DateOfBirthFormatter.isBeforeMinDate(""))
         org.junit.Assert.assertFalse(DateOfBirthFormatter.isBeforeMinDate("1899-13-01"))
+    }
+
+    @Test
+    fun `isFutureDate should return true for future dates`() {
+        // Using dates that will be in the future relative to when tests run
+        // Note: These tests might need adjustment based on current date
+        val futureDate1 = LocalDate.now().plusDays(1).format(DateTimeFormatter.ISO_DATE)
+        val futureDate2 = LocalDate.now().plusYears(1).format(DateTimeFormatter.ISO_DATE)
+        org.junit.Assert.assertTrue(DateOfBirthFormatter.isFutureDate(futureDate1))
+        org.junit.Assert.assertTrue(DateOfBirthFormatter.isFutureDate(futureDate2))
+    }
+
+    @Test
+    fun `isFutureDate should return false for past dates`() {
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isFutureDate("2000-01-01"))
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isFutureDate("2020-01-01"))
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isFutureDate("1900-01-01"))
+    }
+
+    @Test
+    fun `isFutureDate should return false for today's date`() {
+        val today = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isFutureDate(today))
+    }
+
+    @Test
+    fun `isFutureDate should return false for invalid dates`() {
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isFutureDate("invalid-date"))
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isFutureDate(""))
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isFutureDate("2025-13-01"))
+        org.junit.Assert.assertFalse(DateOfBirthFormatter.isFutureDate("not-a-date"))
     }
 }
 
