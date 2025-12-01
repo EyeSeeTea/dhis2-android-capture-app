@@ -5,13 +5,11 @@ import org.dhis2.form.data.FormRepository
 import org.dhis2.form.model.ActionType
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.RowAction
-import org.dhis2.form.ui.intent.FormIntent
 import org.hisp.dhis.android.core.common.ValueType
 
 class DateOfBirthProcessor(
     private val repository: FormRepository,
     private val handler: Handler,
-    private val createRowActionFromIntent: (FormIntent) -> RowAction,
 ) {
     /**
      * Valida y formatea un campo de fecha de nacimiento.
@@ -68,15 +66,8 @@ class DateOfBirthProcessor(
         val calculatedAge = AgeCalculator.calculateAgeInYears(formattedDate)
         calculatedAge?.let { age ->
             handler.post {
-                val ageAction = createRowActionFromIntent(
-                    FormIntent.OnSave(
-                        uid = ageFieldUid,
-                        value = age.toString(),
-                        valueType = ValueType.INTEGER,
-                    ),
-                )
-                repository.save(ageAction.id, ageAction.value, ageAction.extraData)
-                repository.updateValueOnList(ageAction.id, ageAction.value, ageAction.valueType)
+                repository.save(ageFieldUid, age.toString(), null)
+                repository.updateValueOnList(ageFieldUid, age.toString(), ValueType.INTEGER)
             }
         }
     }

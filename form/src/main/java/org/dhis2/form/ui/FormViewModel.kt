@@ -105,7 +105,6 @@ class FormViewModel(
         dateOfBirthProcessor = DateOfBirthProcessor(
             repository = repository,
             handler = handler,
-            createRowActionFromIntent = ::rowActionFromIntent,
         )
 
         viewModelScope.launch {

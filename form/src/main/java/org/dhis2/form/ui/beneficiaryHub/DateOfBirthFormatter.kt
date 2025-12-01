@@ -11,7 +11,7 @@ object DateOfBirthFormatter {
     }
 
     private val defaultFormat = DateFormat.YYYYMMDD
-    private val MIN_DOB = "1900-01-01"
+    private const val MIN_DOB = "1900-01-01"
 
     private val YYYY_MM_DD_REGEX = Regex("^\\d{4}-\\d{2}-\\d{2}$")
     private val MM_DD_YYYY_REGEX = Regex("^\\d{2}-\\d{2}-\\d{4}$")
