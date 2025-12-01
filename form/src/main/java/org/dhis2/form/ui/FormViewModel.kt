@@ -35,7 +35,7 @@ import org.dhis2.form.model.RowAction
 import org.dhis2.form.model.StoreResult
 import org.dhis2.form.model.UiRenderType
 import org.dhis2.form.model.ValueStoreResult
-import org.dhis2.form.ui.beneficiaryHub.DateOfBirthProcessor
+import org.dhis2.form.ui.beneficiaryHub.processors.DateOfBirthProcessor
 import org.dhis2.form.ui.event.RecyclerViewUiEvents
 import org.dhis2.form.ui.intent.FormIntent
 import org.dhis2.form.ui.validation.validators.FieldMaskValidator

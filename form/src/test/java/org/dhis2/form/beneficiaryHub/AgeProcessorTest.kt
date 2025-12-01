@@ -4,7 +4,7 @@ import android.os.Handler
 import org.dhis2.form.data.FormRepository
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.FieldUiModelImpl
-import org.dhis2.form.ui.beneficiaryHub.AgeProcessor
+import org.dhis2.form.ui.beneficiaryHub.processors.AgeProcessor
 import org.dhis2.form.ui.beneficiaryHub.ageFieldUid
 import org.dhis2.form.ui.beneficiaryHub.ageInMonthsFieldUid
 import org.dhis2.form.ui.beneficiaryHub.dateOfBirthFieldUid

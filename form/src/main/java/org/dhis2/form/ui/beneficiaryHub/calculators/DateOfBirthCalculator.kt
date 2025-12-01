@@ -1,4 +1,4 @@
-package org.dhis2.form.ui.beneficiaryHub
+package org.dhis2.form.ui.beneficiaryHub.calculators
 
 import java.time.Clock
 import java.time.LocalDate

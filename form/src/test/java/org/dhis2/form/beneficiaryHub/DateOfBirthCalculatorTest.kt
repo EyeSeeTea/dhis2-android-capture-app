@@ -1,6 +1,6 @@
 package org.dhis2.form.beneficiaryHub
 
-import org.dhis2.form.ui.beneficiaryHub.DateOfBirthCalculator
+import org.dhis2.form.ui.beneficiaryHub.calculators.DateOfBirthCalculator
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.Clock
