@@ -153,5 +153,58 @@ class AgeCalculatorTest {
         val age3 = AgeCalculator.calculateAgeInMonths("2024-06-10", mockClock)
         assertEquals(11, age3)
     }
+
+    // Tests for hasSameAge
+    @Test
+    fun `should return true if both dates have the same age`() {
+        // Both dates result in age 25 on 2025-05-12
+        val result1 = AgeCalculator.hasSameAge("2000-01-01", "2000-05-12", mockClock)
+        assertEquals(true, result1)
+
+        // Both dates result in age 1 on 2025-05-12
+        val result2 = AgeCalculator.hasSameAge("2024-05-12", "2024-01-01", mockClock)
+        assertEquals(true, result2)
+
+        // Same date should have same age
+        val result3 = AgeCalculator.hasSameAge("2000-05-12", "2000-05-12", mockClock)
+        assertEquals(true, result3)
+    }
+
+    @Test
+    fun `should return false if dates have different ages`() {
+        // 25 vs 24 years old
+        val result1 = AgeCalculator.hasSameAge("2000-01-01", "2000-12-31", mockClock)
+        assertEquals(false, result1)
+
+        // 25 vs 1 year old
+        val result2 = AgeCalculator.hasSameAge("2000-05-12", "2024-05-12", mockClock)
+        assertEquals(false, result2)
+
+        // 1 vs 0 years old
+        val result3 = AgeCalculator.hasSameAge("2024-05-12", "2024-05-13", mockClock)
+        assertEquals(false, result3)
+    }
+
+    @Test
+    fun `should return false for invalid dates`() {
+        // First date invalid
+        val result1 = AgeCalculator.hasSameAge("invalid-date", "2000-05-12", mockClock)
+        assertEquals(false, result1)
+
+        // Second date invalid
+        val result2 = AgeCalculator.hasSameAge("2000-05-12", "invalid-date", mockClock)
+        assertEquals(false, result2)
+
+        // Both dates invalid
+        val result3 = AgeCalculator.hasSameAge("invalid-date1", "invalid-date2", mockClock)
+        assertEquals(false, result3)
+
+        // Empty strings
+        val result4 = AgeCalculator.hasSameAge("", "2000-05-12", mockClock)
+        assertEquals(false, result4)
+
+        val result5 = AgeCalculator.hasSameAge("2000-05-12", "", mockClock)
+        assertEquals(false, result5)
+    }
 }
 

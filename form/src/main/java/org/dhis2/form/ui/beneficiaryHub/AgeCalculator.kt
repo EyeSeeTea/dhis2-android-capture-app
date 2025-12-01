@@ -67,5 +67,30 @@ object AgeCalculator {
             null
         }
     }
+
+    /**
+     * Checks if two dates have the same age.
+    
+     *
+     * @param date1 First date of birth in string format (e.g., "YYYY-MM-DD").
+     * @param date2 Second date of birth in string format (e.g., "YYYY-MM-DD").
+     * @param clock Clock to get the current date (defaults to system clock).
+     * @return true if both dates have the same age, false otherwise. Returns false if either date is invalid.
+     */
+    fun hasSameAge(
+        date1: String,
+        date2: String,
+        clock: Clock = Clock.systemDefaultZone()
+    ): Boolean {
+        val age1 = calculateAgeInYears(date1, clock)
+        val age2 = calculateAgeInYears(date2, clock)
+        
+        // If either date is invalid, return false
+        if (age1 == null || age2 == null) {
+            return false
+        }
+        
+        return age1 == age2
+    }
 }
 
