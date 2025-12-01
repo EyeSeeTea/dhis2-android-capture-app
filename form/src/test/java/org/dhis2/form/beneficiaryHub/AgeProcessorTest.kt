@@ -10,8 +10,7 @@ import org.dhis2.form.ui.beneficiaryHub.ageInMonthsFieldUid
 import org.dhis2.form.ui.beneficiaryHub.dateOfBirthFieldUid
 import org.hisp.dhis.android.core.common.ValueType
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doAnswer
@@ -37,9 +36,8 @@ class AgeProcessorTest {
         val fieldUiModel = givenAFieldUiModel(uid = "otherFieldUid", value = "25")
         val result = ageProcessor.process(fieldUiModel, false)
 
-        assertEquals("otherFieldUid", result.id)
-        assertEquals("25", result.value)
-        assertNull(result.error)
+        assertEquals("25", result.getOrNull())
+        assertTrue(result.isSuccess)
     }
 
     @Test
@@ -48,12 +46,12 @@ class AgeProcessorTest {
         val fieldUiModel = givenAFieldUiModel(uid = ageFieldUid, value = "25")
 
         val result1 = ageProcessor.process(fieldUiModel, true)
-        assertEquals("25", result1.value)
-        assertNull(result1.error)
+        assertEquals("25", result1.getOrNull())
+        assertTrue(result1.isSuccess)
 
         val result2 = ageProcessor.process(fieldUiModel, null)
-        assertEquals("25", result2.value)
-        assertNull(result2.error)
+        assertEquals("25", result2.getOrNull())
+        assertTrue(result2.isSuccess)
     }
 
     @Test
@@ -62,8 +60,8 @@ class AgeProcessorTest {
         val fieldUiModel = givenAFieldUiModel(uid = ageFieldUid, value = "-1")
         val result = ageProcessor.process(fieldUiModel, false)
 
-        assertNotNull(result.error)
-        assertEquals("Age must be a valid positive integer number", result.error?.message)
+        assertTrue(result.isFailure)
+        assertEquals("Age must be a valid positive integer number", result.exceptionOrNull()?.message)
     }
 
     @Test
@@ -72,8 +70,8 @@ class AgeProcessorTest {
         val fieldUiModel = givenAFieldUiModel(uid = ageFieldUid, value = "126")
         val result = ageProcessor.process(fieldUiModel, false)
 
-        assertNotNull(result.error)
-        assertEquals("Age cannot be greater than 125", result.error?.message)
+        assertTrue(result.isFailure)
+        assertEquals("Age cannot be greater than 125", result.exceptionOrNull()?.message)
     }
 
     @Test
@@ -82,8 +80,8 @@ class AgeProcessorTest {
         val fieldUiModel = givenAFieldUiModel(uid = ageFieldUid, value = "abc")
         val result = ageProcessor.process(fieldUiModel, false)
 
-        assertNotNull(result.error)
-        assertEquals("Age must be a valid positive integer number", result.error?.message)
+        assertTrue(result.isFailure)
+        assertEquals("Age must be a valid positive integer number", result.exceptionOrNull()?.message)
     }
 
     @Test
@@ -94,8 +92,8 @@ class AgeProcessorTest {
 
         val result = ageProcessor.process(fieldUiModel, false)
 
-        assertEquals("22", result.value)
-        assertNull(result.error)
+        assertEquals("22", result.getOrNull())
+        assertTrue(result.isSuccess)
         verify(repository).save(dateOfBirthFieldUid, "2003-01-01", null)
         verify(repository).updateValueOnList(dateOfBirthFieldUid, "2003-01-01", ValueType.DATE)
     }
@@ -108,8 +106,8 @@ class AgeProcessorTest {
 
         val result = ageProcessor.process(fieldUiModel, false)
 
-        assertEquals("5", result.value)
-        assertNull(result.error)
+        assertEquals("5", result.getOrNull())
+        assertTrue(result.isSuccess)
 
         verify(repository).save(dateOfBirthFieldUid, "2020-01-01", null)
         verify(repository).updateValueOnList(dateOfBirthFieldUid, "2020-01-01", ValueType.DATE)
@@ -126,8 +124,8 @@ class AgeProcessorTest {
 
         val result = ageProcessor.process(fieldUiModel, false)
 
-        assertEquals("6", result.value)
-        assertNull(result.error)
+        assertEquals("6", result.getOrNull())
+        assertTrue(result.isSuccess)
 
         verify(repository).save(dateOfBirthFieldUid, "2019-01-01", null)
         verify(repository).updateValueOnList(dateOfBirthFieldUid, "2019-01-01", ValueType.DATE)
@@ -145,8 +143,8 @@ class AgeProcessorTest {
 
         val result = ageProcessor.process(fieldUiModel, false)
 
-        assertEquals("22", result.value)
-        assertNull(result.error)
+        assertEquals("22", result.getOrNull())
+        assertTrue(result.isSuccess)
 
         verify(repository).save(dateOfBirthFieldUid, "2003-01-01", null)
         verify(repository).updateValueOnList(dateOfBirthFieldUid, "2003-01-01", ValueType.DATE)
@@ -158,8 +156,8 @@ class AgeProcessorTest {
         val fieldUiModel = givenAFieldUiModel(uid = ageFieldUid, value = "")
         val result = ageProcessor.process(fieldUiModel, false)
 
-        assertEquals("", result.value)
-        assertNull(result.error)
+        assertEquals("", result.getOrNull())
+        assertTrue(result.isSuccess)
     }
 
     private fun givenAgeProcessor() : AgeProcessor {

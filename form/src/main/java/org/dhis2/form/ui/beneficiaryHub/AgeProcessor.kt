@@ -2,9 +2,7 @@ package org.dhis2.form.ui.beneficiaryHub
 
 import android.os.Handler
 import org.dhis2.form.data.FormRepository
-import org.dhis2.form.model.ActionType
 import org.dhis2.form.model.FieldUiModel
-import org.dhis2.form.model.RowAction
 import org.hisp.dhis.android.core.common.ValueType
 import java.time.Clock
 
@@ -20,35 +18,28 @@ class AgeProcessor(
 
     /**
      * Processes changes in the age field.
-     * Only processes if isDobKnown == "false".
+     * Only processes if isDobKnown == false.
      * Calculates estimated DOB from age and updates ageInMonths if age <= 5.
      *
      * @param fieldUiModel The age field that changed.
-     * @param isDobKnown The value of the isDobKnown field ("true", "false", or null/undefined).
-     * @return RowAction with the processing result.
+     * @param isDobKnown The value of the isDobKnown field (true, false, or null/undefined).
+     * @return Result with the age value as string or an error.
      */
-    fun process(fieldUiModel: FieldUiModel, isDobKnown: Boolean?): RowAction {
-        val action = RowAction(
-            id = fieldUiModel.uid,
-            value = fieldUiModel.value,
-            valueType = fieldUiModel.valueType,
-            type = ActionType.ON_SAVE,
-        )
-
+    fun process(fieldUiModel: FieldUiModel, isDobKnown: Boolean?): Result<String?> {
         if (fieldUiModel.uid != ageFieldUid || isDobKnown != false || fieldUiModel.value.isNullOrBlank()) {
-            return action
+            return Result.success(fieldUiModel.value)
         }
 
         val ageParsed = fieldUiModel.value!!.toIntOrNull()
         if (ageParsed == null || ageParsed < 0) {
-            return action.copy(
-                error = Throwable("Age must be a valid positive integer number")
+            return Result.failure(
+                Throwable("Age must be a valid positive integer number")
             )
         }
 
         if (ageParsed > MAX_AGE) {
-            return action.copy(
-                error = Throwable("Age cannot be greater than 125")
+            return Result.failure(
+                Throwable("Age cannot be greater than 125")
             )
         }
 
@@ -67,7 +58,7 @@ class AgeProcessor(
 
         updateDobAndAgeInMonths(formattedEstimatedDob, ageParsed)
 
-        return action.copy(value = ageParsed.toString())
+        return Result.success(ageParsed.toString())
     }
 
     private fun updateDobAndAgeInMonths(formattedDob: String, age: Int) {
