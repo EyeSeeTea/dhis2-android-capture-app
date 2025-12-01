@@ -70,7 +70,6 @@ object AgeCalculator {
 
     /**
      * Checks if two dates have the same age.
-    
      *
      * @param date1 First date of birth in string format (e.g., "YYYY-MM-DD").
      * @param date2 Second date of birth in string format (e.g., "YYYY-MM-DD").

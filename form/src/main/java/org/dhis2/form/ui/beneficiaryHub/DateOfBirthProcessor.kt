@@ -30,7 +30,7 @@ class DateOfBirthProcessor(
             type = ActionType.ON_SAVE,
         )
 
-        if (!DateOfBirthFieldMapper.isDateOfBirthField(fieldUIModel.uid) ||
+        if (fieldUIModel.uid != dateOfBirthFieldUid ||
             fieldUIModel.value.isNullOrBlank()
         ) {
             return action
@@ -65,20 +65,18 @@ class DateOfBirthProcessor(
     }
 
     private fun updateAgeFieldFromDateOfBirth(dateOfBirthFieldUid: String, formattedDate: String) {
-        DateOfBirthFieldMapper.getAgeField(dateOfBirthFieldUid, repository)?.let { ageFieldUid ->
-            val calculatedAge = AgeCalculator.calculateAgeInYears(formattedDate)
-            calculatedAge?.let { age ->
-                handler.post {
-                    val ageAction = createRowActionFromIntent(
-                        FormIntent.OnSave(
-                            uid = ageFieldUid,
-                            value = age.toString(),
-                            valueType = ValueType.INTEGER,
-                        ),
-                    )
-                    repository.save(ageAction.id, ageAction.value, ageAction.extraData)
-                    repository.updateValueOnList(ageAction.id, ageAction.value, ageAction.valueType)
-                }
+        val calculatedAge = AgeCalculator.calculateAgeInYears(formattedDate)
+        calculatedAge?.let { age ->
+            handler.post {
+                val ageAction = createRowActionFromIntent(
+                    FormIntent.OnSave(
+                        uid = ageFieldUid,
+                        value = age.toString(),
+                        valueType = ValueType.INTEGER,
+                    ),
+                )
+                repository.save(ageAction.id, ageAction.value, ageAction.extraData)
+                repository.updateValueOnList(ageAction.id, ageAction.value, ageAction.valueType)
             }
         }
     }
