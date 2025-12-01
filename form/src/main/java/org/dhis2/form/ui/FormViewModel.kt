@@ -355,14 +355,17 @@ class FormViewModel(
         if (previousActionItem == null) previousActionItem = rowAction
         if (previousActionItem?.value != it.value && previousActionItem?.id == it.uid) {
             // EyeSeeTea customization: Validate and format
-            val processesAction = dateOfBirthProcessor.process(it)
+            val processResult = dateOfBirthProcessor.process(it)
 
-            // Check for date of birth error first, then standard field errors
-            val error = processesAction.error ?: checkFieldError(it.valueType, processesAction.value, it.fieldMask)
-            
+            val error = processResult.fold(onSuccess = { value ->
+                checkFieldError(it.valueType, it.value, it.fieldMask)
+            }, onFailure = { throwable ->
+                throwable
+            })
+
             if (error != null) {
                 val action = rowActionFromIntent(
-                    FormIntent.OnSave(it.uid, processesAction.value, it.valueType, it.fieldMask),
+                    FormIntent.OnSave(it.uid, it.value, it.valueType, it.fieldMask),
                 ).copy(error = error)
                 repository.updateErrorList(action)
                 StoreResult(
@@ -370,11 +373,14 @@ class FormViewModel(
                     ValueStoreResult.VALUE_HAS_NOT_CHANGED,
                 )
             } else {
+                val value = processResult.getOrNull()
+
                 checkAutoCompleteForLastFocusedItem(it)
-                val intent = FormIntent.OnSave(it.uid, processesAction.value, it.valueType, it.fieldMask)
+                val intent =
+                    FormIntent.OnSave(it.uid, value, it.valueType, it.fieldMask)
                 val action = rowActionFromIntent(intent)
-                val result = repository.save(it.uid, processesAction.value, action.extraData)
-                repository.updateValueOnList(it.uid, processesAction.value, it.valueType)
+                val result = repository.save(it.uid, value, action.extraData)
+                repository.updateValueOnList(it.uid, value, it.valueType)
                 repository.updateErrorList(action)
                 result
             }

@@ -2,9 +2,7 @@ package org.dhis2.form.ui.beneficiaryHub
 
 import android.os.Handler
 import org.dhis2.form.data.FormRepository
-import org.dhis2.form.model.ActionType
 import org.dhis2.form.model.FieldUiModel
-import org.dhis2.form.model.RowAction
 import org.hisp.dhis.android.core.common.ValueType
 
 class DateOfBirthProcessor(
@@ -12,54 +10,41 @@ class DateOfBirthProcessor(
     private val handler: Handler,
 ) {
     /**
-     * Valida y formatea un campo de fecha de nacimiento.
-     * Sigue el patrón de checkFieldError: retorna Pair<RowAction?, Throwable?>
+     * Validate and format a date of birth field.
      *
-     * @return Pair donde:
-     *   - First: RowAction procesado con fecha formateada, o null si hay error
-     *   - Second: Throwable si hay error, o null si está bien
+     * @return Result with the formatted date or an error
      */
-    fun process(fieldUIModel: FieldUiModel): RowAction {
-
-        val action = RowAction(
-            id = fieldUIModel.uid,
-            value = fieldUIModel.value,
-            valueType = fieldUIModel.valueType,
-            type = ActionType.ON_SAVE,
-        )
-
+    fun process(fieldUIModel: FieldUiModel): Result<String?> {
         if (fieldUIModel.uid != dateOfBirthFieldUid ||
             fieldUIModel.value.isNullOrBlank()
         ) {
-            return action
+            return Result.success(fieldUIModel.value)
         }
 
-        val formattedDate = DateOfBirthFormatter.formatAndValidate(action.value)
+        val formattedDate = DateOfBirthFormatter.formatAndValidate(fieldUIModel.value)
 
         if (formattedDate == null) {
-            return action.copy(
-                error = Throwable("Invalid date. Please use format YYYY-MM-DD or YYYYMMDD and ensure the date exists and is valid")
+            return Result.failure(
+             Throwable("Invalid date. Please use format YYYY-MM-DD or YYYYMMDD and ensure the date exists and is valid")
             )
         }
 
         if (DateOfBirthFormatter.isFutureDate(formattedDate)) {
-            return action.copy(
-                error =
-                    Throwable("Date of Birth cannot be in the future")
+            return Result.failure(
+                Throwable("Date of Birth cannot be in the future")
             )
         }
 
         if (DateOfBirthFormatter.isBeforeMinDate(formattedDate)) {
-            return action.copy(
-                error = Throwable("Date of Birth cannot be previous to 1900-01-01")
+            return Result.failure(
+                Throwable("Date of Birth cannot be previous to 1900-01-01")
             )
         }
 
-        val processedAction = action.copy(value = formattedDate)
 
-        updateAgeFieldFromDateOfBirth(action.id, formattedDate)
+        updateAgeFieldFromDateOfBirth(fieldUIModel.uid, formattedDate)
 
-        return processedAction
+        return Result.success(formattedDate)
     }
 
     private fun updateAgeFieldFromDateOfBirth(dateOfBirthFieldUid: String, formattedDate: String) {
