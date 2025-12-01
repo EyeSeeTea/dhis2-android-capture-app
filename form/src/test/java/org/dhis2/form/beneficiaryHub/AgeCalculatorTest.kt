@@ -54,7 +54,7 @@ class AgeCalculatorTest {
         assertEquals(21, age) // 2025-05-12
     }
 
-    // Tests for calculateAgeInMonths - matching plugin web tests exactly
+    // Tests for calculateAgeInMonths
     @Test
     fun `should return the correct age in months for exact year anniversaries`() {
         val age1 = AgeCalculator.calculateAgeInMonths("2024-05-12", mockClock)

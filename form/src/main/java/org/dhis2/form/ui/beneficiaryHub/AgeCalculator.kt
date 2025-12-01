@@ -8,7 +8,6 @@ import java.time.format.DateTimeParseException
 object AgeCalculator {
     /**
      * Calculates the age based on a given date string.
-     * Similar to the plugin web logic
      *
      * @param dateOfBirth The date of birth in string format (e.g., "YYYY-MM-DD").
      * @param clock Clock to get the current date (defaults to system clock).
@@ -38,7 +37,6 @@ object AgeCalculator {
 
     /**
      * Calculates the age in months based on a given date string.
-     * Similar to the plugin web logic
      *
      * @param dateOfBirth The date of birth in string format (e.g., "YYYY-MM-DD").
      * @param clock Clock to get the current date (defaults to system clock).
