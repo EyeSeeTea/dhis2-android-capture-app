@@ -53,5 +53,105 @@ class AgeCalculatorTest {
         val age = AgeCalculator.calculateAgeInYears(dateString, mockClock)
         assertEquals(21, age) // 2025-05-12
     }
+
+    // Tests for calculateAgeInMonths - matching plugin web tests exactly
+    @Test
+    fun `should return the correct age in months for exact year anniversaries`() {
+        val age1 = AgeCalculator.calculateAgeInMonths("2024-05-12", mockClock)
+        assertEquals(12, age1)
+
+        val age2 = AgeCalculator.calculateAgeInMonths("2023-05-12", mockClock)
+        assertEquals(24, age2)
+
+        val age3 = AgeCalculator.calculateAgeInMonths("2022-05-12", mockClock)
+        assertEquals(36, age3)
+    }
+
+    @Test
+    fun `should return 0 for dates in the same month or in the future`() {
+        val age1 = AgeCalculator.calculateAgeInMonths("2025-05-01", mockClock)
+        assertEquals(0, age1)
+
+        val age2 = AgeCalculator.calculateAgeInMonths("2025-05-11", mockClock)
+        assertEquals(0, age2)
+
+        val age3 = AgeCalculator.calculateAgeInMonths("2025-05-13", mockClock)
+        assertEquals(0, age3)
+
+        val age4 = AgeCalculator.calculateAgeInMonths("2027-01-01", mockClock)
+        assertEquals(0, age4)
+
+        // 11 months ago + 1 day
+        val age5 = AgeCalculator.calculateAgeInMonths("2024-05-13", mockClock)
+        assertEquals(11, age5)
+    }
+
+    @Test
+    fun `should return the correct age in months for different months`() {
+        val age1 = AgeCalculator.calculateAgeInMonths("2025-04-12", mockClock)
+        assertEquals(1, age1)
+
+        val age2 = AgeCalculator.calculateAgeInMonths("2025-03-12", mockClock)
+        assertEquals(2, age2)
+
+        val age3 = AgeCalculator.calculateAgeInMonths("2025-01-12", mockClock)
+        assertEquals(4, age3)
+
+        val age4 = AgeCalculator.calculateAgeInMonths("2024-12-12", mockClock)
+        assertEquals(5, age4)
+
+        // ~1 month ago
+        val age5 = AgeCalculator.calculateAgeInMonths("2025-04-01", mockClock)
+        assertEquals(1, age5)
+
+        // ~2 months ago
+        val age6 = AgeCalculator.calculateAgeInMonths("2025-03-01", mockClock)
+        assertEquals(2, age6)
+    }
+
+    @Test
+    fun `should handle cross-year calculations correctly`() {
+        // 1 year + 1 day
+        val age1 = AgeCalculator.calculateAgeInMonths("2024-05-11", mockClock)
+        assertEquals(12, age1)
+
+        // 1 year + 4 months
+        val age2 = AgeCalculator.calculateAgeInMonths("2024-01-12", mockClock)
+        assertEquals(16, age2)
+
+        // 1 year + 5 months
+        val age3 = AgeCalculator.calculateAgeInMonths("2023-12-12", mockClock)
+        assertEquals(17, age3)
+
+        // 25 years = 300 months
+        val age4 = AgeCalculator.calculateAgeInMonths("2000-05-12", mockClock)
+        assertEquals(25 * 12, age4)
+
+        // ~35 years + 4 months
+        val age5 = AgeCalculator.calculateAgeInMonths("1990-01-01", mockClock)
+        assertEquals(35 * 12 + 4, age5)
+    }
+
+    @Test
+    fun `should handle leap years correctly for age in months`() {
+        // From Feb 29, 2024 to May 12, 2025 = 14 months
+        val age = AgeCalculator.calculateAgeInMonths("2024-02-29", mockClock)
+        assertEquals(14, age)
+    }
+
+    @Test
+    fun `should handle day adjustments correctly for age in months`() {
+        // Same month, past day -> 1 month
+        val age1 = AgeCalculator.calculateAgeInMonths("2025-04-10", mockClock)
+        assertEquals(1, age1)
+
+        // Future day in birth month -> 10 months
+        val age2 = AgeCalculator.calculateAgeInMonths("2024-06-15", mockClock)
+        assertEquals(10, age2)
+
+        // Past day in birth month -> 11 months
+        val age3 = AgeCalculator.calculateAgeInMonths("2024-06-10", mockClock)
+        assertEquals(11, age3)
+    }
 }
 

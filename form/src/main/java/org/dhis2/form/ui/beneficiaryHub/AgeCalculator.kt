@@ -35,5 +35,39 @@ object AgeCalculator {
             null
         }
     }
+
+    /**
+     * Calculates the age in months based on a given date string.
+     * Similar to the plugin web logic
+     *
+     * @param dateOfBirth The date of birth in string format (e.g., "YYYY-MM-DD").
+     * @param clock Clock to get the current date (defaults to system clock).
+     * @return The calculated age in months as a number, or null if the date is invalid.
+     */
+    fun calculateAgeInMonths(
+        dateOfBirth: String,
+        clock: Clock = Clock.systemDefaultZone()
+    ): Int? {
+        return try {
+            val birthDate = LocalDate.parse(dateOfBirth, DateTimeFormatter.ISO_DATE)
+            val today = LocalDate.now(clock)
+
+            if (birthDate.isAfter(today)) {
+                return 0
+            }
+
+            var months = (today.year - birthDate.year) * 12
+            months += today.monthValue - birthDate.monthValue
+
+            // Adjust if the current day is before the birth day in the month
+            if (today.dayOfMonth < birthDate.dayOfMonth) {
+                months--
+            }
+
+            maxOf(0, months)
+        } catch (e: DateTimeParseException) {
+            null
+        }
+    }
 }
 
