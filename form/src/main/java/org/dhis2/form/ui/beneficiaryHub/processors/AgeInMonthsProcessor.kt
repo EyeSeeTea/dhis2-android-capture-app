@@ -10,7 +10,6 @@ import org.dhis2.form.ui.beneficiaryHub.calculators.DateOfBirthCalculator
 import org.dhis2.form.ui.beneficiaryHub.dateOfBirthFieldUid
 import org.hisp.dhis.android.core.common.ValueType
 import java.time.Clock
-import kotlin.toString
 
 class AgeInMonthsProcessor(
     private val repository: FormRepository,
@@ -20,7 +19,6 @@ class AgeInMonthsProcessor(
 
     /**
      * Processes changes in the age in months field.
-     * Only processes if isDobKnown == false.
      * Calculates estimated DOB from age in months and updates age in years.
      *
      * @param fieldUiModel The age in months field that changed.
@@ -28,7 +26,7 @@ class AgeInMonthsProcessor(
      * @return Result with the age in months value as string or an error.
      */
     fun process(fieldUiModel: FieldUiModel, isDobKnown: Boolean?): Result<String?> {
-        if (fieldUiModel.uid != ageInMonthsFieldUid || isDobKnown != false || fieldUiModel.value.isNullOrBlank()) {
+        if (fieldUiModel.uid != ageInMonthsFieldUid || fieldUiModel.value.isNullOrBlank()) {
             return Result.success(fieldUiModel.value)
         }
 

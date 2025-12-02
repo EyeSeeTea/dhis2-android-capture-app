@@ -3,14 +3,13 @@ package org.dhis2.form.ui.beneficiaryHub.processors
 import android.os.Handler
 import org.dhis2.form.data.FormRepository
 import org.dhis2.form.model.FieldUiModel
-import org.dhis2.form.ui.beneficiaryHub.calculators.AgeCalculator
-import org.dhis2.form.ui.beneficiaryHub.calculators.DateOfBirthCalculator
 import org.dhis2.form.ui.beneficiaryHub.ageFieldUid
 import org.dhis2.form.ui.beneficiaryHub.ageInMonthsFieldUid
+import org.dhis2.form.ui.beneficiaryHub.calculators.AgeCalculator
+import org.dhis2.form.ui.beneficiaryHub.calculators.DateOfBirthCalculator
 import org.dhis2.form.ui.beneficiaryHub.dateOfBirthFieldUid
 import org.hisp.dhis.android.core.common.ValueType
 import java.time.Clock
-
 
 private const val MAX_AGE = 125
 private const val MAX_CALC_AGE_IN_MONTHS_YEARS = 5
@@ -23,7 +22,6 @@ class AgeProcessor(
 
     /**
      * Processes changes in the age field.
-     * Only processes if isDobKnown == false.
      * Calculates estimated DOB from age and updates ageInMonths if age <= 5.
      *
      * @param fieldUiModel The age field that changed.
@@ -31,7 +29,7 @@ class AgeProcessor(
      * @return Result with the age value as string or an error.
      */
     fun process(fieldUiModel: FieldUiModel, isDobKnown: Boolean?): Result<String?> {
-        if (fieldUiModel.uid != ageFieldUid || isDobKnown != false || fieldUiModel.value.isNullOrBlank()) {
+        if (fieldUiModel.uid != ageFieldUid || fieldUiModel.value.isNullOrBlank()) {
             return Result.success(fieldUiModel.value)
         }
 

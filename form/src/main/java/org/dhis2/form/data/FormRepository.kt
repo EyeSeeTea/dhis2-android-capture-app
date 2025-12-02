@@ -18,6 +18,7 @@ interface FormRepository {
     fun updateErrorList(action: RowAction)
     fun save(id: String, value: String?, extraData: String?): StoreResult?
     fun updateValueOnList(uid: String, value: String?, valueType: ValueType?)
+    fun updateEditableOnList(uid: String, editable: Boolean)
     fun currentFocusedItem(): FieldUiModel?
     fun setFocusedItem(action: RowAction)
     fun updateSectionOpened(action: RowAction)

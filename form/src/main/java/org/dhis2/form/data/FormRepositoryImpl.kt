@@ -704,6 +704,19 @@ class FormRepositoryImpl(
         }
     }
 
+    override fun updateEditableOnList(uid: String, editable: Boolean) {
+        itemList.let { list ->
+            list.find { item ->
+                item.uid == uid
+            }?.let { item ->
+                itemList = list.updated(
+                    list.indexOf(item),
+                    item.setEditable(editable),
+                )
+            }
+        }
+    }
+
     private fun updateEnrollmentDate(fieldUiModelList: List<FieldUiModel>) {
         for (element in fieldUiModelList) {
             itemList.let { list ->
