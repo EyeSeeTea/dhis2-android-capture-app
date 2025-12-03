@@ -96,18 +96,16 @@ class FormViewModel(
 
     private val handler = Handler(Looper.getMainLooper())
 
-    // EyeSeeTea customization: processor for date of birth fields
-    private var fieldProcessor: FieldProcessor
+    // EyeSeeTea customization: beneficiary hub
+    // processor for date of birth fields
+    private var fieldProcessor: FieldProcessor = FieldProcessor(
+        repository = repository,
+        handler = handler,
+    )
 
     var filePath: String? = null
 
     init {
-        // EyeSeeTea customization: processor for date of birth fields
-        fieldProcessor = FieldProcessor(
-            repository = repository,
-            handler = handler,
-        )
-
         viewModelScope.launch {
             _pendingIntents
                 .distinctUntilChanged { old, new ->
@@ -359,7 +357,8 @@ class FormViewModel(
     private fun saveLastFocusedItem(rowAction: RowAction) = getLastFocusedTextItem()?.let {
         if (previousActionItem == null) previousActionItem = rowAction
         if (previousActionItem?.value != it.value && previousActionItem?.id == it.uid) {
-            // EyeSeeTea customization: Process fields using FieldProcessor
+            // EyeSeeTea customization: beneficiary hub
+            //Process fields using FieldProcessor
             val isDobKnown = getIsDobKnown()
             val isDobKnownFieldChanged = it.uid == isDateOfBirthKnownFieldUid
             val processResult = fieldProcessor.process(it, isDobKnown?.value.toBoolean())
@@ -391,7 +390,8 @@ class FormViewModel(
                 repository.updateValueOnList(it.uid, processedValue, it.valueType)
                 repository.updateErrorList(action)
 
-                // If isDobKnown changed, refresh UI to show updated editable states
+                // EyeSeeTea customization: beneficiary hub
+                //If isDobKnown changed, refresh UI to show updated editable states
                 if (isDobKnownFieldChanged) {
                     handler.post {
                         processCalculatedItems(skipProgramRules = true)
@@ -413,6 +413,8 @@ class FormViewModel(
         ValueStoreResult.VALUE_HAS_NOT_CHANGED,
     )
 
+    // EyeSeeTea customization: beneficiary hub
+    // Get isDobKnown field value
     private fun getIsDobKnown(): FieldUiModel? {
         return repository.getField(isDateOfBirthKnownFieldUid)
     }

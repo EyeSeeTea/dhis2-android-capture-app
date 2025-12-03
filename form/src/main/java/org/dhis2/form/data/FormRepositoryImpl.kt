@@ -704,19 +704,6 @@ class FormRepositoryImpl(
         }
     }
 
-    override fun updateEditableOnList(uid: String, editable: Boolean) {
-        itemList.let { list ->
-            list.find { item ->
-                item.uid == uid
-            }?.let { item ->
-                itemList = list.updated(
-                    list.indexOf(item),
-                    item.setEditable(editable),
-                )
-            }
-        }
-    }
-
     private fun updateEnrollmentDate(fieldUiModelList: List<FieldUiModel>) {
         for (element in fieldUiModelList) {
             itemList.let { list ->
@@ -893,5 +880,20 @@ class FormRepositoryImpl(
 
     override fun getField(fieldUid: String): FieldUiModel? {
         return itemList.find { it.uid == fieldUid }
+    }
+
+    // EyeSeeTea customization: beneficiary hub
+    // Update editable property of a field in the internal itemList
+    override fun updateEditableOnList(uid: String, editable: Boolean) {
+        itemList.let { list ->
+            list.find { item ->
+                item.uid == uid
+            }?.let { item ->
+                itemList = list.updated(
+                    list.indexOf(item),
+                    item.setEditable(editable),
+                )
+            }
+        }
     }
 }
