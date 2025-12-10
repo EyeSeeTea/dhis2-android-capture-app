@@ -19,6 +19,10 @@ class DhisAnalyticCharts @Inject constructor(
         return chartsRepository.getVisualizationGroups(uid)
     }
 
+    override fun existsEnrollmentCharts(enrollmentUid: String): Boolean {
+        return chartsRepository.existsAnalyticsForEnrollment(enrollmentUid)
+    }
+
     override fun geEnrollmentCharts(enrollmentUid: String): List<Graph> {
         return chartsRepository.getAnalyticsForEnrollment(enrollmentUid)
     }
