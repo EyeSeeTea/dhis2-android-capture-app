@@ -11,6 +11,7 @@ import org.dhis2.form.model.OptionSetConfiguration
 import org.dhis2.form.model.RowAction
 import org.dhis2.form.model.SectionUiModelImpl
 import org.dhis2.form.model.StoreResult
+import org.dhis2.form.ui.beneficiaryHub.isDateOfBirthKnownFieldUid
 import org.dhis2.form.ui.provider.DisplayNameProvider
 import org.dhis2.form.ui.provider.LegendValueProvider
 import org.dhis2.form.ui.validation.FieldErrorMessageProvider
@@ -166,10 +167,13 @@ class FormRepositoryImpl(
             )
         } ?: emptyList()
 
+        //EyeSeeTea customization - not show warnings for isDateOfBirthKnownFieldUid (beneficiary hub)
+        val finalItemsWithWarning = itemsWithWarning.filter { it.fieldUid != isDateOfBirthKnownFieldUid }
+
         return if (isEvent) {
-            getEventResult(itemsWithErrors, itemsWithWarning, backPressed)
+            getEventResult(itemsWithErrors, finalItemsWithWarning, backPressed)
         } else {
-            getEnrollmentResult(itemsWithErrors, itemsWithWarning, backPressed)
+            getEnrollmentResult(itemsWithErrors, finalItemsWithWarning, backPressed)
         }
     }
 

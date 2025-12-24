@@ -415,6 +415,7 @@ class FormView : Fragment() {
     private fun showDataEntryResultDialog(result: DataIntegrityCheckResult) {
         formResultDialogUiProvider?.let {
             val modelAndFieldsWithIssuesList = getDialogModelBasedOnResult(result)
+
             val fieldsWithIssues = modelAndFieldsWithIssuesList?.second ?: emptyList()
 
             val showBottomSheetDialog = {
