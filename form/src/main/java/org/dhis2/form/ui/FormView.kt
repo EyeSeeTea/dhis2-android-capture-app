@@ -61,7 +61,6 @@ import org.dhis2.form.model.InfoUiModel
 import org.dhis2.form.model.RowAction
 import org.dhis2.form.model.UiRenderType
 import org.dhis2.form.model.exception.RepositoryRecordsException
-import org.dhis2.form.ui.beneficiaryHub.isDateOfBirthKnownFieldUid
 import org.dhis2.form.ui.dialog.QRDetailBottomDialog
 import org.dhis2.form.ui.event.RecyclerViewUiEvents
 import org.dhis2.form.ui.idling.FormCountingIdlingResource
@@ -417,10 +416,7 @@ class FormView : Fragment() {
         formResultDialogUiProvider?.let {
             val modelAndFieldsWithIssuesList = getDialogModelBasedOnResult(result)
 
-
-            //EyeSeeTea customization - not show warnings for isDateOfBirthKnownFieldUid (beneficiary hub)
-            //val fieldsWithIssues = modelAndFieldsWithIssuesList?.second ?: emptyList()
-            val fieldsWithIssues = modelAndFieldsWithIssuesList?.second?.filter { it.fieldUid != isDateOfBirthKnownFieldUid } ?: emptyList()
+            val fieldsWithIssues = modelAndFieldsWithIssuesList?.second ?: emptyList()
 
             val showBottomSheetDialog = {
                 modelAndFieldsWithIssuesList?.first?.let { model ->
