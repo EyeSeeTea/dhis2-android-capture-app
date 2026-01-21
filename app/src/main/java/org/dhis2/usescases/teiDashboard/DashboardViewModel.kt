@@ -197,6 +197,10 @@ class DashboardViewModel(
         fetchDashboardModel()
     }
 
+    fun updateGrouping() {
+        fetchGrouping()
+    }
+
     fun updateEventUid(uid: String?) {
         if (eventUid.value != uid) {
             this.eventUid.value = uid
