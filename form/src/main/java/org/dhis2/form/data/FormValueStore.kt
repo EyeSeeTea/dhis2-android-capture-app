@@ -117,17 +117,34 @@ class FormValueStore(
 
     fun completeEvent() {
         try {
-            d2.eventModule().events().uid(recordUid).setStatus(EventStatus.COMPLETED)
+            // EyeSeeTea customization: Verify event exists before attempting to set status
+            //d2.eventModule().events().uid(recordUid).setStatus(EventStatus.COMPLETED)
+            val event = d2.eventModule().events().uid(recordUid).blockingGet()
+            if (event != null) {
+                d2.eventModule().events().uid(recordUid).setStatus(EventStatus.COMPLETED)
+            } else {
+                Timber.e("Cannot complete event: event with uid $recordUid does not exist")
+            }
         } catch (d2Error: D2Error) {
             Timber.e(d2Error)
+        } catch (e: Exception) {
+            Timber.e(e, "Error completing event with uid $recordUid")
         }
     }
 
     fun activateEvent() {
         try {
-            d2.eventModule().events().uid(recordUid).setStatus(EventStatus.ACTIVE)
+            // EyeSeeTea customization: Verify event exists before attempting to set status
+            val event = d2.eventModule().events().uid(recordUid).blockingGet()
+            if (event != null) {
+                d2.eventModule().events().uid(recordUid).setStatus(EventStatus.ACTIVE)
+            } else {
+                Timber.e("Cannot activate event: event with uid $recordUid does not exist")
+            }
         } catch (d2Error: D2Error) {
             Timber.e(d2Error)
+        } catch (e: Exception) {
+            Timber.e(e, "Error activating event with uid $recordUid")
         }
     }
 

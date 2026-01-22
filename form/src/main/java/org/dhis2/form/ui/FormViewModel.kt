@@ -35,6 +35,8 @@ import org.dhis2.form.model.RowAction
 import org.dhis2.form.model.StoreResult
 import org.dhis2.form.model.UiRenderType
 import org.dhis2.form.model.ValueStoreResult
+import org.dhis2.form.ui.beneficiaryHub.isDateOfBirthKnownFieldUid
+import org.dhis2.form.ui.beneficiaryHub.processors.FieldProcessor
 import org.dhis2.form.ui.event.RecyclerViewUiEvents
 import org.dhis2.form.ui.intent.FormIntent
 import org.dhis2.form.ui.validation.validators.FieldMaskValidator
@@ -94,6 +96,13 @@ class FormViewModel(
 
     private val handler = Handler(Looper.getMainLooper())
 
+    // EyeSeeTea customization: beneficiary hub
+    // processor for date of birth fields
+    private var fieldProcessor: FieldProcessor = FieldProcessor(
+        repository = repository,
+        handler = handler,
+    )
+
     var filePath: String? = null
 
     init {
@@ -113,6 +122,10 @@ class FormViewModel(
 
         viewModelScope.launch(dispatcher.io()) {
             fieldListChannel.consumeEach { fieldListConfiguration ->
+                // EyeSeeTea customization: Update editable state before composing list
+                val isDobKnown = getIsDobKnown()
+                isDobKnown?.let { fieldProcessor.process(it,it.value.toBoolean()) }
+
                 val result = async {
                     repository.composeList(fieldListConfiguration.skipProgramRules)
                 }
@@ -344,25 +357,51 @@ class FormViewModel(
     private fun saveLastFocusedItem(rowAction: RowAction) = getLastFocusedTextItem()?.let {
         if (previousActionItem == null) previousActionItem = rowAction
         if (previousActionItem?.value != it.value && previousActionItem?.id == it.uid) {
-            val error = checkFieldError(it.valueType, it.value, it.fieldMask)
+            // EyeSeeTea customization: beneficiary hub
+            //Process fields using FieldProcessor
+            val isDobKnown = getIsDobKnown()
+            val isDobKnownFieldChanged = it.uid == isDateOfBirthKnownFieldUid
+            val processResult = fieldProcessor.process(it, isDobKnown?.value.toBoolean())
+
+            val error = processResult.fold(
+                onSuccess = { value ->
+                    checkFieldError(it.valueType, value, it.fieldMask)
+                },
+                onFailure = { throwable -> throwable }
+            )
+
             if (error != null) {
                 val action = rowActionFromIntent(
                     FormIntent.OnSave(it.uid, it.value, it.valueType, it.fieldMask),
-                )
+                ).copy(error = error)
                 repository.updateErrorList(action)
                 StoreResult(
                     rowAction.id,
                     ValueStoreResult.VALUE_HAS_NOT_CHANGED,
                 )
             } else {
+                val processedValue = processResult.getOrNull()
                 checkAutoCompleteForLastFocusedItem(it)
-                val intent = FormIntent.OnSave(it.uid, it.value, it.valueType, it.fieldMask)
+
+                val intent =
+                    FormIntent.OnSave(it.uid, processedValue, it.valueType, it.fieldMask)
                 val action = rowActionFromIntent(intent)
-                val result = repository.save(it.uid, it.value, action.extraData)
-                repository.updateValueOnList(it.uid, it.value, it.valueType)
+                val result = repository.save(it.uid, processedValue, action.extraData)
+                repository.updateValueOnList(it.uid, processedValue, it.valueType)
                 repository.updateErrorList(action)
+
+                // EyeSeeTea customization: beneficiary hub
+                //If isDobKnown changed, refresh UI to show updated editable states
+                if (isDobKnownFieldChanged) {
+                    handler.post {
+                        processCalculatedItems(skipProgramRules = true)
+                    }
+                }
+
                 result
             }
+
+
         } else {
             StoreResult(
                 rowAction.id,
@@ -373,6 +412,12 @@ class FormViewModel(
         rowAction.id,
         ValueStoreResult.VALUE_HAS_NOT_CHANGED,
     )
+
+    // EyeSeeTea customization: beneficiary hub
+    // Get isDobKnown field value
+    private fun getIsDobKnown(): FieldUiModel? {
+        return repository.getField(isDateOfBirthKnownFieldUid)
+    }
 
     private fun checkAutoCompleteForLastFocusedItem(fieldUidModel: FieldUiModel) =
         getLastFocusedTextItem()?.let {
@@ -393,23 +438,23 @@ class FormViewModel(
             false
         } else {
             valueType.isNumeric ||
-                valueType.isText && renderType?.isPolygon() != true ||
-                valueType == ValueType.URL ||
-                valueType == ValueType.EMAIL ||
-                valueType == ValueType.PHONE_NUMBER
+                    valueType.isText && renderType?.isPolygon() != true ||
+                    valueType == ValueType.URL ||
+                    valueType == ValueType.EMAIL ||
+                    valueType == ValueType.PHONE_NUMBER
         }
     }
 
     private fun getLastFocusedTextItem() = repository.currentFocusedItem()?.takeIf {
         it.optionSet == null && (
-            valueTypeIsTextField(
-                it.valueType,
-                it.renderingType,
-            ) || it.valueType == ValueType.AGE ||
-                it.valueType == ValueType.DATETIME ||
-                it.valueType == ValueType.DATE ||
-                it.valueType == ValueType.TIME
-            )
+                valueTypeIsTextField(
+                    it.valueType,
+                    it.renderingType,
+                ) || it.valueType == ValueType.AGE ||
+                        it.valueType == ValueType.DATETIME ||
+                        it.valueType == ValueType.DATE ||
+                        it.valueType == ValueType.TIME
+                )
     }
 
     private fun rowActionFromIntent(intent: FormIntent): RowAction {
@@ -831,7 +876,12 @@ class FormViewModel(
                 repository.getDateFormatConfiguration()
             }.await()
             try {
-                _items.postValue(result.await())
+                val items = result.await()
+                // EyeSeeTea customization: Update editable state based on isDobKnown when loading
+                val isDobKnown = getIsDobKnown()
+                isDobKnown?.let { fieldProcessor.process(it,it.value.toBoolean()) }
+
+                _items.postValue(repository.composeList())
             } catch (e: Exception) {
                 Timber.e(e)
                 _items.postValue(emptyList())

@@ -1,0 +1,95 @@
+package org.dhis2.form.ui.beneficiaryHub.calculators
+
+import java.time.Clock
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+
+object AgeCalculator {
+    /**
+     * Calculates the age based on a given date string.
+     *
+     * @param dateOfBirth The date of birth in string format (e.g., "YYYY-MM-DD").
+     * @param clock Clock to get the current date (defaults to system clock).
+     * @return The calculated age as a number, or null if the date is invalid.
+     */
+    fun calculateAgeInYears(
+        dateOfBirth: String,
+        clock: Clock = Clock.systemDefaultZone()
+    ): Int? {
+        return try {
+            val birthDate = LocalDate.parse(dateOfBirth, DateTimeFormatter.ISO_DATE)
+            val today = LocalDate.now(clock)
+
+            var age = today.year - birthDate.year
+            val monthDiff = today.monthValue - birthDate.monthValue
+
+            // Adjust age if the current month and day are before the birth month and day
+            if (monthDiff < 0 || (monthDiff == 0 && today.dayOfMonth < birthDate.dayOfMonth)) {
+                age--
+            }
+
+            age
+        } catch (e: DateTimeParseException) {
+            null
+        }
+    }
+
+    /**
+     * Calculates the age in months based on a given date string.
+     *
+     * @param dateOfBirth The date of birth in string format (e.g., "YYYY-MM-DD").
+     * @param clock Clock to get the current date (defaults to system clock).
+     * @return The calculated age in months as a number, or null if the date is invalid.
+     */
+    fun calculateAgeInMonths(
+        dateOfBirth: String,
+        clock: Clock = Clock.systemDefaultZone()
+    ): Int? {
+        return try {
+            val birthDate = LocalDate.parse(dateOfBirth, DateTimeFormatter.ISO_DATE)
+            val today = LocalDate.now(clock)
+
+            if (birthDate.isAfter(today)) {
+                return 0
+            }
+
+            var months = (today.year - birthDate.year) * 12
+            months += today.monthValue - birthDate.monthValue
+
+            // Adjust if the current day is before the birth day in the month
+            if (today.dayOfMonth < birthDate.dayOfMonth) {
+                months--
+            }
+
+            maxOf(0, months)
+        } catch (e: DateTimeParseException) {
+            null
+        }
+    }
+
+    /**
+     * Checks if two dates have the same age.
+     *
+     * @param date1 First date of birth in string format (e.g., "YYYY-MM-DD").
+     * @param date2 Second date of birth in string format (e.g., "YYYY-MM-DD").
+     * @param clock Clock to get the current date (defaults to system clock).
+     * @return true if both dates have the same age, false otherwise. Returns false if either date is invalid.
+     */
+    fun hasSameAge(
+        date1: String,
+        date2: String,
+        clock: Clock = Clock.systemDefaultZone()
+    ): Boolean {
+        val age1 = calculateAgeInYears(date1, clock)
+        val age2 = calculateAgeInYears(date2, clock)
+        
+        // If either date is invalid, return false
+        if (age1 == null || age2 == null) {
+            return false
+        }
+        
+        return age1 == age2
+    }
+}
+

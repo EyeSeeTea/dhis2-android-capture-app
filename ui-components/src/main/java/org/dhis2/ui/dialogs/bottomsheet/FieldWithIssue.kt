@@ -12,5 +12,7 @@ enum class IssueType {
     MANDATORY,
     WARNING,
     ERROR_ON_COMPLETE,
-    WARNING_ON_COMPLETE,
+    WARNING_ON_COMPLETE;
+
+    fun shouldShowError() = this == ERROR || this == ERROR_ON_COMPLETE || this == MANDATORY
 }

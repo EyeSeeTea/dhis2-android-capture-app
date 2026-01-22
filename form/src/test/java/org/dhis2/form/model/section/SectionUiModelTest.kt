@@ -91,12 +91,14 @@ class SectionUiModelTest {
         null,
         null,
         false,
+        url = null,
         1,
         1,
         0,
         0,
         "",
         ObservableField(),
+
     )
 
     private fun givenSectionUiModelWithNullDescription() = SectionUiModelImpl(
@@ -121,6 +123,7 @@ class SectionUiModelTest {
         null,
         null,
         false,
+        url = null,
         1,
         1,
         0,
@@ -151,6 +154,7 @@ class SectionUiModelTest {
         null,
         null,
         false,
+        url = null,
         1,
         1,
         0,
@@ -181,6 +185,7 @@ class SectionUiModelTest {
         null,
         null,
         false,
+        url = null,
         1,
         1,
         0,
