@@ -33,4 +33,8 @@ interface FormRepository {
     fun saveListToPreferences(uid: String, list: List<String>)
     fun activateEvent()
     fun fetchOptions(id: String, optionSetUid: String)
+   
+    // EyeSeeTea customization - beneficiary hub
+    fun updateEditableOnList(uid: String, editable: Boolean) 
+    fun getField(fieldUid: String): FieldUiModel?
 }

@@ -20,7 +20,9 @@ class CustomDateTransformation : DateTimeVisualTransformation {
     }
 
     private fun dateFilter(text: AnnotatedString): TransformedText {
-        val input = if (text.text.length > DATE_MASK.length) text.text.substring(0, 8) else text.text
+        val originalLength = text.text.length
+
+        val input = if (originalLength > DATE_MASK.length) text.text.substring(0, 8) else text.text
 
         val day = input.take(2).padEnd(2, 'D')
         val month = input.drop(2).take(2).padEnd(2, 'M')
@@ -39,12 +41,16 @@ class CustomDateTransformation : DateTimeVisualTransformation {
             }
 
             override fun transformedToOriginal(offset: Int): Int {
-                return when (offset) {
+                val calculatedOffset = when (offset) {
                     in 0..3 -> offset + 4
+                    4 -> offset
                     in 5..6 -> offset - 3
+                    7 -> offset - 6
                     in 8..9 -> offset - 8
                     else -> 0
                 }
+
+                return if (calculatedOffset > originalLength) originalLength else calculatedOffset
             }
         }
 

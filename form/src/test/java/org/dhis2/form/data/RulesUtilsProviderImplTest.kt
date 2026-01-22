@@ -127,6 +127,7 @@ class RulesUtilsProviderImplTest {
             "",
             null,
             null,
+            url = null
         )
     }
 

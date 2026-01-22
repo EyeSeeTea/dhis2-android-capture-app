@@ -92,6 +92,10 @@ class DashboardViewModel(
             val result = async {
                 repository.getDashboardModel()
             }
+
+            // EyeSeeTea customization - Avoid ARN reading from database in UI Thread
+            val enrollmentItems = loadNavigationBarItems()
+
             withContext(dispatcher.ui()) {
                 try {
                     val model = result.await()
@@ -105,7 +109,15 @@ class DashboardViewModel(
                         _state.value =
                             model.currentEnrollment.aggregatedSyncState()
                         _noEnrollmentSelected.value = false
-                        loadNavigationBarItems()
+
+                        // EyeSeeTea customization - Avoid ARN reading from database in UI Thread
+                        //loadNavigationBarItems()
+
+                        _navigationBarUIState.value = _navigationBarUIState.value.copy(items = enrollmentItems)
+
+                        if (navigationBarUIState.value.items.none { it.id == navigationBarUIState.value.selectedItem }) {
+                            onNavigationItemSelected(navigationBarUIState.value.items.first().id)
+                        }
                     } else {
                         _noEnrollmentSelected.value = true
                     }
@@ -116,7 +128,7 @@ class DashboardViewModel(
         }
     }
 
-    private fun loadNavigationBarItems() {
+    private fun loadNavigationBarItems(): List<NavigationBarItem<TEIDashboardItems>> {
         val enrollmentItems = mutableListOf<NavigationBarItem<TEIDashboardItems>>()
 
         if (isPortrait()) {
@@ -164,11 +176,14 @@ class DashboardViewModel(
             )
         }
 
-        _navigationBarUIState.value = _navigationBarUIState.value.copy(items = enrollmentItems)
+        // EyeSeeTea customization - Avoid ARN reading from database in UI Thread
+/*        _navigationBarUIState.value = _navigationBarUIState.value.copy(items = enrollmentItems)
 
         if (navigationBarUIState.value.items.none { it.id == navigationBarUIState.value.selectedItem }) {
             onNavigationItemSelected(navigationBarUIState.value.items.first().id)
-        }
+        }*/
+
+        return enrollmentItems
     }
 
     private fun fetchGrouping() {

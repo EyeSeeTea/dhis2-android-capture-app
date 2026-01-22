@@ -41,6 +41,52 @@ class ChartsRepositoryImpl(
 
     private val lineListHeaderCache: MutableMap<String, List<TrackerLineListItem>> = mutableMapOf()
 
+    // EyeSeeTea customization - know if there are analytics for enrollment without loading them all
+    override fun existsAnalyticsForEnrollment(enrollmentUid: String): Boolean {
+        val enrollment = getEnrollment(enrollmentUid)
+        if (enrollment?.trackedEntityInstance() == null) return false
+
+        val hasSettingsAnalytics = !d2.settingModule().analyticsSetting().teis()
+            .byProgram().eq(enrollment.program())
+            .blockingIsEmpty()
+
+        if (hasSettingsAnalytics) {
+            return true
+        }
+
+        val repeatableStages = getRepeatableProgramStages(enrollment.program())
+        if (repeatableStages.isEmpty()) {
+            return false
+        }
+
+        val hasIndicators = !d2.programModule().programIndicators()
+            .byDisplayInForm().isTrue
+            .byProgramUid().eq(enrollment.program())
+            .blockingIsEmpty()
+
+        if (hasIndicators) {
+            return true
+        }
+
+        val stageUids = repeatableStages.map { it.uid() }
+        val hasDataElements = !d2.programModule().programStageDataElements()
+            .byProgramStage().`in`(stageUids)
+            .blockingIsEmpty()
+
+        if (!hasDataElements) {
+            return false
+        }
+
+        return d2.programModule().programStageDataElements()
+            .byProgramStage().`in`(stageUids)
+            .blockingGet()
+            .any { programStageDataElement ->
+                val dataElementUid = programStageDataElement.dataElement()?.uid() ?: return@any false
+                val dataElement = d2.dataElementModule().dataElements().uid(dataElementUid).blockingGet()
+                dataElement?.valueType()?.isNumeric == true
+            }
+    }
+
     override fun getAnalyticsForEnrollment(enrollmentUid: String): List<Graph> {
         val enrollment = getEnrollment(enrollmentUid)
         if (enrollment?.trackedEntityInstance() == null) return emptyList()
