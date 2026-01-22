@@ -5,6 +5,7 @@ import org.dhis2.usescases.sms.domain.model.audit.Audit
 import org.dhis2.usescases.sms.domain.repository.audit.AuditRepository
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.event.EventCreateProjection
+import org.hisp.dhis.android.core.event.EventStatus
 
 private const val program = "SdHQreF7gdU"
 private const val programStage = "IsrH6YFBfnM"
@@ -73,6 +74,8 @@ class AuditD2Repository(
                 .value(eventUid, translatedMessageDE)
                 .blockingSet(translatedMessage)
         }
+
+        d2.eventModule().events().uid(eventUid).setStatus(EventStatus.COMPLETED)
     }
 
     private fun formatDateToUTC(date: java.util.Date): String {
