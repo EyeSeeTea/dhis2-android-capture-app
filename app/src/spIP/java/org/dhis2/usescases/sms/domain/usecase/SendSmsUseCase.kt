@@ -55,7 +55,7 @@ class SendSmsUseCase(
                 .replace("{{fullName}}", patient.name)
                 .replace("{{patientNumber}}", patient.number),
             recipients = listOf(cleanupPhoneNumber(patient.phone)),
-            language = patient.preferredLanguage
+            language = messageTemplate.language
         )
     }
 
