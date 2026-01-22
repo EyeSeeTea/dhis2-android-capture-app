@@ -30,4 +30,7 @@ interface ChartsRepository {
         columnIndex: Int,
         filterValue: String?,
     )
+
+    // EyeSeeTea customization - know if there are analytics for enrollment without loading them all
+    fun existsAnalyticsForEnrollment(enrollmentUid: String): Boolean
 }

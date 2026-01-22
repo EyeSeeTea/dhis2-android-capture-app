@@ -16,6 +16,8 @@ interface Charts {
 
     fun getVisualizationGroups(uid: String?): List<AnalyticsDhisVisualizationsGroup>
 
+    fun existsEnrollmentCharts(enrollmentUid: String): Boolean
+
     fun geEnrollmentCharts(enrollmentUid: String): List<Graph>
 
     fun getProgramVisualizations(groupUid: String?, programUid: String): List<Graph>

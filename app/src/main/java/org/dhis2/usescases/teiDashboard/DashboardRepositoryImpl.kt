@@ -569,8 +569,13 @@ class DashboardRepositoryImpl(
             val hasProgramIndicator =
                 !d2.programModule().programIndicators().byProgramUid().eq(programUid)
                     .blockingIsEmpty()
-            val hasCharts =
+            // EyeSeeTea customization: check if enrollment has charts without loading them all
+            /* val hasCharts =
                 enrollmentUid?.let { charts.geEnrollmentCharts(enrollmentUid).isNotEmpty() }
+                    ?: false*/
+
+            val hasCharts =
+                enrollmentUid?.let { charts.existsEnrollmentCharts(enrollmentUid) }
                     ?: false
             hasDisplayRuleActions || hasProgramIndicator || hasCharts
         } else {
