@@ -8,6 +8,8 @@ import org.dhis2.usescases.sms.domain.message.MessageTemplateRepository
 import org.dhis2.usescases.sms.domain.message.SmsRepository
 import org.dhis2.usescases.sms.domain.patient.Patient
 import org.dhis2.usescases.sms.domain.patient.PatientRepository
+import org.dhis2.usescases.sms.domain.patient.PreferredLanguage
+import org.dhis2.usescases.sms.domain.patient.PreferredLanguageRepository
 import org.dhis2.usescases.sms.domain.types.Maybe
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,6 +26,9 @@ class SendSmsUseCaseTest {
 
     @Mock
     lateinit var messageTemplateRepository: MessageTemplateRepository
+
+    @Mock
+    lateinit var preferredLanguageRepository: PreferredLanguageRepository
 
     @Mock
     lateinit var smsRepository: SmsRepository
@@ -143,10 +148,15 @@ class SendSmsUseCaseTest {
             ).thenReturn(Maybe.None)
         }
 
+        whenever(
+            preferredLanguageRepository.getByCode("en")
+        ).thenReturn(PreferredLanguage("en", "en", "English"))
+
         return SendSmsUseCase(
             patientRepository,
             messageTemplateRepository,
-            smsRepository
+            preferredLanguageRepository,
+            smsRepository,
         )
     }
 
