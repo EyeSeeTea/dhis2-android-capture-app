@@ -108,4 +108,7 @@
     <string name="qr_code">QR code</string>
     <string name="bar_code">Bar code</string>
     <string name="add_location">Add location</string>
+
+<!--    EyeSeeTea customization-->
+    <string name="value_not_unique">Value is not unique</string>
 </resources>

@@ -181,7 +181,9 @@ class FormViewModel(
                     )
                 } else {
                     val saveResult = repository.save(action.id, action.value, action.extraData)
-                    if (saveResult?.valueStoreResult != ValueStoreResult.ERROR_UPDATING_VALUE) {
+
+                    //EyeSeeTea customization - Show unique error result as validation error
+                   /* if (saveResult?.valueStoreResult != ValueStoreResult.ERROR_UPDATING_VALUE) {
                         repository.updateValueOnList(action.id, action.value, action.valueType)
                     } else {
                         repository.updateErrorList(
@@ -190,7 +192,23 @@ class FormViewModel(
                             ),
                         )
                     }
-                    saveResult ?: StoreResult(
+                    )*/
+
+                    if (saveResult?.valueStoreResult == ValueStoreResult.VALUE_NOT_UNIQUE) {
+                        repository.updateErrorList(action.copy(error = ValueNotUniqueFailure))
+                    } else {
+                        if (saveResult?.valueStoreResult != ValueStoreResult.ERROR_UPDATING_VALUE) {
+                            repository.updateValueOnList(action.id, action.value, action.valueType)
+                        } else {
+                            repository.updateErrorList(
+                                action.copy(
+                                    error = Throwable(saveResult.valueStoreResultMessage),
+                                ),
+                            )
+                        }
+                    }
+
+                    StoreResult(
                         action.id,
                         ValueStoreResult.VALUE_CHANGED,
                     )
@@ -301,9 +319,22 @@ class FormViewModel(
             val intent = getSaveIntent(it)
             val action = rowActionFromIntent(intent)
             val result = repository.save(it.uid, it.value, action.extraData)
-            repository.updateValueOnList(it.uid, it.value, it.valueType)
+
+            //EyeSeeTea customization - Show unique error result as validation error
+           /* repository.updateValueOnList(it.uid, it.value, it.valueType)
             repository.updateErrorList(action)
-            result
+            result*/
+            if (result?.valueStoreResult == ValueStoreResult.VALUE_NOT_UNIQUE) {
+                repository.updateErrorList(action.copy(error = ValueNotUniqueFailure))
+                StoreResult(
+                    rowAction.id,
+                    ValueStoreResult.VALUE_HAS_NOT_CHANGED,
+                )
+            } else {
+                repository.updateValueOnList(it.uid, it.value, it.valueType)
+                repository.updateErrorList(action)
+                result
+            }
         }
     } ?: StoreResult(
         rowAction.id,
@@ -778,3 +809,6 @@ class FormViewModel(
         const val TAG = "FormViewModel"
     }
 }
+
+//EyeSeeTea customization - Show unique error as validation error
+object ValueNotUniqueFailure : Throwable()
