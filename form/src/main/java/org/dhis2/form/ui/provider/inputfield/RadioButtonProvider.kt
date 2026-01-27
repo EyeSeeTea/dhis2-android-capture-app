@@ -57,7 +57,7 @@ internal fun ProvideRadioButtonInput(
             intentHandler(
                 FormIntent.OnSave(
                     fieldUiModel.uid,
-                    codeList[selectedIndex],
+                    if (item != null) codeList[selectedIndex] else null,
                     fieldUiModel.valueType,
                 ),
             )
