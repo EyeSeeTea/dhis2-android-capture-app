@@ -881,6 +881,10 @@ class TeiDashboardMobileActivity :
             }
         }
     }
+
+    fun refreshEvents() {
+        dashboardViewModel.updateGrouping()
+    }
 }
 
 enum class EnrollmentMenuItem {

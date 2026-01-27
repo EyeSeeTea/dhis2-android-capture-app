@@ -22,7 +22,6 @@ class PatientD2Repository(
     return buildPatient(tei)
   }
 
-
   private fun buildPatient(
     tei: TrackedEntityInstance
   ): Patient {
