@@ -1,6 +1,8 @@
 package org.dhis2.form.extensions
 
 import androidx.compose.ui.graphics.Color
+import org.dhis2.commons.dialogs.bottomsheet.bottomSheetInsets
+import org.dhis2.commons.dialogs.bottomsheet.bottomSheetLowerPadding
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.UiRenderType
 import org.hisp.dhis.mobile.ui.designsystem.component.InputShellState
@@ -31,7 +33,13 @@ fun FieldUiModel.supportingText() = listOfNotNull(
 ).ifEmpty { null }
 
 fun FieldUiModel.legend() = legend?.let {
-    LegendData(Color(it.color), it.label ?: "", null)
+    LegendData(
+        Color(it.color),
+        it.label ?: "",
+        it.legendsInfo,
+        windowInsets = { bottomSheetInsets() },
+        bottomSheetLowerPadding = bottomSheetLowerPadding(),
+    )
 }
 
 fun FieldUiModel.orientation() = when (renderingType) {
@@ -51,8 +59,8 @@ fun FieldUiModel.orientation() = when (renderingType) {
 }
 
 fun FieldUiModel.inputState() = when {
-    error != null -> InputShellState.ERROR
     !editable -> InputShellState.DISABLED
+    error != null -> InputShellState.ERROR
     focused -> InputShellState.FOCUSED
     else -> InputShellState.UNFOCUSED
 }

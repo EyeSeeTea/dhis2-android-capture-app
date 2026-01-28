@@ -1,7 +1,7 @@
 package org.dhis2.composetable
 
 import androidx.annotation.DrawableRes
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +17,7 @@ import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasParent
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -40,7 +41,9 @@ import org.dhis2.composetable.model.TextInputModel
 import org.dhis2.composetable.ui.DataSetTableScreen
 import org.dhis2.composetable.ui.DataTable
 import org.dhis2.composetable.ui.DrawableId
+import org.dhis2.composetable.ui.EMPTY_TABLE_TEXT_TAG
 import org.dhis2.composetable.ui.INPUT_ERROR_MESSAGE_TEST_TAG
+import org.dhis2.composetable.ui.INPUT_HELPER_TEXT_TEST_TAG
 import org.dhis2.composetable.ui.INPUT_ICON_TEST_TAG
 import org.dhis2.composetable.ui.INPUT_TEST_FIELD_TEST_TAG
 import org.dhis2.composetable.ui.INPUT_TEST_TAG
@@ -70,6 +73,8 @@ import org.dhis2.composetable.ui.semantics.RowIndexHeader
 import org.dhis2.composetable.ui.semantics.TableId
 import org.dhis2.composetable.ui.semantics.TableIdColumnHeader
 import org.dhis2.composetable.utils.KeyboardHelper
+import org.hisp.dhis.mobile.ui.designsystem.theme.SurfaceColor
+import org.hisp.dhis.mobile.ui.designsystem.theme.TextColor
 import org.junit.Assert
 
 fun tableRobot(
@@ -88,44 +93,11 @@ class TableRobot(
     lateinit var onSaveTableCell: TableCell
     val keyboardHelper = KeyboardHelper(composeTestRule, timeout = 3000L)
 
-    fun initTable(
-        fakeModelType: FakeModelType,
-        tableColors: TableColors = TableColors(),
-        onSave: (TableCell) -> Unit = {}
-    ): List<TableModel> {
-        var fakeModel: List<TableModel> = emptyList()
-        composeTestRule.setContent {
-            fakeModel = FakeTableModels(LocalContext.current).getMultiHeaderTables(fakeModelType)
-            var tableSelection by remember {
-                mutableStateOf<TableSelection>(TableSelection.Unselected())
-            }
-            TableTheme(
-                tableColors = TableColors().copy(primary = MaterialTheme.colors.primary),
-                tableConfiguration = TableConfiguration(headerActionsEnabled = false),
-                tableResizeActions = object : TableResizeActions {}
-            ) {
-                val iteractions = object : TableInteractions {
-                    override fun onSelectionChange(newTableSelection: TableSelection) {
-                        tableSelection = newTableSelection
-                    }
-                }
-                CompositionLocalProvider(
-                    LocalTableSelection provides tableSelection,
-                    LocalInteraction provides iteractions
-                ) {
-                    DataTable(
-                        tableList = fakeModel
-                    )
-                }
-            }
-        }
-        return fakeModel
-    }
-
     fun initTableAppScreen(
         fakeModelType: FakeModelType,
         tableAppScreenOptions: TableAppScreenOptions = TableAppScreenOptions(),
         tableConfiguration: TableConfiguration = TableConfiguration(headerActionsEnabled = true),
+        helperText: String? = null,
         onSave: (TableCell) -> Unit = {}
     ): List<TableModel> {
         var fakeModel: List<TableModel> = emptyList()
@@ -136,7 +108,7 @@ class TableRobot(
             keyboardHelper.view = LocalView.current
             var model by remember { mutableStateOf(screenState) }
             TableTheme(
-                tableColors = TableColors().copy(primary = MaterialTheme.colors.primary),
+                tableColors = TableColors().copy(primary = SurfaceColor.Primary),
                 tableConfiguration = tableConfiguration,
                 tableResizeActions = object : TableResizeActions {}
             ) {
@@ -152,6 +124,7 @@ class TableRobot(
                                 secondaryLabels = fakeModel.find { it.id == tableId }?.tableHeaderModel?.rows?.map {
                                     it.cells[cell.column!! % it.cells.size].value
                                 } ?: emptyList(),
+                                helperText = helperText,
                                 currentValue = cell.value,
                                 keyboardInputType = KeyboardInputType.TextInput(),
                                 error = null
@@ -167,6 +140,33 @@ class TableRobot(
                         val updatedData = updateValue(fakeModel, tableCell)
                         model = TableScreenState(updatedData)
                     }
+                )
+            }
+        }
+        return fakeModel
+    }
+
+    fun initEmptyTableAppScreen(
+        emptyTablesText: String,
+    ): List<TableModel> {
+        val fakeModel: List<TableModel> = emptyList()
+        composeTestRule.setContent {
+            val screenState = TableScreenState(fakeModel, state = TableState.SUCCESS)
+
+            val model by remember { mutableStateOf(screenState) }
+            TableTheme(
+                tableColors = TableColors().copy(primary = MaterialTheme.colorScheme.primary),
+                tableConfiguration = TableConfiguration(),
+                tableResizeActions = object : TableResizeActions {}
+            ) {
+                DataSetTableScreen(
+                    tableScreenState = model,
+                    onCellClick = { _, _, _ ->
+                            null
+                    },
+                    emptyTablesText = emptyTablesText,
+                    onEdition = {},
+                    onSaveValue = {}
                 )
             }
         }
@@ -245,7 +245,7 @@ class TableRobot(
         composeTestRule.onNode(
             SemanticsMatcher.expectValue(TableId, tableId)
                 .and(SemanticsMatcher.expectValue(RowIndex, rowIndex))
-                .and(SemanticsMatcher.expectValue(RowBackground, tableColors.primary))
+                .and(SemanticsMatcher.expectValue(RowBackground, SurfaceColor.Primary))
         ).assertExists()
     }
 
@@ -343,6 +343,12 @@ class TableRobot(
         composeTestRule.onNodeWithTag(INPUT_ERROR_MESSAGE_TEST_TAG)
             .assertIsDisplayed()
             .assertTextEquals(expectedErrorMessage)
+    }
+
+    fun assertInputComponentHelperTextIsDisplayed(expectedHelperText: String) {
+        composeTestRule.onNodeWithTag(INPUT_HELPER_TEXT_TEST_TAG)
+            .assertIsDisplayed()
+            .assertTextEquals(expectedHelperText)
     }
 
     fun assertCellWithErrorSetsErrorMessage(
@@ -446,5 +452,13 @@ class TableRobot(
 
     fun hideKeyboard() {
         keyboardHelper.hideKeyboard()
+    }
+
+    fun assertInfoBarIsVisible(emptyString: String) {
+        composeTestRule.onNode(
+            hasParent(hasTestTag(EMPTY_TABLE_TEXT_TAG))
+                and
+                hasText(emptyString)
+        ).assertIsDisplayed()
     }
 }

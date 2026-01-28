@@ -5,23 +5,23 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.asLiveData
+import dhis2.org.analytics.charts.Charts
 import io.reactivex.Single
 import io.reactivex.android.plugins.RxAndroidPlugins
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.plugins.RxJavaPlugins
 import io.reactivex.schedulers.Schedulers
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.setMain
 import org.dhis2.android.rtsm.R
-import org.dhis2.android.rtsm.commons.Constants
-import org.dhis2.android.rtsm.data.AppConfig
 import org.dhis2.android.rtsm.data.DataElementFactory
 import org.dhis2.android.rtsm.data.DestinationFactory
 import org.dhis2.android.rtsm.data.FacilityFactory
+import org.dhis2.android.rtsm.data.GroupAnalyticsFactory
 import org.dhis2.android.rtsm.data.OperationState
 import org.dhis2.android.rtsm.data.TransactionType
 import org.dhis2.android.rtsm.data.models.TransactionItem
@@ -31,20 +31,33 @@ import org.dhis2.android.rtsm.services.scheduler.BaseSchedulerProvider
 import org.dhis2.android.rtsm.services.scheduler.TrampolineSchedulerProvider
 import org.dhis2.android.rtsm.utils.ParcelUtils
 import org.dhis2.android.rtsm.utils.humanReadableDate
+import org.dhis2.commons.bindings.distributedTo
+import org.dhis2.commons.bindings.stockCount
+import org.dhis2.commons.bindings.stockDiscarded
+import org.dhis2.commons.bindings.stockDistribution
+import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.option.Option
 import org.hisp.dhis.android.core.organisationunit.OrganisationUnit
+import org.hisp.dhis.android.core.settings.AnalyticsDhisVisualizationsGroup
+import org.hisp.dhis.android.core.usecase.stock.StockUseCase
+import org.hisp.dhis.android.core.usecase.stock.StockUseCaseTransaction
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
+import org.mockito.Mockito
+import org.mockito.Mockito.RETURNS_DEEP_STUBS
 import org.mockito.Mockito.`when`
 import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.time.LocalDateTime
@@ -57,18 +70,22 @@ class HomeViewModelUnitTest {
     @get:Rule
     val countingTaskExecutorRule = CountingTaskExecutorRule()
 
+    private val d2: D2 = Mockito.mock(D2::class.java, RETURNS_DEEP_STUBS)
+
+    private val charts: Charts = mock()
+
     @Mock
     private lateinit var metadataManager: MetadataManager
 
     private lateinit var viewModel: HomeViewModel
     private lateinit var schedulerProvider: BaseSchedulerProvider
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Mock
     private lateinit var testSchedulerProvider: TestCoroutineScheduler
     private lateinit var facilities: List<OrganisationUnit>
     private lateinit var destinations: List<Option>
-    private lateinit var appConfig: AppConfig
+
+    private lateinit var analytics: List<AnalyticsDhisVisualizationsGroup>
 
     private val distributionItem = TransactionItem(
         R.drawable.ic_distribution,
@@ -81,7 +98,11 @@ class HomeViewModelUnitTest {
         TransactionType.CORRECTION,
         TransactionType.CORRECTION.name,
     )
-    private val discardItem = TransactionItem(R.drawable.ic_discard, TransactionType.DISCARD, TransactionType.DISCARD.name)
+    private val discardItem = TransactionItem(
+        R.drawable.ic_discard,
+        TransactionType.DISCARD,
+        TransactionType.DISCARD.name,
+    )
 
     private val transactionItems = mutableListOf(distributionItem, correctionItem, discardItem)
 
@@ -96,13 +117,16 @@ class HomeViewModelUnitTest {
     private val disposable = CompositeDisposable()
 
     @Mock
+    private lateinit var stockUseCase: StockUseCase
+
+    @Mock
     private lateinit var facilitiesObserver: Observer<OperationState<List<OrganisationUnit>>>
 
     @Mock
     private lateinit var destinationsObserver: Observer<OperationState<List<Option>>>
 
-    @OptIn(DelicateCoroutinesApi::class)
-    private val mainThreadSurrogate = newSingleThreadContext("UI thread")
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val mainThreadSurrogate = UnconfinedTestDispatcher()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Before
@@ -112,52 +136,76 @@ class HomeViewModelUnitTest {
         RxJavaPlugins.setComputationSchedulerHandler { Schedulers.trampoline() }
         RxJavaPlugins.setNewThreadSchedulerHandler { Schedulers.trampoline() }
         RxAndroidPlugins.setInitMainThreadSchedulerHandler { Schedulers.trampoline() }
-
-        appConfig = AppConfig(
-            "F5ijs28K4s8",
-            "wBr4wccNBj1",
-            "sLMTQUHAZnk",
-            "RghnAkDBDI4",
-            "yfsEseIcEXr",
-            "lpGYJoVUudr",
-            "ej1YwWaYGmm",
-            "I7cmT3iXT0y",
+        stockUseCase = StockUseCase(
+            programUid = "F5ijs28K4s8",
+            description = "Paracetamol",
+            itemDescription = "sLMTQUHAZnk",
+            itemCode = "wBr4wccNBj1",
+            programType = "LMIS",
+            stockOnHand = "RghnAkDBDI4",
+            transactions = listOf(
+                StockUseCaseTransaction.Distributed(
+                    sortOrder = 1,
+                    transactionType = StockUseCaseTransaction.Companion.TransactionType.DISTRIBUTED,
+                    distributedTo = "UIbjnkdsn8",
+                    stockDistributed = "OP47bhj98jh",
+                ),
+                StockUseCaseTransaction.Discarded(
+                    sortOrder = 2,
+                    transactionType = StockUseCaseTransaction.Companion.TransactionType.DISCARDED,
+                    stockDiscarded = "HJbhj984jh",
+                ),
+                StockUseCaseTransaction.Correction(
+                    sortOrder = 3,
+                    transactionType = StockUseCaseTransaction.Companion.TransactionType.CORRECTED,
+                    stockCount = "JKnaosi9pio",
+                ),
+            ),
         )
 
         facilities = FacilityFactory.getListOf(3)
         destinations = DestinationFactory.getListOf(5)
-
-        val distributionDataSet = DataElementFactory.create(appConfig.stockDistribution, DISTRIBUTION_LABEL)
-        val correctionDataSet = DataElementFactory.create(appConfig.stockCount, CORRECTION_lABEL)
-        val discardDataSet = DataElementFactory.create(appConfig.stockDiscarded, DISCARD_LABEL)
-        val deliverToDataSet = DataElementFactory.create(appConfig.stockDiscarded, DELIVER_TO_LABEL)
+        analytics = GroupAnalyticsFactory.getListOf(2)
+        `when`(charts.getVisualizationGroups(any()))
+            .thenReturn(analytics)
+        val distributionDataSet =
+            DataElementFactory.create(stockUseCase.stockDistribution(), DISTRIBUTION_LABEL)
+        val correctionDataSet = DataElementFactory.create(stockUseCase.stockCount(), CORRECTION_lABEL)
+        val discardDataSet = DataElementFactory.create(stockUseCase.stockDiscarded(), DISCARD_LABEL)
+        val deliverToDataSet = DataElementFactory.create(stockUseCase.stockDiscarded(), DELIVER_TO_LABEL)
 
         schedulerProvider = TrampolineSchedulerProvider()
         testSchedulerProvider = TestCoroutineScheduler()
 
+        runBlocking {
+            whenever(metadataManager.loadStockUseCase(stockUseCase.programUid))
+                .thenReturn(stockUseCase)
+        }
+
         doReturn(
             Single.just(facilities),
-        ).whenever(metadataManager).facilities(appConfig.program)
+        ).whenever(metadataManager).facilities(stockUseCase.programUid)
 
-        `when`(metadataManager.destinations(appConfig.distributedTo))
+        `when`(metadataManager.destinations(stockUseCase.distributedTo()))
             .thenReturn(Single.just(destinations))
 
-        `when`(metadataManager.transactionType(appConfig.stockDistribution))
+        `when`(metadataManager.transactionType(stockUseCase.stockDistribution()))
             .thenReturn(Single.just(distributionDataSet))
 
-        `when`(metadataManager.transactionType(appConfig.distributedTo))
+        `when`(metadataManager.transactionType(stockUseCase.distributedTo()))
             .thenReturn(Single.just(deliverToDataSet))
 
-        `when`(metadataManager.transactionType(appConfig.stockCount))
+        `when`(metadataManager.transactionType(stockUseCase.stockCount()))
             .thenReturn(Single.just(correctionDataSet))
 
-        `when`(metadataManager.transactionType(appConfig.stockDiscarded))
+        `when`(metadataManager.transactionType(stockUseCase.stockDiscarded()))
             .thenReturn(Single.just(discardDataSet))
-
         viewModel = HomeViewModel(
             disposable,
             schedulerProvider,
             metadataManager,
+            charts,
+            d2,
             getStateHandle(),
         )
 
@@ -167,7 +215,7 @@ class HomeViewModelUnitTest {
 
     private fun getStateHandle(): SavedStateHandle {
         val state = hashMapOf<String, Any>(
-            Constants.INTENT_EXTRA_APP_CONFIG to appConfig,
+            org.dhis2.commons.Constants.PROGRAM_UID to "F5ijs28K4s8",
         )
         return SavedStateHandle(state)
     }
@@ -181,42 +229,56 @@ class HomeViewModelUnitTest {
 
     @Test
     fun init_shouldLoadFacilities() {
-        verify(metadataManager).facilities(appConfig.program)
+        verify(metadataManager).facilities(stockUseCase.programUid)
 
         assertEquals(viewModel.facilities.value, OperationState.Success(facilities))
     }
 
     @Test
+    fun init_shouldShowAnalyticsIfThereAreVisualizationGroups() {
+        assertTrue(viewModel.settingsUiState.value.hasAnalytics)
+    }
+
+    @Test
     fun init_shouldLoadDestinations() {
-        verify(metadataManager).destinations(appConfig.distributedTo)
+        verify(metadataManager).destinations(stockUseCase.distributedTo())
 
         assertEquals(viewModel.destinationsList.value, OperationState.Success(destinations))
     }
 
     @Test
     fun init_shouldLoadDistributionLabel() {
-        verify(metadataManager).transactionType(appConfig.stockDistribution)
+        verify(metadataManager).transactionType(stockUseCase.stockDistribution())
 
-        assertEquals(viewModel.settingsUiState.value.transactionItems.find { it.type == TransactionType.DISTRIBUTION }?.label, DISTRIBUTION_LABEL)
+        assertEquals(
+            viewModel.settingsUiState.value.transactionItems.find { it.type == TransactionType.DISTRIBUTION }?.label,
+            DISTRIBUTION_LABEL,
+        )
     }
 
     @Test
     fun init_shouldLoadCorrectLabel() {
-        verify(metadataManager).transactionType(appConfig.stockCount)
+        verify(metadataManager).transactionType(stockUseCase.stockCount())
 
-        assertEquals(viewModel.settingsUiState.value.transactionItems.find { it.type == TransactionType.CORRECTION }?.label, CORRECTION_lABEL)
+        assertEquals(
+            viewModel.settingsUiState.value.transactionItems.find { it.type == TransactionType.CORRECTION }?.label,
+            CORRECTION_lABEL,
+        )
     }
 
     @Test
     fun init_shouldLoadDiscardLabel() {
-        verify(metadataManager).transactionType(appConfig.stockDiscarded)
+        verify(metadataManager).transactionType(stockUseCase.stockDiscarded())
 
-        assertEquals(viewModel.settingsUiState.value.transactionItems.find { it.type == TransactionType.DISCARD }?.label, DISCARD_LABEL)
+        assertEquals(
+            viewModel.settingsUiState.value.transactionItems.find { it.type == TransactionType.DISCARD }?.label,
+            DISCARD_LABEL,
+        )
     }
 
     @Test
     fun init_shouldLoadDeliverToLabel() {
-        verify(metadataManager).transactionType(appConfig.distributedTo)
+        verify(metadataManager).transactionType(stockUseCase.distributedTo())
 
         assertEquals(viewModel.settingsUiState.value.deliverToLabel, DELIVER_TO_LABEL)
     }
@@ -232,7 +294,10 @@ class HomeViewModelUnitTest {
     @Test
     fun isDistributionIsPositive_whenDistributionIsSet() {
         viewModel.selectTransaction(distributionItem)
-        assertEquals(viewModel.settingsUiState.value.selectedTransactionItem.type, TransactionType.DISTRIBUTION)
+        assertEquals(
+            viewModel.settingsUiState.value.selectedTransactionItem.type,
+            TransactionType.DISTRIBUTION,
+        )
     }
 
     @Test

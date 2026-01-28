@@ -3,7 +3,13 @@ package org.dhis2.usescases.datasets.datasetDetail.datasetList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.semantics.semantics
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import com.google.android.material.card.MaterialCardView
@@ -11,7 +17,11 @@ import org.dhis2.R
 import org.dhis2.databinding.ItemDatasetBinding
 import org.dhis2.usescases.datasets.datasetDetail.DataSetDetailModel
 import org.dhis2.usescases.datasets.datasetDetail.datasetList.mapper.DatasetCardMapper
+import org.dhis2.utils.adapterItemPosition
+import org.dhis2.utils.adapterItemTitle
 import org.hisp.dhis.mobile.ui.designsystem.component.ListCard
+import org.hisp.dhis.mobile.ui.designsystem.component.ListCardTitleModel
+import org.hisp.dhis.mobile.ui.designsystem.theme.Spacing
 
 class DataSetListAdapter(
     val viewModel: DataSetListViewModel,
@@ -47,16 +57,32 @@ class DataSetListAdapter(
                         viewModel.openDataSet(it)
                     },
                 )
-                ListCard(
-                    listAvatar = card.avatar,
-                    title = card.title,
-                    lastUpdated = card.lastUpdated,
-                    additionalInfoList = card.additionalInfo,
-                    actionButton = card.actionButton,
-                    expandLabelText = card.expandLabelText,
-                    shrinkLabelText = card.shrinkLabelText,
-                    onCardClick = card.onCardCLick,
-                )
+                Column(
+                    modifier = Modifier
+                        .padding(
+                            start = Spacing.Spacing8,
+                            end = Spacing.Spacing8,
+                            bottom = Spacing.Spacing4,
+                        ),
+                ) {
+                    if (position == 0) {
+                        Spacer(modifier = Modifier.size(Spacing.Spacing8))
+                    }
+                    ListCard(
+                        modifier = Modifier.semantics {
+                            adapterItemPosition = position
+                            adapterItemTitle = card.title
+                        },
+                        listAvatar = card.avatar,
+                        title = ListCardTitleModel(text = card.title),
+                        lastUpdated = card.lastUpdated,
+                        additionalInfoList = card.additionalInfo,
+                        actionButton = card.actionButton,
+                        expandLabelText = card.expandLabelText,
+                        shrinkLabelText = card.shrinkLabelText,
+                        onCardClick = card.onCardCLick,
+                    )
+                }
             }
 
             holder.bind(it, viewModel)

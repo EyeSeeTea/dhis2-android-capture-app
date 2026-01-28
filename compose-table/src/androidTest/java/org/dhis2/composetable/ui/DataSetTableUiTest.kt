@@ -1,8 +1,7 @@
 package org.dhis2.composetable.ui
 
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createComposeRule
-import org.dhis2.composetable.model.FakeTableModels
+import org.dhis2.composetable.tableRobot
 import org.junit.Rule
 import org.junit.Test
 
@@ -12,12 +11,13 @@ class DataSetTableUiTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun shouldRenderTableList() {
-        composeTestRule.setContent {
-            val fakeModel = FakeTableModels(LocalContext.current)
-            DataTable(
-                tableList = fakeModel.getMultiHeaderTables()
+    fun shouldRenderInfoBarIfTableListIsEmpty() {
+        tableRobot(composeTestRule) {
+            initEmptyTableAppScreen(
+                emptyTablesText = "Section is misconfigured"
             )
+
+            assertInfoBarIsVisible("Section is misconfigured")
         }
     }
 }

@@ -1,15 +1,18 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.library")
     kotlin("android")
     kotlin("kapt")
     id("kotlin-parcelize")
     id("dagger.hilt.android.plugin")
-    id("kotlinx-serialization")
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlin.compose.compiler)
 }
 apply(from = "${project.rootDir}/jacoco/jacoco.gradle.kts")
 
 repositories {
-    maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
+    maven { url = uri("https://central.sonatype.com/repository/maven-snapshots") }
 }
 
 base {
@@ -22,7 +25,7 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
-        targetSdk = libs.versions.sdk.get().toInt()
+        testOptions.targetSdk = libs.versions.sdk.get().toInt()
         multiDexEnabled = true
 
         javaCompileOptions {
@@ -73,13 +76,11 @@ android {
             )
         }
     }
+}
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.kotlinCompilerExtensionVersion.get()
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -87,18 +88,14 @@ dependencies {
 
     implementation(project(":commons"))
     implementation(project(":compose-table"))
+    implementation(project(":dhis2-mobile-program-rules"))
+    implementation(project(":dhis_android_analytics"))
 
     implementation(libs.bundles.stock.implementation)
+    testImplementation(project(":dhis_android_analytics"))
     coreLibraryDesugaring(libs.bundles.stock.core)
     kapt(libs.bundles.stock.kapt)
-    debugImplementation(libs.bundles.stock.debugImplementation)
-    releaseImplementation(libs.bundles.stock.releaseImplementation)
     testImplementation(libs.bundles.stock.test)
-    androidTestImplementation(libs.bundles.stock.androidTest)
-
-    debugImplementation(libs.analytics.flipper.network) {
-        exclude("com.squareup.okhttp3")
-    }
 }
 
 kapt {

@@ -3,7 +3,7 @@ package org.dhis2.usescases.main
 import android.content.Context
 import android.net.Uri
 import android.view.Gravity
-import androidx.lifecycle.LiveData
+import androidx.core.net.toUri
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.asLiveData
 import androidx.work.ExistingWorkPolicy
@@ -12,13 +12,13 @@ import io.reactivex.Flowable
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.dhis2.BuildConfig
 import org.dhis2.commons.Constants
 import org.dhis2.commons.filters.FilterManager
 import org.dhis2.commons.filters.data.FilterRepository
 import org.dhis2.commons.matomo.Actions.Companion.BLOCK_SESSION_PIN
-import org.dhis2.commons.matomo.Actions.Companion.JIRA_REPORT
 import org.dhis2.commons.matomo.Actions.Companion.OPEN_ANALYTICS
 import org.dhis2.commons.matomo.Actions.Companion.QR_SCANNER
 import org.dhis2.commons.matomo.Actions.Companion.SETTINGS
@@ -43,6 +43,7 @@ import org.dhis2.usescases.login.SyncIsPerformedInteractor
 import org.dhis2.usescases.settings.DeleteUserData
 import org.dhis2.usescases.sync.WAS_INITIAL_SYNC_DONE
 import org.dhis2.utils.TRUE
+import org.hisp.dhis.android.core.organisationunit.OrganisationUnit
 import org.hisp.dhis.android.core.systeminfo.SystemInfo
 import org.hisp.dhis.android.core.user.User
 import timber.log.Timber
@@ -68,6 +69,7 @@ class MainPresenter(
     private val syncStatusController: SyncStatusController,
     private val versionRepository: VersionRepository,
     private val dispatcherProvider: DispatcherProvider,
+    private val forceToNotSynced: Boolean,
 ) : CoroutineScope {
 
     private var job = Job()
@@ -155,6 +157,16 @@ class MainPresenter(
                     { Timber.e(it) },
                 ),
         )
+
+        disposable.add(
+            filterManager.ouTreeFlowable()
+                .subscribeOn(schedulerProvider.io())
+                .observeOn(schedulerProvider.ui())
+                .subscribe(
+                    { view.openOrgUnitTreeSelector() },
+                    { Timber.e(it) },
+                ),
+        )
     }
 
     fun trackDhis2Server() {
@@ -185,6 +197,10 @@ class MainPresenter(
         }
     }
 
+    fun setOrgUnitFilters(selectedOrgUnits: List<OrganisationUnit>) {
+        filterManager.addOrgUnits(selectedOrgUnits)
+    }
+
     private fun getUserUid(): String {
         return try {
             userManager.d2.userModule().user().blockingGet()?.uid() ?: ""
@@ -198,8 +214,9 @@ class MainPresenter(
             Completable.fromCallable {
                 workManagerController.cancelAllWork()
                 syncStatusController.restore()
-                FilterManager.getInstance().clearAllFilters()
+                filterManager.clearAllFilters()
                 preferences.setValue(Preference.SESSION_LOCKED, false)
+                preferences.setValue(Preference.PIN_ENABLED, false)
                 userManager.d2.dataStoreModule().localDataStore().value(PIN).blockingDeleteIfExist()
             }.andThen(
                 repository.logOut(),
@@ -269,42 +286,30 @@ class MainPresenter(
         matomoAnalyticsController.trackEvent(HOME, SETTINGS, CLICK)
     }
 
-    fun setOpeningFilterToNone() {
-        filterRepository.collapseAllFilters()
-    }
-
     fun isPinStored() = repository.isPinStored()
 
     fun launchInitialDataSync() {
         checkVersionUpdate()
         workManagerController
             .syncDataForWorker(Constants.DATA_NOW, Constants.INITIAL_SYNC)
-        val workerItem = WorkerItem(
-            Constants.RESERVED,
-            WorkerType.RESERVED,
-            null,
-            null,
-            null,
-            null,
-        )
-        workManagerController.cancelAllWorkByTag(workerItem.workerName)
-        workManagerController.syncDataForWorker(workerItem)
     }
 
-    fun observeDataSync(): LiveData<SyncStatusData> {
+    fun observeDataSync(): StateFlow<SyncStatusData> {
         return syncStatusController.observeDownloadProcess()
     }
 
     fun wasSyncAlreadyDone(): Boolean {
-        if (view.hasToNotSync()) {
+        if (forceToNotSynced) {
             return true
         }
         return syncIsPerformedInteractor.execute()
     }
 
     fun onDataSuccess() {
-        userManager.d2.dataStoreModule().localDataStore().value(WAS_INITIAL_SYNC_DONE)
-            .blockingSet(TRUE)
+        launch(dispatcherProvider.io()) {
+            userManager.d2.dataStoreModule().localDataStore().value(WAS_INITIAL_SYNC_DONE)
+                .blockingSet(TRUE)
+        }
     }
 
     fun trackHomeAnalytics() {
@@ -317,10 +322,6 @@ class MainPresenter(
 
     fun trackQRScanner() {
         matomoAnalyticsController.trackEvent(HOME, QR_SCANNER, CLICK)
-    }
-
-    fun trackJiraReport() {
-        matomoAnalyticsController.trackEvent(HOME, JIRA_REPORT, CLICK)
     }
 
     fun checkVersionUpdate() {
@@ -347,7 +348,7 @@ class MainPresenter(
     ) {
         if (BuildConfig.FLAVOR == PLAY_FLAVOR) {
             val url = versionRepository.getUrl()
-            onLaunchUrl(Uri.parse(url))
+            url?.toUri()?.let { onLaunchUrl(it) }
         } else {
             versionRepository.download(
                 context = context,
@@ -366,5 +367,9 @@ class MainPresenter(
 
     fun getSingleItemData(): HomeItemData? {
         return repository.singleHomeItemData()
+    }
+
+    fun hasFilters(): Boolean {
+        return filterRepository.homeFilters().isNotEmpty()
     }
 }

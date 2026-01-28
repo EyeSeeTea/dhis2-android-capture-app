@@ -1,19 +1,23 @@
 package org.dhis2.form.data
 
 import org.dhis2.commons.data.EntryMode
+import org.dhis2.commons.extensions.toDate
 import org.dhis2.commons.network.NetworkUtils
-import org.dhis2.commons.reporting.CrashReportController
 import org.dhis2.commons.resources.ResourceManager
 import org.dhis2.form.model.EnrollmentDetail
 import org.dhis2.form.model.ValueStoreResult
 import org.dhis2.form.model.ValueStoreResult.VALUE_CHANGED
 import org.dhis2.form.model.ValueStoreResult.VALUE_NOT_UNIQUE
+import org.dhis2.mobile.commons.files.FileController
+import org.dhis2.mobile.commons.reporting.CrashReportController
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.ObjectWithUid
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.dataelement.DataElement
 import org.hisp.dhis.android.core.enrollment.Enrollment
+import org.hisp.dhis.android.core.enrollment.EnrollmentObjectRepository
+import org.hisp.dhis.android.core.event.EventObjectRepository
 import org.hisp.dhis.android.core.maintenance.D2Error
 import org.hisp.dhis.android.core.maintenance.D2ErrorCode
 import org.hisp.dhis.android.core.option.Option
@@ -33,6 +37,7 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import java.io.File
 
@@ -46,6 +51,9 @@ class FormValueStoreTest {
     private val resourceManager: ResourceManager = mock()
     private val fileController: FileController = mock()
     private val enrollmentRepository: EnrollmentObjectRepository = mock()
+    private val eventRepository: EventObjectRepository = mock {
+        on { setAttributeOptionComboUid(any<String>()) } doReturn mock()
+    }
     private val uniqueAttributeController: UniqueAttributeController = mock()
 
     @Before
@@ -56,6 +64,7 @@ class FormValueStoreTest {
                 "recordUid",
                 EntryMode.ATTR,
                 enrollmentRepository,
+                null,
                 crashReportController,
                 networkUtils,
                 resourceManager,
@@ -68,6 +77,7 @@ class FormValueStoreTest {
                 "recordUid",
                 EntryMode.DE,
                 null,
+                eventRepository,
                 crashReportController,
                 networkUtils,
                 resourceManager,
@@ -79,6 +89,7 @@ class FormValueStoreTest {
                 d2,
                 "recordUid",
                 EntryMode.DV,
+                null,
                 null,
                 crashReportController,
                 networkUtils,
@@ -94,6 +105,7 @@ class FormValueStoreTest {
             d2,
             "recordUid",
             EntryMode.DV,
+            null,
             null,
             crashReportController,
             networkUtils,
@@ -131,7 +143,7 @@ class FormValueStoreTest {
             filePath = null,
         )
 
-        assertTrue(result?.valueStoreResult == ValueStoreResult.ERROR_UPDATING_VALUE)
+        assertTrue(result.valueStoreResult == ValueStoreResult.ERROR_UPDATING_VALUE)
     }
 
     @Test
@@ -147,7 +159,7 @@ class FormValueStoreTest {
             filePath = null,
         )
 
-        assertTrue(result?.valueStoreResult == ValueStoreResult.ERROR_UPDATING_VALUE)
+        assertTrue(result.valueStoreResult == ValueStoreResult.ERROR_UPDATING_VALUE)
     }
 
     @Test
@@ -172,7 +184,7 @@ class FormValueStoreTest {
             filePath = "filePath",
         )
 
-        assertTrue(result?.valueStoreResult == ValueStoreResult.ERROR_UPDATING_VALUE)
+        assertTrue(result.valueStoreResult == ValueStoreResult.ERROR_UPDATING_VALUE)
     }
 
     @Test
@@ -195,8 +207,8 @@ class FormValueStoreTest {
             filePath = "filePath",
         )
 
-        assertTrue(result?.valueStoreResult == ValueStoreResult.FILE_SAVED)
-        assertTrue(result?.uid == generatedUid)
+        assertTrue(result.valueStoreResult == ValueStoreResult.FILE_SAVED)
+        assertTrue(result.uid == generatedUid)
     }
 
     @Test
@@ -436,7 +448,7 @@ class FormValueStoreTest {
         whenever(
             d2.trackedEntityModule().trackedEntityAttributeValues()
                 .value("uid", "recordUid"),
-        )doReturn mockedRepository
+        ) doReturn mockedRepository
         whenever(
             d2.trackedEntityModule().trackedEntityAttributes().uid("uid").blockingGet(),
         ) doReturn mockedAttribute()
@@ -688,7 +700,7 @@ class FormValueStoreTest {
         }
         whenever(
             d2.trackedEntityModule().trackedEntityDataValues().value("recordUid", "uid"),
-        )doReturn mockedDataValueRepository
+        ) doReturn mockedDataValueRepository
 
         whenever(
             d2.dataElementModule().dataElements().uid("uid").blockingGet(),
@@ -715,7 +727,7 @@ class FormValueStoreTest {
         }
         whenever(
             d2.trackedEntityModule().trackedEntityDataValues().value("recordUid", "uid"),
-        )doReturn mockedDataValueRepository
+        ) doReturn mockedDataValueRepository
 
         whenever(
             d2.dataElementModule().dataElements().uid("uid").blockingGet(),
@@ -742,7 +754,7 @@ class FormValueStoreTest {
         }
         whenever(
             d2.trackedEntityModule().trackedEntityDataValues().value("recordUid", "uid"),
-        )doReturn mockedDataValueRepository
+        ) doReturn mockedDataValueRepository
 
         whenever(
             d2.dataElementModule().dataElements().uid("uid").blockingGet(),
@@ -769,7 +781,7 @@ class FormValueStoreTest {
         }
         whenever(
             d2.trackedEntityModule().trackedEntityAttributeValues().value("uid", "recordUid"),
-        )doReturn mockedDataValueRepository
+        ) doReturn mockedDataValueRepository
 
         whenever(
             d2.trackedEntityModule().trackedEntityAttributes().uid("uid").blockingGet(),
@@ -796,7 +808,7 @@ class FormValueStoreTest {
         }
         whenever(
             d2.trackedEntityModule().trackedEntityAttributeValues().value("uid", "recordUid"),
-        )doReturn mockedDataValueRepository
+        ) doReturn mockedDataValueRepository
 
         whenever(
             d2.trackedEntityModule().trackedEntityAttributes().uid("uid").blockingGet(),
@@ -823,7 +835,7 @@ class FormValueStoreTest {
         }
         whenever(
             d2.trackedEntityModule().trackedEntityAttributeValues().value("uid", "recordUid"),
-        )doReturn mockedDataValueRepository
+        ) doReturn mockedDataValueRepository
 
         whenever(
             d2.trackedEntityModule().trackedEntityAttributes().uid("uid").blockingGet(),
@@ -943,6 +955,102 @@ class FormValueStoreTest {
             .assertValue { result ->
                 result.valueStoreResult == ValueStoreResult.VALUE_HAS_NOT_CHANGED
             }
+    }
+
+    @Test
+    fun `should save event details category option combo`() {
+        val uid = "categoryComboUid"
+        val value = "capOptionUid1, capOptionUid2"
+        val categoryOptionComboUid = "categoryOptionComboUid"
+
+        mockGetCategoryOptionComboUid(
+            categoryComboUid = uid,
+            categoryOptionsUids = value.split(","),
+            categoryOptionComboUid = categoryOptionComboUid,
+        )
+
+        val result = deValueStore.save("EVENT_CATEGORY_COMBO_UID-$uid", value, null)
+
+        verify(eventRepository).setAttributeOptionComboUid(categoryOptionComboUid)
+        assertEquals(result.valueStoreResult, VALUE_CHANGED)
+    }
+
+    @Test
+    fun `should not save value when clear event details category option combo`() {
+        val uid = "categoryComboUid"
+
+        val result = deValueStore.save("EVENT_CATEGORY_COMBO_UID-$uid", null, null)
+
+        verifyNoInteractions(eventRepository)
+        assertEquals(result.valueStoreResult, ValueStoreResult.VALUE_HAS_NOT_CHANGED)
+    }
+
+    @Test
+    fun `should save event details report date`() {
+        val uid = EventRepository.EVENT_REPORT_DATE_UID
+        val dateValue = "2023-01-01'T'00:00:00"
+        val result = deValueStore.save(uid, dateValue, null)
+
+        verify(eventRepository).setEventDate(dateValue.toDate())
+        assertEquals(result.valueStoreResult, VALUE_CHANGED)
+    }
+
+    @Test
+    fun `should not save value when clear event details report date`() {
+        val uid = EventRepository.EVENT_REPORT_DATE_UID
+
+        val result = deValueStore.save(uid, null, null)
+
+        verifyNoInteractions(eventRepository)
+        assertEquals(result.valueStoreResult, ValueStoreResult.VALUE_HAS_NOT_CHANGED)
+    }
+
+    @Test
+    fun `should not save value when clear event details org unit`() {
+        val uid = EventRepository.EVENT_ORG_UNIT_UID
+
+        val result = deValueStore.save(uid, null, null)
+
+        verifyNoInteractions(eventRepository)
+        assertEquals(result.valueStoreResult, ValueStoreResult.VALUE_HAS_NOT_CHANGED)
+    }
+
+    private fun mockGetCategoryOptionComboUid(
+        categoryComboUid: String,
+        categoryOptionsUids: List<String>,
+        categoryOptionComboUid: String,
+    ) {
+        whenever(
+            d2.categoryModule().categoryOptionCombos()
+                .byCategoryComboUid(),
+        ) doReturn mock()
+        whenever(
+            d2.categoryModule().categoryOptionCombos()
+                .byCategoryComboUid().eq(categoryComboUid),
+        ) doReturn mock()
+        whenever(
+            d2.categoryModule().categoryOptionCombos()
+                .byCategoryComboUid().eq(categoryComboUid)
+                .byCategoryOptions(categoryOptionsUids),
+        ) doReturn mock()
+        whenever(
+            d2.categoryModule().categoryOptionCombos()
+                .byCategoryComboUid().eq(categoryComboUid)
+                .byCategoryOptions(categoryOptionsUids)
+                .one(),
+        ) doReturn mock()
+        whenever(
+            d2.categoryModule().categoryOptionCombos()
+                .byCategoryComboUid().eq(categoryComboUid)
+                .byCategoryOptions(categoryOptionsUids)
+                .one().blockingGet(),
+        ) doReturn mock()
+        whenever(
+            d2.categoryModule().categoryOptionCombos()
+                .byCategoryComboUid().eq(categoryComboUid)
+                .byCategoryOptions(categoryOptionsUids)
+                .one().blockingGet()?.uid(),
+        ) doReturn categoryOptionComboUid
     }
 
     private fun mockedAttribute(valueType: ValueType = ValueType.TEXT): TrackedEntityAttribute {

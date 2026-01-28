@@ -1,17 +1,20 @@
 package org.dhis2.android.rtsm.ui.home
 
+import android.annotation.SuppressLint
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dhis2.org.analytics.charts.Charts
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.dhis2.android.rtsm.R
-import org.dhis2.android.rtsm.commons.Constants.INTENT_EXTRA_APP_CONFIG
-import org.dhis2.android.rtsm.data.AppConfig
 import org.dhis2.android.rtsm.data.OperationState
 import org.dhis2.android.rtsm.data.TransactionType
 import org.dhis2.android.rtsm.data.models.Transaction
@@ -22,21 +25,35 @@ import org.dhis2.android.rtsm.services.MetadataManager
 import org.dhis2.android.rtsm.services.scheduler.BaseSchedulerProvider
 import org.dhis2.android.rtsm.ui.base.BaseViewModel
 import org.dhis2.android.rtsm.ui.home.model.SettingsUiState
+import org.dhis2.android.rtsm.ui.home.screens.BottomNavigation
 import org.dhis2.android.rtsm.utils.ParcelUtils
 import org.dhis2.android.rtsm.utils.humanReadableDate
+import org.dhis2.commons.Constants
+import org.dhis2.commons.bindings.distributedTo
+import org.dhis2.commons.bindings.stockCount
+import org.dhis2.commons.bindings.stockDiscarded
+import org.dhis2.commons.bindings.stockDistribution
+import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.option.Option
 import org.hisp.dhis.android.core.organisationunit.OrganisationUnit
+import org.hisp.dhis.android.core.settings.AnalyticsDhisVisualizationsGroup
+import org.hisp.dhis.android.core.usecase.stock.StockUseCase
 import javax.inject.Inject
 
+@SuppressLint("MutableCollectionMutableState")
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val disposable: CompositeDisposable,
     private val schedulerProvider: BaseSchedulerProvider,
     private val metadataManager: MetadataManager,
+    private val charts: Charts,
+    private val d2: D2,
     savedState: SavedStateHandle,
 ) : BaseViewModel(schedulerProvider) {
 
-    private val config: AppConfig = savedState.get<AppConfig>(INTENT_EXTRA_APP_CONFIG)
+    private lateinit var config: StockUseCase
+
+    private val program: String = savedState[Constants.PROGRAM_UID]
         ?: throw InitializationException("Some configuration parameters are missing")
 
     private val _facilities =
@@ -44,25 +61,61 @@ class HomeViewModel @Inject constructor(
     val facilities: StateFlow<OperationState<List<OrganisationUnit>>>
         get() = _facilities
 
-    var transactionItems by mutableStateOf(mapTransaction())
+    private val _analytics =
+        MutableStateFlow<List<AnalyticsDhisVisualizationsGroup>>(emptyList())
+    val analytics: StateFlow<List<AnalyticsDhisVisualizationsGroup>>
+        get() = _analytics
+
+    private var transactionItems by mutableStateOf(mapTransaction())
 
     private val _destinations =
         MutableStateFlow<OperationState<List<Option>>>(OperationState.Loading)
     val destinationsList: StateFlow<OperationState<List<Option>>>
         get() = _destinations
 
-    private val _settingsUiSate = MutableStateFlow(SettingsUiState(programUid = config.program, transactionItems = transactionItems))
+    private val _settingsUiSate = MutableStateFlow(SettingsUiState(programUid = program, transactionItems = transactionItems))
     val settingsUiState: StateFlow<SettingsUiState> = _settingsUiSate
 
+    private val _helperText = MutableStateFlow<String?>(null)
+    val helperText = _helperText.asStateFlow()
+
     init {
+        loadStockUseCases(program)
+        loadAnalytics()
         loadFacilities()
         loadDestinations()
         loadTransactionTypeLabels()
     }
 
+    private fun loadStockUseCases(programUid: String) {
+        viewModelScope.launch {
+            metadataManager.loadStockUseCase(programUid)?.let {
+                config = it
+            }
+        }
+    }
+
+    private fun loadAnalytics() {
+        viewModelScope.launch {
+            val result = charts.getVisualizationGroups(program)
+            if (result.isNotEmpty()) {
+                _settingsUiSate.update { currentUiState ->
+                    currentUiState.copy(hasAnalytics = result.isNotEmpty())
+                }
+                _analytics.value = result
+            }
+            val programName = d2.programModule().programs().uid(program).blockingGet()?.displayName()
+            if (programName != null) {
+                _settingsUiSate.update { currentUiState ->
+                    currentUiState.copy(programName = programName)
+                }
+            }
+        }
+    }
+
     private fun loadDestinations() {
         disposable.add(
-            metadataManager.destinations(config.distributedTo)
+            metadataManager.destinations(config.distributedTo())
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribe(
@@ -79,7 +132,7 @@ class HomeViewModel @Inject constructor(
 
     private fun loadTransactionTypeLabels() {
         disposable.add(
-            metadataManager.transactionType(config.stockDistribution)
+            metadataManager.transactionType(config.stockDistribution())
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribe(
@@ -95,11 +148,12 @@ class HomeViewModel @Inject constructor(
                 ),
         )
         disposable.add(
-            metadataManager.transactionType(config.stockCount)
+            metadataManager.transactionType(config.stockCount())
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribe(
                     { dataElement ->
+                        _helperText.value = dataElement.description()
                         transactionItems.find { it.type == TransactionType.CORRECTION }?.label = dataElement.displayName() ?: TransactionType.CORRECTION.name
                         _settingsUiSate.update { currentUiState ->
                             currentUiState.copy(transactionItems = transactionItems)
@@ -111,7 +165,7 @@ class HomeViewModel @Inject constructor(
                 ),
         )
         disposable.add(
-            metadataManager.transactionType(config.stockDiscarded)
+            metadataManager.transactionType(config.stockDiscarded())
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribe(
@@ -127,7 +181,7 @@ class HomeViewModel @Inject constructor(
                 ),
         )
         disposable.add(
-            metadataManager.transactionType(config.distributedTo)
+            metadataManager.transactionType(config.distributedTo())
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribe(
@@ -145,7 +199,7 @@ class HomeViewModel @Inject constructor(
 
     private fun loadFacilities() {
         disposable.add(
-            metadataManager.facilities(config.program)
+            metadataManager.facilities(config.programUid)
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribe(
@@ -230,7 +284,7 @@ class HomeViewModel @Inject constructor(
     fun resetSettings() {
         _settingsUiSate.update {
             SettingsUiState(
-                programUid = config.program,
+                programUid = config.programUid,
                 transactionItems = transactionItems,
             )
         }
@@ -256,5 +310,20 @@ class HomeViewModel @Inject constructor(
                 TransactionType.CORRECTION.name,
             ),
         )
+    }
+
+    fun switchScreen(itemId: Int) {
+        when (itemId) {
+            BottomNavigation.DATA_ENTRY.id -> {
+                _settingsUiSate.update { currentUiState ->
+                    currentUiState.copy(selectedScreen = BottomNavigation.DATA_ENTRY)
+                }
+            }
+            BottomNavigation.ANALYTICS.id -> {
+                _settingsUiSate.update { currentUiState ->
+                    currentUiState.copy(selectedScreen = BottomNavigation.ANALYTICS)
+                }
+            }
+        }
     }
 }

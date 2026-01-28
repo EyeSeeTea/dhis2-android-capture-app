@@ -7,7 +7,7 @@ import org.hisp.dhis.android.core.arch.helpers.Result as ValidatorResult
 interface ValueStore {
     fun save(uid: String, value: String?): Flowable<StoreResult>
     fun saveWithTypeCheck(uid: String, value: String?): Flowable<StoreResult>
-    fun save(
+    suspend fun save(
         orgUnitUid: String,
         periodId: String,
         attributeOptionComboUid: String,
@@ -18,11 +18,6 @@ interface ValueStore {
 
     fun deleteOptionValues(optionCodeValuesToDelete: List<String>)
     fun deleteOptionValueIfSelected(field: String, optionUid: String): StoreResult
-    fun deleteOptionValueIfSelectedInGroup(
-        field: String,
-        optionGroupUid: String,
-        isInGroup: Boolean,
-    ): StoreResult
 
     fun overrideProgram(programUid: String?)
     fun validate(dataElementUid: String, value: String?): ValidatorResult<String, Throwable>

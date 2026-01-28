@@ -30,9 +30,11 @@ json=$(jq -n \
                 --arg language "$browserstack_language" \
                 --arg locale "$browserstack_locale" \
                 --arg deviceLogs "$browserstack_deviceLogs" \
-                --arg allowDeviceMockServer  "$browserstack_allowDeviceMockServer" \
+                --arg allowDeviceMockServer "$browserstack_allowDeviceMockServer" \
                 --argjson shards "$shards" \
-                '{devices: $devices, app: $app_url, testSuite: $test_url, class: $class, logs: $logs, video: $video, local: $loc, localIdentifier: $locId, gpsLocation: $gpsLocation, language: $language, locale: $locale, deviceLogs: $deviceLogs, allowDeviceMockServer: $allowDeviceMockServer, shards: $shards}')
+                --arg singleRunnerInvocation "$browserstack_singleRunnerInvocation" \
+                --arg buildTag "$buildTag" \
+                '{devices: $devices, app: $app_url, testSuite: $test_url, class: $class, logs: $logs, video: $video, local: $loc, localIdentifier: $locId, gpsLocation: $gpsLocation, language: $language, locale: $locale, deviceLogs: $deviceLogs, allowDeviceMockServer: $allowDeviceMockServer, shards: $shards,singleRunnerInvocation: $singleRunnerInvocation, buildTag: $buildTag}')
 
 test_execution_response="$(curl -X POST https://api-cloud.browserstack.com/app-automate/espresso/v2/build -d \ "$json" -H "Content-Type: application/json" -u "$BROWSERSTACK_USR:$BROWSERSTACK_PSW")"
 
@@ -42,7 +44,7 @@ echo "build id running: $build_id"
 
 # Monitor build status
 build_status="running"
-sleep $build_time_average
+sleep $build_time_average_long
 echo "Monitoring build status started...."
 
 while [[ $build_status = "running" ]];

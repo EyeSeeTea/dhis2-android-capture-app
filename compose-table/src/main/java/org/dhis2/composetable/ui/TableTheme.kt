@@ -1,6 +1,6 @@
 package org.dhis2.composetable.ui
 
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import org.dhis2.composetable.actions.DefaultValidator
@@ -15,7 +15,7 @@ fun TableTheme(
     tableDimensions: TableDimensions? = LocalTableDimensions.current,
     tableConfiguration: TableConfiguration? = LocalTableConfiguration.current,
     tableValidator: Validator? = null,
-    tableResizeActions: TableResizeActions,
+    tableResizeActions: TableResizeActions? = null,
     content: @Composable
     () -> Unit,
 ) {
@@ -24,7 +24,7 @@ fun TableTheme(
         LocalTableDimensions provides (tableDimensions ?: TableDimensions()),
         LocalTableConfiguration provides (tableConfiguration ?: TableConfiguration()),
         LocalValidator provides (tableValidator ?: DefaultValidator()),
-        LocalTableResizeActions provides tableResizeActions,
+        LocalTableResizeActions provides (tableResizeActions ?: object : TableResizeActions {}),
     ) {
         MaterialTheme(
             content = content,

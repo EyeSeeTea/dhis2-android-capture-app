@@ -5,13 +5,13 @@ import org.dhis2.commons.bindings.blockingSetCheck
 import org.dhis2.commons.bindings.withValueTypeCheck
 import org.dhis2.commons.data.EntryMode
 import org.dhis2.commons.network.NetworkUtils
-import org.dhis2.commons.reporting.CrashReportController
 import org.dhis2.commons.resources.ResourceManager
 import org.dhis2.data.dhislogic.DhisEnrollmentUtils
 import org.dhis2.form.R
 import org.dhis2.form.model.StoreResult
 import org.dhis2.form.model.ValueStoreResult
-import org.dhis2.form.ui.validation.FieldErrorMessageProvider
+import org.dhis2.mobile.commons.providers.FieldErrorMessageProvider
+import org.dhis2.mobile.commons.reporting.CrashReportController
 import org.dhis2.utils.DhisTextUtils
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.arch.helpers.FileResizerHelper
@@ -58,7 +58,7 @@ class ValueStoreImpl(
         }
     }
 
-    override fun save(
+    override suspend fun save(
         orgUnitUid: String,
         periodId: String,
         attributeOptionComboUid: String,
@@ -260,37 +260,6 @@ class ValueStoreImpl(
         }
     }
 
-    override fun deleteOptionValueIfSelectedInGroup(
-        field: String,
-        optionGroupUid: String,
-        isInGroup: Boolean,
-    ): StoreResult {
-        val optionsInGroup =
-            d2.optionModule().optionGroups()
-                .withOptions()
-                .uid(optionGroupUid)
-                .blockingGet()
-                ?.options()
-                ?.map { d2.optionModule().options().uid(it.uid()).blockingGet()?.code()!! }
-                ?: arrayListOf()
-        return when (entryMode) {
-            EntryMode.DE -> deleteDataElementValueIfNotInGroup(
-                field,
-                optionsInGroup,
-                isInGroup,
-            )
-            EntryMode.ATTR -> deleteAttributeValueIfNotInGroup(
-                field,
-                optionsInGroup,
-                isInGroup,
-            )
-            EntryMode.DV,
-            -> throw IllegalArgumentException(
-                "DataValues can't be saved using these arguments. Use the other one.",
-            )
-        }
-    }
-
     private fun deleteDataElementValue(field: String, optionUid: String): StoreResult {
         val option = d2.optionModule().options().uid(optionUid).blockingGet()
         val possibleValues = arrayListOf(option?.name(), option?.code()).filterNotNull()
@@ -312,38 +281,6 @@ class ValueStoreImpl(
             d2.trackedEntityModule().trackedEntityAttributeValues().value(field, recordUid)
         return if (valueRepository.blockingExists() &&
             possibleValues.contains(valueRepository.blockingGet()?.value())
-        ) {
-            save(field, null).blockingFirst()
-        } else {
-            StoreResult(field, ValueStoreResult.VALUE_HAS_NOT_CHANGED)
-        }
-    }
-
-    private fun deleteDataElementValueIfNotInGroup(
-        field: String,
-        optionCodesToShow: List<String>,
-        isInGroup: Boolean,
-    ): StoreResult {
-        val valueRepository =
-            d2.trackedEntityModule().trackedEntityDataValues().value(recordUid, field)
-        return if (valueRepository.blockingExists() &&
-            optionCodesToShow.contains(valueRepository.blockingGet()?.value()) == isInGroup
-        ) {
-            save(field, null).blockingFirst()
-        } else {
-            StoreResult(field, ValueStoreResult.VALUE_HAS_NOT_CHANGED)
-        }
-    }
-
-    private fun deleteAttributeValueIfNotInGroup(
-        field: String,
-        optionCodesToShow: List<String>,
-        isInGroup: Boolean,
-    ): StoreResult {
-        val valueRepository =
-            d2.trackedEntityModule().trackedEntityAttributeValues().value(field, recordUid)
-        return if (valueRepository.blockingExists() &&
-            optionCodesToShow.contains(valueRepository.blockingGet()?.value()) == isInGroup
         ) {
             save(field, null).blockingFirst()
         } else {

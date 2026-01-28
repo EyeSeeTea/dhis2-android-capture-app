@@ -1,12 +1,12 @@
 package org.dhis2.usescases.searchTrackEntity.listView
 
-import android.view.ViewGroup
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.composethemeadapter.MdcTheme
+import org.dhis2.bindings.dp
 import org.dhis2.databinding.ResultSearchListBinding
 import org.dhis2.usescases.searchTrackEntity.ui.SearchResultUi
+import org.hisp.dhis.mobile.ui.designsystem.theme.DHIS2Theme
 
 class SearchResultHolder(
     val binding: ResultSearchListBinding,
@@ -22,14 +22,12 @@ class SearchResultHolder(
     fun bind(item: SearchResult) {
         binding.composeView.apply {
             updateLayoutParams {
-                height = if (item.shouldDisplayInFullSize()) {
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                } else {
-                    ViewGroup.LayoutParams.WRAP_CONTENT
+                if (item.shouldDisplayInFullSize()) {
+                    setPadding(0, 160.dp, 0, 0)
                 }
             }
         }.setContent {
-            MdcTheme {
+            DHIS2Theme {
                 SearchResultUi(
                     searchResult = item,
                     onSearchOutsideClick = onSearchOutsideProgram,
