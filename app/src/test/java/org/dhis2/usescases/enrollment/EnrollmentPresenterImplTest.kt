@@ -280,7 +280,7 @@ class EnrollmentPresenterImplTest {
 
         presenter.finish(NEW)
 
-        verify(enrollmentView).openDashboard(ENROLLMENT_UID)
+        verify(enrollmentView).openDashboard(ENROLLMENT_UID, false)
     }
 
     @Test

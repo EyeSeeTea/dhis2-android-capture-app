@@ -722,7 +722,9 @@ class SearchTEIViewModelTest {
             mapOf(
                 "uid1" to "Friendly OrgUnit Name",
                 "uid2" to "Male",
-                "uid3" to "21/02/2024",
+                // EyeSeeTea customization
+                //"uid3" to "21/02/2024",
+                "uid3" to "2024-02-21",
                 "uid4" to "21/02/2024 - 01:00",
                 "uid5" to "Boolean: false",
                 "uid6" to "Yes Only",

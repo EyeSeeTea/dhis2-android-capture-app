@@ -50,7 +50,9 @@ class ConfigureEventReportDateTest {
                 )
 
             // And has a concrete date
-            val expectedDate = "14/02/2022"
+            // EyeSeeTea customization
+            //val expectedDate = "14/02/2022"
+            val expectedDate = "2022-02-14"
 
             val event: Event =
                 mock {
@@ -83,7 +85,9 @@ class ConfigureEventReportDateTest {
                     periodUtils = periodUtils,
                     enrollmentId = ENROLLMENT_ID,
                 )
-            val today = "15/02/2022"
+            // EyeSeeTea customization
+            //val today = "15/02/2022"
+            val today = "2022-02-15"
 
             whenever(
                 repository.getEnrollmentDate(ENROLLMENT_ID),
@@ -91,7 +95,9 @@ class ConfigureEventReportDateTest {
             whenever(
                 repository.getEnrollmentIncidentDate(ENROLLMENT_ID),
             ) doReturn DateUtils.getInstance().getStartOfDay(DateUtils.uiDateFormat().parse(today))
-            val tomorrow = "16/02/2022"
+            // EyeSeeTea customization
+            // val tomorrow = "16/02/2022"
+            val tomorrow = "2022-02-16"
 
             whenever(
                 periodUtils.getPeriodUIString(any(), any(), any()),
@@ -118,8 +124,12 @@ class ConfigureEventReportDateTest {
                     scheduleInterval = 6,
                 )
 
-            val lastEventDate = "13/02/2022"
-            val nextEventDate = "19/02/2022"
+            // EyeSeeTea customization
+            //val lastEventDate = "13/02/2022"
+            //val nextEventDate = "19/02/2022"
+            val lastEventDate = "2022-02-13"
+            val nextEventDate = "2022-02-19"
+
             whenever(
                 repository.getStageLastDate(ENROLLMENT_ID),
             ) doReturn DateUtils.uiDateFormat().parse(lastEventDate)
@@ -145,8 +155,12 @@ class ConfigureEventReportDateTest {
                     scheduleInterval = 6,
                 )
 
-            val lastEventDate = "13/02/2022"
-            val nextEventDate = "19/02/2022"
+            // EyeSeeTea customization
+            //val lastEventDate = "13/02/2022"
+            //val nextEventDate = "19/02/2022"
+            val lastEventDate = "2022-02-13"
+            val nextEventDate = "2022-02-19"
+
             whenever(
                 repository.getStageLastDate(ENROLLMENT_ID),
             ) doReturn null
@@ -181,8 +195,11 @@ class ConfigureEventReportDateTest {
                     enrollmentId = ENROLLMENT_ID,
                 )
 
-            val lastEventDate = "13/02/2022"
-            val nextEventDate = "15/02/2022"
+            // EyeSeeTea customization
+            //val lastEventDate = "13/02/2022"
+            //val nextEventDate = "15/02/2022"
+            val lastEventDate = "2022-02-13"
+            val nextEventDate = "2022-02-15"
             whenever(
                 repository.getStageLastDate(ENROLLMENT_ID),
             ) doReturn null

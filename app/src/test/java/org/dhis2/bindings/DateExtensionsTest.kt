@@ -19,7 +19,9 @@ import java.util.TimeZone
 class DateExtensionsTest {
     val context: Context = mock()
     private val resourceManager: ResourceManager = mock()
-    private val dateFormat = SimpleDateFormat("d/M/yyyy", Locale.getDefault())
+    //EyeSeeTea customization
+    //private val dateFormat = SimpleDateFormat("d/M/yyyy", Locale.getDefault())
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     private val uiFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
 
     @Test

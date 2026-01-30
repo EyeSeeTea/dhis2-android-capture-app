@@ -232,7 +232,7 @@ private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addRemoveEnrollmentIte
         val dashboardModel = dashboardViewModel.dashboardModel.value
         val programmeName =
             if (dashboardModel is DashboardEnrollmentModel) {
-                dashboardModel.currentProgram().displayName()
+                dashboardModel.currentProgram()?.displayName()
             } else {
                 ""
             }

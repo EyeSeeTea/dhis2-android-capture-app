@@ -419,10 +419,10 @@ class TEIDataPresenter(
                         orgUnitUid?.let { onNewEventSelected(orgUnitUid, stage.uid()) }
                             ?: checkOrgUnitCount(program, stage.uid())
                         */
-                teiDataRepository.getEnrollment().blockingGet()?.organisationUnit()?.let { orgUnitUid ->
-                    onNewEventSelected(orgUnitUid, stage.uid())
-                } }
-
+                       teiDataRepository.getEnrollment().blockingGet()?.organisationUnit()?.let { orgUnitUid ->
+                          onNewEventSelected(orgUnitUid, stage.uid())
+                       }
+                    }
                 EventCreationType.SCHEDULE -> {
                     view.displayScheduleEvent(
                         programStage = stage,
@@ -436,7 +436,9 @@ class TEIDataPresenter(
         } else {
             // EyeSeeTea customization - always create event in enrollment
             /*when (eventCreationType) {
-                EventCreationType.REFERAL -> {
+                EventCreationType.REFERAL,
+                EventCreationType.ADDNEW,
+                -> {
                     createEventInEnrollment(eventCreationType)
                 }
 

@@ -49,7 +49,9 @@ class DhisPeriodUtilsTest {
                 .build()
 
         Assert.assertEquals(
-            "11/01/2019",
+            // EyeSeeTea customization
+            //"11/01/2019",
+            "2019-01-11",
             periodUtils.getPeriodUIString(null, testDate, Locale.ENGLISH),
         )
     }
@@ -70,7 +72,9 @@ class DhisPeriodUtilsTest {
                 .build()
 
         Assert.assertEquals(
-            "11/01/2019",
+            // EyeSeeTea customization
+            //"11/01/2019",
+            "2019-01-11",
             periodUtils.getPeriodUIString(
                 PeriodType.Daily,
                 testDate,

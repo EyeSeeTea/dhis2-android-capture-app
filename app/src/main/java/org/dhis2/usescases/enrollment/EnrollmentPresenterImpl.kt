@@ -147,7 +147,7 @@ class EnrollmentPresenterImpl(
                             {
                                 it.second?.let { eventUid ->
                                     view.openEvent(eventUid)
-                                } ?: view.openDashboard(it.first, true)
+                                } ?: view.openDashboard(it.first, false)
                             },
                             { Timber.tag(TAG).e(it) },
                         ),

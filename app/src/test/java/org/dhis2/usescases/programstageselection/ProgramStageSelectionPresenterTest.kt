@@ -80,6 +80,7 @@ class ProgramStageSelectionPresenterTest {
     private val dispatcherProvider: DispatcherProvider =
         mock {
             on { io() } doReturn Dispatchers.Unconfined
+            on { ui() } doReturn Dispatchers.Unconfined
         }
     private val createEventUseCase: CreateEventUseCase = mock()
     private val d2ErrorUtils: D2ErrorUtils = mock()
