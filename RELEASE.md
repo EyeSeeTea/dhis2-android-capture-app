@@ -1,9 +1,15 @@
-# Release notes - Android App for DHIS2 - 3.1.0.1
+# Release notes - Android App for DHIS2 - 3.3.0.1
 
-### Bug
+This patch release includes updated translations and a hotfix.
 
-[ANDROAPP-6653](https://dhis2.atlassian.net/browse/ANDROAPP-6653) Large option sets freeze the app
+## Bugs fixed
 
-[ANDROAPP-6665](https://dhis2.atlassian.net/browse/ANDROAPP-6665) Filters persists when exiting the program or data set
+* [ANDROSDK-2219](https://dhis2.atlassian.net/browse/ANDROSDK-2219) Tracker sync fail due to null properties in Note
 
-[ANDROAPP-6691](https://dhis2.atlassian.net/browse/ANDROAPP-6691) NullPointerException: Dataset table
+* [ANDROSDK-2221](https://dhis2.atlassian.net/browse/ANDROSDK-2221) Data set with default cat combo can't be edited
+
+* [ANDROSDK-2223](https://dhis2.atlassian.net/browse/ANDROSDK-2223) openingDate and closedDate from DataInputPeriod are nullable
+
+### Translations
+
+This release also includes updated translations contributed by the community.

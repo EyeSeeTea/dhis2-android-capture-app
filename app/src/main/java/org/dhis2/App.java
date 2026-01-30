@@ -28,12 +28,10 @@ import org.dhis2.commons.orgunitselector.OUTreeComponent;
 import org.dhis2.commons.orgunitselector.OUTreeModule;
 import org.dhis2.commons.prefs.Preference;
 import org.dhis2.commons.prefs.PreferenceModule;
-import org.dhis2.commons.reporting.CrashReportModule;
 import org.dhis2.commons.schedulers.SchedulerModule;
 import org.dhis2.commons.schedulers.SchedulersProviderImpl;
 import org.dhis2.commons.service.SessionManagerModule;
 import org.dhis2.commons.sync.SyncComponentProvider;
-import org.dhis2.data.appinspector.AppInspector;
 import org.dhis2.data.dispatcher.DispatcherModule;
 import org.dhis2.data.server.SSLContextInitializer;
 import org.dhis2.data.server.ServerComponent;
@@ -42,14 +40,16 @@ import org.dhis2.data.server.UserManager;
 import org.dhis2.data.service.workManager.WorkManagerModule;
 import org.dhis2.data.user.UserComponent;
 import org.dhis2.data.user.UserModule;
+import org.dhis2.di.KoinInitialization;
 import org.dhis2.maps.MapController;
 import org.dhis2.usescases.crash.CrashActivity;
-import org.dhis2.usescases.login.LoginComponent;
-import org.dhis2.usescases.login.LoginModule;
+import org.dhis2.usescases.notifications.di.NotificationsModule;
 import org.dhis2.usescases.teiDashboard.TeiDashboardComponent;
 import org.dhis2.usescases.teiDashboard.TeiDashboardModule;
 import org.dhis2.utils.analytics.AnalyticsModule;
 import org.dhis2.utils.granularsync.SyncStatusDialogProvider;
+import org.dhis2.utils.session.ChangeServerURLComponent;
+import org.dhis2.utils.session.ChangeServerURLModule;
 import org.dhis2.utils.session.PinModule;
 import org.dhis2.utils.session.SessionComponent;
 import org.dhis2.utils.timber.DebugTree;
@@ -63,7 +63,6 @@ import java.net.SocketException;
 import javax.inject.Singleton;
 
 import cat.ereza.customactivityoncrash.config.CaocConfig;
-import dagger.hilt.android.HiltAndroidApp;
 import dhis2.org.analytics.charts.ui.di.AnalyticsFragmentComponent;
 import dhis2.org.analytics.charts.ui.di.AnalyticsFragmentModule;
 import io.reactivex.Scheduler;
@@ -75,7 +74,6 @@ import io.sentry.SentryLevel;
 import io.sentry.android.core.SentryAndroid;
 import timber.log.Timber;
 
-@HiltAndroidApp
 public class App extends MultiDexApplication implements Components, LifecycleObserver {
 
     @NonNull
@@ -92,26 +90,22 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
 
     @Nullable
     @PerActivity
-    LoginComponent loginComponent;
-
-    @Nullable
-    @PerActivity
     private TeiDashboardComponent dashboardComponent;
 
     @Nullable
     private SessionComponent sessionComponent;
 
+    @Nullable
+    private ChangeServerURLComponent changeServerURLComponent;
+
     private boolean fromBackGround = false;
     private boolean recreated;
-    private AppInspector appInspector;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
-
-        appInspector = new AppInspector(this).init();
 
         MapController.Companion.init(this);
 
@@ -122,6 +116,9 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
 
         setUpSecurityProvider();
         setUpServerComponent();
+
+        KoinInitialization.INSTANCE.invoke(this, ServerModule.getD2Configuration(this));
+
         initCrashController();
         setUpRxPlugin();
         initCustomCrashActivity();
@@ -191,7 +188,8 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
 
     ////////////////////////////////////////////////////////////////////////
     // App component
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
     @NonNull
     protected AppComponent.Builder prepareAppComponent() {
         return DaggerAppComponent.builder()
@@ -203,9 +201,8 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
                 .workManagerController(new WorkManagerModule())
                 .sessionManagerService(new SessionManagerModule())
                 .coroutineDispatchers(new DispatcherModule())
-                .crashReportModule(new CrashReportModule())
-                .customDispatcher(new CustomDispatcherModule())
-                .featureConfigModule(new FeatureConfigModule());
+                .featureConfigModule(new FeatureConfigModule())
+                .notificationsModule(new NotificationsModule());
     }
 
     @NonNull
@@ -215,29 +212,9 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
     }
 
     ////////////////////////////////////////////////////////////////////////
-    // Login component
-    ////////////////////////////////////////////////////////////////////////
-
-    @NonNull
-    @Override
-    public LoginComponent createLoginComponent(LoginModule loginModule) {
-        return (loginComponent = appComponent.plus(loginModule));
-    }
-
-    @Nullable
-    @Override
-    public LoginComponent loginComponent() {
-        return loginComponent;
-    }
-
-    @Override
-    public void releaseLoginComponent() {
-        loginComponent = null;
-    }
-
-    ////////////////////////////////////////////////////////////////////////
     // Server component
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public ServerComponent createServerComponent() {
@@ -264,7 +241,8 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
 
     ////////////////////////////////////////////////////////////////////////
     // User component
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public UserComponent createUserComponent() {
@@ -283,7 +261,8 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
 
     ////////////////////////////////////////////////////////////////////////
     // Dashboard component
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
     @NonNull
     public TeiDashboardComponent createDashboardComponent(@NonNull TeiDashboardModule dashboardModule) {
         if (dashboardComponent != null) {
@@ -309,6 +288,11 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
     @NotNull
     public SessionComponent createSessionComponent(PinModule pinModule) {
         return (sessionComponent = userComponent.plus(pinModule));
+    }
+
+    @NotNull
+    public ChangeServerURLComponent createChangeServerULComponent(ChangeServerURLModule changeServerURLModule) {
+        return (changeServerURLComponent = userComponent.plus(changeServerURLModule));
     }
 
     public void releaseSessionComponent() {
@@ -360,10 +344,6 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
         });
     }
 
-    public AppInspector getAppInspector() {
-        return appInspector;
-    }
-
     @Override
     public FeatureConfigActivityComponent provideFeatureConfigActivityComponent() {
         return userComponent.plus(new FeatureConfigActivityModule());
@@ -389,7 +369,6 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
     public OUTreeComponent provideOUTreeComponent(@NotNull OUTreeModule module) {
         return serverComponent.plus(module);
     }
-
 
     @NonNull
     @Override
