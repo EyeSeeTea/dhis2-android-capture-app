@@ -36,12 +36,12 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Run App unit tests
-        run: ./gradlew :app:testWidpDebugUnitTest
+        run: ./gradlew :app:testSpIPDebugUnitTest
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: app-unit-test-results
-          path: app/build/reports/tests/testWidpDebugUnitTest/
+          path: app/build/reports/tests/testSpIPDebugUnitTest/
           retention-days: 7
