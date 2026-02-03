@@ -207,7 +207,7 @@ private fun ProvideDefaultTextInput(
                 fieldUid = fieldUiModel.uid,
                 value = value.text,
                 valueType = fieldUiModel.valueType,
-                lostFocus = lostFocus,
+                lostFocus = !isFocused,
                 onNextClicked = clickedOnNext,
                 intentHandler = intentHandler,
             )
