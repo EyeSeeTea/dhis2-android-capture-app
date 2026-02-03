@@ -438,7 +438,7 @@ class FormViewModel(
                     checkAutoCompleteForLastFocusedItem(it)
 
                     val intent =
-                        FormIntent.OnSave(it.uid, processedValue, it.valueType, it.fieldMask)
+                        FormIntent.OnSave(it.uid, processedValue, it.valueType, it.fieldMask, it.allowFutureDates)
                     val action = rowActionFromIntent(intent)
 
                     val result = repository.save(it.uid, processedValue, action.extraData)
