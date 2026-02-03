@@ -1154,8 +1154,15 @@ class FormViewModel(
         )
 
         if (error != null) {
+            // Use fieldToSave.uid so the error is shown on the field that failed validation.
+            // When called from saveLastFocusedItem, action.id is the next field's uid (ON_NEXT).
             repository.updateErrorList(
-                action.copy(error = error),
+                action.copy(
+                    id = fieldToSave.uid,
+                    value = fieldWithNewValue.value,
+                    valueType = fieldToSave.valueType,
+                    error = error,
+                ),
             )
             return Pair(
                 StoreResult(

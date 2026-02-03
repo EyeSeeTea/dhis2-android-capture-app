@@ -53,7 +53,15 @@ import org.hisp.dhis.android.core.common.valuetype.validation.failures.UrlFailur
 import org.jetbrains.compose.resources.getString
 
 actual class FieldErrorMessageProvider {
-    actual suspend fun getFriendlyErrorMessage(error: Throwable) = getString(parseErrorToMessageResource(error))
+    actual suspend fun getFriendlyErrorMessage(error: Throwable): String {
+        val resource = parseErrorToMessageResource(error)
+        // When we fall back to invalid_field, use the throwable message if present (e.g. from FieldProcessor/DateOfBirthProcessor).
+        return if (resource == Res.string.invalid_field && !error.message.isNullOrBlank()) {
+            error.message!!
+        } else {
+            getString(resource)
+        }
+    }
 
     private fun parseErrorToMessageResource(error: Throwable) =
         when (error) {
