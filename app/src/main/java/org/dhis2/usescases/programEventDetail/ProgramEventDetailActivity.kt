@@ -6,46 +6,50 @@ import android.os.Bundle
 import android.transition.ChangeBounds
 import android.transition.Transition
 import android.transition.TransitionManager
-import android.view.MenuItem
 import android.view.View
+import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.constraintlayout.widget.ConstraintSet
-import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.viewModelScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dhis2.org.analytics.charts.ui.GroupAnalyticsFragment
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.dhis2.R
-import org.dhis2.bindings.app
 import org.dhis2.bindings.clipWithRoundedCorners
 import org.dhis2.bindings.dp
+import org.dhis2.bindings.userComponent
 import org.dhis2.commons.Constants
-import org.dhis2.commons.data.EventCreationType
 import org.dhis2.commons.filters.FilterItem
 import org.dhis2.commons.filters.FilterManager
 import org.dhis2.commons.filters.FilterManager.PeriodRequest
+import org.dhis2.commons.filters.Filters
 import org.dhis2.commons.filters.FiltersAdapter
+import org.dhis2.commons.filters.periods.ui.FilterPeriodsDialog
+import org.dhis2.commons.filters.periods.ui.FilterPeriodsDialog.Companion.FILTER_DIALOG
 import org.dhis2.commons.matomo.Actions.Companion.CREATE_EVENT
 import org.dhis2.commons.network.NetworkUtils
+import org.dhis2.commons.orgunitselector.OURepositoryConfiguration
 import org.dhis2.commons.orgunitselector.OUTreeFragment
+import org.dhis2.commons.orgunitselector.OrgUnitSelectorScope
+import org.dhis2.commons.prefs.Preference.Companion.CURRENT_ORG_UNIT
 import org.dhis2.commons.sync.OnDismissListener
 import org.dhis2.commons.sync.SyncContext
 import org.dhis2.databinding.ActivityProgramEventDetailBinding
+import org.dhis2.form.model.EventMode
 import org.dhis2.ui.ThemeManager
 import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureActivity
-import org.dhis2.usescases.eventsWithoutRegistration.eventInitial.EventInitialActivity
 import org.dhis2.usescases.general.ActivityGlobalAbstract
 import org.dhis2.usescases.programEventDetail.ProgramEventDetailViewModel.EventProgramScreen
 import org.dhis2.usescases.programEventDetail.eventList.EventListFragment
 import org.dhis2.usescases.programEventDetail.eventMap.EventMapFragment
-import org.dhis2.utils.DateUtils
-import org.dhis2.utils.EventMode
 import org.dhis2.utils.analytics.DATA_CREATION
 import org.dhis2.utils.category.CategoryDialog
 import org.dhis2.utils.category.CategoryDialog.Companion.TAG
-import org.dhis2.utils.customviews.navigationbar.NavigationPageConfigurator
 import org.dhis2.utils.granularsync.SyncStatusDialog
 import org.dhis2.utils.granularsync.shouldLaunchSyncDialog
-import org.hisp.dhis.android.core.period.DatePeriod
 import org.hisp.dhis.android.core.program.Program
+import org.hisp.dhis.mobile.ui.designsystem.theme.DHIS2Theme
 import javax.inject.Inject
 
 class ProgramEventDetailActivity :
@@ -61,9 +65,6 @@ class ProgramEventDetailActivity :
     lateinit var filtersAdapter: FiltersAdapter
 
     @Inject
-    lateinit var pageConfigurator: NavigationPageConfigurator
-
-    @Inject
     lateinit var networkUtils: NetworkUtils
 
     @JvmField
@@ -72,6 +73,9 @@ class ProgramEventDetailActivity :
 
     @Inject
     lateinit var viewModelFactory: ProgramEventDetailViewModelFactory
+
+    @Inject
+    lateinit var ouRepositoryConfiguration: OURepositoryConfiguration
 
     private var backDropActive = false
     private var programUid: String = ""
@@ -87,48 +91,48 @@ class ProgramEventDetailActivity :
         initInjection()
         themeManager?.setProgramTheme(programUid)
         super.onCreate(savedInstanceState)
-        initEventFilters()
-        initViewModel()
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_program_event_detail)
-        binding.presenter = presenter
-        binding.totalFilters = FilterManager.getInstance().totalFilters
-        binding.navigationBar.pageConfiguration(pageConfigurator)
-        binding.navigationBar.setOnNavigationItemSelectedListener { item: MenuItem ->
-            when (item.itemId) {
-                R.id.navigation_list_view -> {
-                    programEventsViewModel.showList()
-                    return@setOnNavigationItemSelectedListener true
-                }
-                R.id.navigation_map_view -> {
-                    networkUtils.performIfOnline(
-                        this,
-                        {
-                            presenter.trackEventProgramMap()
-                            programEventsViewModel.showMap()
-                        },
-                        {
-                            binding.navigationBar.selectItemAt(0)
-                        },
-                        getString(R.string.msg_network_connection_maps),
-                    )
-                    return@setOnNavigationItemSelectedListener true
-                }
-                R.id.navigation_analytics -> {
-                    presenter.trackEventProgramAnalytics()
-                    programEventsViewModel.showAnalytics()
-                    return@setOnNavigationItemSelectedListener true
-                }
-                else -> return@setOnNavigationItemSelectedListener false
+
+        setContent {
+            DHIS2Theme {
+                ProgramEventDetailScreen(
+                    programEventsViewModel,
+                    presenter,
+                    networkUtils,
+                    { binding = it },
+                    {
+                        initBindings()
+                        initEventFilters()
+                        initViewModel()
+                    },
+                )
             }
         }
-        binding.fragmentContainer.clipWithRoundedCorners(16.dp)
-        binding.filterLayout.adapter = filtersAdapter
-        presenter.init()
-        binding.syncButton.setOnClickListener { showSyncDialogProgram() }
 
         if (intent.shouldLaunchSyncDialog()) {
             showSyncDialogProgram()
         }
+
+        programEventsViewModel.viewModelScope.launch {
+            programEventsViewModel.shouldNavigateToEventDetails.collectLatest { eventUid ->
+                analyticsHelper.setEvent(CREATE_EVENT, DATA_CREATION, CREATE_EVENT)
+                val intent = EventCaptureActivity.intent(
+                    context = context,
+                    eventUid = eventUid,
+                    programUid = programUid,
+                    eventMode = EventMode.NEW,
+                )
+                startActivity(intent)
+            }
+        }
+    }
+
+    private fun initBindings() {
+        binding.presenter = presenter
+        binding.totalFilters = FilterManager.getInstance().totalFilters
+        binding.fragmentContainer.clipWithRoundedCorners(16.dp)
+        binding.filterLayout.adapter = filtersAdapter
+        binding.syncButton.setOnClickListener { showSyncDialogProgram() }
+        binding.totalFilters = FilterManager.getInstance().totalFilters
     }
 
     private fun initExtras() {
@@ -136,8 +140,14 @@ class ProgramEventDetailActivity :
     }
 
     private fun initInjection() {
-        component = app().userComponent()
-            ?.plus(ProgramEventDetailModule(this, programUid))
+        component = userComponent()
+            ?.plus(
+                ProgramEventDetailModule(
+                    this,
+                    this, programUid,
+                    OrgUnitSelectorScope.ProgramCaptureScope(programUid),
+                ),
+            )
         component?.inject(this)
     }
 
@@ -167,9 +177,7 @@ class ProgramEventDetailActivity :
                 programEventsViewModel.onRecreationActivity(false)
             }
         }
-        programEventsViewModel.writePermission.observe(this) { canWrite: Boolean ->
-            binding.addEventButton.visibility = if (canWrite) View.VISIBLE else View.GONE
-        }
+
         programEventsViewModel.currentScreen.observe(this) { currentScreen: EventProgramScreen? ->
             currentScreen?.let {
                 when (it) {
@@ -181,12 +189,6 @@ class ProgramEventDetailActivity :
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        binding.addEventButton.isEnabled = true
-        binding.totalFilters = FilterManager.getInstance().totalFilters
-    }
-
     private fun showSyncDialogProgram() {
         SyncStatusDialog.Builder()
             .withContext(this)
@@ -195,7 +197,13 @@ class ProgramEventDetailActivity :
                 override fun onDismiss(hasChanged: Boolean) {
                     if (hasChanged) FilterManager.getInstance().publishData()
                 }
-            }).show("EVENT_SYNC")
+            })
+            .onNoConnectionListener {
+                programEventsViewModel.displayMessage(
+                    getString(R.string.sync_offline_check_connection),
+                )
+            }
+            .show("EVENT_SYNC")
     }
 
     public override fun onPause() {
@@ -207,21 +215,20 @@ class ProgramEventDetailActivity :
 
     override fun onDestroy() {
         super.onDestroy()
-        presenter.setOpeningFilterToNone()
-        presenter.onDettach()
-        FilterManager.getInstance().clearEventStatus()
-        FilterManager.getInstance().clearCatOptCombo()
-        FilterManager.getInstance().clearWorkingList(true)
-        FilterManager.getInstance().clearAssignToMe()
-        presenter.clearOtherFiltersIfWebAppIsConfig()
+        if (sessionManagerServiceImpl.isUserLoggedIn()) {
+            presenter.setOpeningFilterToNone()
+            presenter.onDettach()
+            FilterManager.getInstance().clearEventStatus()
+            FilterManager.getInstance().clearCatOptCombo()
+            FilterManager.getInstance().clearWorkingList(true)
+            FilterManager.getInstance().clearAssignToMe()
+            FilterManager.getInstance().clearFlow()
+            presenter.clearOtherFiltersIfWebAppIsConfig()
+        }
     }
 
     override fun setProgram(programModel: Program) {
         binding.name = programModel.displayName()
-    }
-
-    override fun showFilterProgress() {
-        programEventsViewModel.setProgress(true)
     }
 
     override fun renderError(message: String) {
@@ -238,13 +245,13 @@ class ProgramEventDetailActivity :
         val transition: Transition = ChangeBounds()
         transition.addListener(object : Transition.TransitionListener {
             override fun onTransitionStart(transition: Transition) {
+                programEventsViewModel.updateBackdrop(backDropActive)
                 if (!backDropActive) {
                     binding.clearFilters.hide()
                 }
             }
 
             override fun onTransitionEnd(transition: Transition) {
-                programEventsViewModel.updateBackdrop(backDropActive)
                 if (backDropActive) {
                     binding.clearFilters.show()
                 }
@@ -262,9 +269,11 @@ class ProgramEventDetailActivity :
                 /*No action needed*/
             }
         })
+        backDropActive = !backDropActive
+
         transition.duration = 200
         TransitionManager.beginDelayedTransition(binding.backdropLayout, transition)
-        backDropActive = !backDropActive
+
         val initSet = ConstraintSet()
         initSet.clone(binding.backdropLayout)
         if (backDropActive) {
@@ -275,7 +284,13 @@ class ProgramEventDetailActivity :
                 ConstraintSet.BOTTOM,
                 16.dp,
             )
-            binding.navigationBar.hide()
+            initSet.connect(
+                R.id.fragmentContainer,
+                ConstraintSet.BOTTOM,
+                ConstraintSet.PARENT_ID,
+                ConstraintSet.BOTTOM,
+                0,
+            )
         } else {
             initSet.connect(
                 R.id.fragmentContainer,
@@ -284,33 +299,50 @@ class ProgramEventDetailActivity :
                 ConstraintSet.BOTTOM,
                 0,
             )
-            binding.navigationBar.show()
+            initSet.connect(
+                R.id.fragmentContainer,
+                ConstraintSet.BOTTOM,
+                R.id.navigationBar,
+                ConstraintSet.TOP,
+                0,
+            )
         }
         initSet.applyTo(binding.backdropLayout)
     }
 
-    override fun startNewEvent() {
-        analyticsHelper.setEvent(CREATE_EVENT, DATA_CREATION, CREATE_EVENT)
-        binding.addEventButton.isEnabled = false
-        val bundle = EventInitialActivity.getBundle(
-            programUid,
-            null,
-            EventCreationType.ADDNEW.name,
-            null,
-            null,
-            null,
-            presenter.stageUid,
-            null,
-            0,
-            null,
-        )
-        startActivity(
-            EventInitialActivity::class.java,
-            bundle,
-            false,
-            false,
-            null,
-        )
+    override fun selectOrgUnitForNewEvent() {
+        val orgUnitList = ouRepositoryConfiguration.orgUnitRepository(null)
+        if (orgUnitList.size == 1) {
+            presenter.stageUid?.let {
+                programEventsViewModel.onOrgUnitForNewEventSelected(
+                    programUid = programUid,
+                    orgUnitUid = orgUnitList.first().uid(),
+                    programStageUid = it,
+                )
+            }
+        } else {
+            OUTreeFragment.Builder()
+                .singleSelection()
+                .withPreselectedOrgUnits(
+                    listOf(sharedPreferences.getString(CURRENT_ORG_UNIT, "") ?: ""),
+                )
+                .orgUnitScope(
+                    OrgUnitSelectorScope.ProgramCaptureScope(programUid),
+                )
+                .onSelection { selectedOrgUnits ->
+                    if (selectedOrgUnits.isNotEmpty()) {
+                        presenter.stageUid?.let {
+                            programEventsViewModel.onOrgUnitForNewEventSelected(
+                                programUid = programUid,
+                                orgUnitUid = selectedOrgUnits.first().uid(),
+                                programStageUid = it,
+                            )
+                        }
+                    }
+                }
+                .build()
+                .show(supportFragmentManager, "ORG_UNIT_DIALOG")
+        }
     }
 
     override fun setWritePermission(canWrite: Boolean) {
@@ -324,23 +356,14 @@ class ProgramEventDetailActivity :
 
     override fun showPeriodRequest(periodRequest: PeriodRequest) {
         if (periodRequest == PeriodRequest.FROM_TO) {
-            DateUtils.getInstance().fromCalendarSelector(this) { datePeriod: List<DatePeriod?>? ->
-                FilterManager.getInstance().addPeriod(datePeriod)
-            }
+            FilterPeriodsDialog.newPeriodsFilter(Filters.PERIOD, isFromToFilter = true).show(supportFragmentManager, FILTER_DIALOG)
         } else {
-            DateUtils.getInstance().showPeriodDialog(
-                this,
-                { datePeriods: List<DatePeriod?>? ->
-                    FilterManager.getInstance().addPeriod(datePeriods)
-                },
-                true,
-            )
+            FilterPeriodsDialog.newPeriodsFilter(Filters.PERIOD).show(supportFragmentManager, FILTER_DIALOG)
         }
     }
 
     override fun openOrgUnitTreeSelector() {
         OUTreeFragment.Builder()
-            .showAsDialog()
             .withPreselectedOrgUnits(FilterManager.getInstance().orgUnitUidsFilters)
             .onSelection { selectedOrgUnits ->
                 presenter.setOrgUnitFilters(selectedOrgUnits)
@@ -376,40 +399,38 @@ class ProgramEventDetailActivity :
                 override fun onDismiss(hasChanged: Boolean) {
                     if (hasChanged) FilterManager.getInstance().publishData()
                 }
-            }).show(FRAGMENT_TAG)
+            })
+            .onNoConnectionListener {
+                programEventsViewModel.displayMessage(
+                    getString(R.string.sync_offline_check_connection),
+                )
+            }
+            .show(FRAGMENT_TAG)
     }
 
     private fun showList() {
         supportFragmentManager.beginTransaction().replace(
-            R.id.fragmentContainer,
+            binding.fragmentContainer.id,
             EventListFragment(),
             "EVENT_LIST",
         ).commitNow()
-        binding.addEventButton.visibility =
-            if (programEventsViewModel.writePermission.value == true) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
         binding.filter.visibility = View.VISIBLE
     }
 
     private fun showMap() {
         supportFragmentManager.beginTransaction().replace(
-            R.id.fragmentContainer,
+            binding.fragmentContainer.id,
             EventMapFragment(),
             "EVENT_MAP",
         ).commitNow()
-        binding.addEventButton.visibility = View.GONE
         binding.filter.visibility = View.VISIBLE
     }
 
     private fun showAnalytics() {
         supportFragmentManager.beginTransaction().replace(
-            R.id.fragmentContainer,
+            binding.fragmentContainer.id,
             GroupAnalyticsFragment.forProgram(programUid),
         ).commitNow()
-        binding.addEventButton.visibility = View.GONE
         binding.filter.visibility = View.GONE
     }
 

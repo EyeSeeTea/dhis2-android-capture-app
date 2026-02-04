@@ -33,7 +33,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkInfo
-import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,7 +61,6 @@ import org.dhis2.data.service.workManager.WorkerItem
 import org.dhis2.data.service.workManager.WorkerType
 import org.dhis2.usescases.sms.SmsSendingService
 import org.hisp.dhis.android.core.D2
-import org.hisp.dhis.android.core.arch.helpers.UidsHelper
 import org.hisp.dhis.android.core.common.State
 import timber.log.Timber
 
@@ -77,12 +75,20 @@ class GranularSyncPresenter(
     private val smsSyncProvider: SMSSyncProvider,
 ) : ViewModel() {
 
+    private val workerName: String
     private var disposable: CompositeDisposable = CompositeDisposable()
     private lateinit var states: MutableLiveData<List<SmsSendingService.SendingStatus>>
     private lateinit var statesList: ArrayList<SmsSendingService.SendingStatus>
     private var refreshing = false
     private val _currentState = MutableStateFlow<SyncUiState?>(null)
     val currentState: StateFlow<SyncUiState?> = _currentState
+
+    init {
+        workerName = workerName()
+    }
+
+    private val _serverAvailability = MutableLiveData<Boolean>()
+    val serverAvailability: LiveData<Boolean> = _serverAvailability
 
     private fun loadSyncInfo(forcedState: State? = null) {
         viewModelScope.launch(dispatcher.io()) {
@@ -102,8 +108,8 @@ class GranularSyncPresenter(
         loadSyncInfo()
     }
 
-    fun isSMSEnabled(showSms: Boolean): Boolean {
-        return smsSyncProvider.isSMSEnabled(syncContext.conflictType() == TEI) && showSms
+    fun isSMSEnabled(): Boolean {
+        return smsSyncProvider.isSMSEnabled(syncContext.conflictType() == TEI)
     }
 
     fun canSendSMS(): Boolean {
@@ -112,6 +118,7 @@ class GranularSyncPresenter(
             PROGRAM,
             DATA_SET,
             -> false
+
             TEI,
             EVENT,
             DATA_VALUES,
@@ -120,57 +127,68 @@ class GranularSyncPresenter(
     }
 
     fun initGranularSync(): LiveData<List<WorkInfo>> {
-        var conflictTypeData: ConflictType? = null
-        var dataToDataValues: Data? = null
-        when (syncContext.conflictType()) {
-            PROGRAM -> conflictTypeData = PROGRAM
-            TEI -> conflictTypeData = TEI
-            EVENT -> conflictTypeData = EVENT
-            DATA_SET -> conflictTypeData = DATA_SET
-            DATA_VALUES ->
-                with(syncContext as SyncContext.DataSetInstance) {
-                    dataToDataValues = Data.Builder().putString(UID, recordUid())
-                        .putString(CONFLICT_TYPE, DATA_VALUES.name)
-                        .putString(ORG_UNIT, orgUnitUid)
-                        .putString(PERIOD_ID, periodId)
-                        .putString(ATTRIBUTE_OPTION_COMBO, attributeOptionComboUid)
-                        .putStringArray(
-                            CATEGORY_OPTION_COMBO,
-                            getDataSetCatOptCombos().blockingGet().toTypedArray(),
-                        )
+        viewModelScope.launch(dispatcher.io()) {
+            var conflictTypeData: ConflictType? = null
+            var dataToDataValues: Data? = null
+
+            when (syncContext.conflictType()) {
+                PROGRAM -> conflictTypeData = PROGRAM
+                TEI -> conflictTypeData = TEI
+                EVENT -> conflictTypeData = EVENT
+                DATA_SET -> conflictTypeData = DATA_SET
+                DATA_VALUES ->
+                    with(syncContext as SyncContext.DataSetInstance) {
+                        dataToDataValues = Data.Builder().putString(UID, recordUid())
+                            .putString(CONFLICT_TYPE, DATA_VALUES.name)
+                            .putString(ORG_UNIT, orgUnitUid)
+                            .putString(PERIOD_ID, periodId)
+                            .putString(ATTRIBUTE_OPTION_COMBO, attributeOptionComboUid)
+                            .putStringArray(
+                                CATEGORY_OPTION_COMBO,
+                                getDataSetCatOptCombos().toTypedArray(),
+                            )
+                            .build()
+                    }
+
+                ALL -> { // Do nothing
+                }
+            }
+            if (syncContext.conflictType() != ALL) {
+                if (dataToDataValues == null) {
+                    dataToDataValues = Data.Builder()
+                        .putString(UID, syncContext.recordUid())
+                        .putString(CONFLICT_TYPE, conflictTypeData!!.name)
                         .build()
                 }
-            ALL -> { // Do nothing
-            }
-        }
-        var workName: String
-        if (syncContext.conflictType() != ALL) {
-            workName = syncContext.recordUid()
-            if (dataToDataValues == null) {
-                dataToDataValues = Data.Builder()
-                    .putString(UID, syncContext.recordUid())
-                    .putString(CONFLICT_TYPE, conflictTypeData!!.name)
-                    .build()
+
+                val workerItem =
+                    WorkerItem(
+                        workerName,
+                        WorkerType.GRANULAR,
+                        data = dataToDataValues,
+                        policy = ExistingWorkPolicy.KEEP,
+                    )
+
+                workManagerController.beginUniqueWork(workerItem)
             } else {
-                workName = with(syncContext as SyncContext.DataSetInstance) {
-                    orgUnitUid + "_" + periodId + "_" + attributeOptionComboUid
-                }
+                workManagerController.syncDataForWorker(Constants.DATA_NOW, Constants.INITIAL_SYNC)
+            }
+        }
+        return observeWorkInfo()
+    }
+
+    fun observeWorkInfo() =
+        workManagerController.getWorkInfosForUniqueWorkLiveData(workerName)
+
+    private fun workerName(): String {
+        return when (syncContext.conflictType()) {
+            ALL -> Constants.INITIAL_SYNC
+            DATA_VALUES -> with(syncContext as SyncContext.DataSetInstance) {
+                orgUnitUid + "_" + periodId + "_" + attributeOptionComboUid
             }
 
-            val workerItem =
-                WorkerItem(
-                    workName,
-                    WorkerType.GRANULAR,
-                    data = dataToDataValues,
-                    policy = ExistingWorkPolicy.KEEP,
-                )
-
-            workManagerController.beginUniqueWork(workerItem)
-        } else {
-            workName = Constants.INITIAL_SYNC
-            workManagerController.syncDataForWorker(Constants.DATA_NOW, Constants.INITIAL_SYNC)
+            else -> syncContext.recordUid()
         }
-        return workManagerController.getWorkInfosForUniqueWorkLiveData(workName)
     }
 
     // NO PLAY SERVICES
@@ -358,6 +376,7 @@ class GranularSyncPresenter(
                 true -> {
                     updateStatusToSyncedWithSMS()
                 }
+
                 false -> {
                     updateStatusToSentBySMS()
                 }
@@ -367,25 +386,26 @@ class GranularSyncPresenter(
         restartSmsSender()
     }
 
-    private fun getDataSetCatOptCombos(): Single<List<String>> {
-        return d2.dataSetModule().dataSets().withDataSetElements().uid(syncContext.recordUid())
-            .get()
-            .map {
-                it.dataSetElements()?.mapNotNull { dataSetElement ->
-                    if (dataSetElement.categoryCombo() != null) {
-                        dataSetElement.categoryCombo()?.uid()
-                    } else {
-                        d2.dataElementModule()
-                            .dataElements()
-                            .uid(dataSetElement.dataElement().uid())
-                            .blockingGet()?.categoryComboUid()
-                    }
-                }?.distinct()
+    private suspend fun getDataSetCatOptCombos(): List<String> {
+        val dataSet = d2.dataSetModule().dataSets()
+            .withDataSetElements()
+            .uid(syncContext.recordUid())
+            .blockingGet()
+
+        val catCombos = dataSet?.dataSetElements()?.mapNotNull { dataSetElement ->
+            if (dataSetElement.categoryCombo() != null) {
+                dataSetElement.categoryCombo()?.uid()
+            } else {
+                d2.dataElementModule()
+                    .dataElements()
+                    .uid(dataSetElement.dataElement().uid())
+                    .blockingGet()?.categoryComboUid()
             }
-            .flatMap {
-                d2.categoryModule().categoryOptionCombos().byCategoryComboUid().`in`(it).get()
-            }
-            .map { UidsHelper.getUidsList(it) }
+        }?.distinct()
+        val catOptionComboUidList = d2.categoryModule().categoryOptionCombos()
+            .byCategoryComboUid().`in`(catCombos)
+            .blockingGetUids()
+        return catOptionComboUidList
     }
 
     fun onDettach() {
@@ -400,11 +420,23 @@ class GranularSyncPresenter(
             -> {
                 loadSyncInfo(State.UPLOADING)
             }
+
             WorkInfo.State.SUCCEEDED,
             WorkInfo.State.FAILED,
             WorkInfo.State.CANCELLED,
             -> {
                 loadSyncInfo()
+            }
+        }
+    }
+
+    fun checkServerAvailability() {
+        viewModelScope.launch {
+            try {
+                repository.checkServerAvailability()
+                _serverAvailability.value = true
+            } catch (error: RuntimeException) {
+                _serverAvailability.value = false
             }
         }
     }

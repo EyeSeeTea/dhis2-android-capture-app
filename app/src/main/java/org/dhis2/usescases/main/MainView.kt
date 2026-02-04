@@ -48,6 +48,8 @@ interface MainView : AbstractActivityContracts.View {
 
     fun showPeriodRequest(periodRequest: FilterManager.PeriodRequest)
 
+    fun openOrgUnitTreeSelector()
+
     fun goToHome()
 
     fun setFilters(filters: List<FilterItem>)
@@ -63,6 +65,4 @@ interface MainView : AbstractActivityContracts.View {
     fun obtainFileView(): File?
 
     fun cancelNotifications()
-
-    fun hasToNotSync(): Boolean
 }

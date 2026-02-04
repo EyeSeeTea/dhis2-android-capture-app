@@ -2,10 +2,11 @@ package org.dhis2.usescases.searchTrackEntity.ui.mapper
 
 import android.content.Context
 import org.dhis2.R
-import org.dhis2.commons.data.SearchTeiModel
+import org.dhis2.commons.date.DateUtils
 import org.dhis2.commons.date.toDateSpan
-import org.dhis2.commons.date.toOverdueUiText
+import org.dhis2.commons.date.toOverdueOrScheduledUiText
 import org.dhis2.commons.resources.ResourceManager
+import org.dhis2.usescases.searchTrackEntity.SearchTeiModel
 import org.hisp.dhis.android.core.common.State
 import org.hisp.dhis.android.core.enrollment.Enrollment
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus
@@ -15,16 +16,17 @@ import org.hisp.dhis.android.core.trackedentity.TrackedEntityInstance
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import java.util.Calendar
 import java.util.Date
 
 class TEICardMapperTest {
 
     private val context: Context = mock()
     private val resourceManager: ResourceManager = mock()
-    private val currentDate = Date()
 
     private lateinit var mapper: TEICardMapper
 
@@ -36,7 +38,7 @@ class TEICardMapperTest {
         whenever(resourceManager.getString(R.string.show_less)) doReturn "Show less"
         whenever(resourceManager.getString(R.string.completed)) doReturn "Completed"
         whenever(
-            resourceManager.getString(R.string.enrollment_completed),
+            resourceManager.formatWithEnrollmentLabel(any(), any(), any(), any()),
         ) doReturn "Enrollment Completed"
         whenever(
             resourceManager.getString(R.string.overdue_today),
@@ -48,7 +50,7 @@ class TEICardMapperTest {
 
     @Test
     fun shouldReturnCardFull() {
-        val model = createFakeModel()
+        val model = createFakeModel(isOverdue = true)
 
         val result = mapper.map(
             searchTEIModel = model,
@@ -67,12 +69,12 @@ class TEICardMapperTest {
         )
         assertEquals(
             result.additionalInfo[3].value,
-            resourceManager.getString(R.string.enrollment_completed),
+            "Enrollment Completed",
         )
 
         assertEquals(
             result.additionalInfo[4].value,
-            model.overdueDate.toOverdueUiText(resourceManager),
+            model.overdueDate.toOverdueOrScheduledUiText(resourceManager),
         )
         assertEquals(
             result.additionalInfo[5].value,
@@ -80,7 +82,31 @@ class TEICardMapperTest {
         )
     }
 
-    private fun createFakeModel(): SearchTeiModel {
+    @Test
+    fun shouldShowOverDueLabel() {
+        val overdueDate = DateUtils.getInstance().calendar
+        overdueDate.add(Calendar.DATE, -2)
+
+        whenever(resourceManager.getPlural(any(), any(), any())) doReturn "2 days"
+
+        val model = createFakeModel(overdueDate.time, true)
+
+        val result = mapper.map(
+            searchTEIModel = model,
+            onSyncIconClick = {},
+            onCardClick = {},
+            onImageClick = {},
+        )
+        assertEquals(
+            result.additionalInfo[4].value,
+            model.overdueDate.toOverdueOrScheduledUiText(resourceManager),
+        )
+    }
+
+    private fun createFakeModel(
+        currentDate: Date = Date(),
+        isOverdue: Boolean = false,
+    ): SearchTeiModel {
         val attributeValues = LinkedHashMap<String, TrackedEntityAttributeValue>()
         attributeValues["Name"] = TrackedEntityAttributeValue.builder()
             .value("Peter")
@@ -95,9 +121,11 @@ class TEICardMapperTest {
                 .aggregatedSyncState(State.SYNCED)
                 .build()
             enrolledOrgUnit = "OrgUnit"
+            displayOrgUnit = true
             setCurrentEnrollment(
                 Enrollment.builder()
                     .uid("EnrollmentUid")
+                    .program("programUid")
                     .status(EnrollmentStatus.COMPLETED)
                     .build(),
             )
@@ -108,15 +136,17 @@ class TEICardMapperTest {
                     .uid("Program1Uid")
                     .displayName("Program 1")
                     .build(),
+                null,
             )
             addProgramInfo(
                 Program.builder()
                     .uid("Program2Uid")
                     .displayName("Program 2")
                     .build(),
+                null,
             )
             overdueDate = currentDate
-            isHasOverdue = true
+            isHasOverdue = isOverdue
 
             addEnrollment(
                 Enrollment.builder()

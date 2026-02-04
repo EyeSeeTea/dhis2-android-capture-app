@@ -4,14 +4,14 @@ import io.reactivex.Flowable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.functions.BiFunction
 import org.dhis2.commons.data.tuples.Pair
+import org.dhis2.commons.extensions.inDateRange
+import org.dhis2.commons.extensions.inOrgUnit
 import org.dhis2.commons.schedulers.SchedulerProvider
-import org.dhis2.data.dhislogic.inDateRange
-import org.dhis2.data.dhislogic.inOrgUnit
+import org.dhis2.mobile.commons.coroutine.CoroutineTracker
 import org.hisp.dhis.android.core.category.CategoryOption
 import org.hisp.dhis.android.core.organisationunit.OrganisationUnit
 import org.hisp.dhis.android.core.period.PeriodType
 import timber.log.Timber
-import java.util.ArrayList
 
 class DataSetInitialPresenter(
     private val view: DataSetInitialContract.View,
@@ -62,24 +62,11 @@ class DataSetInitialPresenter(
     }
 
     override fun onReportPeriodClick(periodType: PeriodType) {
-        compositeDisposable.add(
-            dataSetInitialRepository.dataInputPeriod
-                .subscribeOn(schedulerProvider.io())
-                .observeOn(schedulerProvider.ui())
-                .subscribe(
-                    { data: List<DateRangeInputPeriodModel?>? ->
-                        view.showPeriodSelector(
-                            periodType,
-                            data,
-                            openFuturePeriods,
-                        )
-                    },
-                    Timber::d,
-                ),
-        )
+        view.showPeriodSelector(periodType, openFuturePeriods)
     }
 
     override fun onCatOptionClick(catOptionUid: String) {
+        CoroutineTracker.increment()
         compositeDisposable.add(
             dataSetInitialRepository.catCombo(catOptionUid)
                 .subscribeOn(schedulerProvider.io())
@@ -94,6 +81,7 @@ class DataSetInitialPresenter(
                                     it.inOrgUnit(view.selectedOrgUnit?.uid())
                             },
                         )
+                        CoroutineTracker.decrement()
                     },
                     Timber::d,
                 ),

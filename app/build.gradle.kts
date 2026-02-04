@@ -1,4 +1,7 @@
+@file:Suppress("UnstableApiUsage")
 
+import com.android.build.api.variant.impl.VariantOutputImpl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -7,13 +10,15 @@ plugins {
     id("com.android.application")
     kotlin("android")
     kotlin("kapt")
-    id("kotlinx-serialization")
+    id("kotlin-parcelize")
+    alias(libs.plugins.kotlin.serialization)
     id("dagger.hilt.android.plugin")
+    alias(libs.plugins.kotlin.compose.compiler)
 }
 apply(from = "${project.rootDir}/jacoco/jacoco.gradle.kts")
 
 repositories {
-    maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
+    maven { url = uri("https://central.sonatype.com/repository/maven-snapshots") }
     mavenCentral()
 }
 
@@ -36,6 +41,25 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+            keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+            System.getenv("SIGNING_KEYSTORE_PATH")?.let { path ->
+                storeFile = file(path)
+            }
+            storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+        }
+        create("training") {
+            keyAlias = System.getenv("TRAINING_KEY_ALIAS")
+            keyPassword = System.getenv("TRAINING_KEY_PASSWORD")
+            System.getenv("TRAINING_STORE_FILE")?.let { path ->
+                storeFile = file(path)
+            }
+            storePassword = System.getenv("TRAINING_STORE_PASSWORD")
+        }
+    }
+
     testOptions {
         execution = "ANDROIDX_TEST_ORCHESTRATOR"
         unitTests {
@@ -52,8 +76,6 @@ android {
         }
     }
 
-    ndkVersion = libs.versions.ndk.get()
-    compileSdk = libs.versions.sdk.get().toInt()
     namespace = "org.dhis2"
     testNamespace = "org.dhis2.test"
 
@@ -63,21 +85,18 @@ android {
 
     defaultConfig {
         applicationId = "com.dhis2"
-        minSdk = libs.versions.minSdk.get().toInt()
+        compileSdk = libs.versions.sdk.get().toInt()
         targetSdk = libs.versions.sdk.get().toInt()
+        minSdk = libs.versions.minSdk.get().toInt()
         versionCode = libs.versions.vCode.get().toInt()
         versionName = libs.versions.vName.get()
         testInstrumentationRunner = "org.dhis2.Dhis2Runner"
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled = true
 
-        val defMapboxToken =
-            "pk.eyJ1IjoiZGhpczJhbmRyb2lkIiwiYSI6ImNrcWt1a2hzYzE5Ymsyb254MWtlbGt4Y28ifQ.JrP61q9BFTVEKO4SwRUwDw"
-        val mapboxAccessToken = System.getenv("MAPBOX_ACCESS_TOKEN") ?: defMapboxToken
         val bitriseSentryDSN = System.getenv("SENTRY_DSN") ?: ""
 
         buildConfigField("String", "SDK_VERSION", "\"" + libs.versions.dhis2sdk.get() + "\"")
-        buildConfigField("String", "MAPBOX_ACCESS_TOKEN", "\"" + mapboxAccessToken + "\"")
         buildConfigField("String", "MATOMO_URL", "\"https://usage.analytics.dhis2.org/matomo.php\"")
         buildConfigField("long", "VERSION_CODE", "${defaultConfig.versionCode}")
         buildConfigField("String", "VERSION_NAME", "\"${defaultConfig.versionName}\"")
@@ -118,21 +137,12 @@ android {
         }
     }
 
-    testOptions {
-        unitTests {
-            isReturnDefaultValues = true
-        }
-    }
-
     buildTypes {
 
         getByName("debug") {
             // custom application suffix which allows to
             // install debug and release builds at the same time
             applicationIdSuffix = ".debug"
-
-            // Using dataentry.jks to sign debug build type.
-            signingConfig = signingConfigs.getByName("debug")
 
             buildConfigField("int", "MATOMO_ID", "2")
             buildConfigField("String", "BUILD_DATE", "\"" + getBuildDate() + "\"")
@@ -144,6 +154,7 @@ android {
                 getDefaultProguardFile("proguard-android.txt"),
                 "proguard-rules.pro"
             )
+
             buildConfigField("int", "MATOMO_ID", "1")
             buildConfigField("String", "BUILD_DATE", "\"" + getBuildDate() + "\"")
             buildConfigField("String", "GIT_SHA", "\"" + getCommitHash() + "\"")
@@ -152,52 +163,41 @@ android {
     flavorDimensions += listOf("default")
 
     productFlavors {
-        create("dhis") {
-            applicationId = "com.dhis2"
-            dimension = "default"
-            versionCode = libs.versions.vCode.get().toInt()
-            versionName = libs.versions.vName.get()
+        create("dhis2") {
+            signingConfig = signingConfigs.getByName("release")
         }
-
-        create("dhisPlayServices") {
-            applicationId = "com.dhis2"
-            dimension = "default"
-            versionCode = libs.versions.vCode.get().toInt()
-            versionName = libs.versions.vName.get()
+        create("dhis2PlayServices") {
+            signingConfig = signingConfigs.getByName("release")
         }
-
-        create("dhisUITesting") {
-            applicationId = "com.dhis2"
-            dimension = "default"
-            versionCode = libs.versions.vCode.get().toInt()
-            versionName = libs.versions.vName.get()
+        create("dhis2Training") {
+            signingConfig = signingConfigs.getByName("training")
         }
         create("widp") {
             applicationId = "com.eyeseetea.widp"
             dimension = "default"
             versionCode = libs.versions.vCode.get().toInt()
-            versionName = "2.9.1-widp-fork-1"
+            versionName = libs.versions.vName.get()
         }
 
         create("psi") {
             applicationId = "org.dhis2.psi"
             dimension = "default"
             versionCode = libs.versions.vCode.get().toInt()
-            versionName = "2.9.1-psi-fork-2"
+            versionName = libs.versions.vName.get()
         }
 
         create("ocbauat") {
             applicationId = "ocba.com.dhis2.uat"
             dimension = "default"
             versionCode = libs.versions.vCode.get().toInt()
-            versionName = "2.9.1.1-ocbauat-fork-4"
+            versionName = libs.versions.vName.get()
         }
 
         create("ocba") {
             applicationId = "ocba.com.dhis2"
             dimension = "default"
             versionCode = libs.versions.vCode.get().toInt()
-            versionName = "2.9.1.1-ocba-fork-4"
+            versionName = libs.versions.vName.get()
         }
     }
 
@@ -232,28 +232,55 @@ android {
         }
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.kotlinCompilerExtensionVersion.get()
-    }
     lint {
         abortOnError = false
         checkReleaseBuilds = false
+    }
+
+    androidComponents {
+        onVariants { variant ->
+            val buildType = variant.buildType
+            val flavorName = variant.flavorName
+
+            // Apply suffix only for training flavor in release buildType
+            if (buildType == "release" && flavorName == "dhis2Training") {
+                variant.applicationId.set("${variant.applicationId.get()}.training")
+            }
+
+            variant.outputs.forEach { output ->
+                if (output is VariantOutputImpl) {
+                    val suffix = when {
+                        buildType == "release" && flavorName == "dhis2Training" -> "-training"
+                        buildType == "release" && flavorName == "dhis2PlayServices" -> "-googlePlay"
+                        else -> ""
+                    }
+
+                    output.outputFileName = "dhis2-v${libs.versions.vName.get()}$suffix.apk"
+                }
+            }
+
+        }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-    implementation(project(":viewpagerdotsindicator"))
     implementation(project(":dhis_android_analytics"))
     implementation(project(":form"))
     implementation(project(":commons"))
     implementation(project(":dhis2_android_maps"))
     implementation(project(":compose-table"))
     implementation(project(":stock-usecase"))
+    implementation(project(":dhis2-mobile-program-rules"))
+    implementation(project(":tracker"))
+    implementation(project(":aggregates"))
+    implementation(project(":commonskmm"))
 
     implementation(libs.security.conscrypt)
     implementation(libs.security.rootbeer)
@@ -268,14 +295,13 @@ dependencies {
     implementation(libs.androidx.work)
     implementation(libs.androidx.workrx)
     implementation(libs.androidx.exifinterface)
-    implementation(libs.google.flexbox)
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.material3)
     implementation(libs.google.guava)
     implementation(libs.github.pinlock)
     implementation(libs.github.fancyshowcase)
     implementation(libs.lottie)
     implementation(libs.dagger.hilt.android)
-    implementation(libs.rx.kotlin)
-    implementation(libs.network.gsonconverter)
     implementation(libs.network.okhttp)
     implementation(libs.dates.jodatime)
     implementation(libs.analytics.matomo)
@@ -283,26 +309,16 @@ dependencies {
     implementation(libs.analytics.customactivityoncrash)
     implementation(platform(libs.dispatcher.dispatchBOM))
     implementation(libs.dispatcher.dispatchCore)
-    implementation(libs.dhis2.mobile.designsystem)
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
 
     coreLibraryDesugaring(libs.desugar)
 
-    debugImplementation(libs.analytics.flipper)
-    debugImplementation(libs.analytics.soloader)
-    debugImplementation(libs.analytics.flipper.network)
-    debugImplementation(libs.analytics.flipper.leak)
-    debugImplementation(libs.analytics.leakcanary)
-    debugImplementation(libs.test.ui.test.manifest)
-
-    releaseImplementation(libs.analytics.leakcanary.noop)
-    releaseImplementation(libs.analytics.flipper.noop)
-
-    "dhisPlayServicesImplementation"(libs.google.auth)
-    "dhisPlayServicesImplementation"(libs.google.auth.apiphone)
+    "dhis2PlayServicesImplementation"(libs.google.auth)
+    "dhis2PlayServicesImplementation"(libs.google.auth.apiphone)
 
     kapt(libs.dagger.compiler)
     kapt(libs.dagger.hilt.android.compiler)
-    kapt(libs.dagger.hilt.compiler)
     kapt(libs.deprecated.autoValueParcel)
 
     testImplementation(libs.test.archCoreTesting)
@@ -313,18 +329,15 @@ dependencies {
     testImplementation(libs.test.truth)
     testImplementation(libs.test.kotlinCoroutines)
     testImplementation(libs.test.turbine)
-
+    testImplementation(libs.test.androidx.paging)
     androidTestUtil(libs.test.orchestrator)
 
     androidTestImplementation(libs.test.testRunner)
     androidTestImplementation(libs.test.espresso.intents)
     androidTestImplementation(libs.test.espresso.contrib)
-    androidTestImplementation(libs.test.espresso.accessibility)
-    androidTestImplementation(libs.test.espresso.web)
     androidTestImplementation(libs.test.uiautomator)
     androidTestImplementation(libs.test.testCore)
     androidTestImplementation(libs.test.rules)
-    androidTestImplementation(libs.test.coreKtx)
     androidTestImplementation(libs.test.junitKtx)
     androidTestImplementation(libs.test.mockitoCore)
     androidTestImplementation(libs.test.dexmaker.mockitoInline)

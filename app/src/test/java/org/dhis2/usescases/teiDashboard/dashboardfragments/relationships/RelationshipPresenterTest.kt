@@ -1,15 +1,14 @@
 package org.dhis2.usescases.teiDashboard.dashboardfragments.relationships
 
-import io.reactivex.Single
-import org.dhis2.commons.data.RelationshipViewModel
-import org.dhis2.commons.schedulers.SchedulerProvider
-import org.dhis2.data.schedulers.TrampolineSchedulerProvider
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import kotlinx.coroutines.test.StandardTestDispatcher
+import org.dhis2.commons.date.DateLabelProvider
+import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.maps.geometry.mapper.featurecollection.MapRelationshipsToFeatureCollection
-import org.dhis2.maps.mapper.MapRelationshipToRelationshipMapModel
 import org.dhis2.maps.usecases.MapStyleConfiguration
+import org.dhis2.tracker.relationships.data.RelationshipsRepository
+import org.dhis2.tracker.ui.AvatarProvider
 import org.dhis2.utils.analytics.AnalyticsHelper
-import org.dhis2.utils.analytics.CLICK
-import org.dhis2.utils.analytics.DELETE_RELATIONSHIP
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.common.ObjectWithUid
 import org.hisp.dhis.android.core.common.State
@@ -20,9 +19,9 @@ import org.hisp.dhis.android.core.relationship.RelationshipType
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityInstance
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityType
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mockito
-import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
@@ -31,19 +30,23 @@ import org.mockito.kotlin.whenever
 
 class RelationshipPresenterTest {
 
+    @JvmField
+    @Rule
+    val instantExecutorRule = InstantTaskExecutorRule()
+
     lateinit var presenter: RelationshipPresenter
     private val view: RelationshipView = mock()
     private val d2: D2 = Mockito.mock(D2::class.java, Mockito.RETURNS_DEEP_STUBS)
-    private val repository: RelationshipRepository = mock()
-    private val schedulerProvider: SchedulerProvider = TrampolineSchedulerProvider()
+    private val relationshipMapsRepository: RelationshipMapsRepository = mock()
     private val analyticsHelper: AnalyticsHelper = mock()
-    private val mapRelationshipToRelationshipMapModel = MapRelationshipToRelationshipMapModel()
     private val mapRelationshipsToFeatureCollection: MapRelationshipsToFeatureCollection = mock()
-    private val relationshipConstrain: RelationshipConstraint = mock()
-    private val relationshipType: RelationshipType = mock {
-        on { fromConstraint() } doReturn relationshipConstrain
-    }
     private val mapStyleConfiguration: MapStyleConfiguration = mock()
+    private val relationshipsRepository: RelationshipsRepository = mock()
+    private val avatarProvider: AvatarProvider = mock()
+    private val dateLabelProvider: DateLabelProvider = mock()
+    private val dispatcherProvider: DispatcherProvider = mock {
+        on { ui() } doReturn StandardTestDispatcher()
+    }
 
     @Before
     fun setup() {
@@ -60,87 +63,44 @@ class RelationshipPresenterTest {
         presenter = RelationshipPresenter(
             view,
             d2,
-            "programUid",
             "teiUid",
             null,
-            repository,
-            schedulerProvider,
+            relationshipMapsRepository,
             analyticsHelper,
-            mapRelationshipToRelationshipMapModel,
             mapRelationshipsToFeatureCollection,
             mapStyleConfiguration,
+            relationshipsRepository,
+            avatarProvider,
+            dateLabelProvider,
+            dispatcherProvider,
         )
-    }
-
-    @Test
-    fun `Should set relationships and init fab`() {
-        val relationship: RelationshipViewModel = mock()
-        val relationships = arrayListOf(relationship)
-        whenever(repository.relationships()) doReturn Single.just(relationships)
-        whenever(repository.relationshipTypes()) doReturn Single.just(
-            arrayListOf(),
-        )
-        whenever(repository.getTeiTypeDefaultRes(any())) doReturn -1
-
-        presenter.init()
-
-        verify(view).setRelationships(relationships)
-        verify(view).initFab(any())
-    }
-
-    @Test
-    fun `Should show empty relationships info`() {
-        val relationships = emptyList<RelationshipViewModel>()
-        whenever(repository.relationships()) doReturn Single.just(relationships)
-        whenever(repository.relationshipTypes()) doReturn Single.just(
-            arrayListOf(),
-        )
-        whenever(repository.getTeiTypeDefaultRes(any())) doReturn -1
-
-        presenter.init()
-
-        verify(view).setRelationships(relationships)
-        verify(view).initFab(any())
     }
 
     @Test
     fun `If user has permission should create a new relationship`() {
+        val relationshipTypeUid = "relationshipTypeUid"
+        val teiTypeToAdd = "teiTypeToAdd"
+
         whenever(
-            d2.relationshipModule().relationshipService().hasAccessPermission(relationshipType),
+            relationshipsRepository.hasWritePermission(relationshipTypeUid),
         ) doReturn true
 
-        presenter.goToAddRelationship("teiType", relationshipType)
+        presenter.goToAddRelationship(relationshipTypeUid, teiTypeToAdd)
 
-        verify(view, times(1)).goToAddRelationship("teiUid", "teiType")
+        verify(view, times(1)).goToAddRelationship("teiUid", teiTypeToAdd)
         verify(view, times(0)).showPermissionError()
     }
 
     @Test
     fun `If user don't have permission should show an error`() {
+        val relationshipTypeUid = "relationshipTypeUid"
         whenever(
-            d2.relationshipModule().relationshipService().hasAccessPermission(relationshipType),
+            relationshipsRepository.hasWritePermission(relationshipTypeUid),
         ) doReturn false
 
-        presenter.goToAddRelationship("teiType", relationshipType)
+        presenter.goToAddRelationship(relationshipTypeUid, "teiTypeToAdd")
 
         verify(view, times(1)).showPermissionError()
-    }
-
-    @Test
-    fun `Should delete relationship`() {
-        presenter.deleteRelationship(getMockedRelationship().uid()!!)
-        verify(analyticsHelper).setEvent(DELETE_RELATIONSHIP, CLICK, DELETE_RELATIONSHIP)
-    }
-
-    @Test
-    fun `Should create a relationship`() {
-        whenever(
-            d2.relationshipModule().relationshipTypes().withConstraints().uid("relationshipTypeUid")
-                .blockingGet(),
-        ) doReturn getMockedRelationshipType(true)
-        presenter.addRelationship("selectedTei", "relationshipTypeUid")
-
-        verify(view, times(0)).displayMessage(any())
     }
 
     @Test
@@ -233,7 +193,7 @@ class RelationshipPresenterTest {
     private fun getMockedTei(state: State): TrackedEntityInstance {
         return TrackedEntityInstance.builder()
             .uid("teiUid")
-            .state(state)
+            .aggregatedSyncState(state)
             .build()
     }
 

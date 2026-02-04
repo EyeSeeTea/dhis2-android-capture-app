@@ -1,14 +1,13 @@
 package org.dhis2.usescases.main.program
 
-import org.dhis2.R
-import org.dhis2.commons.resources.ResourceManager
 import org.dhis2.ui.MetadataIconData
 import org.hisp.dhis.android.core.common.State
 import org.hisp.dhis.android.core.dataset.DataSet
 import org.hisp.dhis.android.core.dataset.DataSetInstanceSummary
 import org.hisp.dhis.android.core.program.Program
+import java.util.Date
 
-class ProgramViewModelMapper(private val resourceManager: ResourceManager) {
+class ProgramViewModelMapper() {
     fun map(
         program: Program,
         recordCount: Int,
@@ -16,17 +15,12 @@ class ProgramViewModelMapper(private val resourceManager: ResourceManager) {
         state: State,
         hasOverdue: Boolean,
         filtersAreActive: Boolean,
-    ): ProgramViewModel {
-        return ProgramViewModel(
+        metadataIconData: MetadataIconData,
+    ): ProgramUiModel {
+        return ProgramUiModel(
             uid = program.uid(),
             title = program.displayName()!!,
-            metadataIconData = MetadataIconData(
-                programColor = resourceManager.getColorOrDefaultFrom(program.style()?.color()),
-                iconResource = resourceManager.getObjectStyleDrawableResource(
-                    program.style()?.icon(),
-                    R.drawable.ic_default_outline,
-                ),
-            ),
+            metadataIconData = metadataIconData,
             count = recordCount,
             type = if (program.trackedEntityType() != null) {
                 program.trackedEntityType()!!.uid()
@@ -42,7 +36,8 @@ class ProgramViewModelMapper(private val resourceManager: ResourceManager) {
             hasOverdueEvent = hasOverdue,
             filtersAreActive = filtersAreActive,
             downloadState = ProgramDownloadState.NONE,
-            stockConfig = null,
+            isStockUseCase = false,
+            lastUpdated = program.lastUpdated() ?: Date(),
         )
     }
 
@@ -52,17 +47,12 @@ class ProgramViewModelMapper(private val resourceManager: ResourceManager) {
         recordCount: Int,
         dataSetLabel: String,
         filtersAreActive: Boolean,
-    ): ProgramViewModel {
-        return ProgramViewModel(
+        metadataIconData: MetadataIconData,
+    ): ProgramUiModel {
+        return ProgramUiModel(
             uid = dataSetInstanceSummary.dataSetUid(),
             title = dataSetInstanceSummary.dataSetDisplayName(),
-            metadataIconData = MetadataIconData(
-                programColor = resourceManager.getColorOrDefaultFrom(dataSet.style()?.color()),
-                iconResource = resourceManager.getObjectStyleDrawableResource(
-                    dataSet.style()?.icon(),
-                    R.drawable.ic_default_outline,
-                ),
-            ),
+            metadataIconData = metadataIconData,
             count = recordCount,
             type = null,
             typeName = dataSetLabel,
@@ -74,15 +64,16 @@ class ProgramViewModelMapper(private val resourceManager: ResourceManager) {
             hasOverdueEvent = false,
             filtersAreActive = filtersAreActive,
             downloadState = ProgramDownloadState.NONE,
-            stockConfig = null,
+            isStockUseCase = false,
+            lastUpdated = dataSet.lastUpdated() ?: Date(),
         )
     }
 
     fun map(
-        programViewModel: ProgramViewModel,
+        programUiModel: ProgramUiModel,
         downloadState: ProgramDownloadState,
-    ): ProgramViewModel {
-        return programViewModel.copy(
+    ): ProgramUiModel {
+        return programUiModel.copy(
             downloadState = downloadState,
         )
     }

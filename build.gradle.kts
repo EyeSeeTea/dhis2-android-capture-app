@@ -1,8 +1,10 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     repositories {
+        maven { url = uri("https://central.sonatype.com/repository/maven-snapshots") }
         google()
-        maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
+        mavenLocal()
+        mavenCentral()
     }
     dependencies {
         classpath(libs.gradlePlugin)
@@ -17,6 +19,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint").version("11.5.1")
     id("org.sonarqube").version("3.5.0.2730")
     id("com.github.ben-manes.versions").version("0.46.0")
+    alias(libs.plugins.dokka)
 }
 
 sonarqube {
@@ -43,7 +46,7 @@ sonarqube {
 
 val isNonStable: (String) -> Boolean = { version ->
     val stableKeyword =
-        listOf("RELEASE", "FINAL", "GA").any { it -> version.toUpperCase().contains(it) }
+        listOf("RELEASE", "FINAL", "GA").any { it -> version.uppercase().contains(it) }
     val regex = """^[0-9,.v-]+(-r)?$""".toRegex()
     !stableKeyword && !(version matches regex)
 }
@@ -51,6 +54,7 @@ val isNonStable: (String) -> Boolean = { version ->
 allprojects {
     configurations.all {
         resolutionStrategy {
+            cacheDynamicVersionsFor(0, TimeUnit.SECONDS)
             eachDependency {
                 if (requested.group == "org.jacoco")
                     useVersion("0.8.10")
@@ -59,28 +63,14 @@ allprojects {
     }
 
     repositories {
+        maven { url = uri("https://central.sonatype.com/repository/maven-snapshots") }
         google()
         mavenCentral()
         maven {
             url = uri("https://maven.google.com")
         }
         maven { url = uri("https://jitpack.io") }
-        maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
-        maven {
-            url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
-
-            authentication {
-                create<BasicAuthentication>("basic")
-            }
-
-            val mapboxDownloadsToken = System.getenv("MAPBOX_DOWNLOADS_TOKEN")
-                ?: project.properties["MAPBOX_DOWNLOADS_TOKEN"] ?: ""
-            credentials {
-                // This should always be `mapbox` (not your username).
-                username = "mapbox"
-                password = mapboxDownloadsToken as String
-            }
-        }
+        mavenLocal()
     }
 
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
@@ -106,13 +96,14 @@ allprojects {
         filter {
             excludes.add("**/*.kts")
             exclude { element -> element.file.path.contains("androidTest") }
+            exclude { element -> element.file.path.contains("generated") }
             exclude { element -> element.file.path.contains("dhis2-android-sdk") }
         }
     }
 }
 
 tasks.register("clean", Delete::class) {
-    delete(rootProject.buildDir)
+    delete(rootProject.layout.buildDirectory)
 }
 
 

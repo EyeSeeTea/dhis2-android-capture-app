@@ -8,8 +8,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.FileDownload
@@ -27,10 +29,13 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.FileProvider
 import androidx.fragment.app.viewModels
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import org.dhis2.commons.data.FileHandler
+import org.dhis2.commons.data.FormFileProvider
+import org.dhis2.commons.dialogs.bottomsheet.bottomSheetInsets
+import org.dhis2.commons.dialogs.bottomsheet.bottomSheetLowerPadding
 import org.dhis2.commons.resources.ColorType
 import org.dhis2.commons.resources.ColorUtils
 import org.dhis2.form.R
-import org.dhis2.form.data.FormFileProvider
 import org.dhis2.form.model.UiRenderType
 import org.hisp.dhis.android.core.arch.helpers.FileResourceDirectoryHelper
 import org.hisp.dhis.lib.expression.math.GS1Elements
@@ -39,6 +44,8 @@ import org.hisp.dhis.mobile.ui.designsystem.component.BottomSheetShell
 import org.hisp.dhis.mobile.ui.designsystem.component.ButtonCarousel
 import org.hisp.dhis.mobile.ui.designsystem.component.CarouselButtonData
 import org.hisp.dhis.mobile.ui.designsystem.component.QrCodeBlock
+import org.hisp.dhis.mobile.ui.designsystem.component.state.BottomSheetShellDefaults
+import org.hisp.dhis.mobile.ui.designsystem.component.state.BottomSheetShellUIState
 import org.hisp.dhis.mobile.ui.designsystem.theme.SurfaceColor
 import timber.log.Timber
 import java.io.File
@@ -67,6 +74,8 @@ QRDetailBottomDialog(
     }
 
     private var showBottomSheet: Boolean = true
+    private val fileHandler = FileHandler()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NORMAL, R.style.CustomBottomSheetDialogTheme)
@@ -114,8 +123,15 @@ QRDetailBottomDialog(
         if (showDialog) {
             val buttonList = getComposeButtonList()
             BottomSheetShell(
+                uiState = BottomSheetShellUIState(
+                    title = label,
+                    showTopSectionDivider = true,
+                    showBottomSectionDivider = true,
+                    bottomPadding = bottomSheetLowerPadding(),
+                ),
+                windowInsets = { bottomSheetInsets() },
+
                 modifier = modifier,
-                title = label,
                 icon = {
                     Icon(
                         imageVector = Icons.Outlined.Info,
@@ -127,10 +143,12 @@ QRDetailBottomDialog(
                     Row(horizontalArrangement = Arrangement.Center) {
                         when (renderingType) {
                             UiRenderType.QR_CODE, UiRenderType.GS1_DATAMATRIX -> {
-                                val isGS1Matrix = value.startsWith(GS1Elements.GS1_d2_IDENTIFIER.element)
+                                val isGS1Matrix =
+                                    value.startsWith(GS1Elements.GS1_d2_IDENTIFIER.element)
                                 val content = formattedContent(value)
                                 QrCodeBlock(data = content, isDataMatrix = isGS1Matrix)
                             }
+
                             else -> {
                                 BarcodeBlock(data = value)
                             }
@@ -138,7 +156,7 @@ QRDetailBottomDialog(
                     }
                 },
                 buttonBlock = {
-                    ButtonCarousel(buttonList)
+                    ButtonCarousel(modifier = Modifier.padding(BottomSheetShellDefaults.buttonBlockPaddings()), carouselButtonList = buttonList)
                 },
                 onDismiss = {
                     dismiss()
@@ -185,7 +203,12 @@ QRDetailBottomDialog(
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             setDataAndType(uri, context?.contentResolver?.getType(uri))
                             putExtra(Intent.EXTRA_STREAM, uri)
-                            startActivity(Intent.createChooser(this, context?.getString(R.string.share)))
+                            startActivity(
+                                Intent.createChooser(
+                                    this,
+                                    context?.getString(R.string.share),
+                                ),
+                            )
                         }
                     }
                 },
@@ -202,16 +225,19 @@ QRDetailBottomDialog(
                 enabled = true,
                 text = resources.getString(R.string.download),
                 onClick = {
-                    qrContentUri?.let { uri ->
-                        startActivity(
-                            Intent().apply {
-                                action = Intent.ACTION_VIEW
-                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                setDataAndType(uri, context?.contentResolver?.getType(uri))
-                                putExtra(Intent.EXTRA_STREAM, uri)
-                            },
-                        )
-                        // implement download action here
+                    viewModel.qrBitmap.value?.onSuccess { bitmap ->
+                        fileHandler.saveBitmapAndOpen(
+                            bitmap,
+                            "$label.png",
+                        ) { file ->
+                            file.observe(viewLifecycleOwner) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    getString(R.string.file_downloaded),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        }
                     }
                 },
             ),

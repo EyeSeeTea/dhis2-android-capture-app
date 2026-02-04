@@ -2,22 +2,22 @@ package org.dhis2.usescases.datasets
 
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.contrib.RecyclerViewActions
-import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.isEnabled
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import org.dhis2.R
 import org.dhis2.common.BaseRobot
-import org.dhis2.utils.customviews.DateViewHolder
+import org.hamcrest.CoreMatchers.not
 
-
-fun dataSetInitialRobot(dataSetInitialRobot: DataSetInitialRobot.() -> Unit) {
+internal fun dataSetInitialRobot(dataSetInitialRobot: DataSetInitialRobot.() -> Unit) {
     DataSetInitialRobot().apply {
         dataSetInitialRobot()
     }
 }
 
-class DataSetInitialRobot : BaseRobot() {
+internal class DataSetInitialRobot : BaseRobot() {
 
     fun clickOnInputOrgUnit() {
         onView(withId(R.id.dataSetOrgUnitInputLayout)).perform(click())
@@ -31,8 +31,19 @@ class DataSetInitialRobot : BaseRobot() {
         onView(withId(R.id.actionButton)).perform(click())
     }
 
-    fun selectPeriod(period: String) {
-        onView(withId(R.id.recycler_date))
-            .perform(RecyclerViewActions.actionOnItem<DateViewHolder>(hasDescendant(withText(period)), click()))
+    fun clickOnInputCatCombo() {
+        onView(withId(R.id.input_layout)).perform(click())
+    }
+
+    fun selectCatCombo(catCombo: String) {
+        onView(withText(catCombo)).perform(click())
+    }
+
+    fun checkActionInputIsNotDisplayed() {
+        onView(withId(R.id.actionButton)).check(matches(not(isDisplayed())))
+    }
+
+    fun checkActionInputIsDisplayed() {
+        onView(withId(R.id.actionButton)).check(matches(isDisplayed()))
     }
 }

@@ -27,10 +27,10 @@ class SyncMetadataWorkerModule {
         d2: D2,
         preference: BasicPreferenceProvider
     ): NotificationRepository {
-        val notificationsApi = d2.retrofit().create(
-            NotificationsApi::class.java
-        )
-        val userGroupsApi = d2.retrofit().create(UserGroupsApi::class.java)
+        val notificationsApi = NotificationsApi(d2.httpServiceClient())
+
+        val userGroupsApi = UserGroupsApi(d2.httpServiceClient())
+
         return NotificationD2Repository(d2, preference, notificationsApi, userGroupsApi)
     }
 

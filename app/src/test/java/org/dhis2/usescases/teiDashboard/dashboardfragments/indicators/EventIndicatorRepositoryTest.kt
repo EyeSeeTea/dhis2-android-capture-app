@@ -1,19 +1,15 @@
 package org.dhis2.usescases.teiDashboard.dashboardfragments.indicators
 
 import dhis2.org.analytics.charts.ui.SectionTitle
-import io.reactivex.Flowable
 import io.reactivex.Single
 import org.dhis2.commons.resources.ResourceManager
-import org.dhis2.data.forms.dataentry.RuleEngineRepository
-import org.dhis2.utils.Result
+import org.dhis2.mobileProgramRules.RuleEngineHelper
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.enrollment.Enrollment
 import org.hisp.dhis.android.core.program.ProgramIndicator
-import org.hisp.dhis.android.core.program.ProgramRule
 import org.hisp.dhis.android.core.program.ProgramRuleAction
 import org.hisp.dhis.android.core.program.ProgramRuleActionType
-import org.hisp.dhis.rules.RuleEngine
-import org.hisp.dhis.rules.models.RuleActionDisplayKeyValuePair
+import org.hisp.dhis.rules.models.RuleAction
 import org.hisp.dhis.rules.models.RuleEffect
 import org.junit.Before
 import org.junit.Test
@@ -25,8 +21,7 @@ import org.mockito.kotlin.whenever
 class EventIndicatorRepositoryTest {
 
     private val d2: D2 = Mockito.mock(D2::class.java, Mockito.RETURNS_DEEP_STUBS)
-    private val ruleEngine: RuleEngine = mock()
-    private val ruleEngineRepository: RuleEngineRepository = mock()
+    private val ruleEngineHelper: RuleEngineHelper = mock()
     private val resourceManager: ResourceManager = mock()
     private lateinit var repository: IndicatorRepository
 
@@ -62,7 +57,7 @@ class EventIndicatorRepositoryTest {
         )doReturn "Info"
         repository = EventIndicatorRepository(
             d2,
-            ruleEngineRepository,
+            ruleEngineHelper,
             "programUid",
             "eventUid",
             resourceManager,
@@ -117,24 +112,24 @@ class EventIndicatorRepositoryTest {
         whenever(
             d2.programModule().programRules()
                 .byProgramUid().eq("programUid")
-                .get(),
-        ) doReturn Single.just(mockedRules())
+                .getUids(),
+        ) doReturn Single.just(mockedRuleUids())
         whenever(
             d2.programModule().programRuleActions()
                 .byProgramRuleUid(),
         ) doReturn mock()
         whenever(
             d2.programModule().programRuleActions()
-                .byProgramRuleUid().`in`(mockedRules().map { it.uid() }),
+                .byProgramRuleUid().`in`(mockedRuleUids()),
         ) doReturn mock()
         whenever(
             d2.programModule().programRuleActions()
-                .byProgramRuleUid().`in`(mockedRules().map { it.uid() })
+                .byProgramRuleUid().`in`(mockedRuleUids())
                 .byProgramRuleActionType(),
         ) doReturn mock()
         whenever(
             d2.programModule().programRuleActions()
-                .byProgramRuleUid().`in`(mockedRules().map { it.uid() })
+                .byProgramRuleUid().`in`(mockedRuleUids())
                 .byProgramRuleActionType().`in`(
                     ProgramRuleActionType.DISPLAYKEYVALUEPAIR,
                     ProgramRuleActionType.DISPLAYTEXT,
@@ -142,7 +137,7 @@ class EventIndicatorRepositoryTest {
         ) doReturn mock()
         whenever(
             d2.programModule().programRuleActions()
-                .byProgramRuleUid().`in`(mockedRules().map { it.uid() })
+                .byProgramRuleUid().`in`(mockedRuleUids())
                 .byProgramRuleActionType().`in`(
                     ProgramRuleActionType.DISPLAYKEYVALUEPAIR,
                     ProgramRuleActionType.DISPLAYTEXT,
@@ -150,11 +145,8 @@ class EventIndicatorRepositoryTest {
                 .get(),
         ) doReturn Single.just(mockedActions())
         whenever(
-            ruleEngineRepository.updateRuleEngine(),
-        ) doReturn Flowable.just(ruleEngine)
-        whenever(
-            ruleEngineRepository.reCalculate(),
-        ) doReturn Flowable.just(Result.success(mockedEffects()))
+            ruleEngineHelper.evaluate(),
+        ) doReturn mockedEffects()
 
         val testObserver = repository.fetchData().test()
         testObserver.assertNoErrors()
@@ -178,10 +170,8 @@ class EventIndicatorRepositoryTest {
         )
     }
 
-    private fun mockedRules(): List<ProgramRule> {
-        return listOf(
-            ProgramRule.builder().uid("rule_1").build(),
-        )
+    private fun mockedRuleUids(): List<String> {
+        return listOf("rule_1")
     }
 
     private fun mockedActions(): List<ProgramRuleAction> {
@@ -192,15 +182,27 @@ class EventIndicatorRepositoryTest {
 
     private fun mockedEffects(): List<RuleEffect> {
         return listOf(
-            RuleEffect.create(
+            RuleEffect(
                 "ruleUid1",
-                RuleActionDisplayKeyValuePair.createForFeedback("content", "data"),
-                "data",
+                RuleAction(
+                    data = "data",
+                    type = ProgramRuleActionType.DISPLAYKEYVALUEPAIR.name,
+                    values = mutableMapOf(
+                        Pair("content", "content"),
+                        Pair("location", "feedback"),
+                    ),
+                ),
             ),
-            RuleEffect.create(
+            RuleEffect(
                 "ruleUid2",
-                RuleActionDisplayKeyValuePair.createForIndicators("content", "data"),
-                "data",
+                RuleAction(
+                    data = "data",
+                    type = ProgramRuleActionType.DISPLAYKEYVALUEPAIR.name,
+                    values = mutableMapOf(
+                        Pair("content", "content"),
+                        Pair("location", "indicators"),
+                    ),
+                ),
             ),
         )
     }

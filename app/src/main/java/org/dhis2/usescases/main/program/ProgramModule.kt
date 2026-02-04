@@ -3,13 +3,17 @@ package org.dhis2.usescases.main.program
 import dagger.Module
 import dagger.Provides
 import org.dhis2.commons.di.dagger.PerFragment
+import org.dhis2.commons.di.dagger.PerService
+import org.dhis2.commons.featureconfig.data.FeatureConfigRepository
 import org.dhis2.commons.filters.FilterManager
 import org.dhis2.commons.filters.data.FilterPresenter
 import org.dhis2.commons.matomo.MatomoAnalyticsController
 import org.dhis2.commons.prefs.BasicPreferenceProvider
 import org.dhis2.commons.resources.ColorUtils
+import org.dhis2.commons.resources.MetadataIconProvider
 import org.dhis2.commons.resources.ResourceManager
 import org.dhis2.commons.schedulers.SchedulerProvider
+import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.data.dhislogic.DhisProgramUtils
 import org.dhis2.data.dhislogic.DhisTrackedEntityInstanceUtils
 import org.dhis2.data.notifications.NotificationD2Repository
@@ -33,20 +37,24 @@ class ProgramModule(
 
     @Provides
     @PerFragment
-    internal fun programPresenter(
+    internal fun programViewModelFactory(
         programRepository: ProgramRepository,
-        schedulerProvider: SchedulerProvider,
-        filterManager: FilterManager,
+        dispatcherProvider: DispatcherProvider,
+        featureConfigRepository: FeatureConfigRepository,
         matomoAnalyticsController: MatomoAnalyticsController,
+        filterManager: FilterManager,
         syncStatusController: SyncStatusController,
-    ): ProgramPresenter {
-        return ProgramPresenter(
+        schedulerProvider: SchedulerProvider,
+    ): ProgramViewModelFactory {
+        return ProgramViewModelFactory(
             view,
             programRepository,
-            schedulerProvider,
-            filterManager,
+            featureConfigRepository,
+            dispatcherProvider,
             matomoAnalyticsController,
+            filterManager,
             syncStatusController,
+            schedulerProvider,
         )
     }
 
@@ -59,6 +67,7 @@ class ProgramModule(
         dhisTrackedEntityInstanceUtils: DhisTrackedEntityInstanceUtils,
         schedulerProvider: SchedulerProvider,
         colorUtils: ColorUtils,
+        metadataIconProvider: MetadataIconProvider,
     ): ProgramRepository {
         return ProgramRepositoryImpl(
             d2,
@@ -66,14 +75,9 @@ class ProgramModule(
             dhisProgramUtils,
             dhisTrackedEntityInstanceUtils,
             ResourceManager(view.context, colorUtils),
+            metadataIconProvider,
             schedulerProvider,
         )
-    }
-
-    @Provides
-    @PerFragment
-    fun provideAnimations(): ProgramAnimation {
-        return ProgramAnimation()
     }
 
     @Provides
@@ -108,24 +112,15 @@ class ProgramModule(
 
     @Provides
     @PerFragment
-    internal fun notificationsRepository(
+    fun notificationsRepository(
         d2: D2,
-        preferences: BasicPreferenceProvider
+        preference: BasicPreferenceProvider
     ): NotificationRepository {
-        val biometricsConfigApi = d2.retrofit().create(
-            NotificationsApi::class.java
-        )
+        val notificationsApi = NotificationsApi(d2.httpServiceClient())
 
-        val userGroupsApi = d2.retrofit().create(
-            UserGroupsApi::class.java
-        )
+        val userGroupsApi = UserGroupsApi(d2.httpServiceClient())
 
-        return NotificationD2Repository(
-            d2,
-            preferences,
-            biometricsConfigApi,
-            userGroupsApi
-        )
+        return NotificationD2Repository(d2, preference, notificationsApi, userGroupsApi)
     }
 
     @Provides

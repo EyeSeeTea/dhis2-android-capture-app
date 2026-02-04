@@ -2,9 +2,12 @@ package org.dhis2.commons.prefs
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.dhis2.commons.date.DateUtils
+import org.hisp.dhis.android.core.arch.storage.internal.AndroidSecureStore
+import org.hisp.dhis.android.core.arch.storage.internal.ChunkedSecureStore
 import java.util.Date
 
 const val LAST_META_SYNC = "last_meta_sync"
@@ -15,8 +18,27 @@ open class PreferenceProviderImpl(context: Context) : PreferenceProvider {
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(SHARE_PREFS, Context.MODE_PRIVATE)
 
+    private val asc = AndroidSecureStore(context)
+    private val css = ChunkedSecureStore(asc)
+
+    init {
+        sharedPreferences.edit { remove(SECURE_PASS) }
+    }
+
     override fun sharedPreferences(): SharedPreferences {
         return sharedPreferences
+    }
+
+    override fun getSecureValue(key: String, default: String?): String? {
+        return css.getData(key) ?: default
+    }
+
+    override fun secureValue(key: String, value: Any?) {
+        if (value is String) {
+            css.setData(key, value)
+        } else {
+            setValue(key, value)
+        }
     }
 
     override fun setValue(key: String, value: Any?) {
@@ -25,18 +47,23 @@ open class PreferenceProviderImpl(context: Context) : PreferenceProvider {
                 is String -> {
                     sharedPreferences.edit().putString(key, it).apply()
                 }
+
                 is Boolean -> {
                     sharedPreferences.edit().putBoolean(key, it).apply()
                 }
+
                 is Int -> {
                     sharedPreferences.edit().putInt(key, it).apply()
                 }
+
                 is Long -> {
                     sharedPreferences.edit().putLong(key, it).apply()
                 }
+
                 is Float -> {
                     sharedPreferences.edit().putFloat(key, it).apply()
                 }
+
                 is Set<*> -> {
                     sharedPreferences.edit().putStringSet(key, it as Set<String>).apply()
                 }
@@ -81,14 +108,15 @@ open class PreferenceProviderImpl(context: Context) : PreferenceProvider {
 
     override fun contains(vararg keys: String): Boolean {
         return keys.all {
-            sharedPreferences.contains(it)
+            sharedPreferences.contains(it) or css.getAllKeys().any { it.startsWith(it) } == true
         }
     }
 
-    override fun saveUserCredentials(serverUrl: String, userName: String, pass: String) {
+    override fun saveUserCredentials(serverUrl: String, userName: String, pass: String?) {
         setValue(SECURE_CREDENTIALS, true)
         setValue(SECURE_SERVER_URL, serverUrl)
         setValue(SECURE_USER_NAME, userName)
+        pass?.let { secureValue(SECURE_PASS, it) }
     }
 
     override fun updateServerURL(serverUrl: String) {
@@ -99,13 +127,9 @@ open class PreferenceProviderImpl(context: Context) : PreferenceProvider {
         return getBoolean(SECURE_CREDENTIALS, false)
     }
 
-    override fun areSameCredentials(serverUrl: String, userName: String, pass: String): Boolean {
+    override fun areSameCredentials(serverUrl: String?, userName: String?): Boolean {
         return getString(SECURE_SERVER_URL, "") == serverUrl &&
             getString(SECURE_USER_NAME, "") == userName
-    }
-
-    override fun saveJiraCredentials(jiraAuth: String): String {
-        return String.format("Basic %s", jiraAuth)
     }
 
     override fun clear() {

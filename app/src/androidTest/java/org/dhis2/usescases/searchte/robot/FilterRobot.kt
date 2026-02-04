@@ -1,23 +1,37 @@
 package org.dhis2.usescases.searchte.robot
 
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.filterToOne
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isEditable
+import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onChildren
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.printToLog
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.TypeTextAction
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.PickerActions
 import androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem
-import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withChild
-import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import org.dhis2.R
 import org.dhis2.common.BaseRobot
 import org.dhis2.common.matchers.RecyclerviewMatchers.Companion.allElementsWithHolderTypeHave
-import org.dhis2.common.matchers.RecyclerviewMatchers.Companion.dateIsInRange
 import org.dhis2.common.matchers.RecyclerviewMatchers.Companion.hasItem
 import org.dhis2.common.viewactions.clickChildViewWithId
 import org.dhis2.common.viewactions.scrollToBottomRecyclerView
@@ -25,36 +39,38 @@ import org.dhis2.commons.filters.FilterHolder
 import org.dhis2.usescases.searchTrackEntity.adapters.SearchTEViewHolder
 import org.hamcrest.CoreMatchers.allOf
 
-fun filterRobot(filterRobot: FilterRobot.() -> Unit) {
-    FilterRobot().apply {
+fun filterRobot(
+    composeTestRule: ComposeTestRule,
+    filterRobot: FilterRobot.() -> Unit
+) {
+    FilterRobot(composeTestRule).apply {
         filterRobot()
     }
 }
 
-class FilterRobot : BaseRobot() {
+class FilterRobot(val composeTestRule: ComposeTestRule) : BaseRobot() {
 
-    fun clickOnEnrollmentDateFilter() {
-        val tag = "DATE OF ENROLLMENT"
-        onView(allOf(withId(R.id.filterLayout), hasDescendant(withText(tag)))).perform(click())
+    fun resetFilters() {
+        onView(withId(R.id.clear_filter)).perform(click())
     }
 
-    fun clickOnTodayEnrollmentDate(){
-        onView(allOf(withId(R.id.today),
-            withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE))).perform(click())
-    }
-
-    fun clickOnFilter() {
-        onView(withId(R.id.search_filter_general)).perform(click())
+    fun openFilters() {
+        onView(withId(R.id.filter)).perform(click())
     }
 
     fun clickOnFilterBy(filter: String) {
         onView(withId(R.id.filterRecyclerLayout))
-            .perform(actionOnItem<FilterHolder>(hasDescendant(withText(filter)), click())
-        )
+            .perform(
+                actionOnItem<FilterHolder>(hasDescendant(withText(filter)), click())
+            )
     }
 
     fun clickOnFilterActiveOption() {
         onView(withId(R.id.stateActive)).perform(click())
+    }
+
+    fun clickOnFilterCompletedOption() {
+        onView(withId(R.id.stateEnrollmentCompleted)).perform(click())
     }
 
     fun clickOnFilterOverdueOption() {
@@ -65,16 +81,22 @@ class FilterRobot : BaseRobot() {
 
     fun closeFilterRowAtField(filter: String) {
         onView(withId(R.id.filterRecyclerLayout))
-            .perform(actionOnItem<FilterHolder>(hasDescendant(withText(filter)), clickChildViewWithId(R.id.filterArrow)))
-    }
-
-    fun closeSearchForm() {
-        onView(withId(R.id.close_filter)).perform(click())
+            .perform(
+                actionOnItem<FilterHolder>(
+                    hasDescendant(withText(filter)),
+                    clickChildViewWithId(R.id.filterArrow)
+                )
+            )
     }
 
     fun clickOnSortByField(fieldFilter: String) {
         onView(withId(R.id.filterRecyclerLayout))
-            .perform(actionOnItem<FilterHolder>(hasDescendant(withText(fieldFilter)), clickChildViewWithId(R.id.sortingIcon)))
+            .perform(
+                actionOnItem<FilterHolder>(
+                    hasDescendant(withText(fieldFilter)),
+                    clickChildViewWithId(R.id.sortingIcon)
+                )
+            )
     }
 
     fun typeOrgUnitField(orgUnit: String) {
@@ -93,42 +115,80 @@ class FilterRobot : BaseRobot() {
     }
 
     fun chooseDate(year: Int, monthOfYear: Int, dayOfMonth: Int) {
-        onView(withId(R.id.datePicker)).perform(PickerActions.setDate(year, monthOfYear, dayOfMonth))
+        onView(withId(R.id.datePicker)).perform(
+            PickerActions.setDate(
+                year,
+                monthOfYear,
+                dayOfMonth
+            )
+        )
         onView(withId(R.id.acceptBtn)).perform(click())
     }
 
-    fun checkTEIsAreOpen() {
-        onView(withId(R.id.scrollView))
-            .check(matches(allElementsWithHolderTypeHave(SearchTEViewHolder::class.java,hasDescendant(withText(R.string.event_open)))))
-    }
-
-    fun checkEventsAreOverdue() {
-        onView(withId(R.id.scrollView))
-            .check(matches(allOf(allElementsWithHolderTypeHave(SearchTEViewHolder::class.java,hasDescendant(withId(R.id.overdueIcon))), isDisplayed())))
+    fun chooseDate(date: String) {
+        composeTestRule.onNodeWithTag("DATE_PICKER").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(
+            label = "text",
+            substring = true,
+            useUnmergedTree = true,
+        ).performClick()
+        composeTestRule.onNodeWithContentDescription("Date", substring = true).performTextReplacement(date)
+        composeTestRule.onNodeWithText("OK", true).performClick()
     }
 
     fun checkTEIWithOrgUnit(orgUnit: String) {
         onView(withId(R.id.scrollView))
-            .check(matches(allElementsWithHolderTypeHave(SearchTEViewHolder::class.java,hasDescendant(withText(orgUnit)))))
+            .check(
+                matches(
+                    allElementsWithHolderTypeHave(
+                        SearchTEViewHolder::class.java,
+                        hasDescendant(withText(orgUnit))
+                    )
+                )
+            )
     }
 
     fun checkTEINotSync() {
-        onView(withId(R.id.scrollView))
-            .check(matches(allElementsWithHolderTypeHave(SearchTEViewHolder::class.java,hasDescendant(withId(R.id.syncState)))))
-    }
-
-    fun checkDateIsInRange(startDate: String, endDate: String) {
-        onView(withId(R.id.scrollView))
-            .check(matches(dateIsInRange(R.id.sorting_field_value, startDate, endDate)))
+        composeTestRule.onNodeWithText("Sync", useUnmergedTree = true).assertIsDisplayed()
     }
 
     fun checkFilterCounter(filterCount: String) {
-        onView(allOf(withId(R.id.filterCounter), isDisplayed(), withParent(withId(R.id.mainToolbar))))
+        waitForView(
+            allOf(
+                withId(R.id.filterCounter),
+                isDisplayed(),
+                withParent(withId(R.id.mainToolbar))
+            )
+        )
             .check(matches(withChild(withText(filterCount))))
     }
 
     fun checkCountAtFilter(filter: String, count: String) {
         onView(withId(R.id.filterRecyclerLayout))
-            .check(matches(hasItem(allOf(hasDescendant(withText(filter)), hasDescendant(withText(count))))))
+            .check(
+                matches(
+                    hasItem(
+                        allOf(
+                            hasDescendant(withText(filter)),
+                            hasDescendant(withText(count))
+                        )
+                    )
+                )
+            )
+    }
+
+    fun checkTeiAreCompleted() {
+        val nodes = composeTestRule.onAllNodesWithText("Enrollment completed", true)
+        assert(nodes.fetchSemanticsNodes().size >= 3) {
+            "Expected at least 3 nodes, but found ${nodes.fetchSemanticsNodes().size}"
+        }
+    }
+
+    fun clickOnThisMonthPeriodFilter() {
+        onView(withId(R.id.this_month)).perform(click())
+    }
+
+    fun clickOnAnytimePeriodFilter() {
+        onView(withId(R.id.anytime)).perform(click())
     }
 }

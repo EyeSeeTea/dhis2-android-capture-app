@@ -1,11 +1,18 @@
 package org.dhis2.usescases.teidashboard
 
+import android.annotation.SuppressLint
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.rule.ActivityTestRule
 import dhis2.org.analytics.charts.data.ChartType
+import org.dhis2.OrientationHelper
 import org.dhis2.R
+import org.dhis2.common.mockwebserver.MockWebServerRobot.Companion.API_TB_IDENTIFIER_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH
+import org.dhis2.common.mockwebserver.MockWebServerRobot.Companion.API_TB_IDENTIFIER_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE
+import org.dhis2.common.mockwebserver.MockWebServerRobot.Companion.API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH
+import org.dhis2.common.mockwebserver.MockWebServerRobot.Companion.API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE
+import org.dhis2.lazyActivityScenarioRule
 import org.dhis2.usescases.BaseTest
+import org.dhis2.usescases.orgunitselector.orgUnitSelectorRobot
 import org.dhis2.usescases.searchTrackEntity.SearchTEActivity
 import org.dhis2.usescases.teiDashboard.TeiDashboardMobileActivity
 import org.dhis2.usescases.teidashboard.entity.EnrollmentUIModel
@@ -16,49 +23,79 @@ import org.dhis2.usescases.teidashboard.robot.eventRobot
 import org.dhis2.usescases.teidashboard.robot.indicatorsRobot
 import org.dhis2.usescases.teidashboard.robot.noteRobot
 import org.dhis2.usescases.teidashboard.robot.teiDashboardRobot
+import org.hisp.dhis.android.core.mockwebserver.ResponseController
+import org.junit.Assume
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @RunWith(AndroidJUnit4::class)
 class TeiDashboardTest : BaseTest() {
 
     @get:Rule
-    val rule = ActivityTestRule(TeiDashboardMobileActivity::class.java, false, false)
+    val rule = lazyActivityScenarioRule<TeiDashboardMobileActivity>(launchActivity = false)
 
     @get:Rule
-    val ruleSearch = ActivityTestRule(SearchTEActivity::class.java, false, false)
+    val ruleSearch = lazyActivityScenarioRule<SearchTEActivity>(launchActivity = false)
 
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    override fun setUp() {
+        super.setUp()
+        setupMockServer()
+    }
+
     @Test
     fun shouldSuccessfullyCreateANoteWhenClickCreateNote() {
+        enableIntents()
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+
         setupCredentials()
 
         prepareTeiCompletedProgrammeAndLaunchActivity(rule)
 
-        teiDashboardRobot {
+        teiDashboardRobot(composeTestRule) {
             goToNotes()
         }
 
         noteRobot {
             clickOnFabAddNewNote()
+            verifyNoteDetailActivityIsLaunched()
             typeNote(NOTE_VALID)
             clickOnSaveButton()
             checkNewNoteWasCreated(NOTE_VALID)
         }
+
     }
 
     @Test
     fun shouldNotCreateANoteWhenClickClear() {
+        enableIntents()
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+
         prepareTeiCompletedProgrammeAndLaunchActivity(rule)
 
-        teiDashboardRobot {
+        teiDashboardRobot(composeTestRule) {
             goToNotes()
         }
 
         noteRobot {
             clickOnFabAddNewNote()
+            verifyNoteDetailActivityIsLaunched()
             typeNote(NOTE_INVALID)
             clickOnClearButton()
             clickYesOnAlertDialog()
@@ -68,14 +105,23 @@ class TeiDashboardTest : BaseTest() {
 
     @Test
     fun shouldOpenNotesDetailsWhenClickOnNote() {
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+
         prepareTeiWithExistingNoteAndLaunchActivity(rule)
 
-        teiDashboardRobot {
+        teiDashboardRobot(composeTestRule) {
             goToNotes()
         }
 
         noteRobot {
-            clickOnNoteWithPosition(0)
+            clickOnFabAddNewNote()
+            typeNote(NOTE_EXISTING_TEXT)
+            clickOnSaveButton()
             checkNoteDetails("@$USER", NOTE_EXISTING_TEXT)
         }
     }
@@ -84,7 +130,7 @@ class TeiDashboardTest : BaseTest() {
     fun shouldReactivateTEIWhenClickReOpenWithProgramCompletedEvents() {
         prepareTeiCompletedProgrammeAndLaunchActivity(rule)
 
-        teiDashboardRobot {
+        teiDashboardRobot(composeTestRule) {
             clickOnMenuMoreOptions()
             clickOnTimelineEvents()
             clickOnMenuMoreOptions()
@@ -95,59 +141,73 @@ class TeiDashboardTest : BaseTest() {
 
     @Test
     fun shouldShowInactiveProgramWhenClickDeactivate() {
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+
         prepareTeiOpenedProgrammeAndLaunchActivity(rule)
 
-        teiDashboardRobot {
+        teiDashboardRobot(composeTestRule) {
             clickOnMenuMoreOptions()
             clickOnTimelineEvents()
             clickOnMenuMoreOptions()
             clickOnMenuDeactivate()
-            checkCancelledStateInfoBarIsDisplay(composeTestRule)
+            checkCancelledStateInfoBarIsDisplay()
             checkCanNotAddEvent()
-            checkAllEventsAreInactive(1)
+            checkAllEventsAreClosed()
         }
     }
 
     @Test
     fun shouldCompleteProgramWhenClickComplete() {
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+
         prepareTeiOpenedForCompleteProgrammeAndLaunchActivity(rule)
 
-        teiDashboardRobot {
+        teiDashboardRobot(composeTestRule) {
             clickOnMenuMoreOptions()
             clickOnTimelineEvents()
             clickOnMenuMoreOptions()
             clickOnMenuComplete()
-            checkCompleteStateInfoBarIsDisplay(composeTestRule)
+            checkCompleteStateInfoBarIsDisplay()
             checkCanNotAddEvent()
-            checkAllEventsAreClosed(1)
-        }
-    }
-
-    @Test
-    fun shouldShowQRWhenClickOnShare() {
-        prepareTeiCompletedProgrammeAndLaunchActivity(rule)
-
-        teiDashboardRobot {
-            clickOnMenuMoreOptions()
-            clickOnShareButton()
-            clickOnNextQR()
+            checkAllEventsAreClosed()
         }
     }
 
     @Test
     fun shouldMakeAReferral() {
+        enableIntents()
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_TB_IDENTIFIER_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_TB_IDENTIFIER_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+
         prepareTeiOpenedForReferralProgrammeAndLaunchActivity(rule)
 
-        teiDashboardRobot {
+        teiDashboardRobot(composeTestRule) {
             clickOnMenuMoreOptions()
             clickOnTimelineEvents()
             clickOnFab()
             clickOnReferral()
+            checkProgramStageSelectionActivityIsLaunched()
             clickOnFirstReferralEvent()
-            clickOnReferralOption(
-                composeTestRule,
-                context.getString(R.string.one_time)
-            )
             clickOnReferralNextButton()
             checkEventWasCreated(LAB_MONITORING)
         }
@@ -155,69 +215,86 @@ class TeiDashboardTest : BaseTest() {
 
     @Test
     fun shouldSuccessfullyScheduleAnEvent() {
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_TB_IDENTIFIER_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_TB_IDENTIFIER_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+
+        val currentDate = LocalDate.now()
+        val formatter = DateTimeFormatter.ofPattern("ddMMyyyy")
+        val formattedCurrentDate = currentDate.format(formatter)
+
         prepareTeiOpenedWithNoPreviousEventProgrammeAndLaunchActivity(rule)
 
-        teiDashboardRobot {
+        teiDashboardRobot(composeTestRule) {
             clickOnMenuMoreOptions()
             clickOnTimelineEvents()
             clickOnFab()
             clickOnScheduleNew()
-            clickOnFirstReferralEvent()
-            clickOnReferralNextButton()
-            checkEventWasCreatedWithDate(LAB_MONITORING, LAB_MONITORING_SCHEDULE_DATE)
-        }
-    }
-
-    @Test
-    fun shouldNotBeAbleToCreateNewEventsWhenFull() {
-        prepareTeiOpenedWithFullEventsAndLaunchActivity(rule)
-
-        teiDashboardRobot {
-            clickOnMenuMoreOptions()
-            clickOnTimelineEvents()
-            checkCanNotAddEvent()
+            typeOnInputDateField(formattedCurrentDate, "Due date")
+            clickOnSchedule()
+            waitToDebounce(1000)
+            checkEventWasScheduled(LAB_MONITORING, 0)
         }
     }
 
     @Test
     fun shouldOpenEventAndSaveSuccessfully() {
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+
         setupCredentials()
 
         prepareTeiOpenedProgrammeAndLaunchActivity(rule)
 
-        val babyPostNatal = 0
-        teiDashboardRobot {
+        val babyPostNatal = "Baby Postnatal"
+        teiDashboardRobot(composeTestRule) {
             clickOnMenuMoreOptions()
             clickOnTimelineEvents()
-            clickOnEventWithPosition(babyPostNatal)
+            clickOnEventWithTitle(babyPostNatal)
         }
 
-        eventRobot {
-            scrollToBottomForm()
+        eventRobot(composeTestRule) {
             clickOnFormFabButton()
-            clickOnNotNow(composeTestRule)
-        }
-    }
-
-    @Test
-    fun shouldShowCorrectInfoWhenOpenTEI() {
-        prepareTeiCompletedProgrammeAndLaunchActivity(rule)
-
-        val upperInformation = createExpectedUpperInformation()
-
-        teiDashboardRobot {
-            checkUpperInfo(upperInformation)
+            clickOnNotNow()
         }
     }
 
     @Test
     fun shouldShowTEIDetailsWhenClickOnSeeDetails() {
+        //This test is only valid for portrait mode given that landscape is showing details
+        //So the test is skipped for landscape
+        Assume.assumeFalse(OrientationHelper.isLandscape())
+
+        //Adding mock response for API_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH
+        //The TEI does not have value assigned for unique ID, as it is autogenerated, it tries to
+        //generate one but there are no reserved values in the database so it performs a new request.
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+
         prepareTeiCompletedProgrammeAndLaunchActivity(rule)
 
         val enrollmentFullDetails = createExpectedEnrollmentInformation()
 
-        teiDashboardRobot {
+        teiDashboardRobot(composeTestRule) {
             clickOnSeeDetails()
+            composeTestRule.waitForIdle()
             checkFullDetails(enrollmentFullDetails)
         }
     }
@@ -226,99 +303,62 @@ class TeiDashboardTest : BaseTest() {
     fun shouldShowIndicatorsDetailsWhenClickOnIndicatorsTab() {
         prepareTeiCompletedProgrammeAndLaunchActivity(rule)
 
-        teiDashboardRobot {
+        teiDashboardRobot(composeTestRule) {
             goToAnalytics()
+            composeTestRule.waitForIdle()
         }
 
-        indicatorsRobot {
+        indicatorsRobot(composeTestRule) {
+            composeTestRule.waitForIdle()
             checkDetails("0", "4817")
         }
     }
 
     @Test
-    fun shouldSuccessfullyCreateANewEvent() {
-        prepareTeiToCreateANewEventAndLaunchActivity(rule)
-
-        teiDashboardRobot {
-            clickOnMenuMoreOptions()
-            clickOnTimelineEvents()
-            clickOnFab()
-            clickOnCreateNewEvent()
-            clickOnFirstReferralEvent()
-            waitToDebounce(2000)
-            clickOnReferralNextButton()
-            waitToDebounce(600)
-        }
-
-        eventRobot {
-            fillRadioButtonForm(4)
-            clickOnFormFabButton()
-            clickOnNotNow(composeTestRule)
-        }
-
-        teiDashboardRobot {
-            checkEventWasCreatedAndOpen(LAB_MONITORING, 0)
-        }
-    }
-
-    @Test
-    fun shouldOpenEventEditAndSaveSuccessfully() {
-        prepareTeiOpenedToEditAndLaunchActivity(rule)
-
-        val labMonitoring = 2
-
-        teiDashboardRobot {
-            clickOnMenuMoreOptions()
-            clickOnTimelineEvents()
-            clickOnEventWithPosition(labMonitoring)
-            waitToDebounce(600)
-        }
-
-        eventRobot {
-            waitToDebounce(600)
-            fillRadioButtonForm(4)
-            clickOnFormFabButton()
-            clickOnCompleteButton(composeTestRule)
-            waitToDebounce(600)
-        }
-
-        teiDashboardRobot {
-            checkEventWasCreatedAndClosed(LAB_MONITORING, 2)
-        }
-    }
-
-    @Test
     fun shouldEnrollToOtherProgramWhenClickOnProgramEnrollments() {
+        enableIntents()
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+
         val womanProgram = "MNCH / PNC (Adult Woman)"
         val personAttribute =
-            context.getString(R.string.enrollment_single_section_label).replace("%s", "")
+            context.getString(R.string.enrollment_single_section_label).replace("%s", "Person")
         val visitPNCEvent = "PNC Visit"
         val deliveryEvent = "Delivery"
         val visitANCEvent = "ANC Visit (2-4+)"
         val firstANCVisitEvent = "ANC 1st visit"
+        val orgUnit = "Ngelehun CHC"
 
         setDatePicker()
         prepareTeiToEnrollToOtherProgramAndLaunchActivity(rule)
 
-        teiDashboardRobot {
+        teiDashboardRobot(composeTestRule) {
             clickOnMenuMoreOptions()
             clickOnTimelineEvents()
             clickOnMenuMoreOptions()
             clickOnMenuProgramEnrollments()
         }
 
-        enrollmentRobot {
+        enrollmentRobot(composeTestRule) {
             clickOnAProgramForEnrollment(composeTestRule, womanProgram)
-            clickOnAcceptEnrollmentDate()
-            clickOnPersonAttributes(personAttribute)
-            waitToDebounce(5000)
-            clickOnCalendarItem()
-            clickOnAcceptEnrollmentDate()
-            scrollToBottomProgramForm()
+            clickOnAcceptInDatePicker()
+        }
+
+        orgUnitSelectorRobot(composeTestRule) {
+            selectTreeOrgUnit(orgUnit)
+        }
+
+        enrollmentRobot(composeTestRule) {
+            openFormSection(personAttribute)
+            typeOnInputDateField("01012000", "Date of birth")
             clickOnSaveEnrollment()
         }
 
-        teiDashboardRobot {
+        teiDashboardRobot(composeTestRule) {
             waitToDebounce(1000)
             clickOnMenuMoreOptions()
             clickOnTimelineEvents()
@@ -332,15 +372,28 @@ class TeiDashboardTest : BaseTest() {
 
     @Test
     fun shouldShowAnalytics() {
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_TB_IDENTIFIER_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_TB_IDENTIFIER_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+        mockWebServerRobot.addResponse(
+            method = ResponseController.GET,
+            path = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_PATH,
+            sdkResource = API_UNIQUE_ID_TRACKED_ENTITY_ATTRIBUTES_RESERVED_VALUES_RESPONSE,
+            responseCode = 200,
+        )
+
         val chartName = "Daily-TB smear microscopy number of specimen"
         setupCredentials()
         prepareTeiForAnalyticsAndLaunchActivity(rule)
 
-        teiDashboardRobot {
+        teiDashboardRobot(composeTestRule) {
             goToAnalytics()
         }
 
-        indicatorsRobot {
+        indicatorsRobot(composeTestRule) {
             checkGraphIsRendered(chartName)
         }
 
@@ -351,18 +404,15 @@ class TeiDashboardTest : BaseTest() {
 
     private fun createExpectedUpperInformation() =
         UpperEnrollmentUIModel(
-            "10/1/2021",
+            "10/1/2024",
             "10/1/2021",
             "Ngelehun CHC"
         )
 
     private fun createExpectedEnrollmentInformation() =
         EnrollmentUIModel(
-            "10/1/2021",
-            "10/1/2021",
-            "Ngelehun CHC",
-            "40.48713205295354",
-            "-3.6847423830882633",
+            "10/01/2025",
+            "10/01/2025",
             "Filona",
             "Ryder",
             "Female"
@@ -375,10 +425,5 @@ class TeiDashboardTest : BaseTest() {
         const val USER = "android"
 
         const val LAB_MONITORING = "Lab monitoring"
-        const val LAB_MONITORING_SCHEDULE_DATE = "10/9/2019"
-
-        const val API_TEI_1_RESPONSE_OK = "mocks/teilist/teilist_1.json"
-        const val API_TEI_2_RESPONSE_OK = "mocks/teilist/teilist_2.json"
-        const val API_TEI_3_RESPONSE_OK = "mocks/teilist/teilist_3.json"
     }
 }

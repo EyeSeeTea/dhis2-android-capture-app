@@ -8,8 +8,6 @@ import org.dhis2.commons.dialogs.calendarpicker.di.CalendarPickerModule;
 import org.dhis2.commons.featureconfig.di.FeatureConfigActivityComponent;
 import org.dhis2.commons.featureconfig.di.FeatureConfigActivityModule;
 import org.dhis2.commons.filters.data.FilterPresenter;
-import org.dhis2.data.service.ReservedValuesWorkerComponent;
-import org.dhis2.data.service.ReservedValuesWorkerModule;
 import org.dhis2.data.service.SyncDataWorkerComponent;
 import org.dhis2.data.service.SyncDataWorkerModule;
 import org.dhis2.data.service.SyncGranularRxComponent;
@@ -20,8 +18,6 @@ import org.dhis2.data.service.SyncMetadataWorkerComponent;
 import org.dhis2.data.service.SyncMetadataWorkerModule;
 import org.dhis2.usescases.about.AboutComponent;
 import org.dhis2.usescases.about.AboutModule;
-import org.dhis2.usescases.datasets.dataSetTable.DataSetTableComponent;
-import org.dhis2.usescases.datasets.dataSetTable.DataSetTableModule;
 import org.dhis2.usescases.datasets.datasetDetail.DataSetDetailComponent;
 import org.dhis2.usescases.datasets.datasetDetail.DataSetDetailModule;
 import org.dhis2.usescases.datasets.datasetInitial.DataSetInitialComponent;
@@ -72,10 +68,10 @@ import org.dhis2.usescases.teiDashboard.TeiDashboardComponent;
 import org.dhis2.usescases.teiDashboard.TeiDashboardModule;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.relationships.RelationshipComponent;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.relationships.RelationshipModule;
+import org.dhis2.usescases.teiDashboard.dialogs.scheduling.SchedulingComponent;
+import org.dhis2.usescases.teiDashboard.dialogs.scheduling.SchedulingModule;
 import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListComponent;
 import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListModule;
-import org.dhis2.utils.optionset.OptionSetComponent;
-import org.dhis2.utils.optionset.OptionSetModule;
 import org.dhis2.utils.session.PinModule;
 import org.dhis2.utils.session.SessionComponent;
 
@@ -137,9 +133,6 @@ public interface UserComponent extends UserComponentFlavor{
     DataSetInitialComponent plus(DataSetInitialModule dataSetInitialModule);
 
     @NonNull
-    DataSetTableComponent plus(DataSetTableModule dataSetTableModule);
-
-    @NonNull
     ReservedValueComponent plus(ReservedValueModule reservedValueModule);
 
     @NonNull
@@ -147,9 +140,6 @@ public interface UserComponent extends UserComponentFlavor{
 
     @NonNull
     SyncMetadataWorkerComponent plus(SyncMetadataWorkerModule syncDataWorkerModule);
-
-    @NonNull
-    ReservedValuesWorkerComponent plus(ReservedValuesWorkerModule reservedValuesWorkerModule);
 
     @NonNull
     EventCaptureComponent plus(EventCaptureModule eventCaptureModule);
@@ -172,8 +162,6 @@ public interface UserComponent extends UserComponentFlavor{
     @NonNull
     ScheduledEventComponent plus(ScheduledEventModule scheduledEventModule);
 
-    @NonNull
-    OptionSetComponent plus(OptionSetModule optionSetModule);
 
     @NonNull
     NotesComponent plus(NotesModule notesModule);
@@ -204,4 +192,7 @@ public interface UserComponent extends UserComponentFlavor{
 
     @NonNull
     SessionComponent plus(PinModule pinModule);
+
+    @NonNull
+    SchedulingComponent plus(SchedulingModule schedulingModule);
 }

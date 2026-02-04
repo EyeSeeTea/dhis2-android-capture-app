@@ -8,15 +8,16 @@ interface PreferenceProvider {
 
     fun sharedPreferences(): SharedPreferences
 
-    fun saveUserCredentials(serverUrl: String, userName: String, pass: String)
+    fun saveUserCredentials(serverUrl: String, userName: String, pass: String?)
 
     fun updateServerURL(serverUrl: String)
 
     fun areCredentialsSet(): Boolean
-    fun areSameCredentials(serverUrl: String, userName: String, pass: String): Boolean
-    fun saveJiraCredentials(jiraAuth: String): String
+    fun areSameCredentials(serverUrl: String?, userName: String?): Boolean
     fun clear()
     fun setValue(key: String, value: Any? = null)
+    fun secureValue(key: String, value: Any? = null)
+    fun getSecureValue(key: String, default: String? = null): String?
     fun removeValue(key: String)
     fun contains(vararg keys: String): Boolean
     fun getString(key: String, default: String? = null): String?

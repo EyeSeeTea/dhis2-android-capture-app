@@ -11,8 +11,7 @@ import org.hisp.dhis.android.core.trackedentity.TrackedEntityInstance
 interface TeiDataRepository {
     fun getTEIEnrollmentEvents(
         selectedStage: StageSection?,
-        groupedByStage: Boolean,
-        replaceProgramStageName: Boolean = false
+        groupedByStage: Boolean
     ): Single<List<EventViewModel>>
 
     fun getEnrollment(): Single<Enrollment?>
@@ -23,4 +22,8 @@ interface TeiDataRepository {
     fun getOrgUnitName(orgUnitUid: String): String
     fun getTeiProfilePath(): String?
     fun getTeiHeader(): String?
+    fun isEventEditable(eventUid: String): Boolean
+    fun displayOrganisationUnit(programUid: String): Boolean
+    fun enrollmentOrgUnitInCaptureScope(enrollmentOrgUnit: String): Boolean
+    fun programOrgListInCaptureScope(programUid: String): List<OrganisationUnit>
 }

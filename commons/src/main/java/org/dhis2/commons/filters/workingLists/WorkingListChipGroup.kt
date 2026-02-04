@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.databinding.Observable
@@ -21,7 +21,7 @@ import org.dhis2.commons.databinding.ItemFilterWorkingListChipBinding
 import org.dhis2.commons.filters.FilterManager
 import org.dhis2.commons.filters.WorkingListFilter
 import org.dhis2.commons.filters.data.EmptyWorkingList
-import org.hisp.dhis.mobile.ui.designsystem.component.Chip
+import org.hisp.dhis.mobile.ui.designsystem.component.FilterChip
 import org.hisp.dhis.mobile.ui.designsystem.theme.Spacing
 
 class WorkingListChipGroup @JvmOverloads constructor(
@@ -79,7 +79,7 @@ fun WorkingListChipGroup(
     workingListViewModel: WorkingListViewModel,
 ) {
     val workingListFilterState = workingListViewModel.workingListFilter.observeAsState()
-    var selectedWorkingList by remember {
+    var selectedWorkingList by rememberSaveable(stateSaver = WorkingListItemSaver) {
         mutableStateOf(
             FilterManager.getInstance().currentWorkingList(),
         )
@@ -95,7 +95,7 @@ fun WorkingListChipGroup(
     workingListFilterState.value?.let { workingListFilter ->
         LazyRow(modifier) {
             itemsIndexed(workingListFilter.workingLists) { index, workingList ->
-                Chip(
+                FilterChip(
                     modifier = Modifier.padding(
                         start = if (index == 0) Spacing.Spacing16 else Spacing.Spacing0,
                         end = if (index == workingListFilter.workingLists.size - 1) {
