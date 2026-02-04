@@ -40,6 +40,7 @@ import org.dhis2.form.model.ValueStoreResult
 import org.dhis2.form.ui.event.RecyclerViewUiEvents
 import org.dhis2.form.ui.idling.FormCountingIdlingResource
 import org.dhis2.form.ui.intent.FormIntent
+import org.dhis2.mobile.commons.providers.ValueNotUniqueFailure
 import org.dhis2.mobile.commons.validation.validators.FieldMaskValidator
 import org.hisp.dhis.android.core.arch.helpers.Result
 import org.hisp.dhis.android.core.common.FeatureType
@@ -47,7 +48,6 @@ import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.common.valuetype.validation.failures.DateFailure
 import org.hisp.dhis.android.core.common.valuetype.validation.failures.DateTimeFailure
 import org.hisp.dhis.android.core.common.valuetype.validation.failures.TimeFailure
-import org.dhis2.mobile.commons.providers.ValueNotUniqueFailure
 import timber.log.Timber
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -386,8 +386,11 @@ class FormViewModel(
                 val result = repository.save(it.uid, it.value, action.extraData)
 
                 //EyeSeeTea customization - Show unique error result as validation error
-                /*repository.updateValueOnList(it.uid, it.value, it.valueType)
-                repository.updateErrorList(action)*/
+                /*
+                repository.updateValueOnList(it.uid, it.value, it.valueType)
+                repository.updateErrorList(action)
+                result
+                */
                 if (result?.valueStoreResult == ValueStoreResult.VALUE_NOT_UNIQUE) {
                     repository.updateErrorList(action.copy(error = ValueNotUniqueFailure))
                     StoreResult(
