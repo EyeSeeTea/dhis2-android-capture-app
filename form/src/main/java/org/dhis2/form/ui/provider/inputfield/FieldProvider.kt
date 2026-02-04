@@ -1095,7 +1095,7 @@ private fun ProvideInteger(
                 fieldUid = fieldUiModel.uid,
                 value = value.text,
                 valueType = fieldUiModel.valueType,
-                lostFocus = lostFocus,
+                lostFocus = !lostFocus,
                 onNextClicked = clickedOnNext,
                 intentHandler = intentHandler,
             )
