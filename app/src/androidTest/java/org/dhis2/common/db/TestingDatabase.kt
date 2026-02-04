@@ -31,7 +31,7 @@ class TestingDatabase : BaseTest() {
         val d2 =
             D2Manager.blockingInstantiateD2(ServerModule.getD2Configuration(ApplicationProvider.getApplicationContext<AppTest>()))
         d2?.userModule()
-            ?.logIn(username, password, url)
+            ?.logIn(username, password, url, null)
             ?.blockingGet()
         d2?.metadataModule()?.blockingDownload()
 
