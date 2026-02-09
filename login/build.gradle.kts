@@ -143,6 +143,9 @@ android {
         create("psi") {
             buildConfigField("String", "LOGIN_TEST", "\"test\"")
         }
+        create("sports") {
+            buildConfigField("String", "LOGIN_TEST", "\"test\"")
+        }
     }
 }
 
