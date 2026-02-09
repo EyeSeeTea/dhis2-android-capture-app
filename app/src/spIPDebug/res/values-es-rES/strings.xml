@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">"Samaritan's Purse International Projects"</string>
+    <string name="logo_text">"Samaritan's Purse International Projects"</string>
+    <string name="logo_number"></string>
+    <string name="open_details">Detalles de registro de %s</string>
+</resources>

@@ -17,7 +17,7 @@ fun Activity.isLandscape(): Boolean {
 }
 
 fun isPortrait(): Boolean {
-    val orientation = Resources.getSystem().configuration.orientation
+    val orientation = Resources.getSystem()?.configuration?.orientation ?:Configuration.ORIENTATION_PORTRAIT
     return orientation == Configuration.ORIENTATION_PORTRAIT
 }
 

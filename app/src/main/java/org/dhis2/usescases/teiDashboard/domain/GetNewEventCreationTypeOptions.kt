@@ -10,7 +10,6 @@ import org.hisp.dhis.android.core.program.ProgramStage
 class GetNewEventCreationTypeOptions(
     private val programConfigurationRepository: ProgramConfigurationRepository,
 ) {
-
     operator fun invoke(
         programStage: ProgramStage?,
         programUid: String,
@@ -34,13 +33,13 @@ class GetNewEventCreationTypeOptions(
     }
 
     private fun shouldShowReferralEvents(programUid: String): Boolean {
-        programConfigurationRepository.getConfigurationByProgram(programUid)
+        programConfigurationRepository
+            .getConfigurationByProgram(programUid)
             ?.let { programConfiguration ->
                 return programConfiguration.disableReferrals() != true
             }
         return true
     }
 
-    private fun shouldShowScheduleEvents(programStage: ProgramStage) =
-        programStage.hideDueDate() != true
+    private fun shouldShowScheduleEvents(programStage: ProgramStage) = programStage.hideDueDate() != true
 }

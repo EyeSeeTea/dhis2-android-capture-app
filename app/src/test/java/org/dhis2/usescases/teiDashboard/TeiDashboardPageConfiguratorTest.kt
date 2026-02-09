@@ -1,6 +1,8 @@
 package org.dhis2.usescases.teiDashboard
 
+import org.dhis2.BuildConfig
 import org.dhis2.utils.customviews.navigationbar.NavigationPageConfigurator
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.kotlin.doReturn
@@ -44,6 +46,10 @@ class TeiDashboardPageConfiguratorTest {
 
     @Test
     fun `Should display the notes screen`() {
-        assertTrue(pageConfigurator.displayNotes())
+        if (BuildConfig.FLAVOR !== "spIP") {
+            assertTrue(pageConfigurator.displayNotes())
+        } else {
+            assertFalse(pageConfigurator.displayNotes())
+        }
     }
 }

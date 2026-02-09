@@ -9,7 +9,6 @@ import static org.dhis2.utils.analytics.AnalyticsConstants.CLICK;
 import static org.dhis2.utils.analytics.AnalyticsConstants.DELETE_TEI;
 
 import java.util.Objects;
-import javax.annotation.Nullable;
 import org.dhis2.commons.Constants;
 import org.dhis2.commons.matomo.MatomoAnalyticsController;
 import org.dhis2.commons.prefs.PreferenceProvider;

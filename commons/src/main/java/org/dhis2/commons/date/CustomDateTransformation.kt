@@ -47,7 +47,7 @@ class CustomDateTransformation : DateTimeVisualTransformation {
                     in 5..6 -> offset - 3
                     7 -> offset - 6
                     in 8..9 -> offset - 8
-                    else -> 0
+                    else -> originalLength
                 }
 
                 return if (calculatedOffset > originalLength) originalLength else calculatedOffset

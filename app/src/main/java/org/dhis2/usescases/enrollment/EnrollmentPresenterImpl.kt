@@ -52,7 +52,6 @@ class EnrollmentPresenterImpl(
     private val teiAttributesProvider: TeiAttributesProvider,
     private val dateEditionWarningHandler: DateEditionWarningHandler,
 ) {
-
     private val disposable = CompositeDisposable()
     private val backButtonProcessor: FlowableProcessor<Boolean> = PublishProcessor.create()
 
@@ -60,7 +59,8 @@ class EnrollmentPresenterImpl(
         view.setSaveButtonVisible(false)
 
         disposable.add(
-            teiRepository.get()
+            teiRepository
+                .get()
                 .map { tei ->
                     val attrList = mutableListOf<String>()
                     val attributesValues =
@@ -84,14 +84,14 @@ class EnrollmentPresenterImpl(
 
                     TeiAttributesInfo(
                         attributes = attrList,
-                        profileImage = tei.profilePicturePath(
-                            d2,
-                            programRepository.blockingGet()?.uid(),
-                        ),
+                        profileImage =
+                            tei.profilePicturePath(
+                                d2,
+                                programRepository.blockingGet()?.uid(),
+                            ),
                         teTypeName = d2.trackedEntityTypeForTei(tei.uid())?.displayName()!!,
                     )
-                }
-                .subscribeOn(schedulerProvider.io())
+                }.subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribe(
                     view::displayTeiInfo,
@@ -100,7 +100,8 @@ class EnrollmentPresenterImpl(
         )
 
         disposable.add(
-            programRepository.get()
+            programRepository
+                .get()
                 .map { it.access()?.data()?.write() }
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
@@ -111,7 +112,8 @@ class EnrollmentPresenterImpl(
         )
 
         disposable.add(
-            enrollmentObjectRepository.get()
+            enrollmentObjectRepository
+                .get()
                 .map { it.status() }
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
@@ -138,13 +140,14 @@ class EnrollmentPresenterImpl(
             EnrollmentActivity.EnrollmentMode.NEW -> {
                 matomoAnalyticsController.trackEvent(TRACKER_LIST, CREATE_TEI, CLICK)
                 disposable.add(
-                    enrollmentFormRepository.generateEvents()
+                    enrollmentFormRepository
+                        .generateEvents()
                         .defaultSubscribe(
                             schedulerProvider,
                             {
                                 it.second?.let { eventUid ->
                                     view.openEvent(eventUid)
-                                } ?: view.openDashboard(it.first, true)
+                                } ?: view.openDashboard(it.first, false)
                             },
                             { Timber.tag(TAG).e(it) },
                         ),
@@ -167,20 +170,16 @@ class EnrollmentPresenterImpl(
         backButtonProcessor.onNext(true)
     }
 
-    fun getEnrollment(): Enrollment? {
-        return enrollmentObjectRepository.blockingGet()
-    }
+    fun getEnrollment(): Enrollment? = enrollmentObjectRepository.blockingGet()
 
     fun getTEI(): TrackedEntityInstance? {
         return teiRepository.blockingGet()
     }
 
-    fun getProgram(): Program? {
-        return programRepository.blockingGet()
-    }
+    fun getProgram(): Program? = programRepository.blockingGet()
 
-    fun updateEnrollmentStatus(newStatus: EnrollmentStatus): Boolean {
-        return try {
+    fun updateEnrollmentStatus(newStatus: EnrollmentStatus): Boolean =
+        try {
             if (getProgram()?.access()?.data()?.write() == true) {
                 enrollmentObjectRepository.setStatus(newStatus)
                 view.renderStatus(newStatus)
@@ -192,7 +191,6 @@ class EnrollmentPresenterImpl(
         } catch (error: D2Error) {
             false
         }
-    }
 
     fun saveEnrollmentGeometry(geometry: Geometry?) {
         enrollmentObjectRepository.setGeometry(geometry)
@@ -231,8 +229,11 @@ class EnrollmentPresenterImpl(
     fun showOrHideSaveButton() {
         val teiUid = teiRepository.blockingGet()?.uid() ?: ""
         val programUid = getProgram()?.uid() ?: ""
-        val hasEnrollmentAccess = d2.enrollmentModule().enrollmentService()
-            .blockingGetEnrollmentAccess(teiUid, programUid)
+        val hasEnrollmentAccess =
+            d2
+                .enrollmentModule()
+                .enrollmentService()
+                .blockingGetEnrollmentAccess(teiUid, programUid)
         if (hasEnrollmentAccess == EnrollmentAccess.WRITE_ACCESS) {
             view.setSaveButtonVisible(visible = true)
         } else {
@@ -250,7 +251,12 @@ class EnrollmentPresenterImpl(
     fun suggestedReportDateIsNotFutureDate(eventUid: String): Boolean {
         return try {
             val event = eventCollectionRepository.uid(eventUid).blockingGet()
-            val programStage = d2.programModule().programStages().uid(event?.programStage()).blockingGet()
+            val programStage =
+                d2
+                    .programModule()
+                    .programStages()
+                    .uid(event?.programStage())
+                    .blockingGet()
             val enrollment = enrollmentObjectRepository.blockingGet()
             val generatedByEnrollment = programStage?.generatedByEnrollmentDate() ?: false
             val startDate = if (generatedByEnrollment) enrollment?.enrollmentDate() else enrollment?.incidentDate()
