@@ -116,7 +116,7 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
 
         if (BuildConfig.FLAVOR.equals("sports")) {
             // Sports: initialize D2 via ServerComponent as in default flavor
-            // but defer Mapbox and skip Koin to reduce startup work.
+            // but defer Mapbox to reduce startup work.
             setUpServerComponent();
             new android.os.Handler(Looper.getMainLooper()).post(() -> {
                 try { MapController.Companion.init(this); } catch (Throwable ignored) {}
@@ -124,8 +124,10 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
         } else {
             MapController.Companion.init(this);
             setUpServerComponent();
-            KoinInitialization.INSTANCE.invoke(this, ServerModule.getD2Configuration(this));
         }
+
+        // Koin is required for Compose login and other screens across flavors.
+        KoinInitialization.INSTANCE.invoke(this, ServerModule.getD2Configuration(this));
 
         initCrashController();
         setUpRxPlugin();
