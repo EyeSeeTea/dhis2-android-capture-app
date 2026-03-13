@@ -8,6 +8,7 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Flag
+import androidx.compose.material.icons.outlined.LockReset
 import androidx.compose.material.icons.outlined.MoveDown
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Sync
@@ -31,32 +32,30 @@ fun getEnrollmentMenuList(
     resourceManager: ResourceManager,
     presenter: TeiDashboardContracts.Presenter,
     dashboardViewModel: DashboardViewModel,
-): List<MenuItemData<EnrollmentMenuItem>> {
-    return if (enrollmentUid == null) {
+): List<MenuItemData<EnrollmentMenuItem>> =
+    if (enrollmentUid == null) {
         buildMenuForNoEnrollment(resourceManager, presenter)
     } else {
         buildMenuForEnrollment(enrollmentUid, resourceManager, presenter, dashboardViewModel)
     }
-}
 
 private fun buildMenuForNoEnrollment(
     resourceManager: ResourceManager,
     presenter: TeiDashboardContracts.Presenter,
-): List<MenuItemData<EnrollmentMenuItem>> {
-    return buildList {
+): List<MenuItemData<EnrollmentMenuItem>> =
+    buildList {
         addSyncMenuItem(resourceManager)
         addMoreEnrollmentsMenuItem(resourceManager)
         addDeleteTeiMenuItem(presenter, resourceManager)
     }
-}
 
 private fun buildMenuForEnrollment(
     enrollmentUid: String,
     resourceManager: ResourceManager,
     presenter: TeiDashboardContracts.Presenter,
     dashboardViewModel: DashboardViewModel,
-): List<MenuItemData<EnrollmentMenuItem>> {
-    return buildList {
+): List<MenuItemData<EnrollmentMenuItem>> =
+    buildList {
         addSyncMenuItem(resourceManager)
         addIfTeiCanBeTransferred(dashboardViewModel, resourceManager)
         addFollowUpMenuItem(dashboardViewModel, resourceManager)
@@ -68,11 +67,8 @@ private fun buildMenuForEnrollment(
         addRemoveEnrollmentItem(enrollmentUid, resourceManager, presenter, dashboardViewModel)
         addDeleteTeiMenuItem(presenter, resourceManager)
     }
-}
 
-private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addSyncMenuItem(
-    resourceManager: ResourceManager,
-) {
+private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addSyncMenuItem(resourceManager: ResourceManager) {
     add(
         MenuItemData(
             id = EnrollmentMenuItem.SYNC,
@@ -135,9 +131,7 @@ private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addTimelineOrGroupBySt
     }
 }
 
-private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addHelpMenuItem(
-    resourceManager: ResourceManager,
-) {
+private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addHelpMenuItem(resourceManager: ResourceManager) {
     add(
         MenuItemData(
             id = EnrollmentMenuItem.HELP,
@@ -147,9 +141,7 @@ private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addHelpMenuItem(
     )
 }
 
-private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addMoreEnrollmentsMenuItem(
-    resourceManager: ResourceManager,
-) {
+private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addMoreEnrollmentsMenuItem(resourceManager: ResourceManager) {
     add(
         MenuItemData(
             id = EnrollmentMenuItem.ENROLLMENTS,
@@ -159,9 +151,7 @@ private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addMoreEnrollmentsMenu
     )
 }
 
-private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addShareMenuItem(
-    resourceManager: ResourceManager,
-) {
+private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addShareMenuItem(resourceManager: ResourceManager) {
     add(
         MenuItemData(
             id = EnrollmentMenuItem.SHARE,
@@ -183,31 +173,31 @@ private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addStatusMenuItems(
             MenuItemData(
                 id = EnrollmentMenuItem.COMPLETE,
                 label = resourceManager.getString(R.string.complete),
-                leadingElement = MenuLeadingElement.Icon(
-                    icon = Icons.Outlined.CheckCircle,
-                    defaultTintColor = SurfaceColor.CustomGreen,
-                    selectedTintColor = SurfaceColor.CustomGreen,
-                ),
+                leadingElement =
+                    MenuLeadingElement.Icon(
+                        icon = Icons.Outlined.CheckCircle,
+                        defaultTintColor = SurfaceColor.CustomGreen,
+                        selectedTintColor = SurfaceColor.CustomGreen,
+                    ),
             ),
         )
     }
 
-    // EyeSeeTea customization - re-open always not visible
-    // is not possible re-open completed enrollments
-/*    if (status != EnrollmentStatus.ACTIVE) {
+    if (shouldShowReOpenEnrollmentMenu(status)) {
         add(
             MenuItemData(
                 id = EnrollmentMenuItem.ACTIVATE,
                 label = resourceManager.getString(R.string.re_open),
                 showDivider = status == EnrollmentStatus.CANCELLED,
-                leadingElement = MenuLeadingElement.Icon(
-                    icon = Icons.Outlined.LockReset,
-                    defaultTintColor = SurfaceColor.Warning,
-                    selectedTintColor = SurfaceColor.Warning,
-                ),
+                leadingElement =
+                    MenuLeadingElement.Icon(
+                        icon = Icons.Outlined.LockReset,
+                        defaultTintColor = SurfaceColor.Warning,
+                        selectedTintColor = SurfaceColor.Warning,
+                    ),
             ),
         )
-    }*/
+    }
 
     if (status != EnrollmentStatus.CANCELLED) {
         add(
@@ -215,11 +205,12 @@ private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addStatusMenuItems(
                 id = EnrollmentMenuItem.DEACTIVATE,
                 label = resourceManager.getString(R.string.deactivate),
                 showDivider = true,
-                leadingElement = MenuLeadingElement.Icon(
-                    icon = Icons.Outlined.Cancel,
-                    defaultTintColor = TextColor.OnDisabledSurface,
-                    selectedTintColor = TextColor.OnDisabledSurface,
-                ),
+                leadingElement =
+                    MenuLeadingElement.Icon(
+                        icon = Icons.Outlined.Cancel,
+                        defaultTintColor = TextColor.OnDisabledSurface,
+                        selectedTintColor = TextColor.OnDisabledSurface,
+                    ),
             ),
         )
     }
@@ -233,11 +224,12 @@ private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addRemoveEnrollmentIte
 ) {
     if (presenter.checkIfEnrollmentCanBeDeleted(enrollmentUid)) {
         val dashboardModel = dashboardViewModel.dashboardModel.value
-        val programmeName = if (dashboardModel is DashboardEnrollmentModel) {
-            dashboardModel.currentProgram().displayName()
-        } else {
-            ""
-        }
+        val programmeName =
+            if (dashboardModel is DashboardEnrollmentModel) {
+                dashboardModel.currentProgram()?.displayName()
+            } else {
+                ""
+            }
         add(
             MenuItemData(
                 id = EnrollmentMenuItem.REMOVE,
@@ -265,3 +257,10 @@ private fun MutableList<MenuItemData<EnrollmentMenuItem>>.addDeleteTeiMenuItem(
         )
     }
 }
+
+// EyeSeeTea customization - Hide re-open menu always
+// Base behavior: show re-open when the enrollment is not ACTIVE.
+// SPOCC behavior: never expose the re-open action.
+private fun shouldShowReOpenEnrollmentMenu(
+    @Suppress("UNUSED_PARAMETER") status: EnrollmentStatus,
+): Boolean = false

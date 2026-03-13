@@ -11,7 +11,6 @@ import org.dhis2.form.model.EnrollmentMode
 import org.dhis2.form.model.EnrollmentRecords
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.ui.FormView
-import org.dhis2.form.ui.provider.FormResultDialogProvider
 
 data class EnrollmentFormBuilderConfig(
     val enrollmentUid: String,
@@ -28,19 +27,18 @@ fun AppCompatActivity.buildEnrollmentForm(
     config: EnrollmentFormBuilderConfig,
     locationProvider: LocationProvider,
     dateEditionWarningHandler: DateEditionWarningHandler,
-    enrollmentResultDialogProvider: FormResultDialogProvider,
     onFieldsLoadingListener: ((fields: List<FieldUiModel>) -> List<FieldUiModel>) = { it },
     onFinish: () -> Unit,
-): FormView {
-    return FormView.Builder()
+): FormView =
+    FormView
+        .Builder()
         .locationProvider(locationProvider)
         .onItemChangeListener { action ->
             dateEditionWarningHandler.shouldShowWarning(
                 fieldUid = action.id,
                 showWarning = ::showDateEditionWarning,
             )
-        }
-        .onLoadingListener { loading ->
+        }.onLoadingListener { loading ->
             runOnUiThread {
                 handleLoading(
                     hasWriteAccess = config.hasWriteAccess,
@@ -49,22 +47,21 @@ fun AppCompatActivity.buildEnrollmentForm(
                     saveButton = config.saveButton,
                 )
             }
-        }
-        .onFinishDataEntry(onFinish)
-        .eventCompletionResultDialogProvider(enrollmentResultDialogProvider)
+        }.onFinishDataEntry(onFinish)
         .factory(supportFragmentManager)
         .setRecords(
             EnrollmentRecords(
                 enrollmentUid = config.enrollmentUid,
                 enrollmentMode = config.enrollmentMode,
             ),
-        )
-        .openErrorLocation(config.openErrorLocation)
+        ).openErrorLocation(config.openErrorLocation)
         .setProgramUid(config.programUid)
+        // EyeSeeTea customization - Validate or hide orgunit by Teamprofile
         .onFieldsLoadingListener {
             onFieldsLoadingListener?.invoke(it) ?: it
         }
-        .build().also { formView ->
+        .build()
+        .also { formView ->
 
             config.saveButton.setOnClickListener { formView.onSaveClick() }
 
@@ -75,12 +72,12 @@ fun AppCompatActivity.buildEnrollmentForm(
             )
             fragmentTransition.commit()
         }
-}
 
 private fun AppCompatActivity.showDateEditionWarning(message: String) {
-    val dialog = MaterialAlertDialogBuilder(this, R.style.DhisMaterialDialog)
-        .setMessage(message)
-        .setPositiveButton(R.string.button_ok, null)
+    val dialog =
+        MaterialAlertDialogBuilder(this, R.style.DhisMaterialDialog)
+            .setMessage(message)
+            .setPositiveButton(R.string.button_ok, null)
     dialog.show()
 }
 
@@ -98,7 +95,10 @@ private fun handleLoading(
     }
 }
 
-private fun handleSaveButtonVisibility(hasWriteAccess: Boolean, saveButton: FloatingActionButton) {
+private fun handleSaveButtonVisibility(
+    hasWriteAccess: Boolean,
+    saveButton: FloatingActionButton,
+) {
     if (hasWriteAccess) {
         saveButton.show()
     } else {

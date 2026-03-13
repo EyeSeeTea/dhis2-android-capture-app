@@ -19,10 +19,13 @@ class DhisPeriodUtils(
     private val defaultWeeklyLabel: String,
     private val defaultBiWeeklyLabel: String,
 ) {
-
     private val periodHelper = d2.periodModule().periodHelper()
 
-    fun getPeriodUIString(periodType: PeriodType?, date: Date, locale: Locale): String {
+    fun getPeriodUIString(
+        periodType: PeriodType?,
+        date: Date,
+        locale: Locale,
+    ): String {
         val formattedDate: String
         var periodString = defaultPeriodLabel
         val period =
@@ -35,28 +38,32 @@ class DhisPeriodUtils(
             PeriodType.WeeklySunday,
             -> {
                 periodString = defaultWeeklyLabel
-                formattedDate = periodString.format(
-                    weekOfTheYear(periodType, period.periodId()!!),
-                    SimpleDateFormat(DATE_FORMAT_EXPRESSION, locale).format(period.startDate()!!),
-                    SimpleDateFormat(DATE_FORMAT_EXPRESSION, locale).format(period.endDate()!!),
-                )
+                formattedDate =
+                    periodString.format(
+                        weekOfTheYear(periodType, period.periodId()!!),
+                        SimpleDateFormat(DATE_FORMAT_EXPRESSION, locale).format(period.startDate()!!),
+                        SimpleDateFormat(DATE_FORMAT_EXPRESSION, locale).format(period.endDate()!!),
+                    )
             }
             PeriodType.BiWeekly -> {
                 periodString = defaultBiWeeklyLabel
-                val firstWeekPeriod = periodHelper.blockingGetPeriodForPeriodTypeAndDate(
-                    PeriodType.Weekly,
-                    period.startDate()!!,
-                )
-                val secondWeekPeriod = periodHelper.blockingGetPeriodForPeriodTypeAndDate(
-                    PeriodType.Weekly,
-                    period.endDate()!!,
-                )
-                formattedDate = periodString.format(
-                    weekOfTheYear(PeriodType.Weekly, firstWeekPeriod.periodId()!!),
-                    SimpleDateFormat(YEARLY_FORMAT_EXPRESSION, locale).format(period.startDate()!!),
-                    weekOfTheYear(PeriodType.Weekly, secondWeekPeriod.periodId()!!),
-                    SimpleDateFormat(YEARLY_FORMAT_EXPRESSION, locale).format(period.endDate()!!),
-                )
+                val firstWeekPeriod =
+                    periodHelper.blockingGetPeriodForPeriodTypeAndDate(
+                        PeriodType.Weekly,
+                        period.startDate()!!,
+                    )
+                val secondWeekPeriod =
+                    periodHelper.blockingGetPeriodForPeriodTypeAndDate(
+                        PeriodType.Weekly,
+                        period.endDate()!!,
+                    )
+                formattedDate =
+                    periodString.format(
+                        weekOfTheYear(PeriodType.Weekly, firstWeekPeriod.periodId()!!),
+                        SimpleDateFormat(YEARLY_FORMAT_EXPRESSION, locale).format(period.startDate()!!),
+                        weekOfTheYear(PeriodType.Weekly, secondWeekPeriod.periodId()!!),
+                        SimpleDateFormat(YEARLY_FORMAT_EXPRESSION, locale).format(period.endDate()!!),
+                    )
             }
             PeriodType.Monthly ->
                 formattedDate =
@@ -69,20 +76,14 @@ class DhisPeriodUtils(
             PeriodType.FinancialApril,
             PeriodType.FinancialJuly,
             PeriodType.FinancialOct,
-            -> formattedDate = periodString.format(
-                SimpleDateFormat(MONTHLY_FORMAT_EXPRESSION, locale).format(period.startDate()!!),
-                SimpleDateFormat(MONTHLY_FORMAT_EXPRESSION, locale).format(period.endDate()!!),
-            )
-            PeriodType.Yearly -> {
-                // Eyeseetea customization - Show year-nextYear for yearly period
-    /*            formattedDate =
-                    SimpleDateFormat(YEARLY_FORMAT_EXPRESSION, locale).format(period.startDate()!!)*/
-                val formattedStartDate =
-                    SimpleDateFormat(YEARLY_FORMAT_EXPRESSION, locale).format(period.startDate()!!)
-                val formattedEndDate = (formattedStartDate.toInt() + 1).toString()
-
-                formattedDate = "$formattedStartDate-$formattedEndDate"
-            }
+            ->
+                formattedDate =
+                    periodString.format(
+                        SimpleDateFormat(MONTHLY_FORMAT_EXPRESSION, locale).format(period.startDate()!!),
+                        SimpleDateFormat(MONTHLY_FORMAT_EXPRESSION, locale).format(period.endDate()!!),
+                    )
+            PeriodType.Yearly ->
+                formattedDate = formatYearlyPeriodForSpocc(period.startDate()!!, locale)
             else ->
                 formattedDate =
                     SimpleDateFormat(SIMPLE_DATE_FORMAT, locale).format(period.startDate()!!)
@@ -90,7 +91,10 @@ class DhisPeriodUtils(
         return WordUtils.capitalize(formattedDate)
     }
 
-    private fun weekOfTheYear(periodType: PeriodType, periodId: String): Int {
+    private fun weekOfTheYear(
+        periodType: PeriodType,
+        periodId: String,
+    ): Int {
         val pattern =
             Pattern.compile(periodType.pattern)
         val matcher = pattern.matcher(periodId)
@@ -100,4 +104,15 @@ class DhisPeriodUtils(
         }
         return weekNumber
     }
+}
+
+// EyeSeeTea customization - Session format ui like in server year-nextYear
+// Base behavior: yearly periods are rendered as the start year only.
+private fun formatYearlyPeriodForSpocc(
+    startDate: Date,
+    locale: Locale,
+): String {
+    val formattedStartDate = SimpleDateFormat(YEARLY_FORMAT_EXPRESSION, locale).format(startDate)
+    val formattedEndDate = (formattedStartDate.toInt() + 1).toString()
+    return "$formattedStartDate-$formattedEndDate"
 }

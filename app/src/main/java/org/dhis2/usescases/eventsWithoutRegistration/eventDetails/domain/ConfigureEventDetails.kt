@@ -6,7 +6,7 @@ import org.dhis2.commons.data.EventCreationType
 import org.dhis2.commons.data.EventCreationType.REFERAL
 import org.dhis2.commons.team.dateToYearlyPeriod
 import org.dhis2.commons.resources.MetadataIconProvider
-import org.dhis2.ui.toColor
+import org.dhis2.mobile.commons.extensions.toColor
 import org.dhis2.usescases.eventsWithoutRegistration.eventDetails.data.EventDetailsRepository
 import org.dhis2.usescases.eventsWithoutRegistration.eventDetails.models.EventDetails
 import org.dhis2.usescases.eventsWithoutRegistration.eventDetails.providers.EventDetailResourcesProvider
@@ -26,7 +26,6 @@ class ConfigureEventDetails(
     private val enrollmentStatus: EnrollmentStatus?,
     private val metadataIconProvider: MetadataIconProvider,
 ) {
-
     operator fun invoke(
         selectedDate: Date?,
         selectedOrgUnit: String?,
@@ -34,32 +33,36 @@ class ConfigureEventDetails(
         isCatComboCompleted: Boolean,
         coordinates: String?,
     ): Flow<EventDetails> {
-        val isEventCompleted = isCompleted(
-            selectedDate = selectedDate,
-            selectedOrgUnit = selectedOrgUnit,
-            isCatComboCompleted = isCatComboCompleted,
-        )
+        val isEventCompleted =
+            isCompleted(
+                selectedDate = selectedDate,
+                selectedOrgUnit = selectedOrgUnit,
+                isCatComboCompleted = isCatComboCompleted,
+            )
         val storedEvent = repository.getEvent()
         val programStage = repository.getProgramStage()
         val program = repository.getProgram()
 
-        val isOrgUnitActive = if (selectedDate == null || selectedOrgUnit == null) true
-        else dateToYearlyPeriod(selectedDate)?.let {
-            repository.isOrgUnitActive(
-                selectedOrgUnit, it
-            )
-        }?: true
+        val isOrgUnitActive =
+            if (selectedDate == null || selectedOrgUnit == null) {
+                true
+            } else {
+                dateToYearlyPeriod(selectedDate)?.let {
+                    repository.isOrgUnitActive(selectedOrgUnit, it)
+                } ?: true
+            }
 
         return flowOf(
             EventDetails(
                 name = programStage?.displayName(),
                 description = programStage?.displayDescription(),
-                metadataIconData = programStage?.style()?.let {
-                    metadataIconProvider(
-                        programStage.style(),
-                        program?.style()?.color()?.toColor() ?: SurfaceColor.Primary,
-                    )
-                },
+                metadataIconData =
+                    programStage?.style()?.let {
+                        metadataIconProvider(
+                            programStage.style(),
+                            program?.style()?.color()?.toColor() ?: SurfaceColor.Primary,
+                        )
+                    },
                 enabled = isEnable(storedEvent),
                 isEditable = isEditable(),
                 editableReason = getEditableReason(),
@@ -71,28 +74,28 @@ class ConfigureEventDetails(
                 isActionButtonVisible = isActionButtonVisible(isEventCompleted, storedEvent, isOrgUnitActive),
                 actionButtonText = getActionButtonText(),
                 canReopen = repository.getCanReopen(),
-                //Eyeseetea customization
-                isOrgUnitActive = isOrgUnitActive ,
+                // EyeSeeTea customization - Validate or hide orgunit by Teamprofile
+                // Base behavior: event details do not expose org unit active/inactive validation by Teamprofile.
+                isOrgUnitActive = isOrgUnitActive,
                 program = repository.getProgram()?.uid() ?: "",
             ),
         )
     }
 
-    private fun getActionButtonText(): String {
-        return repository.getEditableStatus()?.let {
+    private fun getActionButtonText(): String =
+        repository.getEditableStatus()?.let {
             when (it) {
                 is Editable -> resourcesProvider.provideButtonUpdate()
                 is NonEditable -> resourcesProvider.provideButtonCheck()
             }
         } ?: resourcesProvider.provideButtonNext()
-    }
 
     private fun isActionButtonVisible(
         isEventCompleted: Boolean,
         storedEvent: Event?,
-        isOrgUnitActive: Boolean
-    ): Boolean {
-        return if (!isEventCompleted) {
+        isOrgUnitActive: Boolean,
+    ): Boolean =
+        if (!isEventCompleted) {
             false
         } else if (!isOrgUnitActive) {
             false
@@ -102,7 +105,6 @@ class ConfigureEventDetails(
                     repository.getEditableStatus() !is NonEditable
             } ?: true
         }
-    }
 
     fun reopenEvent() = repository.reopenEvent()
 
@@ -114,9 +116,7 @@ class ConfigureEventDetails(
         !selectedOrgUnit.isNullOrEmpty() &&
         isCatComboCompleted
 
-    private fun isEditable(): Boolean {
-        return getEditableReason() == null
-    }
+    private fun isEditable(): Boolean = getEditableReason() == null
 
     private fun getEditableReason(): String? {
         repository.getEditableStatus().let {
@@ -127,9 +127,8 @@ class ConfigureEventDetails(
         return null
     }
 
-    private fun isEnable(storedEvent: Event?): Boolean {
-        return storedEvent?.let {
+    private fun isEnable(storedEvent: Event?): Boolean =
+        storedEvent?.let {
             repository.getEditableStatus() is Editable
         } ?: true
-    }
 }

@@ -11,49 +11,51 @@ internal class GetDataValueData(
     private val attrOptionComboUid: String,
     private val dataSetInstanceRepository: DataSetInstanceRepository,
 ) {
-
     suspend operator fun invoke(
         dataElementUids: List<String>,
         pivotedCategoryUid: String?,
-    ): Map<Pair<String, String>, DataValueData> {
-        return dataSetInstanceRepository.values(
-            periodId = periodId,
-            orgUnitUid = orgUnitUid,
-            attrOptionComboUid = attrOptionComboUid,
-            dataElementUids = dataElementUids,
-            pivotedCategoryUid = pivotedCategoryUid,
-        ).associate { (key, value) ->
-            key to DataValueData(
-                // EyeSeeTea customization - multiple SDS org unit selection
-                //value = value?.userFriendlyValue(key.first),
-                value = createDisplayValue(dataSetInstanceRepository, key.first, value),
-                conflicts = conflicts(key.first, key.second),
-                legendColor = dataSetInstanceRepository.getLegend(
-                    dataElementUid = key.first,
-                    periodId = periodId,
-                    orgUnitUid = orgUnitUid,
-                    attrOptionComboUid = attrOptionComboUid,
-                    categoryOptionComboUid = key.second,
-                )?.first,
-            )
-        }
-    }
+    ): Map<Pair<String, String>, DataValueData> =
+        dataSetInstanceRepository
+            .values(
+                periodId = periodId,
+                orgUnitUid = orgUnitUid,
+                attrOptionComboUid = attrOptionComboUid,
+                dataElementUids = dataElementUids,
+                pivotedCategoryUid = pivotedCategoryUid,
+            ).associate { (key, value) ->
+                key to
+                    DataValueData(
+                        // EyeSeeTea customization - multiple SDS org unit selection
+                        value = createDisplayValue(dataSetInstanceRepository, key.first, value),
+                        conflicts = conflicts(key.first, key.second),
+                        legendColor =
+                            dataSetInstanceRepository
+                                .getLegend(
+                                    dataElementUid = key.first,
+                                    periodId = periodId,
+                                    orgUnitUid = orgUnitUid,
+                                    attrOptionComboUid = attrOptionComboUid,
+                                    categoryOptionComboUid = key.second,
+                                )?.first,
+                    )
+            }
 
     private suspend fun conflicts(
         dataElementUid: String,
         categoryOptionComboUid: String,
-    ) = dataSetInstanceRepository.conflicts(
-        dataSetUid = datasetUid,
-        periodId = periodId,
-        orgUnitUid = orgUnitUid,
-        attrOptionComboUid = attrOptionComboUid,
-        dataElementUid = dataElementUid,
-        categoryOptionComboUid = categoryOptionComboUid,
-    ).let { (errors, warnings) ->
+    ) = dataSetInstanceRepository
+        .conflicts(
+            dataSetUid = datasetUid,
+            periodId = periodId,
+            orgUnitUid = orgUnitUid,
+            attrOptionComboUid = attrOptionComboUid,
+            dataElementUid = dataElementUid,
+            categoryOptionComboUid = categoryOptionComboUid,
+        ).let { (errors, warnings) ->
 
-        Conflicts(
-            errors = errors,
-            warnings = warnings,
-        )
-    }
+            Conflicts(
+                errors = errors,
+                warnings = warnings,
+            )
+        }
 }

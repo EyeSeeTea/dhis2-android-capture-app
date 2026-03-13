@@ -49,7 +49,11 @@ class EventCaptureFormPresenter(
 ) {
     fun showOrHideSaveButton() {
         val isEditable =
-            d2.eventModule().eventService().getEditableStatus(eventUid = eventUid).blockingGet()
+            d2
+                .eventModule()
+                .eventService()
+                .getEditableStatus(eventUid = eventUid)
+                .blockingGet()
 
         when (isEditable) {
             is EventEditableStatus.Editable -> {
@@ -69,20 +73,31 @@ class EventCaptureFormPresenter(
     }
 
     private fun configureNonEditableMessage(eventNonEditableReason: EventNonEditableReason) {
-        val (reason, canBeReOpened) = when (eventNonEditableReason) {
-            EventNonEditableReason.BLOCKED_BY_COMPLETION -> resourceManager.getString(R.string.blocked_by_completion) to canReopen()
-            EventNonEditableReason.EXPIRED -> resourceManager.getString(R.string.edition_expired) to false
-            EventNonEditableReason.NO_DATA_WRITE_ACCESS -> resourceManager.getString(R.string.edition_no_write_access) to false
-            EventNonEditableReason.EVENT_DATE_IS_NOT_IN_ORGUNIT_RANGE -> resourceManager.getString(R.string.event_date_not_in_orgunit_range) to false
-            EventNonEditableReason.NO_CATEGORY_COMBO_ACCESS -> resourceManager.getString(R.string.edition_no_catcombo_access) to false
-            EventNonEditableReason.ENROLLMENT_IS_NOT_OPEN -> resourceManager.formatWithEnrollmentLabel(
-                d2.eventModule().events().uid(eventUid).blockingGet()?.program(),
-                R.string.edition_enrollment_is_no_open_V2,
-                1,
-            ) to false
+        val (reason, canBeReOpened) =
+            when (eventNonEditableReason) {
+                EventNonEditableReason.BLOCKED_BY_COMPLETION -> resourceManager.getString(R.string.blocked_by_completion) to canReopen()
+                EventNonEditableReason.EXPIRED -> resourceManager.getString(R.string.edition_expired) to false
+                EventNonEditableReason.NO_DATA_WRITE_ACCESS -> resourceManager.getString(R.string.edition_no_write_access) to false
+                EventNonEditableReason.EVENT_DATE_IS_NOT_IN_ORGUNIT_RANGE ->
+                    resourceManager.getString(R.string.event_date_not_in_orgunit_range) to
+                        false
+                EventNonEditableReason.NO_CATEGORY_COMBO_ACCESS -> resourceManager.getString(R.string.edition_no_catcombo_access) to false
+                EventNonEditableReason.ENROLLMENT_IS_NOT_OPEN ->
+                    resourceManager.formatWithEnrollmentLabel(
+                        d2
+                            .eventModule()
+                            .events()
+                            .uid(eventUid)
+                            .blockingGet()
+                            ?.program(),
+                        R.string.edition_enrollment_is_no_open_V2,
+                        1,
+                    ) to false
 
-            EventNonEditableReason.ORGUNIT_IS_NOT_IN_CAPTURE_SCOPE -> resourceManager.getString(R.string.edition_orgunit_capture_scope) to false
-        }
+                EventNonEditableReason.ORGUNIT_IS_NOT_IN_CAPTURE_SCOPE ->
+                    resourceManager.getString(R.string.edition_orgunit_capture_scope) to
+                        false
+            }
         view.showNonEditableMessage(reason, canBeReOpened)
     }
 
@@ -104,24 +119,36 @@ class EventCaptureFormPresenter(
         }
     }
 
-    private fun canReopen(): Boolean = getEvent()?.let {
-        it.status() == EventStatus.COMPLETED && hasReopenAuthority()
-    } ?: false
+    private fun canReopen(): Boolean =
+        getEvent()?.let {
+            it.status() == EventStatus.COMPLETED && hasReopenAuthority()
+        } ?: false
 
-    fun getEvent(): Event? {
-        return d2.eventModule().events().uid(eventUid).blockingGet()
-    }
+    fun getEvent(): Event? =
+        d2
+            .eventModule()
+            .events()
+            .uid(eventUid)
+            .blockingGet()
 
-    fun getEventStatus(eventUid: String): EventStatus? {
-        return d2.eventModule().events().uid(eventUid).blockingGet()?.status()
-    }
+    fun getEventStatus(eventUid: String): EventStatus? =
+        d2
+            .eventModule()
+            .events()
+            .uid(eventUid)
+            .blockingGet()
+            ?.status()
 
-    private fun hasReopenAuthority(): Boolean = d2.userModule().authorities()
-        .byName().`in`(AUTH_UNCOMPLETE_EVENT, AUTH_ALL)
-        .one()
-        .blockingExists()
+    private fun hasReopenAuthority(): Boolean =
+        d2
+            .userModule()
+            .authorities()
+            .byName()
+            .`in`(AUTH_UNCOMPLETE_EVENT, AUTH_ALL)
+            .one()
+            .blockingExists()
 
-    //EyeSeeTea customization
+    // EyeSeeTea customization - Select UPG
     private var upgUidUIModel: FieldUiModel? = null
     private var upgNameUIModel: FieldUiModel? = null
     private var savingSelectedUPG = false
@@ -143,6 +170,8 @@ class EventCaptureFormPresenter(
         return if (isEventFromEnrolment) {
             fields.map {
                 if (it.uid == EVENT_ORG_UNIT_UID) {
+                    // EyeSeeTea customization - Avoid change org unit in tracker events
+                    // Base behavior: allow editing the event org unit field.
                     it.setEditable(false)
                 } else {
                     it
@@ -155,6 +184,8 @@ class EventCaptureFormPresenter(
                         dateToYearlyPeriod(date) ?: ""
                     } ?: ""
 
+                    // EyeSeeTea customization - Validate or hide orgunit by Teamprofile
+                    // Base behavior: org unit availability is not filtered by Teamprofile and event period.
                     it.setOrgUnitDataValidation(ValidationData(programUid, period))
                 } else {
                     it
@@ -169,7 +200,9 @@ class EventCaptureFormPresenter(
 
         val programWithUPG = programsWithUPG.find { it.programUid == programUid } ?: return fields
 
-        //EyeSeeTea customization - Remove UPG field from the form
+        // EyeSeeTea customization - Select UPG
+        // Base behavior: keep the UPG UID field visible and editable as a regular form field.
+        // SPOCC behavior: choose UPG through a dialog, so the raw field stays hidden in the form.
         val finalFields = fields
             .map { field ->
                 if (field.uid == programWithUPG.upgUid) {
