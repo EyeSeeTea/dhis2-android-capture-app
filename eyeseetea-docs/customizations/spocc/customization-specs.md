@@ -6,6 +6,7 @@ This file is the functional reference for SPOCC.
 
 Use this file for:
 - customization title
+- current lifecycle status
 - expected business behavior
 - intent of the customization
 
@@ -18,6 +19,9 @@ Do not use this file for:
 
 ### 1. Hide programs and datasets without write data access
 
+Status:
+- `active`
+
 Functional intent:
 - Users should only see programs and datasets where they have data write access.
 
@@ -27,6 +31,9 @@ Expected behavior:
 - The user should not be invited into a flow they cannot edit.
 
 ### 2. Select UPG
+
+Status:
+- `active`
 
 Functional intent:
 - In specific SPOCC event flows, the user must select a UPG value using a controlled selector instead of normal free form editing.
@@ -38,6 +45,9 @@ Expected behavior:
 
 ### 3. Avoid resize images
 
+Status:
+- `active`
+
 Functional intent:
 - Images should preserve original size/quality instead of being resized by app-side processing.
 
@@ -45,7 +55,10 @@ Expected behavior:
 - Image capture/upload flows avoid automatic downsizing when SPOCC requires original images.
 - The chosen behavior must be compatible with the current base SDK/app implementation.
 
-### 4. Session format UI like in server year-nextYear
+### 4. Session format ui like in server year-nextYear
+
+Status:
+- `active`
 
 Functional intent:
 - SPOCC wants yearly periods displayed in the same style used by the server, such as `2024-2025`.
@@ -56,6 +69,9 @@ Expected behavior:
 
 ### 5. Hide Schedule menu in timeline view
 
+Status:
+- `active`
+
 Functional intent:
 - Users should not see schedule actions in timeline mode when that action is not valid or desired for SPOCC.
 
@@ -65,6 +81,9 @@ Expected behavior:
 
 ### 6. Avoid change org unit in tracker events
 
+Status:
+- `active`
+
 Functional intent:
 - Tracker event creation/edit flows should keep the event bound to the TEI/enrollment org unit instead of allowing the user to change it.
 
@@ -73,6 +92,9 @@ Expected behavior:
 - The event uses the TEI/enrollment org unit directly.
 
 ### 7. Validate or hide orgunit by Teamprofile
+
+Status:
+- `active`
 
 Functional intent:
 - Org units should be filtered or blocked according to Team Profile rules and active-period constraints.
@@ -84,6 +106,9 @@ Expected behavior:
 
 ### 8. Hide re-open menu always
 
+Status:
+- `active`
+
 Functional intent:
 - The re-open action should not be available in the affected SPOCC menus.
 
@@ -92,6 +117,9 @@ Expected behavior:
 - Users cannot trigger the hidden action through the normal UI.
 
 ### 9. Team change request
+
+Status:
+- `active`
 
 Functional intent:
 - SPOCC has a dedicated business flow to create and manage team change requests.
@@ -102,13 +130,17 @@ Expected behavior:
 
 ### 10. Multiple SDS org unit selection
 
+Status:
+- `active`
+
 Functional intent:
 - SPOCC supports selecting multiple SDS org units in the affected data entry flow.
-- Only valid SDS org units should appear in the org unit selector. User select an orgunit, look for country level (4) and find level 5 that exiosts in SDS org unit group (yA9VnZi6g7f)
+- Only valid SDS org units should appear in the org unit selector.
 
 Expected behavior:
 - The relevant input and storage logic allow multiple SDS org units.
 - Display, mapping, and validation behave consistently with multi-selection.
+- When the user selects an org unit, the flow resolves from country level 4 to a level 5 org unit that exists in the SDS org unit group `yA9VnZi6g7f`.
 
 ## Maintenance rule
 
@@ -118,6 +150,5 @@ When a customization is confirmed to still exist after an upgrade:
 - keep its minimal manual validation in `eyeseetea-docs/upgrade/spocc/upgrade-validation-checklist.md`
 
 When a customization is removed or absorbed by the base branch:
-- update this file accordingly
+- update the status here explicitly
 - do not leave obsolete functional specs as if they were still active
- 

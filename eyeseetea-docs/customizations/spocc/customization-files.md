@@ -2,8 +2,17 @@
 
 Technical inventory of the SPOCC customization surface on top of `develop-eyeseetea`.
 
+## Mandatory header
+
+- Client: `spocc`
+- Flavor: `spOCC`
+- Base branch: `develop-eyeseetea`
+- Base commit: `7901840c8`
+- Generated on: `2026-03-16`
+- Working tree status: `dirty`
+
 This file is intentionally separate from `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md`:
-- `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md` documents the shared EyeSeeTea reference branch.
+- `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md` documents the shared EyeSeeTea reference branch
 - this file documents the SPOCC-specific implementation points that still survive in code
 
 ## Scope
@@ -14,8 +23,9 @@ This inventory is based on:
 - current diffs against `develop-eyeseetea` used only as supporting evidence
 
 This file is not a full raw diff dump. Its goal is to answer:
-- which functional customizations still exist
+- which confirmed functional customizations still exist
 - where they are implemented
+- what their current technical status is
 
 ## 1. Direct SPOCC flavor surface
 
@@ -38,21 +48,28 @@ These files belong to the SPOCC flavor itself.
 
 ## 2. Shared-code customization implementation points
 
-These are the current shared files where SPOCC customization logic is explicitly implemented.
+### 2.1 Hide programs and datasets without write data access
 
-### 2.1 Only programs and datasets with write access
+Status: `active`
 
+Main implementation points:
 - `app/src/main/java/org/dhis2/data/dhislogic/DhisProgramUtils.kt`
 - `app/src/main/java/org/dhis2/usescases/main/program/ProgramRepositoryImpl.kt`
 
+Technical note:
+- shared selectors still differ from `develop-eyeseetea` to filter out items without write access.
+
 ### 2.2 Select UPG
 
+Status: `active`
+
+Main implementation points:
 - `app/src/main/java/org/dhis2/usescases/eventsWithoutRegistration/eventCapture/eventCaptureFragment/EventCaptureFormFragment.kt`
 - `app/src/main/java/org/dhis2/usescases/eventsWithoutRegistration/eventCapture/eventCaptureFragment/EventCaptureFormPresenter.kt`
 - `form/src/main/java/org/dhis2/form/ui/Form.kt`
 - `app/src/main/res/values/strings.xml`
 
-Supporting SPOCC-specific UPG flow files differing from `develop-eyeseetea`:
+Supporting files in the same workflow:
 - `app/src/main/java/org/dhis2/usescases/eventsWithoutRegistration/eventCapture/eventCaptureFragment/EventCaptureFormView.kt`
 - `app/src/main/java/org/dhis2/usescases/eventsWithoutRegistration/eventCapture/eventCaptureFragment/upg/SelectUPGDialogComponent.kt`
 - `app/src/main/java/org/dhis2/usescases/eventsWithoutRegistration/eventCapture/eventCaptureFragment/upg/SelectUPGDialogModule.kt`
@@ -68,25 +85,40 @@ Supporting SPOCC-specific UPG flow files differing from `develop-eyeseetea`:
 - `app/src/main/res/layout/dialog_select_upg.xml`
 - `app/src/main/res/layout/item_upg.xml`
 
+Technical note:
+- the UPG selector flow still lives in shared code and remains separate from the baseline form behavior.
+
 ### 2.3 Hide Schedule menu in timeline view
 
+Status: `active`
+
+Main implementation points:
 - `app/src/main/java/org/dhis2/usescases/teiDashboard/domain/GetNewEventCreationTypeOptions.kt`
 
-Note:
-- the current inline comment in code says `Not show schedule events when programStage is null`; this implementation should still be treated as the SPOCC customization titled `Hide Schedule menu in timeline view`
+Technical note:
+- the timeline menu still removes the schedule action for SPOCC-specific behavior.
 
 ### 2.4 Avoid change org unit in tracker events
 
+Status: `active`
+
+Main implementation points:
 - `app/src/main/java/org/dhis2/usescases/eventsWithoutRegistration/eventCapture/eventCaptureFragment/EventCaptureFormPresenter.kt`
 - `app/src/main/java/org/dhis2/usescases/programStageSelection/ProgramStageSelectionActivity.kt`
 - `app/src/main/java/org/dhis2/usescases/teiDashboard/dashboardfragments/teidata/TEIDataFragment.kt`
 - `app/src/main/java/org/dhis2/usescases/teiDashboard/dashboardfragments/teidata/TEIDataPresenter.kt`
 
-Supporting file differing in the same flow:
+Supporting files in the same workflow:
 - `app/src/main/java/org/dhis2/usescases/eventsWithoutRegistration/eventInitial/EventInitialActivity.kt`
+
+Technical note:
+- tracker event flows still override the baseline org unit selection behavior.
 
 ### 2.5 Validate or hide orgunit by Teamprofile
 
+Status: `active`
+
+Main implementation points:
 - `app/src/main/java/org/dhis2/usescases/enrollment/EnrollmentActivity.kt`
 - `app/src/main/java/org/dhis2/usescases/enrollment/EnrollmentPresenterImpl.kt`
 - `app/src/main/java/org/dhis2/usescases/enrollment/FormInjector.kt`
@@ -107,7 +139,7 @@ Supporting file differing in the same flow:
 - `form/src/main/java/org/dhis2/form/ui/event/RecyclerViewUiEvents.kt`
 - `app/src/main/res/values/strings.xml`
 
-Supporting files differing in the same customization area:
+Supporting files in the same workflow:
 - `app/src/main/java/org/dhis2/usescases/eventsWithoutRegistration/eventDetails/models/EventDetails.kt`
 - `app/src/main/java/org/dhis2/usescases/eventsWithoutRegistration/eventDetails/providers/InputFieldsProvider.kt`
 - `app/src/main/java/org/dhis2/usescases/eventsWithoutRegistration/eventDetails/ui/EventDetailsViewModel.kt`
@@ -118,28 +150,52 @@ Supporting files differing in the same customization area:
 - `commons/src/main/java/org/dhis2/commons/team/dateToYearlyPeriod.kt`
 - `commons/src/main/java/org/dhis2/commons/team/isActiveOrgUnit.kt`
 
+Technical note:
+- Teamprofile validation still drives org unit visibility and rejection rules across enrollment, event, and dataset flows.
+
 ### 2.6 Hide re-open menu always
 
+Status: `active`
+
+Main implementation points:
 - `app/src/main/java/org/dhis2/usescases/teiDashboard/ui/TeiDashboardMenu.kt`
+
+Technical note:
+- the dashboard menu still suppresses the re-open action for SPOCC.
 
 ### 2.7 Session format ui like in server year-nextYear
 
+Status: `active`
+
+Main implementation points:
 - `commons/src/main/java/org/dhis2/commons/resources/DhisPeriodUtils.kt`
 - `app/src/test/java/org/dhis2/data/dhislogic/DhisPeriodUtilsTest.kt`
 
+Technical note:
+- yearly period labels still differ from the baseline format and require dedicated coverage.
+
 ### 2.8 Avoid resize images
 
+Status: `active`
+
+Main implementation points:
 - `app/src/main/java/org/dhis2/data/server/ServerModule.kt`
+
+Technical note:
+- image upload configuration still prevents the baseline resize behavior.
 
 ### 2.9 Team change request
 
+Status: `active`
+
+Main implementation points:
 - `aggregates/src/androidMain/kotlin/org/dhis2/mobile/aggregates/data/DataSetInstanceRepositoryImpl.kt`
 - `aggregates/src/commonMain/kotlin/org/dhis2/mobile/aggregates/data/DataSetInstanceRepository.kt`
 - `aggregates/src/commonMain/kotlin/org/dhis2/mobile/aggregates/model/DataSetDetails.kt`
 - `aggregates/src/commonMain/kotlin/org/dhis2/mobile/aggregates/ui/states/DataSetModalDialogUiState.kt`
 - `aggregates/src/commonMain/kotlin/org/dhis2/mobile/aggregates/ui/viewModel/DataSetTableViewModel.kt`
 
-Supporting files differing in the same workflow:
+Supporting files in the same workflow:
 - `aggregates/src/commonMain/composeResources/values/strings.xml`
 - `aggregates/src/commonMain/kotlin/org/dhis2/mobile/aggregates/di/AggregateModule.kt`
 - `aggregates/src/commonMain/kotlin/org/dhis2/mobile/aggregates/ui/provider/DataSetModalDialogProvider.kt`
@@ -147,8 +203,14 @@ Supporting files differing in the same workflow:
 - `aggregates/src/commonMain/kotlin/org/dhis2/mobile/aggregates/ui/component/ValidationBottomSheet.kt`
 - `aggregates/build.gradle.kts`
 
+Technical note:
+- aggregate dataset flows still contain a dedicated team change request path not present in the shared baseline.
+
 ### 2.10 Multiple SDS org unit selection
 
+Status: `active`
+
+Main implementation points:
 - `aggregates/src/androidMain/kotlin/org/dhis2/mobile/aggregates/data/DataSetInstanceRepositoryImpl.kt`
 - `aggregates/src/androidMain/kotlin/org/dhis2/mobile/aggregates/ui/UiActionHandlerImpl.kt`
 - `aggregates/src/commonMain/kotlin/org/dhis2/mobile/aggregates/data/DataSetInstanceRepository.kt`
@@ -162,39 +224,42 @@ Supporting files differing in the same workflow:
 - `commonskmm/src/commonMain/kotlin/org/dhis2/mobile/commons/input/UiAction.kt`
 - `commonskmm/src/commonMain/kotlin/org/dhis2/mobile/commons/orgunit/OrgUnitSelectorScope.kt`
 
-Supporting files differing in the same workflow:
+Supporting files in the same workflow:
 - `aggregates/src/androidMain/kotlin/org/dhis2/mobile/aggregates/data/mappers/DataSetInstanceToDataSetDetails.kt`
 - `aggregates/src/commonMain/kotlin/org/dhis2/mobile/aggregates/domain/EyeSeeTeaConstants.kt`
 - `aggregates/src/commonMain/kotlin/org/dhis2/mobile/aggregates/ui/provider/ResourceManager.kt`
 - `aggregates/src/commonMain/kotlin/org/dhis2/mobile/aggregates/ui/states/DataSetModalDialogUiState.kt`
 - `commonskmm/src/commonMain/kotlin/org/dhis2/mobile/commons/input/UiActionHandler.kt`
 
-## 3. Shared drift still differing but not mapped to a documented customization title
+Technical note:
+- the dataset input flow still supports multi-selection and SDS-specific resolution beyond baseline behavior.
 
-These files still differ from `develop-eyeseetea`, but the current code comments do not map them cleanly to a documented SPOCC customization title. They should be reviewed case by case during upgrades.
+## 3. Shared drift still differing
 
-- `app/build.gradle.kts`
-- `app/src/main/java/org/dhis2/data/forms/ScanCaptureActivity.kt`
-- `app/src/main/java/org/dhis2/data/forms/ScanCaptureManager.kt`
-- `app/src/main/java/org/dhis2/data/forms/ScanContract.kt`
-- `app/src/main/java/org/dhis2/data/user/UserComponent.java`
-- `app/src/main/java/org/dhis2/usescases/about/AboutFragment.kt`
-- `app/src/main/java/org/dhis2/usescases/datasets/datasetInitial/DataSetInitialActivity.java`
-- `app/src/main/java/org/dhis2/usescases/datasets/datasetInitial/DataSetInitialContract.java`
-- `app/src/main/java/org/dhis2/usescases/datasets/datasetInitial/DataSetInitialModel.kt`
-- `app/src/main/java/org/dhis2/usescases/datasets/datasetInitial/DataSetInitialModule.java`
-- `app/src/main/java/org/dhis2/usescases/datasets/datasetInitial/DataSetInitialPresenter.kt`
-- `app/src/main/java/org/dhis2/usescases/datasets/datasetInitial/DataSetInitialRepositoryImpl.java`
-- `app/src/main/res/drawable/ic_alert.xml`
-- `app/src/main/res/drawable/ic_error_outline.xml`
-- `app/src/main/res/drawable/ic_saved_check.xml`
-- `app/src/test/java/org/dhis2/usescases/datasets/dataSetInitial/DataSetInitialPresenterTest.kt`
-- `app/src/test/java/org/dhis2/usescases/datasets/dataSetInitial/DataSetInitialRepositoryImplTest.kt`
-- `app/src/test/java/org/dhis2/usescases/eventsWithoutRegistration/eventDetails/domain/ConfigureEventDetailsTest.kt`
-- `app/src/test/java/org/dhis2/usescases/main/program/ProgramRepositoryImplTest.kt`
-- `commons/src/main/java/org/dhis2/commons/Constants.java`
-- `commonskmm/build.gradle.kts`
-- `form/src/main/java/org/dhis2/form/ui/provider/inputfield/FieldProvider.kt`
+Use this section only for temporary or still-unclassified differences.
+
+- `app/build.gradle.kts` - pending classification because it still differs but no confirmed customization title has been assigned.
+- `app/src/main/java/org/dhis2/data/forms/ScanCaptureActivity.kt` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/main/java/org/dhis2/data/forms/ScanCaptureManager.kt` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/main/java/org/dhis2/data/forms/ScanContract.kt` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/main/java/org/dhis2/data/user/UserComponent.java` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/main/java/org/dhis2/usescases/about/AboutFragment.kt` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/main/java/org/dhis2/usescases/datasets/datasetInitial/DataSetInitialActivity.java` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/main/java/org/dhis2/usescases/datasets/datasetInitial/DataSetInitialContract.java` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/main/java/org/dhis2/usescases/datasets/datasetInitial/DataSetInitialModel.kt` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/main/java/org/dhis2/usescases/datasets/datasetInitial/DataSetInitialModule.java` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/main/java/org/dhis2/usescases/datasets/datasetInitial/DataSetInitialPresenter.kt` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/main/java/org/dhis2/usescases/datasets/datasetInitial/DataSetInitialRepositoryImpl.java` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/main/res/drawable/ic_alert.xml` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/main/res/drawable/ic_error_outline.xml` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/main/res/drawable/ic_saved_check.xml` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/test/java/org/dhis2/usescases/datasets/dataSetInitial/DataSetInitialPresenterTest.kt` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/test/java/org/dhis2/usescases/datasets/dataSetInitial/DataSetInitialRepositoryImplTest.kt` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/test/java/org/dhis2/usescases/eventsWithoutRegistration/eventDetails/domain/ConfigureEventDetailsTest.kt` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `app/src/test/java/org/dhis2/usescases/main/program/ProgramRepositoryImplTest.kt` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `commons/src/main/java/org/dhis2/commons/Constants.java` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `commonskmm/build.gradle.kts` - pending classification because the surviving diff has not yet been mapped to a functional customization.
+- `form/src/main/java/org/dhis2/form/ui/provider/inputfield/FieldProvider.kt` - pending classification because the surviving diff has not yet been mapped to a functional customization.
 
 ## 4. Notes
 

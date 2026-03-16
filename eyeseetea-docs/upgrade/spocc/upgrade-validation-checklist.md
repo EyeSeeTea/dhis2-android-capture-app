@@ -26,7 +26,7 @@ Expected result:
 - programs without write access are not shown
 - datasets without write access are not shown
 
-## 2. Select UPG 
+## 2. Select UPG
 
 Preconditions:
 - Use a flow such as End of Season Report or Season Plan where UPG is required.
@@ -53,7 +53,7 @@ Manual flow:
 Expected result:
 - the app does not apply unintended client-side resize behavior
 
-## 4. Session format UI like in server year-nextYear
+## 4. Session format ui like in server year-nextYear
 
 Preconditions:
 - Open a screen that shows yearly periods.
@@ -139,7 +139,7 @@ Manual flow:
 1. Open the Team Profile.
 2. Open the org unit selector for SDS.
 3. Select one org unit and verify that the selector only offers valid SDS org units.
-4. When selecting an org unit, verify that the flow resolves from country level (4) to a level 5 org unit that exists in the SDS org unit group `yA9VnZi6g7f`.
+4. When selecting an org unit, verify that the flow resolves from country level 4 to a level 5 org unit that exists in the SDS org unit group `yA9VnZi6g7f`.
 5. Select multiple org units.
 6. Reopen the field or return to the screen.
 
