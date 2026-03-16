@@ -430,7 +430,7 @@ class TEIDataPresenter(
                 else -> view.goToEventInitial(eventCreationType, stage)
             }
         } else {
-            when (eventCreationType) {
+             when (eventCreationType) {
                 EventCreationType.REFERAL,
                 EventCreationType.ADDNEW,
                 -> {
@@ -445,7 +445,6 @@ class TEIDataPresenter(
                     )
                 }
             }
-            createEventInEnrollment(eventCreationType)
         }
     }
 
