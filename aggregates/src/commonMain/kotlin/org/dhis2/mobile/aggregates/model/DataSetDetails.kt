@@ -9,7 +9,7 @@ internal data class DataSetDetails(
     val isCompleted: Boolean,
     val edition: DataSetEdition,
 
-    // EyeSeeTea customization - Create Change Team Request
+    // EyeSeeTea customization - Team change request
     val dataSetUid: String,
 )
 

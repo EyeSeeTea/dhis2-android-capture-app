@@ -63,7 +63,7 @@ internal class ProgramRepositoryImpl(
                     d2
                         .dataSetModule()
                         .dataSets()
-                        // EyeSeeTea customization - Only datasets with write access
+                        // EyeSeeTea customization - Hide programs and datasets without write data access
                         .byAccessDataWrite().isTrue
                         .uid(it.dataSetUid())
                         .blockingGet()

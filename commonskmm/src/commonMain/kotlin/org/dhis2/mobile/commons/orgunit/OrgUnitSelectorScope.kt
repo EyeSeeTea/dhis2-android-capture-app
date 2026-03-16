@@ -36,7 +36,7 @@ sealed class OrgUnitSelectorScope(
         val dataSetUid: String,
     ) : OrgUnitSelectorScope(dataSetUid)
 
-    // EyeSeeTea customization - multiple SDS org unit selection
+    // EyeSeeTea customization - Multiple SDS org unit selection
     // SPOCC behavior: scope for team SDS org unit selector; filters org units by team/period.
     @Serializable
     data class SdsTeamScope(

@@ -552,7 +552,7 @@ internal class DataSetTableViewModel(
                 }
 
                 is UiAction.OnOpenOrgUnitTree -> {
-                    // EyeSeeTea customization - multiple SDS org unit selection
+                    // EyeSeeTea customization - Multiple SDS org unit selection
                     // SPOCC behavior: preselected org units from stored comma-separated value.
                     val preselectedOrgUnits = uiAction.currentOrgUnitUid
                         ?.let { it.split(",") } ?: emptyList()
@@ -560,7 +560,7 @@ internal class DataSetTableViewModel(
                     val dataElementUid = getDataElementUid(rowIds, columnIds)
                     val orgUnitSelectorScope =
                         if (dataElementUid == teamSDSUid) {
-                            // EyeSeeTea customization - multiple SDS org unit selection
+                            // EyeSeeTea customization - Multiple SDS org unit selection
                             // SPOCC behavior: use SdsTeamScope for team SDS so selector filters by team org units.
                             OrgUnitSelectorScope.SdsTeamScope(
                                 currentOrgUnitUid = orgUnitUid,
@@ -731,14 +731,14 @@ internal class DataSetTableViewModel(
                     checkValidationRulesConfiguration()
                 }
 
-            // EyeSeeTea customization - Create Team change request
+            // EyeSeeTea customization - Team change request
             val dataSetInstanceData = getDataSetInstanceData(this)
 
             CoroutineTracker.decrement()
 
             when (result) {
                 NONE -> {
-                    // EyeSeeTea customization - Create Team change request
+                    // EyeSeeTea customization - Team change request
                     //attemptToFinish()
                     if (dataSetInstanceData.dataSetDetails.dataSetUid == teamChangeRequestDataSet) {
                         askCreateTeamChangeRequest()
@@ -1001,7 +1001,7 @@ internal class DataSetTableViewModel(
         }
     }
 
-    // EyeSeeTea customization - - Create Team change request
+    // EyeSeeTea customization - Team change request
     private fun askCreateTeamChangeRequest() {
         viewModelScope.launch {
             _dataSetScreenState.update {
@@ -1021,7 +1021,7 @@ internal class DataSetTableViewModel(
         }
     }
 
-    // EyeSeeTea customization - Create Team change request
+    // EyeSeeTea customization - Team change request
     private fun createTeamChange() {
         viewModelScope.launch {
             CoroutineTracker.increment()

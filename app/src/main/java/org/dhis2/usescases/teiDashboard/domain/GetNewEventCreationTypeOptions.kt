@@ -17,14 +17,11 @@ class GetNewEventCreationTypeOptions(
         val options: MutableList<EventCreationType> = mutableListOf()
         options.add(ADDNEW)
 
-        // EyeSeeTea customization - Not show schedule events when programStage is null
+        // EyeSeeTea customization - Hide Schedule menu in timeline view
         // (timeline events view)
         /* if (programStage = null || shouldShowScheduleEvents(programStage)) {
             options.add(SCHEDULE)
         }*/
-        if (programStage != null && shouldShowScheduleEvents(programStage)) {
-            options.add(SCHEDULE)
-        }
 
         if (shouldShowReferralEvents(programUid)) {
             options.add(REFERAL)

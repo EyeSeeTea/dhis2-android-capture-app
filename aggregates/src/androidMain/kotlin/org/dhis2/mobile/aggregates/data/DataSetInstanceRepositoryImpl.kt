@@ -1434,7 +1434,7 @@ internal class DataSetInstanceRepositoryImpl(
         }
     }
 
-    //EyeSeeTea customization - Create Change Team Request
+    // EyeSeeTea customization - Team change request
     override suspend fun getParentOrgUnit(orgUnitUid:String): String {
         val orgUnit = d2.organisationUnitModule().organisationUnits().uid(orgUnitUid).blockingGet()
         val path = orgUnit!!.path()!!.split("/")
@@ -1442,7 +1442,7 @@ internal class DataSetInstanceRepositoryImpl(
         return path[path.size - 2]
     }
 
-    // EyeSeeTea customization - multiple SDS org unit selection
+    // EyeSeeTea customization - Multiple SDS org unit selection
     override suspend fun getOrgUnitById(orgUnitUid: String): String? {
         return d2.organisationUnitModule().organisationUnits()
             .uid(orgUnitUid)

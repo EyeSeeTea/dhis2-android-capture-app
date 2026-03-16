@@ -25,7 +25,7 @@ internal class GetDataValueData(
             ).associate { (key, value) ->
                 key to
                     DataValueData(
-                        // EyeSeeTea customization - multiple SDS org unit selection
+                        // EyeSeeTea customization - Multiple SDS org unit selection
                         value = createDisplayValue(dataSetInstanceRepository, key.first, value),
                         conflicts = conflicts(key.first, key.second),
                         legendColor =

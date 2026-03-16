@@ -67,7 +67,7 @@ internal class GetDataValueInput(
             CellInfo(
                 label = dataElementInfo.label,
                 value = value,
-                // EyeSeeTea customization - multiple SDS org unit selection
+                // EyeSeeTea customization - Multiple SDS org unit selection
                 displayValue = createDisplayValue(repository, dataElementUid, value),
                 inputType = dataElementInfo.inputType,
                 inputExtra =

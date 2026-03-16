@@ -44,7 +44,7 @@ internal class InputDataUiStateMapper(
             id = cellId,
             label = cellInfo.label,
             value = cellInfo.value,
-            // EyeSeeTea customization - multiple SDS org unit selection
+            // EyeSeeTea customization - Multiple SDS org unit selection
             // Base behavior: use raw input while the field has a valueWithError override.
             displayValue = cellInfo.displayValue,
             inputType = cellInfo.inputType,

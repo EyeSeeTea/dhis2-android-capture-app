@@ -174,10 +174,10 @@ internal interface DataSetInstanceRepository {
 
     suspend fun getFilePath(fileUid: String): String?
 
-    // EyeSeeTea customization - Create Team change request
+    // EyeSeeTea customization - Team change request
     suspend fun getParentOrgUnit(orgUnitUid: String): String
 
-    // EyeSeeTea customization - multiple SDS org unit selection
+    // EyeSeeTea customization - Multiple SDS org unit selection
     suspend fun getOrgUnitById(orgUnitUid: String): String?
 
 }

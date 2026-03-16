@@ -105,7 +105,7 @@ class OURepositoryConfiguration(
 
     private fun applySearchFilter(orgUnitRepository: OrganisationUnitCollectionRepository) = orgUnitRepository
 
-    // EyeSeeTea customization - multiple SDS org unit selection
+    // EyeSeeTea customization - Multiple SDS org unit selection
     private fun getSdsOrgUnits(
         scope: OrgUnitSelectorScope.SdsTeamScope,
     ): List<OrganisationUnit> {
@@ -135,7 +135,6 @@ class OURepositoryConfiguration(
         return orgUnitsInSDSGroup
     }
 }
-
 
 
 

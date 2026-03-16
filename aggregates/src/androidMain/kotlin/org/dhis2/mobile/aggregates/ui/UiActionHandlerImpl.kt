@@ -147,7 +147,7 @@ class UiActionHandlerImpl(
         OUTreeFragment
             .Builder()
             .withPreselectedOrgUnits(preselectedOrgUnits)
-            // EyeSeeTea customization - multiple SDS org unit selection
+            // EyeSeeTea customization - Multiple SDS org unit selection
             // Base behavior: tree always uses singleSelection().
             // SPOCC behavior: when singleSelection is false, allow multi-select and pass comma-separated UIDs.
             .let {
@@ -158,7 +158,7 @@ class UiActionHandlerImpl(
                 }
             }
             .onSelection { selectedOrgUnits ->
-                // EyeSeeTea customization - multiple SDS org unit selection
+                // EyeSeeTea customization - Multiple SDS org unit selection
                 // Base behavior: callback receives only the first selected org unit UID.
                 // SPOCC behavior: when multi-select, callback receives comma-separated UIDs.
                 if (selectedOrgUnits.isNotEmpty()) {

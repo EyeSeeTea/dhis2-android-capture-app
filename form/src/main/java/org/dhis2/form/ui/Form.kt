@@ -129,7 +129,7 @@ fun Form(
                             section.fields.forEachIndexed { index, fieldUiModel ->
                                 fieldUiModel.setCallback(callback)
 
-                                // EyeSeeTea customization - Remove UPG field from the form
+                                // EyeSeeTea customization - Select UPG
                                 // Base behavior: the field stays visible and keeps normal height.
                                 // SPOCC behavior: hiding is not persisted, so height is collapsed explicitly.
                                 val modifier = if (fieldUiModel.visible) {

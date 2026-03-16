@@ -52,7 +52,7 @@ class DhisProgramUtils
             d2
                 .programModule()
                 .programs()
-                // EyeSeeTea customization - Only programs with write access
+                // EyeSeeTea customization - Hide programs and datasets without write data access
                 .byAccessDataWrite().isTrue
                 .withTrackedEntityType()
                 .byOrganisationUnitScope(OrganisationUnit.Scope.SCOPE_DATA_CAPTURE)
