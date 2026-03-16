@@ -34,20 +34,22 @@ class GetNewEventCreationTypeOptionsTest {
     }
 
     @Test
-    fun shouldReturnScheduleTypeIfThereISNoDueDate() {
+    fun shouldNotReturnScheduleTypeIfThereIsNoDueDateForSpocc() {
         whenever(programStage.hideDueDate()) doReturn false
 
         val result = getNewEventCreationTypeOptions.invoke(programStage, programUid)
 
-        assertNotNull(result.find { it == SCHEDULE })
+        // EyeSeeTea customization - Hide Schedule menu in timeline view
+        assertNull(result.find { it == SCHEDULE })
     }
 
     @Test
-    fun shouldNotReturnScheduleTypeIfThereISDueDate() {
+    fun shouldNotReturnScheduleTypeIfThereIsDueDateForSpocc() {
         whenever(programStage.hideDueDate()) doReturn true
 
         val result = getNewEventCreationTypeOptions.invoke(programStage, programUid)
 
+        // EyeSeeTea customization - Hide Schedule menu in timeline view
         assertNull(result.find { it == SCHEDULE })
     }
 

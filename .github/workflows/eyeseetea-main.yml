@@ -35,13 +35,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Run App unit tests (eyeseetea flavor)
-        run: ./gradlew :app:testEyeseeteaDebugUnitTest
+      - name: Run App unit tests (spocc flavor)
+        run: ./gradlew :app:testSpOCCDebugUnitTest
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: app-unit-test-results
-          path: app/build/reports/tests/testEyeseeteaDebugUnitTest/
+          path: app/build/reports/tests/testSpOCCDebugUnitTest/
           retention-days: 7
