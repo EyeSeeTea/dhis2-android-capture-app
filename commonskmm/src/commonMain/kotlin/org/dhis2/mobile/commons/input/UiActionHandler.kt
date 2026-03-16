@@ -1,5 +1,7 @@
 package org.dhis2.mobile.commons.input
 
+import org.dhis2.mobile.commons.orgunit.OrgUnitSelectorScope
+
 interface UiActionHandler {
     fun onCaptureCoordinates(
         fieldUid: String,
@@ -10,7 +12,8 @@ interface UiActionHandler {
 
     fun onCaptureOrgUnit(
         preselectedOrgUnits: List<String>,
-        singleSelection:Boolean,
+        singleSelection: Boolean,
+        orgUnitSelectorScope: OrgUnitSelectorScope? = null,
         callback: (result: String?) -> Unit,
     )
 

@@ -178,6 +178,7 @@ internal class DataSetTableViewModelTest : KoinTest {
                             dataSetTitle = "dataSetTitle",
                             isCompleted = false,
                             edition = DataSetEdition(editable = true, NonEditableReason.None),
+                            dataSetUid = "dataSetUid",
                         ),
                     dataSetSections =
                         listOf(
@@ -262,6 +263,9 @@ internal class DataSetTableViewModelTest : KoinTest {
 
             viewModel =
                 DataSetTableViewModel(
+                    dataSetUid = "dataSetUid",
+                    periodId = "periodId",
+                    orgUnitUid = "orgUnitUid",
                     onClose = onCloseCallback,
                     getDataSetInstanceData = get(),
                     getDataSetSectionData = get(),
@@ -282,6 +286,7 @@ internal class DataSetTableViewModelTest : KoinTest {
                     inputDataUiStateMapper = get(),
                     fieldErrorMessageProvider = get(),
                     computeResizeAction = get(),
+                    createChangeTeamRequest = get(),
                 )
         }
 
@@ -637,7 +642,7 @@ internal class DataSetTableViewModelTest : KoinTest {
                 awaitItem()
                 viewModel.onUiAction(UiAction.OnOpenOrgUnitTree(testingId, null))
                 testDispatcher.scheduler.advanceUntilIdle()
-                verify(uiActionHandler).onCaptureOrgUnit(any(), any(), any())
+                verify(uiActionHandler).onCaptureOrgUnit(any(), any(), anyOrNull(), any())
             }
         }
 
@@ -837,6 +842,7 @@ internal class DataSetTableViewModelTest : KoinTest {
                             dataSetTitle = "dataSetTitle",
                             isCompleted = false,
                             edition = DataSetEdition(editable = true, NonEditableReason.None),
+                            dataSetUid = "dataSetUid",
                         ),
                     dataSetSections =
                         listOf(
@@ -886,6 +892,7 @@ internal class DataSetTableViewModelTest : KoinTest {
                             dataSetTitle = "dataSetTitle",
                             isCompleted = false,
                             edition = DataSetEdition(editable = true, NonEditableReason.None),
+                            dataSetUid = "dataSetUid",
                         ),
                     dataSetSections =
                         listOf(
@@ -933,6 +940,7 @@ internal class DataSetTableViewModelTest : KoinTest {
                             dataSetTitle = "dataSetTitle",
                             isCompleted = false,
                             edition = DataSetEdition(editable = true, NonEditableReason.None),
+                            dataSetUid = "dataSetUid",
                         ),
                     dataSetSections =
                         listOf(

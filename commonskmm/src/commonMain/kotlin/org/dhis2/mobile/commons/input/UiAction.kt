@@ -69,6 +69,7 @@ sealed class UiAction(
         override val id: String,
         val currentOrgUnitUid: String?,
         // EyeSeeTea customization - multiple SDS org unit selection
+        // SPOCC behavior: when false, selector allows multiple org units and value is comma-separated UIDs.
         val singleSelection: Boolean = true,
     ) : UiAction(id)
 

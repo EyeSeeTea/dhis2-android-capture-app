@@ -141,13 +141,15 @@ class UiActionHandlerImpl(
     override fun onCaptureOrgUnit(
         preselectedOrgUnits: List<String>,
         singleSelection: Boolean,
+        orgUnitSelectorScope: OrgUnitSelectorScope?,
         callback: (result: String?) -> Unit,
     ) {
         OUTreeFragment
             .Builder()
             .withPreselectedOrgUnits(preselectedOrgUnits)
-            //EyeSeeTea customization - multiple SDS org unit selection
-            //.singleSelection()
+            // EyeSeeTea customization - multiple SDS org unit selection
+            // Base behavior: tree always uses singleSelection().
+            // SPOCC behavior: when singleSelection is false, allow multi-select and pass comma-separated UIDs.
             .let {
                 if (singleSelection) {
                     it.singleSelection()
@@ -157,18 +159,15 @@ class UiActionHandlerImpl(
             }
             .onSelection { selectedOrgUnits ->
                 // EyeSeeTea customization - multiple SDS org unit selection
-                /*
-                if (selectedOrgUnits.isNotEmpty()) {
-                   callback(selectedOrgUnits.firstOrNull()?.uid())
-                }
-                */
+                // Base behavior: callback receives only the first selected org unit UID.
+                // SPOCC behavior: when multi-select, callback receives comma-separated UIDs.
                 if (selectedOrgUnits.isNotEmpty()) {
                     val value = if (singleSelection) selectedOrgUnits.firstOrNull()
                         ?.uid() else selectedOrgUnits.joinToString(",") { it.uid() }
 
                     callback(value)
                 }
-            }.orgUnitScope(OrgUnitSelectorScope.DataSetCaptureScope(dataSetUid))
+            }.orgUnitScope(orgUnitSelectorScope ?: OrgUnitSelectorScope.DataSetCaptureScope(dataSetUid))
             .build()
             .show(context.supportFragmentManager, dataSetUid)
     }

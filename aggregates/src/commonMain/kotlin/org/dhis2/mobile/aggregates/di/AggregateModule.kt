@@ -194,6 +194,9 @@ internal val featureModule =
             val uiActionHandler = params.get<UiActionHandler>()
 
             DataSetTableViewModel(
+                dataSetUid = dataSetUid,
+                periodId = periodId,
+                orgUnitUid = orgUnitUid,
                 onClose = onClose,
                 getDataSetInstanceData =
                     get {

@@ -31,29 +31,38 @@ class OURepositoryConfiguration(
                 is OrgUnitSelectorScope.DataSetCaptureScope,
                 is OrgUnitSelectorScope.ProgramCaptureScope,
                 is OrgUnitSelectorScope.UserCaptureScope,
-                ->
+                    ->
                     applyCaptureFilter(orgUnitRepository)
+
                 is OrgUnitSelectorScope.ProgramSearchScope,
                 is OrgUnitSelectorScope.DataSetSearchScope,
                 is OrgUnitSelectorScope.UserSearchScope,
-                ->
+                is OrgUnitSelectorScope.SdsTeamScope,
+                    ->
                     applySearchFilter(orgUnitRepository)
             }
 
-        orgUnitRepository =
+        val orgUnits =
             when (orgUnitSelectorScope) {
                 is OrgUnitSelectorScope.DataSetCaptureScope,
                 is OrgUnitSelectorScope.DataSetSearchScope,
-                ->
+                    ->
                     orgUnitRepository.byDataSetUids(listOf(orgUnitSelectorScope.uid!!))
+                        .blockingGet()
+
                 is OrgUnitSelectorScope.ProgramCaptureScope,
                 is OrgUnitSelectorScope.ProgramSearchScope,
-                ->
+                    ->
                     orgUnitRepository.byProgramUids(listOf(orgUnitSelectorScope.uid!!))
+                        .blockingGet()
+
                 is OrgUnitSelectorScope.UserCaptureScope,
                 is OrgUnitSelectorScope.UserSearchScope,
-                ->
-                    orgUnitRepository
+                    ->
+                    orgUnitRepository.blockingGet()
+
+                is OrgUnitSelectorScope.SdsTeamScope ->
+                    getSdsOrgUnits(orgUnitSelectorScope)
             }
 
         // EyeSeeTea customization - Validate or hide orgunit by Teamprofile
@@ -65,8 +74,7 @@ class OURepositoryConfiguration(
                 nonActiveOrgUnits(d2, validationData)
             }
 
-        return orgUnitRepository
-            .blockingGet()
+        return orgUnits
             .filter { organisationUnit ->
                 organisationUnit.uid() !in nonActiveOrgUnits
             }
@@ -96,4 +104,38 @@ class OURepositoryConfiguration(
         orgUnitRepository.byOrganisationUnitScope(OrganisationUnit.Scope.SCOPE_DATA_CAPTURE)
 
     private fun applySearchFilter(orgUnitRepository: OrganisationUnitCollectionRepository) = orgUnitRepository
+
+    // EyeSeeTea customization - multiple SDS org unit selection
+    private fun getSdsOrgUnits(
+        scope: OrgUnitSelectorScope.SdsTeamScope,
+    ): List<OrganisationUnit> {
+        val sdsOrgUnitLevel = 5
+        val countryLevel = 4
+        val sdsOrgUnitGroupId = "yA9VnZi6g7f"
+
+        val orgUnit = d2.organisationUnitModule().organisationUnits()
+            .uid(scope.currentOrgUnitUid).blockingGet()
+
+        val countryParent = orgUnit?.path()?.split("/")[countryLevel] ?: ""
+
+        val level5OrgUnits = d2.organisationUnitModule().organisationUnits()
+            .byLevel().eq(sdsOrgUnitLevel).withOrganisationUnitGroups().blockingGet()
+            .filter { organisationUnit ->
+                organisationUnit.path()?.contains(countryParent) ?: false
+            }
+
+        val orgUnitsInSDSGroup = level5OrgUnits.filter { organisationUnit ->
+            val groups = organisationUnit.organisationUnitGroups() ?: listOf()
+
+            groups.any { organisationUnitGroup ->
+                organisationUnitGroup.uid() == sdsOrgUnitGroupId
+            }
+        }
+
+        return orgUnitsInSDSGroup
+    }
 }
+
+
+
+

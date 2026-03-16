@@ -27,6 +27,7 @@ import org.dhis2.mobile.aggregates.domain.RunValidationRules
 import org.dhis2.mobile.aggregates.domain.SetDataValue
 import org.dhis2.mobile.aggregates.domain.UploadFile
 import org.dhis2.mobile.aggregates.domain.teamChangeRequestDataSet
+import org.dhis2.mobile.aggregates.domain.teamSDSUid
 import org.dhis2.mobile.aggregates.model.DataSetCompletionStatus.COMPLETED
 import org.dhis2.mobile.aggregates.model.DataSetCompletionStatus.NOT_COMPLETED_EDITABLE
 import org.dhis2.mobile.aggregates.model.DataSetCompletionStatus.NOT_COMPLETED_NOT_EDITABLE
@@ -64,6 +65,7 @@ import org.dhis2.mobile.commons.input.CallbackStatus
 import org.dhis2.mobile.commons.input.InputType
 import org.dhis2.mobile.commons.input.UiAction
 import org.dhis2.mobile.commons.input.UiActionHandler
+import org.dhis2.mobile.commons.orgunit.OrgUnitSelectorScope
 import org.dhis2.mobile.commons.providers.FieldErrorMessageProvider
 import org.hisp.dhis.mobile.ui.designsystem.component.UploadFileState
 import org.hisp.dhis.mobile.ui.designsystem.component.table.model.TableCell
@@ -71,6 +73,9 @@ import org.hisp.dhis.mobile.ui.designsystem.component.table.model.TableModel
 import org.hisp.dhis.mobile.ui.designsystem.component.table.ui.TableSelection
 
 internal class DataSetTableViewModel(
+    private val dataSetUid: String,
+    private val periodId: String,
+    private val orgUnitUid: String,
     private val onClose: () -> Unit,
     private val getDataSetInstanceData: GetDataSetInstanceData,
     private val getDataSetSectionData: GetDataSetSectionData,
@@ -548,12 +553,27 @@ internal class DataSetTableViewModel(
 
                 is UiAction.OnOpenOrgUnitTree -> {
                     // EyeSeeTea customization - multiple SDS org unit selection
+                    // SPOCC behavior: preselected org units from stored comma-separated value.
                     val preselectedOrgUnits = uiAction.currentOrgUnitUid
                         ?.let { it.split(",") } ?: emptyList()
+                    val (rowIds, columnIds) = CellIdGenerator.getIdInfo(uiAction.id)
+                    val dataElementUid = getDataElementUid(rowIds, columnIds)
+                    val orgUnitSelectorScope =
+                        if (dataElementUid == teamSDSUid) {
+                            // EyeSeeTea customization - multiple SDS org unit selection
+                            // SPOCC behavior: use SdsTeamScope for team SDS so selector filters by team org units.
+                            OrgUnitSelectorScope.SdsTeamScope(
+                                currentOrgUnitUid = orgUnitUid,
+                                period = periodId,
+                            )
+                        } else {
+                            null
+                        }
 
                     uiActionHandler.onCaptureOrgUnit(
                         preselectedOrgUnits,
-                        uiAction.singleSelection
+                        uiAction.singleSelection,
+                        orgUnitSelectorScope,
                     ) {
                         onUiAction(
                             UiAction.OnValueChanged(
