@@ -19,13 +19,15 @@ When upgrading a client fork:
 1. upgrade Oslo into `develop-eyeseetea` first
 2. verify the shared EyeSeeTea baseline there
 3. merge `develop-eyeseetea` into the client fork
-4. resolve easy conflicts using the rules file
-5. pause for review if needed
-6. resolve manual shared-code conflicts by reapplying only the minimum client logic
-7. mark surviving customizations in code with the exact EyeSeeTea comment title
-8. validate each surviving customization with the client validation checklist
-9. keep temporary merge progress in `upgrade-<version>-notes.md`
-10. keep the final stable client inventory in `customization-files.md`
+4. classify conflicts and surviving diff immediately after the merge
+5. resolve easy conflicts using the rules file
+6. pause for review if needed
+7. resolve manual shared-code conflicts by reapplying only the minimum client logic
+8. mark surviving customizations in code with the exact EyeSeeTea comment title
+9. validate each surviving customization with the client validation checklist
+10. keep temporary merge progress in `upgrade-<version>-notes.md`
+11. keep the final stable client inventory in `customization-files.md`
+12. close only when no unexplained drift remains
 
 Never do this:
 
@@ -132,7 +134,28 @@ Expected result:
 Expected result:
 - the client branch now only needs client-specific conflict resolution
 
-### Phase 3. Resolve easy conflicts
+### Phase 3. Classify conflicts and surviving diff
+
+Right after the merge, classify every affected file into one of these groups:
+
+- direct flavor files
+- easy conflicts
+- manual conflicts
+- shared non-conflict diffs that may still be custom
+- obsolete or absorbed differences
+
+For each file, record at least:
+
+- classification
+- expected functional delta
+- linked customization title if known
+- current status: `pending`, `resolved_keep_theirs`, `resolved_keep_ours`, `resolved_manual_merge`, `needs_validation`
+
+Expected result:
+- easy and hard work are separated before editing starts
+- files with surviving drift are visible before the final reconciliation
+
+### Phase 4. Resolve easy conflicts
 
 1. Resolve direct client flavor files automatically.
 2. Resolve obvious shared-base conflicts using the rules file.
@@ -142,7 +165,7 @@ Expected result:
 - low-risk conflicts are resolved quickly
 - difficult files remain clearly identified
 
-### Phase 4. Pause for review
+### Phase 5. Pause for review
 
 After the easy conflict batch:
 
@@ -153,7 +176,7 @@ After the easy conflict batch:
 Why:
 - this is the best checkpoint to avoid silent loss of client behavior
 
-### Phase 5. Resolve manual conflicts
+### Phase 6. Resolve manual conflicts
 
 For each shared conflicted file:
 
@@ -166,16 +189,18 @@ For each shared conflicted file:
    `// EyeSeeTea customization - [title]`
 7. use the exact functional title from `customization-specs.md`
 8. document the surviving customization in `customization-files.md` if it still exists after merge
+9. if the file still differs but the business meaning is unclear, keep it in `upgrade-<version>-notes.md` and classify it as `needs_validation`
 
 Expected result:
 - the client branch keeps only intentional custom behavior
 - separable custom code is easier to identify in future upgrades
 
-### Phase 6. Validate
+### Phase 7. Validate
 
 1. run the build if feasible
 2. run targeted tests if feasible
 3. inspect critical workflows manually if needed
+4. confirm that each active customization has either a targeted automated test or a manual validation entry
 
 Typical areas to validate:
 - login
@@ -185,14 +210,14 @@ Typical areas to validate:
 - dataset / team-change flows
 - TEI dashboard
 
-### Phase 7. Finalize documentation
+### Phase 8. Finalize documentation
 
 1. keep `customization-files.md` as the final stable inventory
 2. keep `conflict-rules.md` as stable merge guidance
 3. keep `upgrade-validation-checklist.md` as the stable manual validation reference
 4. keep `upgrade-<version>-notes.md` as temporary upgrade notes only, or remove/archive it when the upgrade is complete
 
-### Phase 8. Final reconciliation
+### Phase 9. Final reconciliation
 
 Before considering the upgrade complete:
 
@@ -202,6 +227,8 @@ Before considering the upgrade complete:
 4. confirm that each customization in the functional spec is:
    - still present and validated
    - or explicitly marked as absorbed/removed
+5. confirm that `Shared drift still differing` is empty or contains only short-lived items with a reason and next action
+6. do not close the upgrade while unexplained drift remains in shared code
 
 Expected result:
 - there are no unexplained surviving differences
@@ -216,6 +243,7 @@ An agent should automatically:
 - resolve obvious `ours` and obvious `theirs`
 - update `upgrade-<version>-notes.md`
 - keep the user informed at the end of each batch
+- run the preclassification script before the easy batch when feasible
 
 ## What an agent should not do automatically
 
@@ -239,13 +267,15 @@ Use this test:
 1. Confirm current branch and base branch.
 2. Confirm that the upgrade source is `develop-eyeseetea`.
 3. Read `conflict-rules.md`.
-4. Resolve easy conflicts first.
-5. Pause for user review after the easy batch unless instructed otherwise.
-6. Resolve manual conflicts by reapplying minimal client logic.
-7. Ensure each surviving customization has a nearby comment:
+4. Classify conflicts and surviving diff before editing files.
+5. Resolve easy conflicts first.
+6. Pause for user review after the easy batch unless instructed otherwise.
+7. Resolve manual conflicts by reapplying minimal client logic.
+8. Ensure each surviving customization has a nearby comment:
    `// EyeSeeTea customization - [title]`
-8. When possible, keep separable custom helpers grouped near the end of the file.
-9. Update `customization-files.md` only with confirmed surviving customizations.
+9. When possible, keep separable custom helpers grouped near the end of the file.
+10. Update `customization-files.md` only with confirmed surviving customizations.
+11. Do not close the upgrade while shared drift remains unexplained.
 
 ## Customization Comment Checklist
 
