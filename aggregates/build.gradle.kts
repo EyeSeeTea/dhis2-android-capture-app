@@ -5,18 +5,10 @@ plugins {
     alias(libs.plugins.kotlin.compose.compiler)
 }
 
-repositories{
-    maven { url = uri("https://central.sonatype.com/repository/maven-snapshots") }
-    mavenCentral()
-    google()
-}
-
 kotlin {
     androidTarget {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "17"
-            }
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
 
@@ -37,8 +29,8 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.material3)
             api(compose.materialIconsExtended)
-            val desyngsystem = libs.dhis2.mobile.designsystem
-            implementation("${desyngsystem.get().group}:${desyngsystem.get().name}:${desyngsystem.get().version}"){
+            val designSystem = libs.dhis2.mobile.designsystem
+            implementation("${designSystem.get().group}:${designSystem.get().name}:${designSystem.get().version}"){
                 isChanging= true
             }
             implementation(libs.compose.material3.window)
@@ -50,7 +42,7 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.composeVM)
         }
-        
+
         commonTest.dependencies {
             implementation(kotlin("test"))
             // Koin Test features
@@ -66,8 +58,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.compose.preview)
             // EyeSeeTea customization
-            //implementation(libs.dhis2.android.sdk)
-            implementation(project(":core"))
+            implementation(libs.dhis2.android.sdk)
             // Koin support for Android
             implementation(libs.koin.android)
             implementation(libs.koin.androidx.compose)
@@ -116,5 +107,5 @@ android {
 dependencies {
     testImplementation(libs.junit.jupiter)
     debugImplementation(libs.androidx.compose.preview)
-    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.compose.uitooling)
 }

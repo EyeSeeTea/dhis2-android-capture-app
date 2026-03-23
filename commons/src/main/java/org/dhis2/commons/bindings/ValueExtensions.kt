@@ -1,7 +1,6 @@
-package org.dhis2.commons.bindings
+package org.dhis2.bindings
 
 import org.dhis2.commons.date.DateUtils
-import org.dhis2.commons.extensions.invoke
 import org.dhis2.commons.extensions.toPercentage
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.common.ValueType
@@ -14,13 +13,16 @@ import java.text.ParseException
 fun TrackedEntityAttributeValue.userFriendlyValue(
     d2: D2,
     addPercentageSymbol: Boolean = true,
-): String? {
-    return when {
+): String? =
+    when {
         value().isNullOrEmpty() -> value()
         else -> {
-            val attribute = d2.trackedEntityModule().trackedEntityAttributes()
-                .uid(trackedEntityAttribute())
-                .blockingGet()
+            val attribute =
+                d2
+                    .trackedEntityModule()
+                    .trackedEntityAttributes()
+                    .uid(trackedEntityAttribute())
+                    .blockingGet()
             value()!!.userFriendlyValue(
                 d2,
                 attribute?.valueType(),
@@ -29,19 +31,21 @@ fun TrackedEntityAttributeValue.userFriendlyValue(
             )
         }
     }
-}
 
 fun TrackedEntityDataValue?.userFriendlyValue(
     d2: D2,
     addPercentageSymbol: Boolean = true,
-): String? {
-    return when {
+): String? =
+    when {
         this == null -> null
         value().isNullOrEmpty() -> value()
         else -> {
-            val dataElement = d2.dataElementModule().dataElements()
-                .uid(dataElement())
-                .blockingGet()
+            val dataElement =
+                d2
+                    .dataElementModule()
+                    .dataElements()
+                    .uid(dataElement())
+                    .blockingGet()
 
             value()!!.userFriendlyValue(
                 d2,
@@ -51,7 +55,6 @@ fun TrackedEntityDataValue?.userFriendlyValue(
             )
         }
     }
-}
 
 fun String.userFriendlyValue(
     d2: D2,
@@ -70,71 +73,44 @@ fun String.userFriendlyValue(
     }
 }
 
-fun TrackedEntityDataValue?.valueByPropName(d2: D2, propName: String): String? {
-    if (this == null) {
-        return null
-    } else {
-        if (value().isNullOrEmpty()) {
-            return value()
-        }
-
-
-        val dataElement = d2.dataElementModule().dataElements()
-            .uid(dataElement())
-            .blockingGet()
-
-        return dataElement?.let { dataElement ->
-            if (check(d2, dataElement.valueType(), dataElement.optionSet()?.uid(), value()!!)) {
-                dataElement.optionSet()?.let {
-                    return checkOptionSetValueByPropName(d2, it.uid(), value()!!, propName)
-                } ?: return checkValueTypeValue(d2, dataElement.valueType(), value()!!)
-            } else {
-                return null
-            }
-        }
-    }
-}
-
-fun checkOptionSetValue(d2: D2, optionSetUid: String, code: String): String? {
-    return d2.optionModule().options()
-        .byOptionSetUid().eq(optionSetUid)
-        .byCode().eq(code).one().blockingGet()?.displayName()
-}
-
-fun checkOptionSetValueByPropName(
+fun checkOptionSetValue(
     d2: D2,
     optionSetUid: String,
     code: String,
-    propName: String
-): String? {
-    val option = d2.optionModule().options()
-        .byOptionSetUid().eq(optionSetUid)
-        .byCode().eq(code).one().blockingGet()
-
-    return option?.let {
-        return try {
-            option.invoke(propName) as String
-        } catch (e: Exception) {
-            option.displayName()
-        }
-    }
-}
+): String? =
+    d2
+        .optionModule()
+        .options()
+        .byOptionSetUid()
+        .eq(optionSetUid)
+        .byCode()
+        .eq(code)
+        .one()
+        .blockingGet()
+        ?.displayName()
 
 fun checkValueTypeValue(
     d2: D2,
     valueType: ValueType?,
     value: String,
     addPercentageSymbol: Boolean = true,
-): String {
-    return when (valueType) {
+): String =
+    when (valueType) {
         ValueType.ORGANISATION_UNIT ->
-            d2.organisationUnitModule().organisationUnits()
+            d2
+                .organisationUnitModule()
+                .organisationUnits()
                 .uid(value)
                 .blockingGet()
                 ?.displayName() ?: value
 
         ValueType.IMAGE, ValueType.FILE_RESOURCE ->
-            d2.fileResourceModule().fileResources().uid(value).blockingGet()?.path() ?: ""
+            d2
+                .fileResourceModule()
+                .fileResources()
+                .uid(value)
+                .blockingGet()
+                ?.path() ?: ""
 
         ValueType.DATE, ValueType.AGE ->
             try {
@@ -173,7 +149,6 @@ fun checkValueTypeValue(
 
         else -> value
     }
-}
 
 fun TrackedEntityAttributeValueObjectRepository.blockingSetCheck(
     d2: D2,
@@ -201,9 +176,10 @@ fun TrackedEntityAttributeValueObjectRepository.blockingSetCheck(
 fun TrackedEntityAttributeValueObjectRepository.blockingGetCheck(
     d2: D2,
     attrUid: String,
-): TrackedEntityAttributeValue? {
-    return d2.trackedEntityModule().trackedEntityAttributes().uid(attrUid).blockingGet()?.let {
-        if (blockingExists() && check(
+): TrackedEntityAttributeValue? =
+    d2.trackedEntityModule().trackedEntityAttributes().uid(attrUid).blockingGet()?.let {
+        if (blockingExists() &&
+            check(
                 d2,
                 it.valueType(),
                 it.optionSet()?.uid(),
@@ -216,14 +192,13 @@ fun TrackedEntityAttributeValueObjectRepository.blockingGetCheck(
             null
         }
     }
-}
 
 fun TrackedEntityDataValueObjectRepository.blockingSetCheck(
     d2: D2,
     deUid: String,
     value: String,
-): Boolean {
-    return d2.dataElementModule().dataElements().uid(deUid).blockingGet()?.let {
+): Boolean =
+    d2.dataElementModule().dataElements().uid(deUid).blockingGet()?.let {
         if (check(d2, it.valueType(), it.optionSet()?.uid(), value)) {
             val finalValue = assureCodeForOptionSet(d2, it.optionSet()?.uid(), value)
             blockingSet(finalValue)
@@ -233,7 +208,6 @@ fun TrackedEntityDataValueObjectRepository.blockingSetCheck(
             false
         }
     } ?: false
-}
 
 fun String?.withValueTypeCheck(valueType: ValueType?): String? {
     return this?.let {
@@ -244,8 +218,9 @@ fun String?.withValueTypeCheck(valueType: ValueType?): String? {
             ValueType.INTEGER_POSITIVE,
             ValueType.INTEGER_NEGATIVE,
             ValueType.INTEGER_ZERO_OR_POSITIVE,
-            -> (
-                it.toIntOrNull() ?: it.toFloat().toInt()
+            ->
+                (
+                    it.toIntOrNull() ?: it.toFloat().toInt()
                 ).toString()
 
             ValueType.UNIT_INTERVAL -> (it.toIntOrNull() ?: it.toFloat()).toString()
@@ -257,9 +232,10 @@ fun String?.withValueTypeCheck(valueType: ValueType?): String? {
 fun TrackedEntityDataValueObjectRepository.blockingGetValueCheck(
     d2: D2,
     deUid: String,
-): TrackedEntityDataValue? {
-    return d2.dataElementModule().dataElements().uid(deUid).blockingGet()?.let {
-        if (blockingExists() && check(
+): TrackedEntityDataValue? =
+    d2.dataElementModule().dataElements().uid(deUid).blockingGet()?.let {
+        if (blockingExists() &&
+            check(
                 d2,
                 it.valueType(),
                 it.optionSet()?.uid(),
@@ -272,15 +248,35 @@ fun TrackedEntityDataValueObjectRepository.blockingGetValueCheck(
             null
         }
     }
-}
 
-private fun check(d2: D2, valueType: ValueType?, optionSetUid: String?, value: String): Boolean {
-    return when {
+private fun check(
+    d2: D2,
+    valueType: ValueType?,
+    optionSetUid: String?,
+    value: String,
+): Boolean =
+    when {
         valueType != ValueType.MULTI_TEXT && optionSetUid != null -> {
-            val optionByCodeExist = d2.optionModule().options().byOptionSetUid().eq(optionSetUid)
-                .byCode().eq(value).one().blockingExists()
-            val optionByNameExist = d2.optionModule().options().byOptionSetUid().eq(optionSetUid)
-                .byDisplayName().eq(value).one().blockingExists()
+            val optionByCodeExist =
+                d2
+                    .optionModule()
+                    .options()
+                    .byOptionSetUid()
+                    .eq(optionSetUid)
+                    .byCode()
+                    .eq(value)
+                    .one()
+                    .blockingExists()
+            val optionByNameExist =
+                d2
+                    .optionModule()
+                    .options()
+                    .byOptionSetUid()
+                    .eq(optionSetUid)
+                    .byDisplayName()
+                    .eq(value)
+                    .one()
+                    .blockingExists()
             optionByCodeExist || optionByNameExist
         }
 
@@ -295,11 +291,20 @@ private fun check(d2: D2, valueType: ValueType?, optionSetUid: String?, value: S
             } else {
                 when (valueType) {
                     ValueType.FILE_RESOURCE, ValueType.IMAGE ->
-                        d2.fileResourceModule().fileResources()
-                            .byUid().eq(value).one().blockingExists()
+                        d2
+                            .fileResourceModule()
+                            .fileResources()
+                            .byUid()
+                            .eq(value)
+                            .one()
+                            .blockingExists()
 
                     ValueType.ORGANISATION_UNIT ->
-                        d2.organisationUnitModule().organisationUnits().uid(value).blockingExists()
+                        d2
+                            .organisationUnitModule()
+                            .organisationUnits()
+                            .uid(value)
+                            .blockingExists()
 
                     else -> true
                 }
@@ -308,19 +313,34 @@ private fun check(d2: D2, valueType: ValueType?, optionSetUid: String?, value: S
 
         else -> false
     }
-}
 
-private fun assureCodeForOptionSet(d2: D2, optionSetUid: String?, value: String): String {
-    return optionSetUid?.let {
-        if (d2.optionModule().options()
-                .byOptionSetUid().eq(it)
-                .byName().eq(value)
-                .one().blockingExists()
+private fun assureCodeForOptionSet(
+    d2: D2,
+    optionSetUid: String?,
+    value: String,
+): String =
+    optionSetUid?.let {
+        if (d2
+                .optionModule()
+                .options()
+                .byOptionSetUid()
+                .eq(it)
+                .byName()
+                .eq(value)
+                .one()
+                .blockingExists()
         ) {
-            d2.optionModule().options().byOptionSetUid().eq(it).byName().eq(value).one()
-                .blockingGet()?.code()
+            d2
+                .optionModule()
+                .options()
+                .byOptionSetUid()
+                .eq(it)
+                .byName()
+                .eq(value)
+                .one()
+                .blockingGet()
+                ?.code()
         } else {
             value
         }
     } ?: value
-}

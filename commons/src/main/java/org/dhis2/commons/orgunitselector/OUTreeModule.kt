@@ -31,6 +31,7 @@ import dagger.Module
 import dagger.Provides
 import org.dhis2.commons.team.ValidationData
 import org.dhis2.commons.viewmodel.DispatcherProvider
+import org.dhis2.mobile.commons.orgunit.OrgUnitSelectorScope
 import org.hisp.dhis.android.core.D2
 
 @Module
@@ -41,23 +42,21 @@ class OUTreeModule(
     private val orgUnitSelectorScope: OrgUnitSelectorScope,
     private val validationData: ValidationData?,
 ) {
-
     @Provides
     internal fun providesPresenter(
         ouTreeRepository: OUTreeRepository,
         dispatcherProvider: DispatcherProvider,
-    ): OUTreeViewModelFactory {
-        return OUTreeViewModelFactory(
+    ): OUTreeViewModelFactory =
+        OUTreeViewModelFactory(
             ouTreeRepository,
             dispatcherProvider,
             preselectedOrgUnits.toMutableList(),
             singleSelection,
             model,
         )
-    }
 
     @Provides
-    internal fun providesOUTreeRepository(d2: D2): OUTreeRepository {
-        return OUTreeRepository(OURepositoryConfiguration(d2, orgUnitSelectorScope, validationData))
-    }
+    internal fun providesOUTreeRepository(d2: D2): OUTreeRepository =
+        // EyeSeeTea customization - Validate or hide orgunit by Teamprofile
+        OUTreeRepository(OURepositoryConfiguration(d2, orgUnitSelectorScope, validationData))
 }

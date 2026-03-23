@@ -10,7 +10,6 @@ import org.hisp.dhis.android.core.program.ProgramStage
 class GetNewEventCreationTypeOptions(
     private val programConfigurationRepository: ProgramConfigurationRepository,
 ) {
-
     operator fun invoke(
         programStage: ProgramStage?,
         programUid: String,
@@ -18,14 +17,11 @@ class GetNewEventCreationTypeOptions(
         val options: MutableList<EventCreationType> = mutableListOf()
         options.add(ADDNEW)
 
-        // EyeSeeTea customization - Not show schedule events when programStage is null
+        // EyeSeeTea customization - Hide Schedule menu in timeline view
         // (timeline events view)
         /* if (programStage = null || shouldShowScheduleEvents(programStage)) {
             options.add(SCHEDULE)
         }*/
-        if (programStage != null && shouldShowScheduleEvents(programStage)) {
-            options.add(SCHEDULE)
-        }
 
         if (shouldShowReferralEvents(programUid)) {
             options.add(REFERAL)
@@ -34,13 +30,13 @@ class GetNewEventCreationTypeOptions(
     }
 
     private fun shouldShowReferralEvents(programUid: String): Boolean {
-        programConfigurationRepository.getConfigurationByProgram(programUid)
+        programConfigurationRepository
+            .getConfigurationByProgram(programUid)
             ?.let { programConfiguration ->
                 return programConfiguration.disableReferrals() != true
             }
         return true
     }
 
-    private fun shouldShowScheduleEvents(programStage: ProgramStage) =
-        programStage.hideDueDate() != true
+    private fun shouldShowScheduleEvents(programStage: ProgramStage) = programStage.hideDueDate() != true
 }

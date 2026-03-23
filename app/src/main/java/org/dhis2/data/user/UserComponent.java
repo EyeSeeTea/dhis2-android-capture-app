@@ -60,8 +60,6 @@ import org.dhis2.usescases.searchTrackEntity.SearchTEComponent;
 import org.dhis2.usescases.searchTrackEntity.SearchTEModule;
 import org.dhis2.usescases.settings.SyncManagerComponent;
 import org.dhis2.usescases.settings.SyncManagerModule;
-import org.dhis2.usescases.settingsprogram.ProgramSettingsComponent;
-import org.dhis2.usescases.settingsprogram.SettingsProgramModule;
 import org.dhis2.usescases.sms.SmsComponent;
 import org.dhis2.usescases.sms.SmsModule;
 import org.dhis2.usescases.sync.SyncComponent;
@@ -83,7 +81,7 @@ import dhis2.org.analytics.charts.ui.di.AnalyticsFragmentModule;
 
 @PerUser
 @Subcomponent(modules = UserModule.class)
-public interface UserComponent extends UserComponentFlavor{
+public interface UserComponent {
 
     FilterPresenter filterPresenter();
 
@@ -170,9 +168,6 @@ public interface UserComponent extends UserComponentFlavor{
 
     @NonNull
     NoteDetailComponent plus(NoteDetailModule noteDetailModule);
-
-    @NonNull
-    ProgramSettingsComponent plus(SettingsProgramModule settingsProgramModule);
 
     @NonNull
     ScanComponent plus(ScanModule scanModule);

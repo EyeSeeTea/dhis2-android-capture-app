@@ -20,6 +20,6 @@ internal enum class DataSetModalType {
     VALIDATION_RULES,
     VALIDATION_RULES_ERROR,
 
-    // EyeSeeTea customization - Create Change Team Request
+    // EyeSeeTea customization - Team change request
     STANDARD
 }

@@ -22,13 +22,9 @@ internal interface DataSetInstanceRepository {
         attrOptionComboUid: String,
     ): DataSetDetails
 
-    suspend fun getDataSetInstanceSections(
-        dataSetUid: String,
-    ): List<DataSetSection>
+    suspend fun getDataSetInstanceSections(dataSetUid: String): List<DataSetSection>
 
-    suspend fun getRenderingConfig(
-        dataSetUid: String,
-    ): DataSetRenderingConfig
+    suspend fun getRenderingConfig(dataSetUid: String): DataSetRenderingConfig
 
     suspend fun dataSetInstanceConfiguration(
         dataSetUid: String,
@@ -53,6 +49,7 @@ internal interface DataSetInstanceRepository {
     ): Int
 
     suspend fun dataSetInstanceSectionConfiguration(sectionUid: String): DataSetInstanceSectionConfiguration?
+
     suspend fun conflicts(
         dataSetUid: String,
         periodId: String,
@@ -101,7 +98,11 @@ internal interface DataSetInstanceRepository {
         value: String?,
     ): Result<Unit>
 
-    suspend fun categoryOptionComboFromCategoryOptions(dataSetUid: String, dataElementUid: String, categoryOptions: List<String>): String
+    suspend fun categoryOptionComboFromCategoryOptions(
+        dataSetUid: String,
+        dataElementUid: String,
+        categoryOptions: List<String>,
+    ): String
 
     suspend fun getCoordinatesFrom(coordinatesValue: String): Pair<Double, Double>
 
@@ -173,10 +174,10 @@ internal interface DataSetInstanceRepository {
 
     suspend fun getFilePath(fileUid: String): String?
 
-    // EyeSeeTea customization - Create Team change request
+    // EyeSeeTea customization - Team change request
     suspend fun getParentOrgUnit(orgUnitUid: String): String
 
-    // EyeSeeTea customization - multiple SDS org unit selection
+    // EyeSeeTea customization - Multiple SDS org unit selection
     suspend fun getOrgUnitById(orgUnitUid: String): String?
 
 }

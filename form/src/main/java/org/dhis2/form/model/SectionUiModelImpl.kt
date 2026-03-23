@@ -1,11 +1,12 @@
 package org.dhis2.form.model
 
 import androidx.databinding.ObservableField
-import org.dhis2.commons.orgunitselector.OrgUnitSelectorScope
 import org.dhis2.commons.team.ValidationData
 import org.dhis2.form.ui.event.UiEventFactory
 import org.dhis2.form.ui.intent.FormIntent
 import org.dhis2.form.ui.intent.FormIntent.OnFocus
+import org.dhis2.mobile.commons.model.CustomIntentModel
+import org.dhis2.mobile.commons.orgunit.OrgUnitSelectorScope
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.mobile.ui.designsystem.component.SelectableDates
 
@@ -31,7 +32,6 @@ data class SectionUiModelImpl(
     override val keyboardActionType: KeyboardActionType? = null,
     override val fieldMask: String? = null,
     var isOpen: Boolean? = false,
-    override val url: String? = null,
     var totalFields: Int = 0,
     var completedFields: Int = 0,
     var errors: Int = 0,
@@ -39,25 +39,24 @@ data class SectionUiModelImpl(
     var rendering: String? = null,
     var selectedField: ObservableField<String?> = ObservableField(null),
     override val isLoadingData: Boolean = false,
-    override var optionSetConfiguration: OptionSetConfiguration? = null,
+    override val optionSetConfiguration: OptionSetConfiguration? = null,
     override val autocompleteList: List<String>? = null,
     override val orgUnitSelectorScope: OrgUnitSelectorScope? = null,
     override val selectableDates: SelectableDates? = null,
     override val eventCategories: List<EventCategory>? = null,
     override val periodSelector: PeriodSelector? = null,
     override val visible: Boolean = true,
+    // EyeSeeTea customization - Validate or hide orgunit by Teamprofile
     override val orgUnitDataValidation: ValidationData? = null,
+    override var customIntent: CustomIntentModel? = null,
 ) : FieldUiModel {
-
     private var sectionNumber: Int = 0
     private var showBottomShadow: Boolean = false
     private var lastPositionShouldChangeHeight: Boolean = false
 
     private var callback: FieldUiModel.Callback? = null
 
-    fun hasToShowDescriptionIcon(isTitleEllipsed: Boolean): Boolean {
-        return !description.isNullOrEmpty() || isTitleEllipsed
-    }
+    fun hasToShowDescriptionIcon(isTitleEllipsed: Boolean): Boolean = !description.isNullOrEmpty() || isTitleEllipsed
 
     private fun isClosingSection(): Boolean = uid == CLOSING_SECTION_UID
 
@@ -67,9 +66,7 @@ data class SectionUiModelImpl(
         this.showBottomShadow = showBottomShadow
     }
 
-    fun showNextButton(): Boolean {
-        return showBottomShadow && !isClosingSection()
-    }
+    fun showNextButton(): Boolean = showBottomShadow && !isClosingSection()
 
     override val formattedLabel: String
         get() = label
@@ -130,6 +127,9 @@ data class SectionUiModelImpl(
     override fun setWarning(warning: String) = this.copy(warning = warning)
 
     override fun setFieldMandatory() = this.copy(mandatory = true)
+
+    override fun setOptionSetConfiguration(optionSetConfiguration: OptionSetConfiguration) =
+        this.copy(optionSetConfiguration = optionSetConfiguration)
 
     override fun isSectionWithFields() = totalFields > 0
     override fun setOrgUnitDataValidation(data: ValidationData) = this.copy(orgUnitDataValidation = data)

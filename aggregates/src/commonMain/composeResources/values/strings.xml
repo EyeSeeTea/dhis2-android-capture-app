@@ -77,6 +77,6 @@
 
     <string name="team_change_request">Do you want to create a change request for this team profile?</string>
 
-<!--    EyeSeeTea customization - Create change team request -->
+<!--    EyeSeeTea customization - Team change request -->
     <string name="create">Create</string>
 </resources>

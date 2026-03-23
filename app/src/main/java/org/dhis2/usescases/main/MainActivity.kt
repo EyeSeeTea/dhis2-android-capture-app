@@ -15,8 +15,7 @@ import android.view.View
 import android.webkit.MimeTypeMap
 import android.widget.TextView
 import android.widget.Toast
-import android.window.OnBackInvokedDispatcher
-import androidx.activity.addCallback
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -31,7 +30,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
-import dispatch.core.dispatcherProvider
 import kotlinx.coroutines.launch
 import org.dhis2.BuildConfig
 import org.dhis2.R
@@ -49,11 +47,10 @@ import org.dhis2.commons.orgunitselector.OUTreeFragment
 import org.dhis2.commons.sync.OnDismissListener
 import org.dhis2.commons.sync.SyncContext
 import org.dhis2.databinding.ActivityMainBinding
-import org.dhis2.ui.dialogs.alert.AlertDialog
-import org.dhis2.ui.model.ButtonUiModel
 import org.dhis2.usescases.development.DevelopmentActivity
 import org.dhis2.usescases.general.ActivityGlobalAbstract
 import org.dhis2.usescases.login.LoginActivity
+import org.dhis2.usescases.main.ui.NewVersionDialog
 import org.dhis2.utils.analytics.CLICK
 import org.dhis2.utils.analytics.CLOSE_SESSION
 import org.dhis2.utils.customviews.navigationbar.NavigationPage
@@ -77,7 +74,6 @@ class MainActivity :
     ActivityGlobalAbstract(),
     MainView,
     DrawerLayout.DrawerListener {
-
     private lateinit var binding: ActivityMainBinding
 
     lateinit var mainComponent: MainComponent
@@ -90,8 +86,6 @@ class MainActivity :
 
     @Inject
     lateinit var pageConfigurator: NavigationPageConfigurator
-
-    private var singleProgramNavigationDone = false
 
     private val getDevActivityContent =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -107,16 +101,16 @@ class MainActivity :
             } else if (granted) {
                 onDownloadNewVersion()
             } else {
-                Toast.makeText(
-                    context,
-                    getString(R.string.storage_denied),
-                    Toast.LENGTH_LONG,
-                ).show()
+                Toast
+                    .makeText(
+                        context,
+                        getString(R.string.storage_denied),
+                        Toast.LENGTH_LONG,
+                    ).show()
             }
         }
 
     private var isPinLayoutVisible = false
-    private var isChangeServerURLVisible = false
 
     private lateinit var mainNavigator: MainNavigator
 
@@ -128,48 +122,51 @@ class MainActivity :
             context: Context,
             initScreen: MainNavigator.MainScreen? = null,
             launchDataSync: Boolean = false,
-        ): Intent {
-            return Intent(context, MainActivity::class.java).apply {
+        ): Intent =
+            Intent(context, MainActivity::class.java).apply {
                 initScreen?.let {
                     putExtra(FRAGMENT, initScreen.name)
                 }
                 putExtra(INIT_DATA_SYNC, launchDataSync)
             }
-        }
 
-        fun bundle(initScreen: MainNavigator.MainScreen? = null, launchDataSync: Boolean = false) =
-            Bundle().apply {
-                initScreen?.let {
-                    putString(FRAGMENT, initScreen.name)
-                }
-                putBoolean(INIT_DATA_SYNC, launchDataSync)
+        fun bundle(
+            initScreen: MainNavigator.MainScreen? = null,
+            launchDataSync: Boolean = false,
+        ) = Bundle().apply {
+            initScreen?.let {
+                putString(FRAGMENT, initScreen.name)
             }
+            putBoolean(INIT_DATA_SYNC, launchDataSync)
+        }
     }
 
     //region LIFECYCLE
     override fun onCreate(savedInstanceState: Bundle?) {
         app().userComponent()?.let {
-            mainComponent = it.plus(
-                MainModule(
-                    view = this,
-                    forceToNotSynced = intent.getBooleanExtra(AVOID_SYNC, false),
-                ),
-            )
+            mainComponent =
+                it.plus(
+                    MainModule(
+                        view = this,
+                        forceToNotSynced = intent.getBooleanExtra(AVOID_SYNC, false),
+                    ),
+                )
             mainComponent.inject(this@MainActivity)
         } ?: navigateTo<LoginActivity>(true)
-        mainNavigator = MainNavigator(
-            dispatcherProvider = presenter.dispatcherProvider,
-            supportFragmentManager,
-            {
-                if (backDropActive) {
-                    showHideFilter()
-                }
-            },
-        ) { titleRes, showFilterButton, showBottomNavigation ->
-            setTitle(getString(titleRes))
-            setFilterButtonVisibility(showFilterButton)
-            setBottomNavigationVisibility(showBottomNavigation)
-        }
+        mainNavigator =
+            MainNavigator(
+                dispatcherProvider = presenter.dispatcherProvider,
+                supportFragmentManager,
+                {
+                    if (backDropActive) {
+                        showHideFilter()
+                    }
+                },
+            ) { titleRes, showFilterButton, showBottomNavigation ->
+                setTitle(getString(titleRes))
+                setFilterButtonVisibility(showFilterButton)
+                setBottomNavigationVisibility(showBottomNavigation)
+            }
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
@@ -192,8 +189,12 @@ class MainActivity :
         setUpDevelopmentMode()
 
         val restoreScreenName = savedInstanceState?.getString(FRAGMENT)
-        singleProgramNavigationDone =
-            savedInstanceState?.getBoolean(SINGLE_PROGRAM_NAVIGATION) ?: false
+        presenter.updateSingleProgramNavigationDone(
+            savedInstanceState?.getBoolean(
+                SINGLE_PROGRAM_NAVIGATION,
+            ) ?: false,
+        )
+
         val openScreen = intent.getStringExtra(FRAGMENT)
 
         when {
@@ -205,9 +206,10 @@ class MainActivity :
                 )
                 mainNavigator.restoreScreen(
                     screenToRestoreName = openScreen ?: restoreScreenName!!,
-                    languageSelectorOpened = openScreen != null &&
-                        MainNavigator.MainScreen.valueOf(openScreen) ==
-                        MainNavigator.MainScreen.TROUBLESHOOTING,
+                    languageSelectorOpened =
+                        openScreen != null &&
+                            MainNavigator.MainScreen.valueOf(openScreen) ==
+                            MainNavigator.MainScreen.TROUBLESHOOTING,
                 )
             }
 
@@ -219,11 +221,12 @@ class MainActivity :
 
         observeSyncState()
         observeVersionUpdate()
+        observeSingleProgram()
 
         if (!presenter.wasSyncAlreadyDone()) {
             presenter.launchInitialDataSync()
-        } else if (!singleProgramNavigationDone && presenter.hasOneHomeItem()) {
-            navigateToSingleProgram()
+        } else {
+            presenter.checkSingleProgramNavigation()
         }
 
         checkNotificationPermission()
@@ -241,7 +244,7 @@ class MainActivity :
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putBoolean(SINGLE_PROGRAM_NAVIGATION, singleProgramNavigationDone)
+        outState.putBoolean(SINGLE_PROGRAM_NAVIGATION, presenter.isSingleProgramNavigationDone())
         outState.putString(FRAGMENT, mainNavigator.currentScreenName())
     }
 
@@ -261,6 +264,9 @@ class MainActivity :
 
     private fun setUpDevelopmentMode() {
         if (BuildConfig.DEBUG || BuildConfig.FLAVOR == "dhis2Training") {
+            binding.navView.menu
+                .findItem(R.id.menu_troubleshooting)
+                .isVisible = true
             binding.menu.setOnLongClickListener {
                 getDevActivityContent.launch(Intent(this, DevelopmentActivity::class.java))
                 false
@@ -269,15 +275,13 @@ class MainActivity :
     }
 
     private fun registerOnBackPressedCallback() {
-        if (Build.VERSION.SDK_INT >= 33) {
-            onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) {
-                backPressed()
-            }
-        } else {
-            onBackPressedDispatcher.addCallback(this) {
-                backPressed()
-            }
-        }
+        onBackPressedDispatcher.addCallback(
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    backPressed()
+                }
+            },
+        )
     }
 
     private fun setUpNavigationBar() {
@@ -307,7 +311,7 @@ class MainActivity :
 
                             NavigationPage.PROGRAMS -> mainNavigator.openPrograms()
                             else -> {
-                                /*no-op*/
+                                // no-op
                             }
                         }
                     }
@@ -331,9 +335,7 @@ class MainActivity :
                         binding.syncActionButton.visibility = View.VISIBLE
                         setBottomNavigationVisibility(true)
                         presenter.onDataSuccess()
-                        if (presenter.hasOneHomeItem()) {
-                            navigateToSingleProgram()
-                        }
+                        presenter.checkSingleProgramNavigation()
                     }
 
                     else -> {
@@ -341,13 +343,6 @@ class MainActivity :
                     }
                 }
             }
-        }
-    }
-
-    private fun navigateToSingleProgram() {
-        presenter.getSingleItemData()?.let { homeItemData ->
-            singleProgramNavigationDone = true
-            navigationLauncher.navigateTo(this, homeItemData)
         }
     }
 
@@ -360,6 +355,14 @@ class MainActivity :
                 binding.toolbarProgress.show()
             } else {
                 binding.toolbarProgress.hide()
+            }
+        }
+    }
+
+    private fun observeSingleProgram() {
+        lifecycleScope.launch {
+            presenter.singleProgramNavigationChannel.collect { homeItemData ->
+                navigationLauncher.navigateTo(this@MainActivity, homeItemData)
             }
         }
     }
@@ -394,7 +397,8 @@ class MainActivity :
     }
 
     override fun showGranularSync() {
-        SyncStatusDialog.Builder()
+        SyncStatusDialog
+            .Builder()
             .withContext(this)
             .withSyncContext(SyncContext.Global())
             .onDismissListener(
@@ -405,16 +409,15 @@ class MainActivity :
                         }
                     }
                 },
-            )
-            .onNoConnectionListener {
+            ).onNoConnectionListener {
                 val contextView = findViewById<View>(R.id.navigationBar)
-                Snackbar.make(
-                    contextView,
-                    R.string.sync_offline_check_connection,
-                    Snackbar.LENGTH_SHORT,
-                ).show()
-            }
-            .show("ALL_SYNC")
+                Snackbar
+                    .make(
+                        contextView,
+                        R.string.sync_offline_check_connection,
+                        Snackbar.LENGTH_SHORT,
+                    ).show()
+            }.show("ALL_SYNC")
     }
 
     override fun updateFilters(totalFilters: Int) {
@@ -423,30 +426,41 @@ class MainActivity :
 
     override fun showPeriodRequest(periodRequest: FilterManager.PeriodRequest) {
         if (periodRequest == FilterManager.PeriodRequest.FROM_TO) {
-            FilterPeriodsDialog.newPeriodsFilter(filterType = Filters.PERIOD, isFromToFilter = true).show(supportFragmentManager, FILTER_DIALOG)
+            FilterPeriodsDialog
+                .newPeriodsFilter(filterType = Filters.PERIOD, isFromToFilter = true)
+                .show(supportFragmentManager, FILTER_DIALOG)
         } else {
-            FilterPeriodsDialog.newPeriodsFilter(filterType = Filters.PERIOD).show(supportFragmentManager, FILTER_DIALOG)
+            FilterPeriodsDialog
+                .newPeriodsFilter(filterType = Filters.PERIOD)
+                .show(supportFragmentManager, FILTER_DIALOG)
         }
     }
 
     override fun openOrgUnitTreeSelector() {
-        OUTreeFragment.Builder()
+        OUTreeFragment
+            .Builder()
             .withPreselectedOrgUnits(
-                FilterManager.getInstance().orgUnitFilters.map { it.uid() }.toMutableList(),
-            )
-            .onSelection { selectedOrgUnits ->
+                FilterManager
+                    .getInstance()
+                    .orgUnitFilters
+                    .map { it.uid() }
+                    .toMutableList(),
+            ).onSelection { selectedOrgUnits ->
                 presenter.setOrgUnitFilters(selectedOrgUnits)
-            }
-            .build()
+            }.build()
             .show(supportFragmentManager, "OUTreeFragment")
     }
 
-    override fun goToLogin(accountsCount: Int, isDeletion: Boolean) {
+    override fun goToLogin(
+        accountsCount: Int,
+        isDeletion: Boolean,
+    ) {
         startActivity(
             LoginActivity::class.java,
             LoginActivity.bundle(
                 accountsCount = accountsCount,
                 isDeletion = isDeletion,
+                fromMainActivity = true,
             ),
             true,
             true,
@@ -462,16 +476,18 @@ class MainActivity :
     }
 
     private fun setFilterButtonVisibility(showFilterButton: Boolean) {
-        binding.filterActionButton.visibility = if (showFilterButton && presenter.hasFilters()) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
-        binding.syncActionButton.visibility = if (showFilterButton) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+        binding.filterActionButton.visibility =
+            if (showFilterButton && presenter.hasFilters()) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+        binding.syncActionButton.visibility =
+            if (showFilterButton) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
     }
 
     override fun openDrawer(gravity: Int) {
@@ -509,7 +525,7 @@ class MainActivity :
         when {
             !mainNavigator.isHome() -> presenter.onNavigateBackToHome()
             isPinLayoutVisible -> isPinLayoutVisible = false
-            isChangeServerURLVisible -> isChangeServerURLVisible = false
+            else -> back()
         }
     }
 
@@ -538,7 +554,10 @@ class MainActivity :
         // no op
     }
 
-    override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
+    override fun onDrawerSlide(
+        drawerView: View,
+        slideOffset: Float,
+    ) {
         // no op
     }
 
@@ -597,65 +616,55 @@ class MainActivity :
             .setView(R.layout.warning_layout)
             .setPositiveButton(getString(R.string.wipe_data_ok)) { _, _ ->
                 presenter.onDeleteAccount()
-            }
-            .setNegativeButton(getString(R.string.wipe_data_no)) { dialog, _ ->
+            }.setNegativeButton(getString(R.string.wipe_data_no)) { dialog, _ ->
                 dialog.dismiss()
-            }
-            .show()
+            }.show()
     }
 
     override fun showProgressDeleteNotification() {
         val notificationManager =
             context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val mChannel = NotificationChannel(
-                WIPE_NOTIFICATION,
-                RESTART,
-                NotificationManager.IMPORTANCE_HIGH,
-            )
+            val mChannel =
+                NotificationChannel(
+                    WIPE_NOTIFICATION,
+                    RESTART,
+                    NotificationManager.IMPORTANCE_HIGH,
+                )
             notificationManager.createNotificationChannel(mChannel)
         }
-        val notificationBuilder = NotificationCompat.Builder(context, WIPE_NOTIFICATION)
-            .setSmallIcon(R.drawable.ic_sync)
-            .setContentTitle(getString(R.string.wipe_data))
-            .setContentText(getString(R.string.please_wait))
-            .setOngoing(true)
-            .setAutoCancel(false)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+        val notificationBuilder =
+            NotificationCompat
+                .Builder(context, WIPE_NOTIFICATION)
+                .setSmallIcon(R.drawable.ic_sync)
+                .setContentTitle(getString(R.string.wipe_data))
+                .setContentText(getString(R.string.please_wait))
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
 
         notificationManager.notify(123456, notificationBuilder.build())
     }
 
-    override fun obtainFileView(): File? {
-        return this.cacheDir
-    }
+    override fun obtainFileView(): File? = this.cacheDir
 
     override fun cancelNotifications() {
         val notificationManager: NotificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancelAll()
     }
 
     private fun showNewVersionAlert(version: String) {
-        AlertDialog(
-            labelText = getString(R.string.software_update),
-            descriptionText = getString(R.string.new_version_message).format(version),
-            iconResource = R.drawable.ic_software_update,
-            spanText = version,
-            dismissButton = ButtonUiModel(
-                getString(R.string.remind_me_later),
-                onClick = { presenter.remindLaterAlertNewVersion() },
-            ),
-            confirmButton = ButtonUiModel(
-                getString(R.string.download_now),
-                onClick = {
-                    if (hasPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
-                        onDownloadNewVersion()
-                    } else {
-                        requestWritePermissions.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    }
-                },
-            ),
+        NewVersionDialog(
+            newVersion = version,
+            onRemindMeLater = presenter::remindLaterAlertNewVersion,
+            onDownloadVersion = {
+                if (hasPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
+                    onDownloadNewVersion()
+                } else {
+                    requestWritePermissions.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                }
+            },
         ).show(supportFragmentManager)
     }
 
@@ -674,17 +683,19 @@ class MainActivity :
                     Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
                         .setData(String.format("package:%s", packageName).toUri()),
                 )
+
             !hasPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)) && Build.VERSION.SDK_INT < Build.VERSION_CODES.R ->
                 requestReadStoragePermission.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
 
-            else -> Intent(Intent.ACTION_VIEW).apply {
-                val mime = MimeTypeMap.getSingleton()
-                val ext = apkUri.path?.substringAfterLast(("."))
-                val type: String? = mime.getMimeTypeFromExtension(ext)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                setDataAndType(apkUri, type)
-                startActivity(this)
-            }
+            else ->
+                Intent(Intent.ACTION_VIEW).apply {
+                    val mime = MimeTypeMap.getSingleton()
+                    val ext = apkUri.path?.substringAfterLast(("."))
+                    val type: String? = mime.getMimeTypeFromExtension(ext)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    setDataAndType(apkUri, type)
+                    startActivity(this)
+                }
         }
     }
 
@@ -695,11 +706,12 @@ class MainActivity :
     private val manageUnknownSources =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (hasNoPermissionToInstall()) {
-                Toast.makeText(
-                    context,
-                    getString(R.string.unknow_sources_denied),
-                    Toast.LENGTH_LONG,
-                ).show()
+                Toast
+                    .makeText(
+                        context,
+                        getString(R.string.unknow_sources_denied),
+                        Toast.LENGTH_LONG,
+                    ).show()
             } else {
                 onDownloadNewVersion()
             }
@@ -712,28 +724,31 @@ class MainActivity :
             } else if (granted) {
                 onDownloadNewVersion()
             } else {
-                Toast.makeText(
-                    context,
-                    getString(R.string.storage_denied),
-                    Toast.LENGTH_LONG,
-                ).show()
+                Toast
+                    .makeText(
+                        context,
+                        getString(R.string.storage_denied),
+                        Toast.LENGTH_LONG,
+                    ).show()
             }
         }
 
     private val requestNotificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
-                Toast.makeText(
-                    context,
-                    getString(R.string.permission_notification_granted),
-                    Toast.LENGTH_SHORT,
-                ).show()
+                Toast
+                    .makeText(
+                        context,
+                        getString(R.string.permission_notification_granted),
+                        Toast.LENGTH_SHORT,
+                    ).show()
             } else {
-                Toast.makeText(
-                    context,
-                    getString(R.string.permission_notification_denied),
-                    Toast.LENGTH_SHORT,
-                ).show()
+                Toast
+                    .makeText(
+                        context,
+                        getString(R.string.permission_notification_denied),
+                        Toast.LENGTH_SHORT,
+                    ).show()
             }
         }
 
