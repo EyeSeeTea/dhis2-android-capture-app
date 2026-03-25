@@ -19,6 +19,7 @@ interface PreferenceProvider {
 
     fun getBiometricCredentials(): CiphertextWrapper?
 
+    // EyeSeeTea customization - Change server URL dialog
     fun updateServerURL(serverUrl: String)
 
     fun areCredentialsSet(): Boolean

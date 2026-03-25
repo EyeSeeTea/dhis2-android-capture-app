@@ -4,13 +4,8 @@ import static org.dhis2.utils.analytics.AnalyticsConstants.CLICK;
 import static org.dhis2.utils.analytics.AnalyticsConstants.SHOW_HELP;
 
 import android.content.Context;
-import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.util.AttributeSet;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
@@ -25,6 +20,7 @@ import org.dhis2.commons.Constants;
 import org.dhis2.commons.dialogs.CustomDialog;
 import org.dhis2.commons.popupmenu.AppMenuHelper;
 import org.dhis2.mobile.commons.reporting.CrashReportController;
+// EyeSeeTea customization - Notifications system
 import org.dhis2.data.server.ServerComponent;
 import org.dhis2.usescases.notifications.domain.Notification;
 import org.dhis2.usescases.notifications.presentation.NotificationsPresenter;
@@ -34,15 +30,19 @@ import org.dhis2.utils.OnDialogClickListener;
 import org.dhis2.utils.analytics.AnalyticsHelper;
 import org.dhis2.utils.granularsync.SyncStatusDialog;
 
+// EyeSeeTea customization - Notifications system
 import java.util.List;
 import java.util.Locale;
 
 import javax.inject.Inject;
 
+// EyeSeeTea customization - Notifications system
 import io.noties.markwon.Markwon;
 import kotlin.Unit;
 
 
+// EyeSeeTea customization - Notifications system
+// (implements NotificationsView)
 public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         implements AbstractActivityContracts.View, ActivityResultObservable, NotificationsView {
 
@@ -53,11 +53,24 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     @Inject
     public CrashReportController crashReportController;
 
+    // EyeSeeTea customization - Notifications system
     @Inject
     public NotificationsPresenter notificationsPresenter;
 
     private CustomDialog descriptionDialog;
 
+
+    // EyeSeeTea customization - Notifications system
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        ServerComponent serverComponent = ((App) getApplicationContext()).getServerComponent();
+
+        if (notificationsPresenter != null){
+            notificationsPresenter.refresh(this);
+        }
+
+        super.onCreate(savedInstanceState);
+    }
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -70,16 +83,6 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         );
     }
 
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        ServerComponent serverComponent = ((App) getApplicationContext()).getServerComponent();
-
-        if (notificationsPresenter != null){
-            notificationsPresenter.refresh(this);
-        }
-
-        super.onCreate(savedInstanceState);
-    }
 
     @Override
     public void setTutorial() {
@@ -223,6 +226,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         return analyticsHelper;
     }
 
+    // EyeSeeTea customization - Notifications system
     @Override
     public void renderNotifications(List<Notification> notifications) {
         for (Notification notification : notifications) {
@@ -230,9 +234,8 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         }
     }
 
+    // EyeSeeTea customization - Notifications system
     private void showNotification(Notification notification) {
-
-
         String content = getNotificationContent(notification);
 
         new MaterialAlertDialogBuilder(this, R.style.DhisMaterialDialog)
@@ -245,6 +248,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
                 .show();
     }
 
+    // EyeSeeTea customization - Notifications system
     private String getNotificationContent(Notification notification) {
         Markwon markwon = Markwon.create(getContext());
 

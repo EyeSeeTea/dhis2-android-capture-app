@@ -90,27 +90,24 @@ Technical note:
 
 ## 3. Shared drift still differing
 
-### 3.1 PSI/WIDP flavor artifacts (to remove)
+### 3.1 PSI/WIDP flavor artifacts — resolved
 
-These files exist in `develop-sports` because the branch was forked from a state that included other client flavors. They are not sports customizations and should be removed during the upgrade:
+These files have been removed from the tracked tree during the upgrade merge. Untracked leftover directories (`app/psi/`, `app/widp/`, `app/simprints/`) may remain on disk from prior checkouts but are not part of this branch.
 
-- `app/src/psi/**` — entire PSI flavor (~50 files)
-- `app/src/widp/**` — entire WIDP flavor (~40 files)
-- `app/src/simprints/**` — entire Simprints flavor (~10 files)
-- `app/src/psiDebug/**`, `app/src/widpDebug/**` — debug variants
+### 3.2 PSI-only dependency — resolved
 
-Note: These will be automatically resolved by accepting `develop-eyeseetea` during the merge (the eyeseetea branch does not contain these flavors either, or has its own cleanup).
+The `atv` (`com.github.bmelnychuk:atv`) dependency has been removed from both `build.gradle.kts` and `libs.versions.toml`. No references remain in tracked code.
 
-### 3.2 PSI-only dependency (to remove)
+### 3.3 Version drift (~157 files in shared modules)
 
-- `atv` (`com.github.bmelnychuk:atv`) — AndroidTreeView library, only used in `app/src/psi/`. Remove from `build.gradle.kts` and `libs.versions.toml`.
+Not customizations. Remaining differences between `origin/develop-eyeseetea` and HEAD in shared modules (`app/src/main/`, `commons/`, `form/`, `tracker/`, `aggregates/`) include:
+- SDK API differences (e.g., `categoryComboUid()` vs `categoryCombo()?.uid()`)
+- Import ordering differences
+- UI code that eyeseetea refactored after the merge base (e.g., `SyncManagerFragment`, `SettingsScreen`)
+- String resource drift in multiple locales
+- Minor Compose and form module differences
 
-### 3.3 Version drift (~300 files)
-
-Not customizations. These are older versions of shared code that will be resolved by accepting `develop-eyeseetea` during the merge:
-- SDK version, Gradle version, Kotlin version, design system version
-- Missing `sync` module (new in eyeseetea)
-- Missing Sentry plugin, CycloneDX plugin, lottie-compose dependency
+These are expected and will converge as the branch is rebased or merged forward. None represent intentional sports customizations.
 
 ## 4. Notes
 

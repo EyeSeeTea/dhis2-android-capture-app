@@ -6,6 +6,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.ListenableWorker
 import io.reactivex.Completable
 import io.reactivex.Observable
+// EyeSeeTea customization - Notifications system
 import kotlinx.coroutines.runBlocking
 import org.dhis2.bindings.toSeconds
 import org.dhis2.commons.bindings.enrollment
@@ -26,6 +27,7 @@ import org.dhis2.commons.prefs.PreferenceProvider
 import org.dhis2.data.service.workManager.WorkManagerController
 import org.dhis2.data.service.workManager.WorkerItem
 import org.dhis2.data.service.workManager.WorkerType
+// EyeSeeTea customization - Notifications system
 import org.dhis2.usescases.notifications.domain.NotificationRepository
 import org.dhis2.utils.analytics.AnalyticsHelper
 import org.dhis2.utils.analytics.matomo.DEFAULT_EXTERNAL_TRACKER_NAME
@@ -51,7 +53,8 @@ class SyncPresenterImpl(
     private val analyticsHelper: AnalyticsHelper,
     private val syncStatusController: SyncStatusController,
     private val syncRepository: SyncRepository,
-    private val notificationRepository: NotificationRepository
+    // EyeSeeTea customization - Notifications system
+    private val notificationRepository: NotificationRepository,
 ) : SyncPresenter {
     override fun initSyncControllerMap() {
         Completable
@@ -254,6 +257,7 @@ class SyncPresenterImpl(
                     }.doOnComplete {
                         updateProyectAnalytics()
                         setUpSMS()
+                        // EyeSeeTea customization - Notifications system
                         syncNotifications()
                     },
             ).doOnError {
@@ -815,6 +819,7 @@ class SyncPresenterImpl(
         } ?: analyticsHelper.clearMatomoSecondaryTracker()
     }
 
+    // EyeSeeTea customization - Notifications system
     private fun syncNotifications() {
         runBlocking {
             notificationRepository.sync().collect {}

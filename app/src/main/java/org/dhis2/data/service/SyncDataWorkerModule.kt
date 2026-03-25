@@ -5,6 +5,7 @@ import dagger.Provides
 import org.dhis2.commons.di.dagger.PerService
 import org.dhis2.commons.prefs.PreferenceProvider
 import org.dhis2.data.service.workManager.WorkManagerController
+// EyeSeeTea customization - Notifications system
 import org.dhis2.usescases.notifications.domain.NotificationRepository
 import org.dhis2.utils.analytics.AnalyticsHelper
 import org.hisp.dhis.android.core.D2
@@ -24,7 +25,8 @@ class SyncDataWorkerModule {
         analyticsHelper: AnalyticsHelper,
         syncStatusController: SyncStatusController,
         syncRepository: SyncRepository,
-        notificationsRepository: NotificationRepository
+        // EyeSeeTea customization - Notifications system
+        notificationsRepository: NotificationRepository,
     ): SyncPresenter =
         SyncPresenterImpl(
             d2,
@@ -33,6 +35,7 @@ class SyncDataWorkerModule {
             analyticsHelper,
             syncStatusController,
             syncRepository,
-            notificationsRepository
+            // EyeSeeTea customization - Notifications system
+            notificationsRepository,
         )
 }

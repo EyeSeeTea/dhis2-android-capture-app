@@ -47,6 +47,7 @@ class Preference {
         const val DATE_PICKER = "DATE_PICKER"
         const val PREF_COMPLETED_EVENT = "COMPLETED_EVENT"
 
+        // EyeSeeTea customization - Notifications system
         const val NOTIFICATIONS = "NOTIFICATIONS"
     }
 }
