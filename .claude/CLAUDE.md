@@ -15,6 +15,7 @@ Fork of the **DHIS2 Android Capture App** (University of Oslo) maintained by **E
 ## Git Workflow
 
 - **Default branch per fork**: `develop-<fork>` (e.g., `develop-widp`, `develop-sports`)
+- **Baseline branch**: `develop-eyeseetea` is the EyeSeeTea reference. Oslo upgrades go into `develop-eyeseetea` first; client forks upgrade from it, **never directly from Oslo**.
 - **Branch naming**: `feature-<fork>/<name>`, `fix-<fork>/<name>` (e.g., `feature-widp/custom-enrollment`)
 - **Conventional Commits**: `feat(scope):`, `fix(scope):`, `refactor(scope):`, `test(scope):`, `docs(scope):`
 - **Important**: Always branch from and PR into the relevant `develop-<fork>` branch, NOT master
@@ -131,6 +132,26 @@ Presentation (Activities, Fragments, ViewModels, Compose screens)
 # Lint / code style
 ./gradlew ktlintCheck
 ```
+
+## Fork Documentation (eyeseetea-docs)
+
+EyeSeeTea maintains a documentation structure for fork management in `eyeseetea-docs/` (on `develop-eyeseetea`):
+
+- **`eyeseetea-docs/README.md`** — Documentation model overview
+- **`eyeseetea-docs/onboarding-fork-guide.md`** — 8-phase guide for onboarding forks without docs
+- **`eyeseetea-docs/upgrade/conflict-rules.md`** — Conflict classification and resolution rules for merges
+- **`eyeseetea-docs/upgrade/upgrade-plan-client-forks.md`** — Full upgrade runbook
+- **`eyeseetea-docs/customizations/<client>/customization-specs.md`** — Functional customization inventory per client
+- **`eyeseetea-docs/customizations/<client>/customization-files.md`** — Technical file inventory per client
+- **`eyeseetea-docs/upgrade/<client>/upgrade-validation-checklist.md`** — Manual validation flows
+- **`eyeseetea-docs/upgrade/<client>/upgrade-<version>-notes.md`** — Temporary merge progress tracking
+
+### Key rules from conflict-rules.md
+- Prefer `develop-eyeseetea` by default; only keep confirmed client-specific logic
+- Classify conflicts as: `accept_ours`, `accept_theirs`, `manual_reapply_on_theirs`, `defer_after_build_verification`
+- Classify ALL conflicts BEFORE editing any file
+- Resolve easy batch first, pause for developer review, then manual conflicts
+- Surviving customizations in shared code must have: `// EyeSeeTea customization - [title]`
 
 ## SDK Configuration
 
