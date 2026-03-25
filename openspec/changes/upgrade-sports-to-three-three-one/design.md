@@ -74,6 +74,25 @@ Per the guide's file migration rule: if a sports customization was in a `.java` 
 - **[Risk] Removed code (notifications, ChangeServerURL) was actually needed by sports** → Mitigation: Inventory phase will confirm. If needed, it would go in `app/src/sports/` not shared code.
 - **[Risk] 611-file diff makes manual review impractical** → Mitigation: Preclassification table reduces manual review to only the `manual_reapply_on_theirs` files, which appear to be a small subset.
 
+## Referenced Specs and Documentation
+
+### Active Customization Specs
+
+Each active sports customization has a formal OpenSpec spec with MUST/SHALL requirements and Given-When-Then scenarios. These specs define the behavior that MUST be preserved through the upgrade:
+
+- [`openspec/specs/sports-branding/spec.md`](../../specs/sports-branding/spec.md)
+- [`openspec/specs/sports-flavor-build-config/spec.md`](../../specs/sports-flavor-build-config/spec.md)
+- [`openspec/specs/notifications-system/spec.md`](../../specs/notifications-system/spec.md)
+- [`openspec/specs/change-server-url-dialog/spec.md`](../../specs/change-server-url-dialog/spec.md)
+
+### Inventory and Conflict Resolution Docs
+
+- `eyeseetea-docs/upgrade/conflict-rules.md` -- classification categories and resolution rules referenced in Decisions 3, 4, and 5
+- `eyeseetea-docs/customizations/sports/customization-specs.md` -- functional customization inventory (prerequisite for Phase 6)
+- `eyeseetea-docs/customizations/sports/customization-files.md` -- technical file inventory grouped by customization title
+- `eyeseetea-docs/upgrade/sports/upgrade-validation-checklist.md` -- manual validation flows per active customization
+- `eyeseetea-docs/upgrade/sports/upgrade-three-three-one-notes.md` -- conflict preclassification table (created during Phase 6)
+
 ## Open Questions
 
 - Which sports customizations in shared code are intentional vs. inherited drift from the WIDP branch (sports was branched from a state that included WIDP/PSI code)?
