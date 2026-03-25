@@ -1,0 +1,130 @@
+schema: spec-driven
+
+context: |
+  Project: DHIS2 Android Capture App (EyeSeeTea Forks)
+
+  What it is:
+  - Fork of the DHIS2 Android Capture App (University of Oslo) maintained by EyeSeeTea
+  - Multiple client-specific forks as branches (develop-widp, develop-psi, develop-simprints, develop-sports), each with custom features
+
+  Tech stack:
+  - Kotlin 2.2.20 + Java 17 (progressive migration from Java to Kotlin)
+  - Android SDK (min 21, target 36)
+  - Jetpack Compose (new UI) + Android Views/XML/Data Binding (legacy UI)
+  - Koin (new DI) + Dagger 2 (legacy DI)
+  - Kotlin Coroutines/Flow (new async) + RxJava 2 (legacy async)
+  - EyeSeeTea fork of DHIS2 Android SDK (via JitPack)
+  - Gradle Kotlin DSL with version catalog (gradle/libs.versions.toml)
+  - JUnit 4 + Mockito/MockK (unit tests), Espresso (UI tests), Turbine (Flow tests), Compose Test Rule
+
+  Directory structure:
+  - app/src/main/java/org/dhis2/ — Main shared source
+    - usescases/ — Feature packages (one per feature: enrollment, events, search, etc.)
+    - data/ — Data layer (repositories, SDK interactions, mappers)
+    - ui/ — Shared UI utilities
+    - utils/ — Utilities
+    - di/ — Dependency injection modules
+  - app/src/<flavor>/ — Flavor-specific source sets (widp/, psi/, sports/, etc.)
+  - commons/ — Shared utilities module
+  - form/ — Form handling module
+  - login/ — Authentication module
+  - tracker/ — DHIS2 Tracker programs module
+  - aggregates/ — Data aggregation module
+  - ui-components/ — Shared UI component library
+  - compose-table/ — Compose table components
+
+  Configuration:
+  - gradle/libs.versions.toml — Centralized version catalog
+  - app/build.gradle.kts — Flavors, signing, dependencies
+  - settings.gradle.kts — Module includes, composite build for local SDK
+  - local.properties — Local SDK path (never committed)
+  - EyeSeeTea.md — SDK integration documentation
+
+  Canonical commands:
+  - Build: ./gradlew :app:assembleDhis2Debug (or assembleWidpDebug, assemblePsiDebug, etc.)
+  - Test: ./gradlew test (all) or ./gradlew :app:testDhis2DebugUnitTest (specific)
+  - Android tests: ./gradlew :app:connectedDhis2DebugAndroidTest
+  - Lint: ./gradlew ktlintCheck
+
+  Code conventions:
+  - Kotlin for all new code; Java only when modifying existing Java files
+  - Package naming: org.dhis2.*
+  - Follow Kotlin conventions (camelCase for functions/properties, PascalCase for classes)
+  - All user-facing strings in strings.xml, never hardcoded
+  - Test file naming: <ClassName>Test.kt with backtick method names
+
+  Architecture:
+  - Clean Architecture with strict layered dependency rules
+  - Domain layer (entities, repository interfaces, use cases) — zero Android/framework imports
+  - Data layer (repository implementations, SDK interactions, data sources, mappers)
+  - Presentation layer (Activities, Fragments, ViewModels, Compose screens)
+  - Outer layers depend on inner, never reverse
+  - All SDK access through repository interfaces
+  - Presentation is wiring only — no business logic
+
+  Git workflow:
+  - Each fork has its own develop-<fork> branch (develop-widp, develop-sports, etc.)
+  - Feature branches: feature-<fork>/<name>, fix-<fork>/<name>
+  - Commits follow Conventional Commits (feat, fix, refactor, test, docs, chore)
+  - Shared improvements go to develop, then merge into fork branches
+
+  Non-goals (do NOT introduce these):
+  - Direct SQL access to DHIS2 SDK database (use SDK repositories)
+  - New Dagger modules (use Koin for new features)
+  - New RxJava chains (use Coroutines/Flow for new code)
+  - Hardcoded flavor-specific values in shared code (use build config or resource overrides)
+
+  Extension principles:
+  - New features go in their own package under usescases/
+  - New shared components go in ui-components/ or commons/
+  - Flavor-specific code in app/src/<flavor>/ — minimize, prefer shared + config
+  - New DI via Koin modules
+  - New async code via Coroutines/Flow
+
+  Testing strategy:
+  - Unit tests in <module>/src/test/ — JUnit 4 + Mockito/MockK
+  - Compose UI tests with ComposeTestRule
+  - Espresso tests for View-based UI in <module>/src/androidTest/
+  - Flow testing with Turbine
+  - Every use case and mapper must have unit tests
+  - Test concrete values, not truthiness
+
+  Code style:
+  - Prefer functional/declarative patterns: map, filter, flatMap, fold over for loops with mutable accumulators
+  - Avoid mutating function arguments or shared state — return new objects
+  - Use val over var, List over MutableList, immutable data class for models
+  - Use sealed class/sealed interface for state modeling and error handling
+  - Use Either/Result for error handling, not exceptions
+  - Prefer composition over inheritance
+
+rules:
+  project:
+    - "Specs first: before modifying any behavior, check openspec/specs/ for existing specs. If behavior is unclear, read the spec. If no spec exists, propose one under changes/."
+    - Follow code conventions as defined in the project context above.
+    - "New code goes in the correct module and package per the architecture."
+    - "Clean Architecture: domain layer must have no Android framework or infrastructure dependencies. All external access goes through repository interfaces."
+    - "Git: always branch from the relevant develop-<fork> branch. Use feature-<fork>/<name> for features, fix-<fork>/<name> for bugs. All commits must follow Conventional Commits."
+    - "Definition of Done: a change is complete when specs are updated, code aligns with specs, tests pass, and no breaking surfaces are altered without a proposal."
+    - "Boy Scout Rule: leave every file you touch cleaner than you found it."
+    - "Kotlin first: all new code in Kotlin. Only modify Java when changing existing Java files."
+
+  proposal:
+    - Must include: Goals, Non-goals, User impact, Compatibility, and Rollback plan.
+    - If changing public interfaces or SDK interactions, explicitly list old vs new.
+    - Specify which fork(s) the change targets (or if it's shared across all forks).
+
+  design:
+    - Must describe: data flow through the architecture layers (Presentation → Domain → Data → SDK).
+    - Note known constraints when relevant (offline support, SDK limitations, flavor differences).
+    - "UI design gate: when a change includes user-facing UI, the design phase MUST produce wireframes or mockups in Pencil (.pen files) before implementation begins. Designs are stored in openspec/designs/ and exported to openspec/designs/exports/."
+
+  tasks:
+    - Include at least one task for tests when behavior changes.
+    - Include a task to update specs/ when behavior changes.
+    - "Tag each task with the responsible agent role: [BE], [UI], [GD], [DB], [UX], [CR], [BUILD], or other as applicable."
+    - "Tag fork-specific tasks with the fork: [WIDP], [PSI], [SPORTS], etc."
+
+  specs:
+    - "Tests are the behavioral source of truth. Specs provide design context that tests cannot express (goals, non-goals, design decisions, rationale)."
+    - "Specs and tests are complementary: specs capture the 'why', tests capture the 'what'."
+    - "Keep specs lean: avoid duplicating in markdown what is already asserted by well-named tests."
