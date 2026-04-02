@@ -271,7 +271,7 @@ class FormValueStore(
         return filePath
             ?.let {
                 try {
-                    // EyeSeeTea customization no resize
+                    // EyeSeeTea customization - Image upload without resizing
                     // saveFileResource(filePath, valueType == ValueType.IMAGE)
                     saveFileResource(filePath, false)
                 } catch (e: Exception) {

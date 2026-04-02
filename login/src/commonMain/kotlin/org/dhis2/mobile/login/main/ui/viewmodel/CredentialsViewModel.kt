@@ -266,7 +266,7 @@ class CredentialsViewModel(
                 }
             }
 
-            // EyeSeeTea customization - Two Factor Authentication required
+            // EyeSeeTea customization - 2FA support
             is LoginResult.TwoFactorError -> {
                 _credentialsScreenState.update {
                     val code = it.twoFactorState?.code ?: ""
@@ -430,7 +430,7 @@ class CredentialsViewModel(
         }
     }
 
-    // EyeSeeTea customization - Two Factor Authentication methods
+    // EyeSeeTea customization - 2FA support
     fun updateTwoFactorCode(code: String) {
         _credentialsScreenState.update {
             val updatedState = when (val currentState = it.twoFactorState) {

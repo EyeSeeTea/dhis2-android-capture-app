@@ -209,7 +209,7 @@ fun CredentialsScreen(
                 }
             },
         )
-        // EyeSeeTea customization - Two Factor Authentication fields
+        // EyeSeeTea customization - 2FA support
         if (screenState.twoFactorState != null) {
             TwoFactorContainer(
                 twoFactorState = screenState.twoFactorState!!,
@@ -770,7 +770,7 @@ private fun BiometricsDialog(onPermissionResult: (granted: Boolean) -> Unit) {
     )
 }
 
-// EyeSeeTea customization - Two Factor Authentication container
+// EyeSeeTea customization - 2FA support
 @Composable
 private fun TwoFactorContainer(
     twoFactorState: TwoFactorState,

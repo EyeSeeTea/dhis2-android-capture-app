@@ -22,7 +22,7 @@ Originally 8 customizations were assumed. After verification against `develop-ey
 - **5 confirmed** (3 active, 1 active with SDK dependency, 1 broken)
 - **3 removed**: notifications translations merged into #3, indicators from form exists in baseline, events text filter does not exist in code
 
-### 1. Server URL change by user
+### 1. Change Server URL
 
 - Status: `active`
 - Risk: **medium**

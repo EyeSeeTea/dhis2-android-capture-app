@@ -1,4 +1,5 @@
 package org.dhis2.data.notifications
+// EyeSeeTea customization - Notifications system
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable

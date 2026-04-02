@@ -1,4 +1,5 @@
 package org.dhis2.data.notifications
+// EyeSeeTea customization - Notifications system
 
 import org.dhis2.usescases.notifications.domain.User
 import org.dhis2.usescases.notifications.domain.UserRepository

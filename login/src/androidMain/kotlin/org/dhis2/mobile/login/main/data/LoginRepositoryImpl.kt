@@ -104,7 +104,7 @@ class LoginRepositoryImpl(
             kotlin.Result.success(Unit)
         } catch (e: Exception) {
             if (e is D2Error && isTwoFactorError(e.errorCode())) {
-                // EyeSeeTea customization - Detect 2FA errors
+                // EyeSeeTea customization - 2FA support
                 handleTwoFactorError(e, isNetworkAvailable)
             } else {
                 kotlin.Result.failure(
@@ -423,7 +423,7 @@ class LoginRepositoryImpl(
             }
         }
 
-    // EyeSeeTea customization -
+    // EyeSeeTea customization - 2FA support
     private fun isTwoFactorError(errorCode: D2ErrorCode): Boolean {
         return errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE ||
                 errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP ||

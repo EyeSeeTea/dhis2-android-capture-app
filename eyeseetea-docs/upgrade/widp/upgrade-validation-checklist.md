@@ -12,7 +12,7 @@ Do not use this file for:
 - raw diff inventory
 - implementation notes
 
-## 1. Server URL change by user
+## 1. Change Server URL
 
 Preconditions:
 - Login with a valid user on a known server.

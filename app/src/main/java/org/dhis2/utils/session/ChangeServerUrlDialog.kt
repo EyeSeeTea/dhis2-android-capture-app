@@ -1,4 +1,5 @@
 package org.dhis2.utils.session
+// EyeSeeTea customization - Change Server URL
 
 import android.app.Dialog
 import android.os.Bundle

@@ -1,4 +1,5 @@
 package org.dhis2.usescases.notifications.presentation
+// EyeSeeTea customization - Notifications system
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

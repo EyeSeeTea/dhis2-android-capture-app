@@ -17,7 +17,7 @@ Do not use this file for:
 
 ## Known WIDP customizations
 
-### 1. Server URL change by user
+### 1. Change Server URL
 
 Status:
 - `active`

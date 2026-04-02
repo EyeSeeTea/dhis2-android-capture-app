@@ -726,6 +726,7 @@ class EventRepository(
         val renderingType = getSectionRenderingType(programStageSection)
         val featureType = getFeatureType(valueType)
 
+        // EyeSeeTea customization - URL data element field
         val url = de?.url()
 
         var fieldViewModel =

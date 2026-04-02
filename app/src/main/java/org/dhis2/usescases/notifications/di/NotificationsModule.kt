@@ -1,4 +1,5 @@
 package org.dhis2.usescases.notifications.di
+// EyeSeeTea customization - Notifications system
 
 import dagger.Module
 import dagger.Provides

@@ -51,7 +51,7 @@ Originally 8 customizations were assumed. After verification against `develop-ey
 
 ## 2. Shared-code customization implementation points
 
-### 2.1 Server URL change by user
+### 2.1 Change Server URL
 
 Status: `active`
 

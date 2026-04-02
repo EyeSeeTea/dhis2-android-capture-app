@@ -15,7 +15,7 @@ data class CredentialsUiState(
     val displayBiometricsDialog: Boolean,
     val hasOtherAccounts: Boolean,
     val isSessionLocked: Boolean,
-    // EyeSeeTea customization - Two Factor Authentication
+    // EyeSeeTea customization - 2FA support
     val twoFactorState: TwoFactorState? = null,
     val twoFactorCode: String = "",
     val infoMessage: String?,

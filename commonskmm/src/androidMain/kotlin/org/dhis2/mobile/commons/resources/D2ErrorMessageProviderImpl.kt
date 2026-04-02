@@ -224,7 +224,7 @@ class D2ErrorMessageProviderImpl : D2ErrorMessageProvider {
             D2ErrorCode.NOT_IN_TOTP_2FA_ENROLLMENT_MODE ->
                 getString(Res.string.not_in_totp_2fa_enrollment_mode)
 
-            // EyeSeeTea customization - errors for 2FA
+            // EyeSeeTea customization - 2FA support
             D2ErrorCode.INCORRECT_TWO_FACTOR_CODE, D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP ->
                 getString(
                     Res.string.incorrect_two_factor_code
