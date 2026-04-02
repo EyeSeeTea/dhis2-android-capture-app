@@ -110,13 +110,12 @@ Findings:
 - All file paths verified against actual two-dot diff
 - All EyeSeeTea customization comments located (17 for 2FA, 1 for image resize)
 
-Pending (part of Phase A, to do before Phase D):
-8. **Review and fix customization comments**: verify every file in `customization-files.md` has `// EyeSeeTea customization - [title]` with exact spec title. Add missing comments. Do NOT place on import lines (Oslo GitHub action rejects them). Covers:
-   - #1 Server URL: 4 new files + layout → add comment at top of each `.kt` file
-   - #2 Image resize: already has comment (`// EyeSeeTea customization no resize`) → update to `// EyeSeeTea customization - Image upload without resizing`
-   - #3 Notifications: ~17 new files → add comment at top of each
-   - #4 2FA: 17 existing comments → verify titles match spec ("2FA support")
-   - #5 URL data element: multiple files → add comment where url parameter is added
+8. ~~Review and fix customization comments~~ (done — added/normalized comments in 31 files):
+   - #1 Change Server URL: added to 4 `.kt` files
+   - #2 Image upload without resizing: updated from "no resize" to full spec title
+   - #3 Notifications system: added to 13 new files
+   - #4 2FA support: normalized 11 comments from various descriptions to spec title
+   - #5 URL data element field: added to EventRepository.kt
 
 ### Phase B: OpenSpec formalization
 
