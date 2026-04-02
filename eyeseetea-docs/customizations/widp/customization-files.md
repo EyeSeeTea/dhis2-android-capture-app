@@ -1,0 +1,173 @@
+# WIDP customization files vs develop-eyeseetea
+
+Technical inventory of the WIDP customization surface on top of `develop-eyeseetea`.
+
+## Mandatory header
+
+- Client: `widp`
+- Flavor: `widp`
+- Base branch: `develop-eyeseetea`
+- Base commit: `83269ca92`
+- Generated on: `2026-03-25`
+- Last updated: `2026-04-02`
+- Working tree status: `dirty`
+
+This file is intentionally separate from `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md`:
+- `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md` documents the shared EyeSeeTea reference branch
+- this file documents the WIDP-specific implementation points that still survive in code
+
+## Scope
+
+This inventory is based on:
+- direct flavor files under `app/src/widp/` and `app/src/widpDebug/`
+- shared-code implementation points currently marked with `EyeSeeTea customization`
+- two-dot diff (`git diff develop-eyeseetea HEAD`) used as supporting evidence
+- verified against code on 2026-04-02
+
+This file is not a full raw diff dump. Its goal is to answer:
+- which confirmed functional customizations still exist
+- where they are implemented
+- what their current technical status is
+
+## Validated customization count
+
+Originally 8 customizations were assumed. After verification against `develop-eyeseetea`:
+- **5 confirmed** (3 active, 1 active with SDK dependency, 1 broken)
+- **3 removed**: #4 Notification translations (merged into #3), #5 Access to indicators from form (exists in baseline since 2019), #6 Events filter for text-type data elements (no diff found, never existed or was removed)
+
+## 1. Direct WIDP flavor surface
+
+### 1.1 WIDP flavor code
+
+- `app/src/widp/java/org.dhis2.utils/CustomizableConstants.kt`
+- `app/src/widp/java/org.dhis2.utils/granularsync/GranularSyncModule.kt`
+- `app/src/widp/java/org/dhis2/data/user/UserComponentFlavor.kt`
+
+### 1.2 WIDP flavor resources and branding
+
+- `app/src/widp/` (google-services.json, launcher icons, menu, strings)
+- `app/src/widpDebug/` (google-services.json, launcher icons, strings)
+- `app/src/widpRelease/` (google-services.json, launcher icons)
+
+## 2. Shared-code customization implementation points
+
+### 2.1 Server URL change by user
+
+Status: `active`
+
+Main implementation points (all new files, not in develop-eyeseetea):
+- `app/src/main/java/org/dhis2/utils/session/ChangeServerUrlDialog.kt` — DialogFragment UI
+- `app/src/main/java/org/dhis2/utils/session/ChangeServerURLPresenter.kt` — logic (validate, save, update credentials)
+- `app/src/main/java/org/dhis2/utils/session/ChangeServerURLModule.kt` — Dagger DI module
+- `app/src/main/java/org/dhis2/utils/session/ChangeServerURLComponent.kt` — Dagger subcomponent
+- `app/src/main/res/layout/dialog_change_server_url.xml` — layout
+
+Supporting files:
+- `app/src/widp/res/menu/main_menu.xml` (menu entry for change URL)
+- DI wiring in AppComponent / App
+
+### 2.2 Image upload without resizing
+
+Status: `active`
+
+Main implementation points:
+- `form/src/main/java/org/dhis2/form/data/FormValueStore.kt` (line ~274)
+
+Technical note:
+- Marked with `// EyeSeeTea customization no resize`. Changes `saveFileResource(filePath, valueType == ValueType.IMAGE)` to `saveFileResource(filePath, false)`, disabling resize for all image uploads.
+
+### 2.3 Notifications system (includes translations)
+
+Status: `active`
+
+Data layer (all new files):
+- `app/src/main/java/org/dhis2/data/notifications/NotificationD2Repository.kt` — repository with sync, filtering, read/write logic
+- `app/src/main/java/org/dhis2/data/notifications/NotificationsApi.kt` — HTTP client for `dataStore/notifications/notifications`
+- `app/src/main/java/org/dhis2/data/notifications/NotificationDTO.kt` — DTOs (NotificationDTO, ReadByDTO, RecipientsDTO, RefDTO, UserGroupsDTO, PermissionsDTO)
+- `app/src/main/java/org/dhis2/data/notifications/UserD2Repository.kt` — current user provider
+
+Domain layer (all new files):
+- `app/src/main/java/org/dhis2/usescases/notifications/domain/Notification.kt` — domain models (Notification, ReadBy, Recipients, Ref, UserGroups, Permissions)
+- `app/src/main/java/org/dhis2/usescases/notifications/domain/NotificationRepository.kt` — repository interface
+- `app/src/main/java/org/dhis2/usescases/notifications/domain/GetNotifications.kt` — use case
+- `app/src/main/java/org/dhis2/usescases/notifications/domain/MarkNotificationAsRead.kt` — use case
+- `app/src/main/java/org/dhis2/usescases/notifications/domain/User.kt` — user model
+- `app/src/main/java/org/dhis2/usescases/notifications/domain/UserRepository.kt` — user repository interface
+
+Presentation layer (all new files):
+- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenter.kt` — presenter + ShowNotifications singleton
+- `app/src/main/java/org/dhis2/usescases/notifications/di/NotificationsModule.kt` — Dagger DI module
+- `app/src/main/java/org/dhis2/usescases/notifications/di/NotificationsComponent.kt` — commented out subcomponent
+
+UI integration (modified existing files):
+- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements NotificationsView, renders dialogs, handles translations via `getNotificationContent()`
+- `app/src/main/java/org/dhis2/data/service/SyncPresenterImpl.kt` — calls `syncNotifications()` during metadata sync
+
+Tests:
+- `app/src/test/java/org/dhis2/data/notifications/NotificationD2RepositoryTest.kt`
+
+SharedPreferences:
+- `commons/src/main/java/org/dhis2/commons/prefs/Preference.kt` — `NOTIFICATIONS` key
+
+### 2.4 2FA support
+
+Status: `active`
+
+New files (not in develop-eyeseetea):
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorState.kt` — sealed class (TotpVerification, EmailVerification, SmsVerification) + TwoFactorType enum
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorRequiredException.kt` — exception with type and message
+
+Modified files (EyeSeeTea customization markers):
+- `login/src/androidMain/kotlin/org/dhis2/mobile/login/main/data/LoginRepositoryImpl.kt` — `handleTwoFactorError()` method (lines ~426-501), 2FA detection at login (line ~107)
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/ui/viewmodel/CredentialsViewModel.kt` — 2FA state management, resend logic, error/info message handling (lines ~255, ~269, ~287, ~433-531)
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/ui/screen/CredentialsScreen.kt` — TwoFactorContainer composable (lines ~212, ~507, ~773-896)
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/ui/state/CredentialsUiState.kt` — 2FA fields (line ~18)
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/LoginResult.kt` — TwoFactorError sealed variant (line ~14)
+- `commonskmm/src/androidMain/kotlin/org/dhis2/mobile/commons/resources/D2ErrorMessageProviderImpl.kt` — error messages for 2FA codes (lines ~227-256)
+- `commonskmm/src/androidMain/kotlin/org/dhis2/mobile/commons/error/DomainErrorMapper.kt` — 2FA error code mapping
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/data/LoginRepository.kt` — interface changes
+
+SDK patch (in dhis2-android-sdk EyeSeeTea fork):
+- `core/.../user/internal/LogInCall.kt` — `generate2FAErrorIfRequired()` (lines ~260-302)
+- `core/.../user/internal/LoginPayload.kt` — `twoFactorCode: String?` parameter
+- `core/.../maintenance/D2ErrorCode.java` — new error codes (lines ~96-104)
+
+### 2.5 URL data element field
+
+Status: `broken` — data plumbing exists, rendering lost in upstream Compose migration
+
+Original commit: `c556b7ab7` ("Implement show data element url", Nov 2022)
+
+Data plumbing (still present, verified in diff):
+- `form/src/main/java/org/dhis2/form/data/EventRepository.kt` (line ~729) — reads `de?.url()` and passes to factory
+- `form/src/main/java/org/dhis2/form/model/FieldUiModel.kt` (line ~74) — `val url: String?`
+- `form/src/main/java/org/dhis2/form/model/FieldUiModelImpl.kt` — `override val url: String? = null`
+- `form/src/main/java/org/dhis2/form/ui/FieldViewModelFactory.kt` — `url` parameter in interface
+- `form/src/main/java/org/dhis2/form/ui/FieldViewModelFactoryImpl.kt` — passes `url` through to model
+- `form/src/main/java/org/dhis2/form/data/EnrollmentRepository.kt` — passes `url = null` (not applicable to enrollments)
+
+Rendering (LOST):
+- Original: `FieldUiModelImpl.onDescriptionClick()` concatenated URL to description in `ShowDescriptionLabelDialog`
+- Current: `onDescriptionClick()` and `ShowDescriptionLabelDialog` were removed during upstream Compose migration. URL value is stored but never displayed.
+
+Action required:
+- Find where field description/info dialog is rendered in current Compose UI
+- Reimplement URL concatenation to description there
+
+## 3. Removed customizations (verified 2026-04-02)
+
+### Notification translations (originally #4)
+- **Merged into #3**: translations are an integral part of the notifications system, not a separate customization. The `translations: Map<String, String>?` field and locale resolution are documented within customization #3.
+
+### Access to indicators from the form (originally #6)
+- **Not a WIDP customization**: exists in `develop-eyeseetea` since May 2019 (commit `949911e22`). Zero diff between branches for indicator-related files.
+
+### Events filter for text-type data elements (originally #7)
+- **Does not exist in code**: zero diff between branches for filter/event-related files. No EyeSeeTea customization comments found. Was either never implemented or was removed before 3.3.0.1.
+
+## 4. Notes
+
+- This inventory reflects the verified branch state as of 2026-04-02.
+- If files are merged, renamed, reverted, or reworked, regenerate this file from the current code and the diff against `develop-eyeseetea`.
+- The source of truth for functional titles remains `customization-specs.md`.
+- If code comments and functional titles diverge, prefer the title defined in `customization-specs.md` and update the code comment when possible.
