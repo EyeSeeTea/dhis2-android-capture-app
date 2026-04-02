@@ -16,6 +16,7 @@ import org.hisp.dhis.android.core.program.ProgramRule
 import org.hisp.dhis.android.core.program.ProgramRuleAction
 import org.hisp.dhis.android.core.program.ProgramRuleActionType
 import org.hisp.dhis.android.core.program.ProgramRuleVariable
+import org.hisp.dhis.android.core.program.ProgramRuleVariableCollectionRepository
 import org.hisp.dhis.android.core.program.ProgramRuleVariableSourceType
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttributeCollectionRepository
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttributeValue
@@ -73,7 +74,6 @@ fun List<ProgramRuleAction>.toRuleActionList(): List<RuleAction> =
     }
 
 fun List<ProgramRuleVariable>.toRuleVariableList(
-    optionCollectionRepository: OptionCollectionRepository,
     attributeRepository: TrackedEntityAttributeCollectionRepository,
     dataElementRepository: DataElementCollectionRepository,
 ): List<RuleVariable> =
@@ -91,7 +91,7 @@ fun List<ProgramRuleVariable>.toRuleVariableList(
                 else -> isCalculatedValue(it)
             }
         if (allowVariable) {
-            it.toRuleVariable(optionCollectionRepository, attributeRepository, dataElementRepository)
+            it.toRuleVariable(attributeRepository, dataElementRepository)
         } else {
             null
         }
@@ -357,7 +357,6 @@ fun ProgramRuleAction.toRuleEngineObject(): RuleAction {
 }
 
 fun ProgramRuleVariable.toRuleVariable(
-    optionCollectionRepository: OptionCollectionRepository,
     attributeRepository: TrackedEntityAttributeCollectionRepository,
     dataElementRepository: DataElementCollectionRepository,
 ): RuleVariable {
@@ -389,14 +388,7 @@ fun ProgramRuleVariable.toRuleVariable(
         }
 
     val useCodeForOptionSet = useCodeForOptionSet() ?: false
-    val options =
-        fetchOptions(
-            optionCollectionRepository = optionCollectionRepository,
-            dataElementUid = dataElement()?.uid(),
-            attributeUid = trackedEntityAttribute()?.uid(),
-            dataElementRepository = dataElementRepository,
-            attributeRepository = attributeRepository,
-        )
+    val options = emptyList<Option>()
 
     return when (programRuleVariableSourceType()) {
         ProgramRuleVariableSourceType.CALCULATED_VALUE ->
@@ -458,44 +450,6 @@ fun ProgramRuleVariable.toRuleVariable(
     }
 }
 
-private fun fetchOptions(
-    dataElementUid: String?,
-    attributeUid: String?,
-    optionCollectionRepository: OptionCollectionRepository,
-    dataElementRepository: DataElementCollectionRepository,
-    attributeRepository: TrackedEntityAttributeCollectionRepository,
-): List<Option> {
-    val optionSetUid =
-        when {
-            dataElementUid != null ->
-                dataElementRepository
-                    .uid(dataElementUid)
-                    .blockingGet()
-                    ?.optionSet()
-                    ?.uid()
-            attributeUid != null ->
-                attributeRepository
-                    .uid(attributeUid)
-                    .blockingGet()
-                    ?.optionSet()
-                    ?.uid()
-            else -> null
-        }
-
-    return optionSetUid?.let { optionSetUid ->
-        optionCollectionRepository
-            .byOptionSetUid()
-            .eq(optionSetUid)
-            .blockingGet()
-            .map {
-                Option(
-                    name = it.name() ?: "",
-                    code = it.code() ?: "",
-                )
-            }
-    } ?: emptyList()
-}
-
 fun ValueType.toRuleValueType(): RuleValueType =
     when {
         isInteger || isNumeric -> RuleValueType.NUMERIC
@@ -503,52 +457,125 @@ fun ValueType.toRuleValueType(): RuleValueType =
         else -> RuleValueType.TEXT
     }
 
-fun List<TrackedEntityDataValue>.toRuleDataValue(): List<RuleDataValue> =
-    mapNotNull {
-        val dataElement = it.dataElement() ?: return@mapNotNull null
-        it.value()?.let { value ->
-            RuleDataValue(
-                dataElement = dataElement,
-                value = value,
-            )
+fun List<TrackedEntityDataValue>.toRuleDataValue(
+    event: Event,
+    dataElementRepository: DataElementCollectionRepository,
+    ruleVariableRepository: ProgramRuleVariableCollectionRepository,
+    optionRepository: OptionCollectionRepository,
+): List<RuleDataValue> =
+    map {
+        var value = if (it.value() != null) it.value() else ""
+        val de = dataElementRepository.uid(it.dataElement()).blockingGet()
+        if (!de?.optionSetUid().isNullOrEmpty()) {
+            if (ruleVariableRepository
+                    .byProgramUid()
+                    .eq(event.program())
+                    .byDataElementUid()
+                    .eq(it.dataElement())
+                    .byUseCodeForOptionSet()
+                    .isTrue
+                    .blockingIsEmpty()
+            ) {
+                value =
+                    if (optionRepository
+                            .byOptionSetUid()
+                            .eq(de?.optionSetUid())
+                            .byCode()
+                            .eq(value)
+                            .one()
+                            .blockingExists()
+                    ) {
+                        optionRepository
+                            .byOptionSetUid()
+                            .eq(de?.optionSetUid())
+                            .byCode()
+                            .eq(value)
+                            .one()
+                            .blockingGet()
+                            ?.name()
+                    } else {
+                        ""
+                    }
+            }
+        } else if (de?.valueType()?.isNumeric == true && value.isNullOrEmpty()) {
+            value = ""
         }
-    }
+        RuleDataValue(
+            dataElement = it.dataElement()!!,
+            value = value!!,
+        )
+    }.filter { it.value.isNotEmpty() }
 
-fun List<TrackedEntityAttributeValue>.toRuleAttributeValue(d2: D2) =
-
-    mapNotNull {
-        val attributeUid = it.trackedEntityAttribute() ?: return@mapNotNull null
+fun List<TrackedEntityAttributeValue>.toRuleAttributeValue(
+    d2: D2,
+    program: String,
+): List<RuleAttributeValue> =
+    map {
+        var value = if (it.value() != null) it.value() else ""
         val attr =
             d2
                 .trackedEntityModule()
                 .trackedEntityAttributes()
-                .uid(attributeUid)
+                .uid(it.trackedEntityAttribute())
                 .blockingGet()
-        val numericValue =
-            if (attr?.valueType()?.isNumeric == true) {
+        if (!attr?.optionSet()?.uid().isNullOrEmpty()) {
+            if (d2
+                    .programModule()
+                    .programRuleVariables()
+                    .byProgramUid()
+                    .eq(program)
+                    .byTrackedEntityAttributeUid()
+                    .eq(it.trackedEntityAttribute())
+                    .byUseCodeForOptionSet()
+                    .isTrue
+                    .blockingIsEmpty()
+            ) {
+                value =
+                    if (d2
+                            .optionModule()
+                            .options()
+                            .byOptionSetUid()
+                            .eq(attr?.optionSet()?.uid())
+                            .byCode()
+                            .eq(value)
+                            .one()
+                            .blockingExists()
+                    ) {
+                        d2
+                            .optionModule()
+                            .options()
+                            .byOptionSetUid()
+                            .eq(attr?.optionSet()?.uid())
+                            .byCode()
+                            .eq(value)
+                            .one()
+                            .blockingGet()
+                            ?.name() ?: ""
+                    } else {
+                        ""
+                    }
+            }
+        } else if (attr?.valueType()?.isNumeric == true) {
+            value =
                 try {
                     when (attr.valueType()) {
                         ValueType.INTEGER_NEGATIVE,
                         ValueType.INTEGER_ZERO_OR_POSITIVE,
                         ValueType.INTEGER_POSITIVE,
                         ValueType.INTEGER,
-                        -> it.value()?.toInt().toString()
+                        -> value?.toInt().toString()
 
                         ValueType.PERCENTAGE,
                         ValueType.UNIT_INTERVAL,
                         ValueType.NUMBER,
-                        -> it.value()?.toFloat().toString()
+                        -> value?.toFloat().toString()
 
-                        else -> it.value()
+                        else -> value
                     }
                 } catch (e: Exception) {
                     Timber.e(e)
-                    null
+                    ""
                 }
-            } else {
-                null
-            }
-        (numericValue ?: it.value())?.let { value ->
-            RuleAttributeValue(attributeUid, value)
         }
-    }
+        RuleAttributeValue(it.trackedEntityAttribute()!!, value!!)
+    }.filter { it.value.isNotEmpty() }

@@ -139,15 +139,6 @@ class TEICardMapper(
         attributeList.removeIf { it.value.isEmpty() || it.value == "-" }
 
         return attributeList.also { list ->
-            if (
-                !searchTEIModel.ownerOrgUnit.isNullOrEmpty() &&
-                searchTEIModel.ownerOrgUnit != searchTEIModel.enrolledOrgUnit
-            ) {
-                addOwnedBy(
-                    list = list,
-                    ownerOrgUnit = searchTEIModel.ownerOrgUnit,
-                )
-            }
             if (searchTEIModel.displayOrgUnit) {
                 checkEnrolledIn(
                     list = list,
@@ -291,19 +282,6 @@ class TEICardMapper(
             AdditionalInfoItem(
                 key = resourceManager.getString(R.string.enrolledIn),
                 value = enrolledOrgUnit,
-                isConstantItem = true,
-            ),
-        )
-    }
-
-    private fun addOwnedBy(
-        list: MutableList<AdditionalInfoItem>,
-        ownerOrgUnit: String,
-    ) {
-        list.add(
-            AdditionalInfoItem(
-                key = resourceManager.getString(R.string.ownedBy),
-                value = ownerOrgUnit,
                 isConstantItem = true,
             ),
         )

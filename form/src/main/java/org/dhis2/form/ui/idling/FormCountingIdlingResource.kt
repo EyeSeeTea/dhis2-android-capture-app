@@ -8,12 +8,10 @@ object FormCountingIdlingResource {
     @JvmField
     val countingIdlingResource = CountingIdlingResource(RESOURCE)
 
-    @Synchronized
     fun increment() {
         countingIdlingResource.increment()
     }
 
-    @Synchronized
     fun decrement() {
         if (!countingIdlingResource.isIdleNow) {
             countingIdlingResource.decrement()

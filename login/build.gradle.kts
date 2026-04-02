@@ -137,7 +137,10 @@ android {
         create("dhis2Training") {
             buildConfigField("String", "LOGIN_TEST", "\"test\"")
         }
-        create("eyeseetea") {
+        create("widp") {
+            buildConfigField("String", "LOGIN_TEST", "\"test\"")
+        }
+        create("psi") {
             buildConfigField("String", "LOGIN_TEST", "\"test\"")
         }
     }

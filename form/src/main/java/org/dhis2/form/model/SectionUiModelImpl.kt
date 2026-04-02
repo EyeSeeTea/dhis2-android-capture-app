@@ -31,6 +31,7 @@ data class SectionUiModelImpl(
     override val keyboardActionType: KeyboardActionType? = null,
     override val fieldMask: String? = null,
     var isOpen: Boolean? = false,
+    override val url: String? = null,
     var totalFields: Int = 0,
     var completedFields: Int = 0,
     var errors: Int = 0,

@@ -27,7 +27,7 @@ class ForgotPinUseCaseTest {
             whenever(repository.setSessionLocked(false)).then { }
 
             // When
-            val result = useCase(Unit)
+            val result = useCase()
 
             // Then
             assertTrue(result.isSuccess)
@@ -45,7 +45,7 @@ class ForgotPinUseCaseTest {
             whenever(repository.logout()).thenThrow(exception)
 
             // When
-            val result = useCase(Unit)
+            val result = useCase()
 
             // Then
             assertTrue(result.isFailure)

@@ -71,6 +71,8 @@ interface FieldUiModel {
 
     val periodSelector: PeriodSelector?
 
+    val url: String?
+
     fun setCallback(callback: Callback)
 
     fun equals(item: FieldUiModel): Boolean

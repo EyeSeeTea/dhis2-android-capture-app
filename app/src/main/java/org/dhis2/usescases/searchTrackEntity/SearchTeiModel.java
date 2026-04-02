@@ -46,7 +46,6 @@ public class SearchTeiModel implements CarouselItemModel {
     private String sortingValue;
     private String teTypeName;
     private String enrolledOrgUnit;
-    private String ownerOrgUnit;
 
     private Boolean displayOrgUnit;
     private boolean showNavigationButton = false;
@@ -70,7 +69,6 @@ public class SearchTeiModel implements CarouselItemModel {
         this.enrolledOrgUnit = null;
         this.onlineErrorMessage = null;
         this.metadataIconDataMap = new HashMap<>();
-        this.ownerOrgUnit = null;
     }
 
     public void addEnrollmentInfo(Triple<String, String, String> enrollmentInfo) {
@@ -270,14 +268,6 @@ public class SearchTeiModel implements CarouselItemModel {
 
     public String getEnrolledOrgUnit() {
         return enrolledOrgUnit;
-    }
-
-    public void setOwnerOrgUnit(String orgUnit) {
-        ownerOrgUnit = orgUnit;
-    }
-
-    public String getOwnerOrgUnit() {
-        return ownerOrgUnit;
     }
 
     public void setDisplayOrgUnit(Boolean display) {

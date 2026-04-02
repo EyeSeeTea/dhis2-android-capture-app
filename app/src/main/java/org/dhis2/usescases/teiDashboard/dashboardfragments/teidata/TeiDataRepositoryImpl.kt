@@ -2,8 +2,8 @@ package org.dhis2.usescases.teiDashboard.dashboardfragments.teidata
 
 import io.reactivex.Single
 import org.dhis2.bindings.profilePicturePath
-import org.dhis2.bindings.userFriendlyValue
 import org.dhis2.commons.bindings.program
+import org.dhis2.commons.bindings.userFriendlyValue
 import org.dhis2.commons.data.EventModel
 import org.dhis2.commons.data.EventViewModelType
 import org.dhis2.commons.data.StageSection
@@ -77,17 +77,9 @@ class TeiDataRepositoryImpl(
     override fun eventsWithoutCatCombo(): Single<List<EventModel>> {
         return getEnrollmentProgram()
             .flatMap { program ->
-                d2
-                    .categoryModule()
-                    .categoryCombos()
-                    .uid(
-                        program
-                            .categoryCombo()
-                            ?.uid(),
-                    ).get()
-                    .map {
-                        Pair(program, it)
-                    }
+                d2.categoryModule().categoryCombos().uid(program.categoryComboUid()).get().map {
+                    Pair(program, it)
+                }
             }.flatMap { (program, categoryCombo) ->
                 if (categoryCombo.isDefault == true) {
                     Single.just(emptyList())

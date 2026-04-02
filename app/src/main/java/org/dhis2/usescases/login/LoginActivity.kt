@@ -70,6 +70,11 @@ class LoginActivity : ActivityGlobalAbstract() {
                             true,
                         )
 
+                    OpenIdSession.LogOutReason.UNAUTHORIZED -> putBoolean(
+                        EXTRA_SESSION_EXPIRED,
+                        true
+                    )
+
                     null -> {
                         // Nothing to do in this case
                     }

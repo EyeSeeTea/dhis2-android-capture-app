@@ -1,10 +1,7 @@
 package org.dhis2.mobile.login.pin.domain.usecase
 
-import org.dhis2.mobile.commons.domain.UseCase
-import org.dhis2.mobile.commons.error.DomainError
 import org.dhis2.mobile.login.pin.data.SessionRepository
-import org.dhis2.mobile.login.pin.domain.model.PinError
-import org.dhis2.mobile.login.pin.domain.model.ValidatePinInput
+import org.dhis2.mobile.login.pin.domain.model.PinResult
 
 /**
  * Use case for validating a PIN against the stored PIN.
@@ -12,36 +9,36 @@ import org.dhis2.mobile.login.pin.domain.model.ValidatePinInput
  */
 class ValidatePinUseCase(
     private val sessionRepository: SessionRepository,
-) : UseCase<ValidatePinInput, Unit> {
+) {
     companion object {
         private const val MAX_ATTEMPTS = 3
     }
 
     /**
      * Validates the provided PIN against the stored PIN.
-     * @param input ValidatePinInput containing the PIN to validate and current attempt count.
+     * @param pin The PIN to validate.
+     * @param currentAttempts The current number of failed attempts.
      * @return PinResult indicating the validation outcome.
      */
-    override suspend operator fun invoke(input: ValidatePinInput): Result<Unit> {
-        try {
-            val storedPin = sessionRepository.getStoredPin()
+    suspend operator fun invoke(
+        pin: String,
+        currentAttempts: Int,
+    ): PinResult {
+        val storedPin = sessionRepository.getStoredPin()
 
-            if (storedPin == null) {
-                return Result.failure(PinError.NoPinStored)
-            }
+        if (storedPin == null) {
+            return PinResult.NoPinStored
+        }
 
-            return if (storedPin == input.pin) {
-                Result.success(Unit)
+        return if (storedPin == pin) {
+            PinResult.Success
+        } else {
+            val attemptsLeft = MAX_ATTEMPTS - (currentAttempts + 1)
+            if (attemptsLeft <= 0) {
+                PinResult.TooManyAttempts
             } else {
-                val attemptsLeft = MAX_ATTEMPTS - (input.currentAttempts + 1)
-                if (attemptsLeft <= 0) {
-                    Result.failure(PinError.TooManyAttempts)
-                } else {
-                    Result.failure(PinError.Failed(attemptsLeft))
-                }
+                PinResult.Failed(attemptsLeft)
             }
-        } catch (e: DomainError) {
-            return Result.failure(e)
         }
     }
 }

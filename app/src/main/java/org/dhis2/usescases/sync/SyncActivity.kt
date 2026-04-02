@@ -2,7 +2,6 @@ package org.dhis2.usescases.sync
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View.GONE
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.databinding.DataBindingUtil
 import androidx.work.WorkInfo
@@ -105,8 +104,7 @@ class SyncActivity :
 
     override fun setFlag(flagName: String?) {
         flagName?.takeIf { it.isNotBlank() }?.let {
-            val flagRes = resources.getIdentifier(flagName, "drawable", packageName)
-            binding.logoFlag.setImageResource(flagRes)
+            binding.logoFlag.setImageResource(R.drawable.ic_flag)
             animations.startFlagAnimation { value ->
                 binding.apply {
                     logoFlag.alpha = value
@@ -115,7 +113,7 @@ class SyncActivity :
             }
         } ?: run {
             // Hide flag if no valid name provided
-            binding.logoFlag.visibility = GONE
+            binding.logoFlag.setImageDrawable(null)
         }
     }
 

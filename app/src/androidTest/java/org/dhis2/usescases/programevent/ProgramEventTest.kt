@@ -9,6 +9,7 @@ import org.dhis2.usescases.BaseTest
 import org.dhis2.usescases.programEventDetail.ProgramEventDetailActivity
 import org.dhis2.usescases.programevent.robot.programEventsRobot
 import org.dhis2.usescases.teidashboard.robot.eventRobot
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
@@ -66,7 +67,6 @@ class ProgramEventTest : BaseTest() {
         }
 
         eventRobot(composeTestRule) {
-            composeTestRule.waitForIdle()
             clickOnReopen()
             checkEventIsOpen()
         }

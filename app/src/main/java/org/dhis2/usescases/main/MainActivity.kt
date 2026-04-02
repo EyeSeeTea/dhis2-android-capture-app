@@ -47,16 +47,19 @@ import org.dhis2.commons.orgunitselector.OUTreeFragment
 import org.dhis2.commons.sync.OnDismissListener
 import org.dhis2.commons.sync.SyncContext
 import org.dhis2.databinding.ActivityMainBinding
+import org.dhis2.ui.dialogs.alert.AlertDialog
+import org.dhis2.ui.model.ButtonUiModel
 import org.dhis2.usescases.development.DevelopmentActivity
 import org.dhis2.usescases.general.ActivityGlobalAbstract
 import org.dhis2.usescases.login.LoginActivity
-import org.dhis2.usescases.main.ui.NewVersionDialog
 import org.dhis2.utils.analytics.CLICK
 import org.dhis2.utils.analytics.CLOSE_SESSION
 import org.dhis2.utils.customviews.navigationbar.NavigationPage
 import org.dhis2.utils.customviews.navigationbar.NavigationPageConfigurator
 import org.dhis2.utils.extension.navigateTo
 import org.dhis2.utils.granularsync.SyncStatusDialog
+import org.dhis2.utils.session.CHANGE_SERVER_URL_DIALOG_TAG
+import org.dhis2.utils.session.ChangeServerUrlDialog
 import org.dhis2.utils.session.PIN_DIALOG_TAG
 import org.dhis2.utils.session.PinDialog
 import org.hisp.dhis.mobile.ui.designsystem.component.navigationBar.NavigationBar
@@ -111,6 +114,7 @@ class MainActivity :
         }
 
     private var isPinLayoutVisible = false
+    private var isChangeServerURLVisible = false
 
     private lateinit var mainNavigator: MainNavigator
 
@@ -189,11 +193,7 @@ class MainActivity :
         setUpDevelopmentMode()
 
         val restoreScreenName = savedInstanceState?.getString(FRAGMENT)
-        presenter.updateSingleProgramNavigationDone(
-            savedInstanceState?.getBoolean(
-                SINGLE_PROGRAM_NAVIGATION,
-            ) ?: false,
-        )
+        presenter.updateSingleProgramNavigationDone(savedInstanceState?.getBoolean(SINGLE_PROGRAM_NAVIGATION) ?: false)
 
         val openScreen = intent.getStringExtra(FRAGMENT)
 
@@ -521,10 +521,17 @@ class MainActivity :
         }
     }
 
+    private fun onChangeServerURL(){
+        binding.mainDrawerLayout.closeDrawers()
+        ChangeServerUrlDialog().show(supportFragmentManager, CHANGE_SERVER_URL_DIALOG_TAG)
+        isChangeServerURLVisible = true
+    }
+
     private fun backPressed() {
         when {
             !mainNavigator.isHome() -> presenter.onNavigateBackToHome()
             isPinLayoutVisible -> isPinLayoutVisible = false
+            isChangeServerURLVisible -> isChangeServerURLVisible = false
             else -> back()
         }
     }
@@ -574,6 +581,7 @@ class MainActivity :
             R.id.sync_manager -> {
                 presenter.onClickSyncManager()
                 mainNavigator.openSettings()
+                notificationsPresenter.markShowNotificationsAsPending()
             }
 
             R.id.qr_scan -> {
@@ -597,6 +605,7 @@ class MainActivity :
 
             R.id.menu_home -> {
                 mainNavigator.openHome()
+                notificationsPresenter.refresh(this)
             }
 
             R.id.menu_troubleshooting -> {
@@ -605,6 +614,9 @@ class MainActivity :
 
             R.id.delete_account -> {
                 confirmAccountDelete()
+            }
+            R.id.change_url -> {
+                onChangeServerURL()
             }
         }
     }
@@ -650,21 +662,32 @@ class MainActivity :
 
     override fun cancelNotifications() {
         val notificationManager: NotificationManager =
-            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancelAll()
     }
 
     private fun showNewVersionAlert(version: String) {
-        NewVersionDialog(
-            newVersion = version,
-            onRemindMeLater = presenter::remindLaterAlertNewVersion,
-            onDownloadVersion = {
-                if (hasPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
-                    onDownloadNewVersion()
-                } else {
-                    requestWritePermissions.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                }
-            },
+        AlertDialog(
+            labelText = getString(R.string.software_update),
+            descriptionText = getString(R.string.new_version_message).format(version),
+            iconResource = R.drawable.ic_software_update,
+            spanText = version,
+            dismissButton =
+                ButtonUiModel(
+                    getString(R.string.remind_me_later),
+                    onClick = { presenter.remindLaterAlertNewVersion() },
+                ),
+            confirmButton =
+                ButtonUiModel(
+                    getString(R.string.download_now),
+                    onClick = {
+                        if (hasPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
+                            onDownloadNewVersion()
+                        } else {
+                            requestWritePermissions.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        }
+                    },
+                ),
         ).show(supportFragmentManager)
     }
 
@@ -755,5 +778,13 @@ class MainActivity :
     private fun launchUrl(uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
         startActivity(intent)
+    }
+
+    override fun markShowNotificationsAsPending() {
+        notificationsPresenter.markShowNotificationsAsPending()
+    }
+
+    override fun refreshNotifications() {
+        notificationsPresenter.refresh(this)
     }
 }

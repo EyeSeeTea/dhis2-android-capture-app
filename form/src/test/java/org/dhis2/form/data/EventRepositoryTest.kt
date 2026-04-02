@@ -45,8 +45,7 @@ class EventRepositoryTest {
 
     private val mockedProgram: Program =
         mock {
-            on { categoryCombo() } doReturn mock()
-            on { categoryCombo()?.uid() } doReturn catComboUid
+            on { categoryComboUid() } doReturn catComboUid
         }
 
     private val catCombo: CategoryCombo =

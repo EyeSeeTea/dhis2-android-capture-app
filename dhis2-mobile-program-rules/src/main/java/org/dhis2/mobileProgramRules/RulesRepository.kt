@@ -85,7 +85,6 @@ class RulesRepository(
             .eq(programUid)
             .blockingGet()
             .toRuleVariableList(
-                d2.optionModule().options(),
                 d2.trackedEntityModule().trackedEntityAttributes(),
                 d2.dataElementModule().dataElements(),
             )
@@ -163,7 +162,12 @@ class RulesRepository(
                                     ?.let { Instant.fromEpochMilliseconds(it.time) }
                                     ?: Clock.System.now(),
                             dataValues =
-                                event.trackedEntityDataValues()?.toRuleDataValue() ?: emptyList(),
+                                event.trackedEntityDataValues()?.toRuleDataValue(
+                                    event,
+                                    d2.dataElementModule().dataElements(),
+                                    d2.programModule().programRuleVariables(),
+                                    d2.optionModule().options().orderBySortOrder(RepositoryScope.OrderByDirection.ASC),
+                                ) ?: emptyList(),
                         )
                     }.toList()
             } ?: emptyList()
@@ -286,7 +290,12 @@ class RulesRepository(
                             ?.let { Instant.fromEpochMilliseconds(it.time) }
                             ?: Clock.System.now(),
                     dataValues =
-                        event.trackedEntityDataValues()?.toRuleDataValue() ?: emptyList(),
+                        event.trackedEntityDataValues()?.toRuleDataValue(
+                            event,
+                            d2.dataElementModule().dataElements(),
+                            d2.programModule().programRuleVariables(),
+                            d2.optionModule().options().orderBySortOrder(RepositoryScope.OrderByDirection.ASC),
+                        ) ?: emptyList(),
                 )
             }.toList()
 
@@ -351,7 +360,7 @@ class RulesRepository(
                 .byTrackedEntityInstance()
                 .eq(enrollment.trackedEntityInstance())
                 .blockingGet()
-        return attributeValues.toRuleAttributeValue(d2)
+        return attributeValues.toRuleAttributeValue(d2, enrollment.program()!!)
     }
 
     fun enrollmentProgram(enrollmentUid: String): Pair<String, String> =
@@ -366,14 +375,26 @@ class RulesRepository(
 
     fun queryDataValues(eventUid: String): List<RuleDataValue> =
         d2
-            .trackedEntityModule()
-            .trackedEntityDataValues()
-            .byEvent()
-            .eq(eventUid)
-            .byValue()
-            .isNotNull
+            .eventModule()
+            .events()
+            .uid(eventUid)
             .blockingGet()
-            .toRuleDataValue()
+            ?.let { event ->
+                d2
+                    .trackedEntityModule()
+                    .trackedEntityDataValues()
+                    .byEvent()
+                    .eq(eventUid)
+                    .byValue()
+                    .isNotNull
+                    .blockingGet()
+                    .toRuleDataValue(
+                        event,
+                        d2.dataElementModule().dataElements(),
+                        d2.programModule().programRuleVariables(),
+                        d2.optionModule().options().orderBySortOrder(RepositoryScope.OrderByDirection.ASC),
+                    )
+            } ?: emptyList()
 
     fun queryAttributeValues(enrollmentUid: String): List<RuleAttributeValue> =
         d2
@@ -388,7 +409,10 @@ class RulesRepository(
                     .byTrackedEntityInstance()
                     .eq(enrollment.trackedEntityInstance())
                     .blockingGet()
-                    .toRuleAttributeValue(d2)
+                    .toRuleAttributeValue(
+                        d2,
+                        enrollment.program()!!,
+                    )
             } ?: emptyList()
 
     fun getRuleEnrollment(enrollmentUid: String): RuleEnrollment {

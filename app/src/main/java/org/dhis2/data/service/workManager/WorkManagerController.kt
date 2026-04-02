@@ -54,10 +54,7 @@ interface WorkManagerController {
 
     fun getWorkInfosForTags(vararg tags: String): LiveData<List<WorkInfo>>
 
-    @Deprecated("Use cancelAllWorkAndWait instead")
     fun cancelAllWork()
-
-    suspend fun cancelAllWorkAndWait()
 
     fun cancelAllWorkByTag(tag: String)
 

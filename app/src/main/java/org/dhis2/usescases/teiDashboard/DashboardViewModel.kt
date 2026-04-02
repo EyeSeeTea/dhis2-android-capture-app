@@ -21,7 +21,6 @@ import kotlinx.coroutines.withContext
 import org.dhis2.R
 import org.dhis2.commons.resources.ResourceManager
 import org.dhis2.commons.viewmodel.DispatcherProvider
-import org.dhis2.mobile.commons.coroutine.CoroutineTracker
 import org.dhis2.tracker.NavigationBarUIState
 import org.dhis2.tracker.TEIDashboardItems
 import org.dhis2.tracker.relationships.ui.state.RelationshipTopBarIconState
@@ -89,7 +88,6 @@ class DashboardViewModel(
 
     private fun fetchDashboardModel() {
         viewModelScope.launch(dispatcher.io()) {
-            CoroutineTracker.increment()
             val result =
                 async {
                     repository.getDashboardModel()
@@ -113,8 +111,6 @@ class DashboardViewModel(
                     }
                 } catch (e: Exception) {
                     Timber.e(e)
-                } finally {
-                    CoroutineTracker.decrement()
                 }
             }
         }

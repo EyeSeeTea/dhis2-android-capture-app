@@ -21,15 +21,8 @@ class SettingsProgramPresenterTest {
             val viewmodel = SettingsProgramViewModel(getProgramSpecificSettings)
 
             viewmodel.programSettings.test {
-                // Skip the initial empty emission if present
-                val firstItem = awaitItem()
-                if (firstItem.isEmpty()) {
-                    // If first emission is empty, wait for the actual data
-                    assertEquals(testSettings, awaitItem())
-                } else {
-                    // If first emission has data, verify it
-                    assertEquals(testSettings, firstItem)
-                }
+                assertEquals(emptyList<SpecificSettings>(), awaitItem())
+                assertEquals(testSettings, awaitItem())
                 cancelAndConsumeRemainingEvents()
             }
         }

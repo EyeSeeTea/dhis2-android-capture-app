@@ -260,7 +260,7 @@ internal class DataSetInstanceRepositoryImpl(
             .blockingGet()
             ?.dataElements()
             ?.mapNotNull {
-                val catComboUid = dataSetElements[it.uid()] ?: it.categoryCombo()?.uid()
+                val catComboUid = dataSetElements[it.uid()] ?: it.categoryComboUid()
                 val emptyCategory =
                     d2
                         .categoryModule()
@@ -1119,8 +1119,7 @@ internal class DataSetInstanceRepositoryImpl(
         val categoryComboUid =
             dataSetElement?.categoryCombo()?.uid() ?: d2
                 .dataElement(dataElementUid)
-                ?.categoryCombo()
-                ?.uid()
+                ?.categoryComboUid()
         val categoryOptionCombos =
             d2
                 .categoryModule()
@@ -1143,8 +1142,7 @@ internal class DataSetInstanceRepositoryImpl(
                 .dataElements()
                 .uid(dataElementUid)
                 .blockingGet()
-                ?.categoryCombo()
-                ?.uid()
+                ?.categoryComboUid()
         }
 
     override suspend fun getDataSetIndicator(
@@ -1339,7 +1337,7 @@ internal class DataSetInstanceRepositoryImpl(
                             .categoryModule()
                             .categoryOptionCombos()
                             .byCategoryComboUid()
-                            .like(de.categoryCombo()?.uid())
+                            .like(de.categoryComboUid())
                             .blockingGet()
                     }
                 catOptCombos.forEach { catOptCombo ->

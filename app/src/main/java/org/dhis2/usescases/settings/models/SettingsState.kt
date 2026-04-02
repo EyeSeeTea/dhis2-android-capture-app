@@ -12,7 +12,6 @@ data class SettingsState(
     val smsSettingsViewModel: SMSSettingsViewModel,
     val isTwoFAConfigured: Boolean,
     val versionName: String,
-    val deleteDataState: DeleteDataState = DeleteDataState.None,
 ) {
     fun canInitDataSync() = hasConnection && !dataSettingsViewModel.syncInProgress
 

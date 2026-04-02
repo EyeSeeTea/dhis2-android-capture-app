@@ -268,6 +268,7 @@ class EnrollmentRepository(
                 optionSetConfig,
                 if (valueType == ValueType.COORDINATE) FeatureType.POINT else null,
                 customIntentModel = attributeCustomIntent,
+                url = null,
             )
 
         if (!error.isNullOrEmpty()) {
@@ -462,6 +463,7 @@ class EnrollmentRepository(
             null,
             null,
             selectableDates = getAllowedDatesForEnrollmentDate(),
+            url = null
         )
 
     private fun getIncidentDateField(
@@ -488,6 +490,7 @@ class EnrollmentRepository(
             null,
             null,
             null,
+            url = null,
         )
 
     private fun getOrgUnitField(editable: Boolean): FieldUiModel =
@@ -509,6 +512,7 @@ class EnrollmentRepository(
             null,
             null,
             orgUnitSelectorScope = programUid?.let { OrgUnitSelectorScope.ProgramCaptureScope(it) },
+            url = null,
         )
 
     private fun getTeiCoordinatesField(featureType: FeatureType?): FieldUiModel {
@@ -532,6 +536,7 @@ class EnrollmentRepository(
             null,
             null,
             featureType,
+            url = null,
         )
     }
 
@@ -553,6 +558,7 @@ class EnrollmentRepository(
             null,
             null,
             featureType,
+            url = null,
         )
 
     override fun firstSectionToOpen(): String? =

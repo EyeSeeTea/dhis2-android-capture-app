@@ -9,5 +9,13 @@ import javax.inject.Singleton
 open class PreferenceModule {
     @Provides
     @Singleton
-    open fun preferenceProvider(context: Context): PreferenceProvider = PreferenceProviderImpl(context)
+    open fun preferenceProvider(context: Context): PreferenceProvider {
+        return PreferenceProviderImpl(context)
+    }
+
+    @Provides
+    @Singleton
+    open fun basicPreferenceProvider(context: Context): BasicPreferenceProvider {
+        return BasicPreferenceProviderImpl(context)
+    }
 }

@@ -25,7 +25,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.dhis2.usescases.settings.SettingItem
 import org.dhis2.usescases.settings.SyncManagerPresenter
-import org.dhis2.usescases.settings.models.DeleteDataState
 import org.dhis2.usescases.settings.models.ErrorViewModel
 import org.dhis2.usescases.settings.models.SettingsState
 import org.dhis2.usescases.settings.models.SettingsUiAction
@@ -47,6 +46,7 @@ fun SettingsScreen(
     checkProgramSpecificSettings: () -> Unit,
     manageReserveValues: () -> Unit,
     showErrorLogs: (List<ErrorViewModel>) -> Unit,
+    displayDeleteLocalDataWarning: () -> Unit,
     showShareActions: (file: File) -> Unit,
     display2FASettingsScreen: () -> Unit,
 ) {
@@ -111,14 +111,13 @@ fun SettingsScreen(
                             viewmodel.onItemClick(SettingItem.TWO_FACTOR_AUTH)
                             display2FASettingsScreen()
                         }
-
                         is SettingsUiAction.OnSaveReservedValuesToDownload ->
                             viewmodel.saveReservedValues(uiAction.count)
 
                         SettingsUiAction.OnDownload -> viewmodel.onExportAndDownloadDB()
                         SettingsUiAction.OnShare -> viewmodel.onExportAndShareDB()
                         SettingsUiAction.OnCheckVersionUpdates -> viewmodel.onCheckVersionUpdate()
-                        SettingsUiAction.OnDeleteLocalData -> viewmodel.onDeleteLocalData()
+                        SettingsUiAction.OnDeleteLocalData -> displayDeleteLocalDataWarning()
                         is SettingsUiAction.OnSyncDataPeriodChanged ->
                             viewmodel.onSyncDataPeriodChanged(uiAction.periodInSeconds)
 
@@ -143,23 +142,13 @@ fun SettingsScreen(
 
                         is SettingsUiAction.SaveGateway ->
                             viewmodel.saveGatewayNumber(uiAction.gatewayNumber)
-
                         is SettingsUiAction.SaveResultSender ->
                             viewmodel.saveResultSender(uiAction.resultSender)
-
                         is SettingsUiAction.SaveTimeout ->
                             viewmodel.saveTimeout(uiAction.timeout)
                     }
                 },
             )
-
-            if (it.deleteDataState !is DeleteDataState.None) {
-                DeleteLocalDataDialog(
-                    isDeletingLocalData = it.deleteDataState is DeleteDataState.Deleting,
-                    onDeleteLocalData = viewmodel::deleteLocalData,
-                    onDismissRequest = viewmodel::onDismissLocalData,
-                )
-            }
         }
     }
 }

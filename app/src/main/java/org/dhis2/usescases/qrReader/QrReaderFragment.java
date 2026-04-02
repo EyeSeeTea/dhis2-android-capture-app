@@ -21,11 +21,7 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.gson.Gson;
 import com.google.zxing.BarcodeFormat;
-import com.google.zxing.ResultPoint;
-import com.journeyapps.barcodescanner.BarcodeCallback;
-import com.journeyapps.barcodescanner.BarcodeResult;
-import com.journeyapps.barcodescanner.DecoratedBarcodeView;
-import com.journeyapps.barcodescanner.DefaultDecoderFactory;
+import com.google.zxing.Result;
 
 import org.dhis2.Components;
 import org.dhis2.R;
@@ -42,13 +38,13 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import javax.inject.Inject;
 
 import kotlin.Pair;
 import kotlin.Triple;
+import me.dm7.barcodescanner.zxing.ZXingScannerView;
 import timber.log.Timber;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
@@ -59,9 +55,9 @@ import static org.dhis2.commons.Constants.PROGRAM_UID;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class QrReaderFragment extends FragmentGlobalAbstract implements BarcodeCallback, QrReaderContracts.View {
+public class QrReaderFragment extends FragmentGlobalAbstract implements ZXingScannerView.ResultHandler, QrReaderContracts.View {
 
-    private DecoratedBarcodeView mScannerView;
+    private ZXingScannerView mScannerView;
     private Context context;
     FragmentQrBinding binding;
     private boolean isPermissionRequested = false;
@@ -97,24 +93,18 @@ public class QrReaderFragment extends FragmentGlobalAbstract implements BarcodeC
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_qr, container, false);
         presenter.init(this);
         mScannerView = binding.scannerView;
-        mScannerView.setDecoderFactory(new DefaultDecoderFactory(Collections.singletonList(BarcodeFormat.QR_CODE)));
+        mScannerView.setAutoFocus(true);
+        ArrayList<BarcodeFormat> formats = new ArrayList<>();
+        formats.add(BarcodeFormat.QR_CODE);
+        mScannerView.setFormats(formats);
         return binding.getRoot();
     }
 
     @Override
-    public void barcodeResult(BarcodeResult result) {
-        handleResult(result.getText());
-    }
-
-    @Override
-    public void possibleResultPoints(List<ResultPoint> resultPoints) {
-        // Not used
-    }
-
-    private void handleResult(String resultText) {
+    public void handleResult(Result result) {
 
         try {
-            QRjson qRjson = new Gson().fromJson(resultText, QRjson.class);
+            QRjson qRjson = new Gson().fromJson(result.getText(), QRjson.class);
             switch (qRjson.getType()) {
                 case QRjson.EVENT_JSON:
                     presenter.handleEventWORegistrationInfo(new JSONObject(qRjson.getData()));
@@ -166,13 +156,7 @@ public class QrReaderFragment extends FragmentGlobalAbstract implements BarcodeC
     @Override
     public void onPause() {
         super.onPause();
-        mScannerView.pause();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mScannerView.pause();
+        mScannerView.stopCamera();
     }
 
     @Override
@@ -182,7 +166,8 @@ public class QrReaderFragment extends FragmentGlobalAbstract implements BarcodeC
     }
 
     private void initScanner() {
-        mScannerView.decodeContinuous(this);
+        mScannerView.setResultHandler(this);
+        mScannerView.startCamera();
     }
 
 
@@ -257,7 +242,7 @@ public class QrReaderFragment extends FragmentGlobalAbstract implements BarcodeC
                 .setMessage(message)
                 .setPositiveButton(getString(R.string.action_accept), (dialog, which) -> {
                     dialog.dismiss();
-                    mScannerView.decodeContinuous(this);
+                    mScannerView.resumeCameraPreview(this);
                 })
                 .setNegativeButton(getString(R.string.cancel), (dialog, which) -> dialog.dismiss())
                 .show();
@@ -427,7 +412,7 @@ public class QrReaderFragment extends FragmentGlobalAbstract implements BarcodeC
                 .setMessage(message)
                 .setPositiveButton(getString(R.string.action_accept), (dialog, which) -> {
                     dialog.dismiss();
-                    mScannerView.decodeSingle(this);
+                    mScannerView.resumeCameraPreview(this);
                 })
                 .setNegativeButton(getString(R.string.save_qr), (dialog, which) -> {
                     presenter.download();
@@ -473,7 +458,7 @@ public class QrReaderFragment extends FragmentGlobalAbstract implements BarcodeC
                 .setMessage(message)
                 .setPositiveButton(getString(R.string.action_accept), (dialog, which) -> {
                     dialog.dismiss();
-                    mScannerView.decodeContinuous(this);
+                    mScannerView.resumeCameraPreview(this);
                 })
                 .setNegativeButton(getString(R.string.save_qr), (dialog, which) -> {
                     presenter.downloadEventWORegistration();

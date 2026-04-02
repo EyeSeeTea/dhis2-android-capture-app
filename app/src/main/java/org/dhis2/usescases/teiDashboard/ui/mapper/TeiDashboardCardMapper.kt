@@ -155,22 +155,20 @@ class TeiDashboardCardMapper(
             is DashboardEnrollmentModel ->
                 attributesList
                     .also { list ->
-                        if (item.currentProgram()?.displayIncidentDate() == true) {
+                        if (item.currentProgram().displayIncidentDate() == true) {
                             addIncidentDate(
                                 list,
-                                incidentDateLabel = item.currentProgram()?.displayIncidentDateLabel(),
-                                incidentDate = item.currentEnrollment.incidentDate(),
+                                item.currentProgram().displayIncidentDateLabel(),
+                                item.currentEnrollment.incidentDate(),
                             )
                         }
                     }.also { list ->
-                        item.currentProgram()?.let { currentProgram ->
-                            addEnrollmentDate(
-                                programUid = currentProgram.uid(),
-                                list = list,
-                                programLabel = currentProgram.displayEnrollmentDateLabel(),
-                                enrollmentDate = item.currentEnrollment.enrollmentDate(),
-                            )
-                        }
+                        addEnrollmentDate(
+                            item.currentProgram().uid(),
+                            list,
+                            item.currentProgram().displayEnrollmentDateLabel(),
+                            item.currentEnrollment.enrollmentDate(),
+                        )
                     }.also { list ->
                         addOwnedBy(
                             list,

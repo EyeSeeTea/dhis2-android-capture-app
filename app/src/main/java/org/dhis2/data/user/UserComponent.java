@@ -70,6 +70,8 @@ import org.dhis2.usescases.teiDashboard.dialogs.scheduling.SchedulingComponent;
 import org.dhis2.usescases.teiDashboard.dialogs.scheduling.SchedulingModule;
 import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListComponent;
 import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListModule;
+import org.dhis2.utils.session.ChangeServerURLComponent;
+import org.dhis2.utils.session.ChangeServerURLModule;
 import org.dhis2.utils.session.PinModule;
 import org.dhis2.utils.session.SessionComponent;
 
@@ -79,7 +81,7 @@ import dhis2.org.analytics.charts.ui.di.AnalyticsFragmentModule;
 
 @PerUser
 @Subcomponent(modules = UserModule.class)
-public interface UserComponent {
+public interface UserComponent extends UserComponentFlavor{
 
     FilterPresenter filterPresenter();
 
@@ -187,6 +189,9 @@ public interface UserComponent {
 
     @NonNull
     SessionComponent plus(PinModule pinModule);
+
+    @NonNull
+    ChangeServerURLComponent plus(ChangeServerURLModule changeServerURLModule);
 
     @NonNull
     SchedulingComponent plus(SchedulingModule schedulingModule);

@@ -66,9 +66,12 @@ dependencies {
     api(project(":ui-components"))
     implementation(project(":commonskmm"))
 
-    api(libs.dhis2.android.sdk) {
+    //EyeSeeTea customization - SDK as submodule
+   api(libs.dhis2.android.sdk) {
         this.isChanging = true
     }
+
+    //api(project(":core"))
 
     api(libs.dhis2.ruleengine) {
         exclude("junit", "junit")
@@ -100,9 +103,13 @@ dependencies {
     api(libs.analytics.timber)
     api(libs.github.glide)
     ksp(libs.github.glide.compiler)
+    api(libs.barcodeScanner.scanner) {
+        exclude("com.google.zxing", "core")
+    }
     api(libs.barcodeScanner.zxing.android) {
         exclude("com.google.zxing", "core")
     }
+    api(libs.rx.binding.compat)
     testApi(libs.test.junit)
     testApi(libs.test.mockitoCore)
     testApi(libs.test.mockitoKotlin)

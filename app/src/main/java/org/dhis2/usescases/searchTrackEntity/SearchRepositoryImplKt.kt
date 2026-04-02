@@ -516,5 +516,6 @@ class SearchRepositoryImplKt(
             optionSetConfiguration = optionSetConfiguration,
             featureType = null,
             customIntentModel = customIntent,
+            url = null
         )
 }

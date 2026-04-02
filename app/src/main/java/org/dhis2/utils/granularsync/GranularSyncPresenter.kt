@@ -413,8 +413,7 @@ class GranularSyncPresenter(
                             .dataElements()
                             .uid(dataSetElement.dataElement().uid())
                             .blockingGet()
-                            ?.categoryCombo()
-                            ?.uid()
+                            ?.categoryComboUid()
                     }
                 }?.distinct()
         val catOptionComboUidList =

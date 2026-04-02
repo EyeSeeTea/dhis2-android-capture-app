@@ -74,15 +74,15 @@ class InfoBarMapper(
             InfoBarType.ENROLLMENT_STATUS -> {
                 if (enrollmentStatus == EnrollmentStatus.COMPLETED) {
                     resourceManager.formatWithEnrollmentLabel(
-                        programUid = item.currentProgram()?.uid(),
-                        stringResource = R.string.enrollment_completed_V2,
-                        quantity = 1,
+                        item.currentProgram().uid(),
+                        R.string.enrollment_completed_V2,
+                        1,
                     )
                 } else {
                     resourceManager.formatWithEnrollmentLabel(
-                        programUid = item.currentProgram()?.uid(),
-                        stringResource = R.string.enrollment_cancelled_V2,
-                        quantity = 1,
+                        item.currentProgram().uid(),
+                        R.string.enrollment_cancelled_V2,
+                        1,
                     )
                 }
             }

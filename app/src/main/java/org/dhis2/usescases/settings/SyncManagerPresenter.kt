@@ -25,10 +25,10 @@ import org.dhis2.usescases.settings.domain.SettingsMessages
 import org.dhis2.usescases.settings.domain.UpdateSmsModule
 import org.dhis2.usescases.settings.domain.UpdateSmsResponse
 import org.dhis2.usescases.settings.domain.UpdateSyncSettings
-import org.dhis2.usescases.settings.models.DeleteDataState
 import org.dhis2.usescases.settings.models.ErrorViewModel
 import org.dhis2.usescases.settings.models.SettingsState
 import org.hisp.dhis.android.core.settings.LimitScope
+import timber.log.Timber
 import java.io.File
 
 class SyncManagerPresenter(
@@ -114,14 +114,18 @@ class SyncManagerPresenter(
     }
 
     private suspend fun loadData() {
-        val settingsState =
-            getSettingsState(
-                openedItem = _settingsState.value?.openedItem,
-                hasConnection = _settingsState.value?.hasConnection == true,
-                metadataSyncInProgress = syncWorkInfo.value.metadataSyncProgress == LaunchSync.SyncStatus.InProgress,
-                dataSyncInProgress = syncWorkInfo.value.dataSyncProgress == LaunchSync.SyncStatus.InProgress,
-            )
-        _settingsState.update { settingsState }
+        try {
+            val settingsState =
+                getSettingsState(
+                    openedItem = _settingsState.value?.openedItem,
+                    hasConnection = _settingsState.value?.hasConnection == true,
+                    metadataSyncInProgress = syncWorkInfo.value.metadataSyncProgress == LaunchSync.SyncStatus.InProgress,
+                    dataSyncInProgress = syncWorkInfo.value.dataSyncProgress == LaunchSync.SyncStatus.InProgress,
+                )
+            _settingsState.update { settingsState }
+        } catch (e: Exception) {
+            Timber.e(e)
+        }
     }
 
     fun onItemClick(settingsItem: SettingItem) {
@@ -137,26 +141,6 @@ class SyncManagerPresenter(
     fun onCheckVersionUpdate() {
         viewModelScope.launch(dispatcherProvider.io()) {
             checkVersionUpdate()
-        }
-    }
-
-    fun onDeleteLocalData() {
-        viewModelScope.launch {
-            _settingsState.update {
-                it?.copy(
-                    deleteDataState = DeleteDataState.Opened,
-                )
-            }
-        }
-    }
-
-    fun onDismissLocalData() {
-        viewModelScope.launch {
-            _settingsState.update {
-                it?.copy(
-                    deleteDataState = DeleteDataState.None,
-                )
-            }
         }
     }
 
@@ -322,11 +306,6 @@ class SyncManagerPresenter(
 
     fun deleteLocalData() {
         viewModelScope.launch(dispatcherProvider.io()) {
-            _settingsState.update {
-                it?.copy(
-                    deleteDataState = DeleteDataState.Deleting,
-                )
-            }
             deleteLocalData.invoke()
             loadData()
         }

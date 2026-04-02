@@ -19,6 +19,8 @@ interface PreferenceProvider {
 
     fun getBiometricCredentials(): CiphertextWrapper?
 
+    fun updateServerURL(serverUrl: String)
+
     fun areCredentialsSet(): Boolean
 
     fun areSameCredentials(

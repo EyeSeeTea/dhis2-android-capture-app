@@ -286,6 +286,7 @@ class EventDetailsRepository(
             editable = accessDataWrite && !shouldBlockEdition,
             description = null,
             featureType = featureType,
+            url = null
         )
     }
 
@@ -385,7 +386,7 @@ class EventDetailsRepository(
                     .categoryModule()
                     .categoryCombos()
                     .withCategories()
-                    .uid(program.categoryCombo()?.uid())
+                    .uid(program.categoryComboUid())
                     .get()
             }.blockingGet()
 

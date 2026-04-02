@@ -27,18 +27,15 @@ import androidx.compose.ui.text.input.TextFieldValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.dhis2.commons.resources.ResourceManager
-import org.dhis2.form.data.EventRepository.Companion.EVENT_ORG_UNIT_UID
 import org.dhis2.form.extensions.autocompleteList
 import org.dhis2.form.extensions.inputState
 import org.dhis2.form.extensions.legend
 import org.dhis2.form.extensions.supportingText
-import org.dhis2.form.model.EnrollmentDetail
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.UiRenderType
 import org.dhis2.form.ui.event.RecyclerViewUiEvents
 import org.dhis2.form.ui.intent.FormIntent
 import org.dhis2.form.ui.keyboard.keyboardAsState
-import org.dhis2.form.ui.provider.onFieldFocusChanged
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.mobile.ui.designsystem.component.InputEmail
 import org.hisp.dhis.mobile.ui.designsystem.component.InputInteger
@@ -568,14 +565,6 @@ private fun ProvideIntegerPositive(
     var value by remember(fieldUiModel.value) {
         mutableStateOf(TextFieldValue(fieldUiModel.value ?: "", savedTextSelection))
     }
-    var clickedOnNext by remember {
-        mutableStateOf(false)
-    }
-
-    var lostFocus by remember {
-        mutableStateOf(false)
-    }
-
     InputPositiveInteger(
         modifier = modifier.fillMaxWidth(),
         inputStyle = inputStyle,
@@ -585,10 +574,7 @@ private fun ProvideIntegerPositive(
         legendData = fieldUiModel.legend(),
         inputTextFieldValue = value,
         isRequiredField = fieldUiModel.mandatory,
-        onNextClicked = {
-            clickedOnNext = true
-            onNextClicked()
-        },
+        onNextClicked = onNextClicked,
         onValueChanged = {
             value = it ?: TextFieldValue()
             savedTextSelection = it?.selection ?: TextRange.Zero
@@ -601,17 +587,6 @@ private fun ProvideIntegerPositive(
             )
         },
         autoCompleteList = fieldUiModel.autocompleteList(),
-        onFocusChanged = { isFocused ->
-            lostFocus = lostFocus == true && isFocused == false
-            onFieldFocusChanged(
-                fieldUid = fieldUiModel.uid,
-                value = value.text,
-                valueType = fieldUiModel.valueType,
-                lostFocus = lostFocus,
-                onNextClicked = clickedOnNext,
-                intentHandler = intentHandler,
-            )
-        },
         autoCompleteItemSelected = {
             focusManager.clearFocus()
         },
@@ -637,14 +612,6 @@ private fun ProvideIntegerPositiveOrZero(
         mutableStateOf(TextFieldValue(fieldUiModel.value ?: "", savedTextSelection))
     }
 
-    var clickedOnNext by remember {
-        mutableStateOf(false)
-    }
-
-    var lostFocus by remember {
-        mutableStateOf(false)
-    }
-
     InputPositiveIntegerOrZero(
         modifier = modifier.fillMaxWidth(),
         inputStyle = inputStyle,
@@ -654,10 +621,7 @@ private fun ProvideIntegerPositiveOrZero(
         legendData = fieldUiModel.legend(),
         inputTextFieldValue = value,
         isRequiredField = fieldUiModel.mandatory,
-        onNextClicked = {
-            clickedOnNext = true
-            onNextClicked()
-        },
+        onNextClicked = onNextClicked,
         onValueChanged = {
             value = it ?: TextFieldValue()
             savedTextSelection = it?.selection ?: TextRange.Zero
@@ -667,17 +631,6 @@ private fun ProvideIntegerPositiveOrZero(
                     value.text,
                     fieldUiModel.valueType,
                 ),
-            )
-        },
-        onFocusChanged = { isFocused ->
-            lostFocus = lostFocus == true && isFocused == false
-            onFieldFocusChanged(
-                fieldUid = fieldUiModel.uid,
-                value = value.text,
-                valueType = fieldUiModel.valueType,
-                lostFocus = lostFocus,
-                onNextClicked = clickedOnNext,
-                intentHandler = intentHandler,
             )
         },
         autoCompleteList = fieldUiModel.autocompleteList(),
@@ -706,14 +659,6 @@ private fun ProvidePercentage(
         mutableStateOf(TextFieldValue(fieldUiModel.value ?: "", savedTextSelection))
     }
 
-    var clickedOnNext by remember {
-        mutableStateOf(false)
-    }
-
-    var lostFocus by remember {
-        mutableStateOf(false)
-    }
-
     InputPercentage(
         modifier = modifier.fillMaxWidth(),
         inputStyle = inputStyle,
@@ -723,10 +668,7 @@ private fun ProvidePercentage(
         legendData = fieldUiModel.legend(),
         inputTextFieldValue = value,
         isRequiredField = fieldUiModel.mandatory,
-        onNextClicked = {
-            clickedOnNext = true
-            onNextClicked()
-        },
+        onNextClicked = onNextClicked,
         onValueChanged = {
             value = it ?: TextFieldValue()
             savedTextSelection = it?.selection ?: TextRange.Zero
@@ -736,17 +678,6 @@ private fun ProvidePercentage(
                     value.text,
                     fieldUiModel.valueType,
                 ),
-            )
-        },
-        onFocusChanged = { isFocused ->
-            lostFocus = lostFocus == true && isFocused == false
-            onFieldFocusChanged(
-                fieldUid = fieldUiModel.uid,
-                value = value.text,
-                valueType = fieldUiModel.valueType,
-                lostFocus = lostFocus,
-                onNextClicked = clickedOnNext,
-                intentHandler = intentHandler,
             )
         },
         autoCompleteList = fieldUiModel.autocompleteList(),
@@ -775,14 +706,6 @@ private fun ProvideNumber(
         mutableStateOf(TextFieldValue(fieldUiModel.value ?: "", savedTextSelection))
     }
 
-    var clickedOnNext by remember {
-        mutableStateOf(false)
-    }
-
-    var lostFocus by remember {
-        mutableStateOf(false)
-    }
-
     InputNumber(
         modifier = modifier.fillMaxWidth(),
         inputStyle = inputStyle,
@@ -792,10 +715,7 @@ private fun ProvideNumber(
         legendData = fieldUiModel.legend(),
         inputTextFieldValue = value,
         isRequiredField = fieldUiModel.mandatory,
-        onNextClicked = {
-            clickedOnNext = true
-            onNextClicked()
-        },
+        onNextClicked = onNextClicked,
         onValueChanged = {
             value = it ?: TextFieldValue()
             savedTextSelection = it?.selection ?: TextRange.Zero
@@ -809,17 +729,6 @@ private fun ProvideNumber(
         },
         notation = RegExValidations.BRITISH_DECIMAL_NOTATION,
         autoCompleteList = fieldUiModel.autocompleteList(),
-        onFocusChanged = { isFocused ->
-            lostFocus = lostFocus == true && isFocused == false
-            onFieldFocusChanged(
-                fieldUid = fieldUiModel.uid,
-                value = value.text,
-                valueType = fieldUiModel.valueType,
-                lostFocus = lostFocus,
-                onNextClicked = clickedOnNext,
-                intentHandler = intentHandler,
-            )
-        },
         autoCompleteItemSelected = {
             focusManager.clearFocus()
         },
@@ -849,14 +758,6 @@ private fun ProvideIntegerNegative(
         )
     }
 
-    var clickedOnNext by remember {
-        mutableStateOf(false)
-    }
-
-    var lostFocus by remember {
-        mutableStateOf(false)
-    }
-
     InputNegativeInteger(
         modifier = modifier.fillMaxWidth(),
         inputStyle = inputStyle,
@@ -866,10 +767,7 @@ private fun ProvideIntegerNegative(
         legendData = fieldUiModel.legend(),
         inputTextFieldValue = value,
         isRequiredField = fieldUiModel.mandatory,
-        onNextClicked = {
-            clickedOnNext = true
-            onNextClicked()
-        },
+        onNextClicked = onNextClicked,
         onValueChanged = {
             value = it ?: TextFieldValue()
             savedTextSelection = it?.selection ?: TextRange.Zero
@@ -879,17 +777,6 @@ private fun ProvideIntegerNegative(
                     value.text,
                     fieldUiModel.valueType,
                 ),
-            )
-        },
-        onFocusChanged = { isFocused ->
-            lostFocus = lostFocus == true && isFocused == false
-            onFieldFocusChanged(
-                fieldUid = fieldUiModel.uid,
-                value = value.text,
-                valueType = fieldUiModel.valueType,
-                lostFocus = lostFocus,
-                onNextClicked = clickedOnNext,
-                intentHandler = intentHandler,
             )
         },
         autoCompleteList = fieldUiModel.autocompleteList(),
@@ -917,15 +804,6 @@ private fun ProvideLongText(
     var value by remember(fieldUiModel.value) {
         mutableStateOf(TextFieldValue(fieldUiModel.value ?: "", savedTextSelection))
     }
-
-    var clickedOnNext by remember {
-        mutableStateOf(false)
-    }
-
-    var lostFocus by remember {
-        mutableStateOf(false)
-    }
-
     InputLongText(
         modifier = modifier.fillMaxWidth(),
         inputStyle = inputStyle,
@@ -935,10 +813,7 @@ private fun ProvideLongText(
         legendData = fieldUiModel.legend(),
         inputTextFieldValue = value,
         isRequiredField = fieldUiModel.mandatory,
-        onNextClicked = {
-            clickedOnNext = true
-            onNextClicked()
-        },
+        onNextClicked = onNextClicked,
         onValueChanged = {
             value = it ?: TextFieldValue()
             savedTextSelection = it?.selection ?: TextRange.Zero
@@ -948,17 +823,6 @@ private fun ProvideLongText(
                     value.text,
                     fieldUiModel.valueType,
                 ),
-            )
-        },
-        onFocusChanged = { isFocused ->
-            lostFocus = lostFocus == true && isFocused == false
-            onFieldFocusChanged(
-                fieldUid = fieldUiModel.uid,
-                value = value.text,
-                valueType = fieldUiModel.valueType,
-                lostFocus = lostFocus,
-                onNextClicked = clickedOnNext,
-                intentHandler = intentHandler,
             )
         },
         imeAction = ImeAction.Default,
@@ -987,15 +851,6 @@ private fun ProvideLetter(
     var value by remember(fieldUiModel.value) {
         mutableStateOf(TextFieldValue(fieldUiModel.value ?: "", savedTextSelection))
     }
-
-    var clickedOnNext by remember {
-        mutableStateOf(false)
-    }
-
-    var lostFocus by remember {
-        mutableStateOf(false)
-    }
-
     InputLetter(
         modifier = modifier.fillMaxWidth(),
         inputStyle = inputStyle,
@@ -1005,10 +860,7 @@ private fun ProvideLetter(
         legendData = fieldUiModel.legend(),
         inputTextFieldValue = value,
         isRequiredField = fieldUiModel.mandatory,
-        onNextClicked = {
-            clickedOnNext = true
-            onNextClicked()
-        },
+        onNextClicked = onNextClicked,
         onValueChanged = {
             value = it ?: TextFieldValue()
             savedTextSelection = it?.selection ?: TextRange.Zero
@@ -1018,17 +870,6 @@ private fun ProvideLetter(
                     value.text,
                     fieldUiModel.valueType,
                 ),
-            )
-        },
-        onFocusChanged = { isFocused ->
-            lostFocus = lostFocus == true && isFocused == false
-            onFieldFocusChanged(
-                fieldUid = fieldUiModel.uid,
-                value = value.text,
-                valueType = fieldUiModel.valueType,
-                lostFocus = lostFocus,
-                onNextClicked = clickedOnNext,
-                intentHandler = intentHandler,
             )
         },
         autoCompleteList = fieldUiModel.autocompleteList(),
@@ -1057,14 +898,6 @@ private fun ProvideInteger(
         mutableStateOf(TextFieldValue(fieldUiModel.value ?: "", savedTextSelection))
     }
 
-    var clickedOnNext by remember {
-        mutableStateOf(false)
-    }
-
-    var lostFocus by remember {
-        mutableStateOf(false)
-    }
-
     InputInteger(
         modifier = modifier.fillMaxWidth(),
         inputStyle = inputStyle,
@@ -1074,10 +907,7 @@ private fun ProvideInteger(
         legendData = fieldUiModel.legend(),
         inputTextFieldValue = value,
         isRequiredField = fieldUiModel.mandatory,
-        onNextClicked = {
-            clickedOnNext = true
-            onNextClicked()
-        },
+        onNextClicked = onNextClicked,
         onValueChanged = {
             value = it ?: TextFieldValue()
             savedTextSelection = it?.selection ?: TextRange.Zero
@@ -1087,17 +917,6 @@ private fun ProvideInteger(
                     value.text,
                     fieldUiModel.valueType,
                 ),
-            )
-        },
-        onFocusChanged = { isFocused ->
-            lostFocus = lostFocus == true && isFocused == false
-            onFieldFocusChanged(
-                fieldUid = fieldUiModel.uid,
-                value = value.text,
-                valueType = fieldUiModel.valueType,
-                lostFocus = lostFocus,
-                onNextClicked = clickedOnNext,
-                intentHandler = intentHandler,
             )
         },
         autoCompleteList = fieldUiModel.autocompleteList(),
@@ -1127,14 +946,6 @@ private fun ProvideEmail(
         mutableStateOf(TextFieldValue(fieldUiModel.value ?: "", savedTextSelection))
     }
 
-    var clickedOnNext by remember {
-        mutableStateOf(false)
-    }
-
-    var lostFocus by remember {
-        mutableStateOf(false)
-    }
-
     InputEmail(
         modifier = modifier.fillMaxWidth(),
         inputStyle = inputStyle,
@@ -1144,10 +955,7 @@ private fun ProvideEmail(
         legendData = fieldUiModel.legend(),
         inputTextFieldValue = value,
         isRequiredField = fieldUiModel.mandatory,
-        onNextClicked = {
-            clickedOnNext = true
-            onNextClicked()
-        },
+        onNextClicked = onNextClicked,
         onValueChanged = {
             value = it ?: TextFieldValue()
             savedTextSelection = it?.selection ?: TextRange.Zero
@@ -1166,17 +974,6 @@ private fun ProvideEmail(
                     value.text,
                     fieldUiModel.uid,
                 ),
-            )
-        },
-        onFocusChanged = { isFocused ->
-            lostFocus = lostFocus == true && isFocused == false
-            onFieldFocusChanged(
-                fieldUid = fieldUiModel.uid,
-                value = value.text,
-                valueType = fieldUiModel.valueType,
-                lostFocus = lostFocus,
-                onNextClicked = clickedOnNext,
-                intentHandler = intentHandler,
             )
         },
         autoCompleteList = fieldUiModel.autocompleteList(),
@@ -1206,14 +1003,6 @@ private fun ProvideInputPhoneNumber(
         mutableStateOf(TextFieldValue(fieldUiModel.value ?: "", savedTextSelection))
     }
 
-    var clickedOnNext by remember {
-        mutableStateOf(false)
-    }
-
-    var lostFocus by remember {
-        mutableStateOf(false)
-    }
-
     InputPhoneNumber(
         modifier = modifier.fillMaxWidth(),
         inputStyle = inputStyle,
@@ -1223,10 +1012,7 @@ private fun ProvideInputPhoneNumber(
         legendData = fieldUiModel.legend(),
         inputTextFieldValue = value,
         isRequiredField = fieldUiModel.mandatory,
-        onNextClicked = {
-            clickedOnNext = true
-            onNextClicked()
-        },
+        onNextClicked = onNextClicked,
         onValueChanged = {
             value = it ?: TextFieldValue()
             savedTextSelection = it?.selection ?: TextRange.Zero
@@ -1245,17 +1031,6 @@ private fun ProvideInputPhoneNumber(
                     value.text,
                     fieldUiModel.uid,
                 ),
-            )
-        },
-        onFocusChanged = { isFocused ->
-            lostFocus = lostFocus == true && isFocused == false
-            onFieldFocusChanged(
-                fieldUid = fieldUiModel.uid,
-                value = value.text,
-                valueType = fieldUiModel.valueType,
-                lostFocus = lostFocus,
-                onNextClicked = clickedOnNext,
-                intentHandler = intentHandler,
             )
         },
         autoCompleteList = fieldUiModel.autocompleteList(),
@@ -1285,14 +1060,6 @@ private fun ProvideInputLink(
         mutableStateOf(TextFieldValue(fieldUiModel.value ?: "", savedTextSelection))
     }
 
-    var clickedOnNext by remember {
-        mutableStateOf(false)
-    }
-
-    var lostFocus by remember {
-        mutableStateOf(false)
-    }
-
     InputLink(
         modifier = modifier.fillMaxWidth(),
         inputStyle = inputStyle,
@@ -1302,10 +1069,7 @@ private fun ProvideInputLink(
         legendData = fieldUiModel.legend(),
         inputTextFieldValue = value,
         isRequiredField = fieldUiModel.mandatory,
-        onNextClicked = {
-            clickedOnNext = true
-            onNextClicked()
-        },
+        onNextClicked = onNextClicked,
         onValueChanged = {
             value = it ?: TextFieldValue()
             savedTextSelection = it?.selection ?: TextRange.Zero
@@ -1324,17 +1088,6 @@ private fun ProvideInputLink(
                     value.text,
                     fieldUiModel.uid,
                 ),
-            )
-        },
-        onFocusChanged = { isFocused ->
-            lostFocus = lostFocus == true && isFocused == false
-            onFieldFocusChanged(
-                fieldUid = fieldUiModel.uid,
-                value = value.text,
-                valueType = fieldUiModel.valueType,
-                lostFocus = lostFocus,
-                onNextClicked = clickedOnNext,
-                intentHandler = intentHandler,
             )
         },
         autoCompleteList = fieldUiModel.autocompleteList(),
@@ -1357,8 +1110,6 @@ private fun ProvideOrgUnitInput(
     ) {
         mutableStateOf(fieldUiModel.displayName)
     }
-
-    val showResetButton = (fieldUiModel.uid != EnrollmentDetail.ORG_UNIT_UID.name && fieldUiModel.uid != EVENT_ORG_UNIT_UID)
 
     InputOrgUnit(
         modifier = modifier.fillMaxWidth(),
@@ -1389,7 +1140,6 @@ private fun ProvideOrgUnitInput(
                 ),
             )
         },
-        showResetButton = showResetButton,
     )
 }
 

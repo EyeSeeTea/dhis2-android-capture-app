@@ -266,7 +266,7 @@ class FilterRepositoryTest {
             d2
                 .categoryModule()
                 .categoryCombos()
-                .uid(program.categoryCombo()?.uid())
+                .uid(program.categoryComboUid())
                 .blockingGet(),
         ) doReturn catCombo
 
@@ -341,7 +341,7 @@ class FilterRepositoryTest {
             d2
                 .categoryModule()
                 .categoryCombos()
-                .uid(program.categoryCombo()?.uid())
+                .uid(program.categoryComboUid())
                 .blockingGet(),
         ) doReturn catCombo
         whenever(
@@ -444,7 +444,7 @@ class FilterRepositoryTest {
             d2
                 .categoryModule()
                 .categoryCombos()
-                .uid(program.categoryCombo()?.uid())
+                .uid(program.categoryComboUid())
                 .blockingGet(),
         ) doReturn catCombo
 

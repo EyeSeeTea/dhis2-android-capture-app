@@ -21,7 +21,6 @@ import org.dhis2.commons.bindings.stockUseCase
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.arch.repositories.scope.RepositoryScope
 import org.hisp.dhis.android.core.enrollment.Enrollment
-import org.hisp.dhis.android.core.enrollment.EnrollmentStatus
 import org.hisp.dhis.android.core.event.EventCreateProjection
 import org.hisp.dhis.android.core.event.EventStatus
 import org.hisp.dhis.android.core.maintenance.D2Error
@@ -146,23 +145,15 @@ class StockManagerImpl(
                 .orderByEventDate(RepositoryScope.OrderByDirection.DESC)
                 .blockingGet()
 
-        events
-            .filter {
-                d2
-                    .enrollmentModule()
-                    .enrollments()
-                    .uid(it.enrollment())
-                    .blockingGet()
-                    ?.status() == EnrollmentStatus.ACTIVE
-            }.forEach { event ->
-                event.trackedEntityDataValues()?.forEach { dataValue ->
-                    dataValue.dataElement().let { dv ->
-                        if (dv.equals(stockOnHandUid)) {
-                            return dataValue.value()
-                        }
+        events.forEach { event ->
+            event.trackedEntityDataValues()?.forEach { dataValue ->
+                dataValue.dataElement().let { dv ->
+                    if (dv.equals(stockOnHandUid)) {
+                        return dataValue.value()
                     }
                 }
             }
+        }
 
         return null
     }
@@ -428,8 +419,6 @@ class StockManagerImpl(
         d2
             .enrollmentModule()
             .enrollments()
-            .byStatus()
-            .eq(EnrollmentStatus.ACTIVE)
             .byTrackedEntityInstance()
             .eq(teiUid)
             .one()
