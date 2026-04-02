@@ -26,8 +26,8 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import org.dhis2.App
-import org.dhis2.bindings.checkSMSPermission
 import org.dhis2.R
+import org.dhis2.bindings.checkSMSPermission
 import org.dhis2.commons.date.toDateSpan
 import org.dhis2.commons.dialogs.bottomsheet.BottomSheetDialogUi
 import org.dhis2.commons.dialogs.bottomsheet.BottomSheetDialogUiModel
@@ -38,7 +38,6 @@ import org.dhis2.commons.sync.OnNoConnectionListener
 import org.dhis2.commons.sync.OnSyncNavigationListener
 import org.dhis2.commons.sync.SyncContext
 import org.dhis2.commons.ui.icons.SyncStateIcon
-import org.dhis2.ui.items.SyncStatusItem
 import org.dhis2.usescases.sms.SmsSendingService
 import org.dhis2.utils.analytics.AnalyticsHelper
 import org.dhis2.utils.customviews.MessageAmountDialog

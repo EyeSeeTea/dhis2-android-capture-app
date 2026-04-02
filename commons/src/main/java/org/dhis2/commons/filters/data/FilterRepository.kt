@@ -41,7 +41,6 @@ import org.hisp.dhis.android.core.settings.DataSetFilter
 import org.hisp.dhis.android.core.settings.HomeFilter
 import org.hisp.dhis.android.core.settings.ProgramFilter
 import org.hisp.dhis.android.core.trackedentity.search.TrackedEntitySearchCollectionRepository
-import timber.log.Timber
 import javax.inject.Inject
 
 class FilterRepository
@@ -760,7 +759,7 @@ class FilterRepository
                 d2
                     .categoryModule()
                     .categoryCombos()
-                    .uid(program.categoryComboUid())
+                    .uid(program.categoryCombo()?.uid())
                     .blockingGet()
             if (categoryCombo?.isDefault == false) {
                 defaultEventFilter[ProgramFilter.CAT_COMBO] =
