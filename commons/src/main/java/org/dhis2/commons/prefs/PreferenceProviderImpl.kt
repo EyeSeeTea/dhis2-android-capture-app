@@ -225,4 +225,9 @@ open class PreferenceProviderImpl(
             }.minOrNull()
 
     // endregion
+
+    // EyeSeeTea customization - Change Server URL
+    override fun updateServerURL(serverUrl: String) {
+        setValue(SECURE_SERVER_URL, serverUrl)
+    }
 }

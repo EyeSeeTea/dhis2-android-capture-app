@@ -98,4 +98,7 @@ interface PreferenceProvider {
         key: String,
         default: List<String>,
     ): List<String>
+
+    // EyeSeeTea customization - Change Server URL
+    fun updateServerURL(serverUrl: String)
 }

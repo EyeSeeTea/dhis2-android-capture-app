@@ -5,7 +5,7 @@ navigationCompose = "2.9.1"
 sdk = "36"
 minSdk = "21"
 vCode = "151"
-vName = "3.3.1-eyeseetea-fork-1"
+vName = "3.3.1-widp-fork-1"
 gradle = "8.13.2"
 kotlin = '2.2.21'
 dagger = '2.57.2'
@@ -51,6 +51,9 @@ rxlint = "1.7.8"
 crashactivity = "2.4.0"
 zxing = "3.5.4"
 zxingandroid = "4.3.0"
+
+#Eyeseetea
+markwon = "4.6.0"
 root = "0.1.1"
 openid = "0.11.1"
 conscrypt = "2.5.3"
@@ -221,6 +224,9 @@ ktxml = { module = "org.kobjects.ktxml:core", version.ref = "ktxml" }
 commons-text = { module = "org.apache.commons:commons-text", version.ref = "commonsText" }
 coil = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil"}
 coil-network = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil"}
+
+#Eyeseetea
+eyeseetea-markwon = { group = "io.noties.markwon", name = "core", version.ref = "markwon" }
 
 [plugins]
 kotlin-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

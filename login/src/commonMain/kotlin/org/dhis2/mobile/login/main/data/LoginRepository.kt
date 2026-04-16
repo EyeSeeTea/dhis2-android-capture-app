@@ -15,6 +15,7 @@ interface LoginRepository {
         username: String,
         password: String,
         isNetworkAvailable: Boolean,
+        twoFactorCode: String? = null,
     ): Result<Unit>
 
     suspend fun getAvailableLoginUsernames(): List<String>

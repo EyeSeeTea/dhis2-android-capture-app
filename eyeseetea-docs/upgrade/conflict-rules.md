@@ -185,6 +185,23 @@ Stop and redo rule:
 - redo the file from `develop-eyeseetea`
 - reapply only the minimum custom lines
 
+Automerge verification rule:
+
+Git automerge resolves hunks without conflicts silently. It can drop customization code that is not in a conflicting hunk — for example, a parameter added at the end of a function call when only the beginning of the file conflicts. An IDE three-way merge view shows all changes (conflicting and auto-resolved), but the CLI only shows conflict markers. Code comments (`// EyeSeeTea customization`) may also be missing from some insertion points, so they are not a reliable check.
+
+After resolving a file that contains a known customization, verify the full delta — not just the conflicted hunks:
+
+```bash
+git diff develop-eyeseetea -- path/to/file
+```
+
+- the diff must contain ALL the customization lines for that file, not just the ones that were in conflict
+- compare the diff against `customization-files.md` to check that every documented insertion point for that customization survived
+- if the diff is smaller than expected (fewer customization lines than documented), the automerge silently dropped code — recover it before staging
+- do not trust conflict markers as the complete picture of what changed; they only cover hunks where both sides touched the same lines
+
+This rule applies to both human and agent resolution. It is the CLI equivalent of reviewing the full three-way diff in an IDE.
+
 Shared-file safety rule:
 
 - for shared files such as `*Module.kt`, large tests, dependency wiring files, and files with formatting drift, resolve as `theirs` in structure
@@ -342,6 +359,74 @@ Expected action:
 - tentatively keep `develop-eyeseetea`
 - verify with compilation/tests/manual path
 - only reintroduce flavor code if behavior is missing
+
+## Post-merge fork identity check
+
+After merging `develop-eyeseetea` into a client branch (or after a revert-the-revert), the merge can silently overwrite or delete fork-specific configuration that was not in a conflicting hunk. Run these checks before proceeding to conflict classification or build verification.
+
+### 1. Version and identity strings
+
+Compare `gradle/libs.versions.toml` against the pre-merge fork version:
+
+```bash
+diff <(git show HEAD~1:gradle/libs.versions.toml) gradle/libs.versions.toml
+```
+
+Check that:
+- `vName` still has the client fork name (e.g., `3.3.1-widp-fork-1`, not `3.3.1-eyeseetea-fork-1`)
+- `vCode` is correct for the client release
+- `dhis2sdk` points to the right SDK fork version if the client uses a patched SDK
+
+### 2. Flavor source sets
+
+Verify the client flavor source sets still exist:
+
+```bash
+ls -d app/src/<flavor>/ app/src/<flavor>Debug/ app/src/<flavor>Release/
+```
+
+`develop-eyeseetea` may have renamed source sets (e.g., `widp` → `eyeseetea`). The merge brings the new source sets but deletes the old ones. Both must coexist — restore the client source sets from the pre-merge commit if deleted:
+
+```bash
+git checkout HEAD~1 -- app/src/<flavor>/ app/src/<flavor>Debug/ app/src/<flavor>Release/
+```
+
+### 3. Dependencies
+
+Compare the `[versions]` and `[libraries]` sections of `libs.versions.toml`:
+
+```bash
+diff <(git show HEAD~1:gradle/libs.versions.toml) gradle/libs.versions.toml
+```
+
+Check that:
+- no dependency used by the client fork was removed (search for removed library aliases in `*.kts` and `*.kt` files)
+- no dependency version was downgraded if the client fork patched it
+
+Also check `build.gradle.kts` files in modules that contain client customizations:
+
+```bash
+diff <(git show HEAD~1:app/build.gradle.kts) app/build.gradle.kts
+```
+
+### 4. Build configuration
+
+Check that `app/build.gradle.kts` still defines the client flavor:
+
+```bash
+grep -A5 '<flavor>' app/build.gradle.kts
+```
+
+If the flavor definition was removed or renamed, restore it.
+
+### 5. Files that should not come from develop-eyeseetea
+
+Some files are fork-specific and should never be overwritten by the baseline:
+- `google-services.json` (Firebase config, per-client)
+- Signing configurations
+- CI/CD files specific to the client
+
+If these were overwritten, restore from the pre-merge commit.
 
 ## Mandatory post-merge preclassification
 

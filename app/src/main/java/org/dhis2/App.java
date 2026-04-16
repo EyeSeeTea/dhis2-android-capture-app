@@ -43,9 +43,14 @@ import org.dhis2.data.user.UserModule;
 import org.dhis2.di.KoinInitialization;
 import org.dhis2.maps.MapController;
 import org.dhis2.usescases.crash.CrashActivity;
+// EyeSeeTea customization - Notifications system
+import org.dhis2.usescases.notifications.di.NotificationsModule;
 import org.dhis2.usescases.teiDashboard.TeiDashboardComponent;
 import org.dhis2.usescases.teiDashboard.TeiDashboardModule;
 import org.dhis2.utils.analytics.AnalyticsModule;
+// EyeSeeTea customization - Change Server URL
+import org.dhis2.utils.session.ChangeServerURLComponent;
+import org.dhis2.utils.session.ChangeServerURLModule;
 import org.dhis2.utils.granularsync.SyncStatusDialogProvider;
 import org.dhis2.utils.session.PinModule;
 import org.dhis2.utils.session.SessionComponent;
@@ -91,6 +96,10 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
 
     @Nullable
     private SessionComponent sessionComponent;
+
+    // EyeSeeTea customization - Change Server URL
+    @Nullable
+    private ChangeServerURLComponent changeServerURLComponent;
 
     private boolean fromBackGround = false;
     private boolean recreated;
@@ -195,7 +204,9 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
                 .workManagerController(new WorkManagerModule())
                 .sessionManagerService(new SessionManagerModule())
                 .coroutineDispatchers(new DispatcherModule())
-                .featureConfigModule(new FeatureConfigModule());
+                .featureConfigModule(new FeatureConfigModule())
+                // EyeSeeTea customization - Notifications system
+                .notificationsModule(new NotificationsModule());
     }
 
     @NonNull
@@ -373,6 +384,12 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
         KeyValuePair granted = D2Manager.getD2().dataStoreModule().localDataStore()
                 .value(DATA_STORE_ANALYTICS_PERMISSION_KEY).blockingGet();
         return granted != null && Boolean.parseBoolean(granted.value());
+    }
+
+    // EyeSeeTea customization - Change Server URL
+    @NotNull
+    public ChangeServerURLComponent createChangeServerULComponent(ChangeServerURLModule changeServerURLModule) {
+        return (changeServerURLComponent = userComponent.plus(changeServerURLModule));
     }
 
 }

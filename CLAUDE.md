@@ -52,6 +52,8 @@ Java 17 required. Gradle 8.9.3 with parallel execution.
 
 **Comment convention:** Every customized file must have `// EyeSeeTea customization - [Title]` where `[Title]` matches the spec heading exactly. Not in imports (Oslo GitHub action rejects them).
 
+**Automerge verification:** After resolving any conflicted file that contains a customization, run `git diff develop-eyeseetea -- path/to/file` and verify the diff contains ALL customization lines for that file — not just the ones that were in the conflict markers. Git automerge can silently drop customization code in non-conflicting hunks. Compare against `customization-files.md`. See `conflict-rules.md` for the full rule.
+
 ## Key documentation
 
 - `openspec/specs/` — functional specs (source of truth for what each customization does)

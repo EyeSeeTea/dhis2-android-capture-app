@@ -140,6 +140,10 @@ android {
         create("eyeseetea") {
             buildConfigField("String", "LOGIN_TEST", "\"test\"")
         }
+        // EyeSeeTea customization - WIDP flavor
+        create("widp") {
+            buildConfigField("String", "LOGIN_TEST", "\"test\"")
+        }
     }
 }
 

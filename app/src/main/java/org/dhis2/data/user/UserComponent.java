@@ -70,6 +70,8 @@ import org.dhis2.usescases.teiDashboard.dialogs.scheduling.SchedulingComponent;
 import org.dhis2.usescases.teiDashboard.dialogs.scheduling.SchedulingModule;
 import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListComponent;
 import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListModule;
+import org.dhis2.utils.session.ChangeServerURLComponent;
+import org.dhis2.utils.session.ChangeServerURLModule;
 import org.dhis2.utils.session.PinModule;
 import org.dhis2.utils.session.SessionComponent;
 
@@ -190,4 +192,7 @@ public interface UserComponent {
 
     @NonNull
     SchedulingComponent plus(SchedulingModule schedulingModule);
+
+    // EyeSeeTea customization - Change Server URL
+    ChangeServerURLComponent plus(ChangeServerURLModule changeServerURLModule);
 }
