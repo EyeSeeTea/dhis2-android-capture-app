@@ -15,7 +15,7 @@ Use `eyeseetea-docs/README.md` to understand the model first. Use this file as t
 ### 1. Create the documentation
 
 1. Use `eyeseetea-docs/upgrade/conflict-rules.md` as the shared merge guide for future upgrades.
-2. Copy `eyeseetea-docs/customizations/template/customization-specs-template.md` to `eyeseetea-docs/customizations/<client>/customization-specs.md`.
+2. Install and initialize OpenSpec at the repository root: `npm install -g @fission-ai/openspec@latest && openspec init --tools claude`. Functional specs for client customizations live under `openspec/specs/<capability>/spec.md` (one spec per customization).
 3. Copy `eyeseetea-docs/upgrade/template/upgrade-validation-checklist-template.md` to `eyeseetea-docs/upgrade/<client>/upgrade-validation-checklist.md`.
 4. Copy `eyeseetea-docs/customizations/template/customization-files-template.md` to `eyeseetea-docs/customizations/<client>/customization-files.md`.
 
@@ -36,12 +36,12 @@ Use `eyeseetea-docs/README.md` to understand the model first. Use this file as t
 1. List direct flavor-specific files.
 2. List current shared files that already differ from `develop-eyeseetea`.
 3. Populate `customization-files.md` with the initial technical inventory.
-4. Populate `customization-specs.md` with the initial functional titles and expected behavior.
+4. Create one `openspec/specs/<capability>/spec.md` per customization with the initial functional title (as the `#` top-level heading), purpose, SHALL/MUST requirements, and WHEN/THEN scenarios. Run `openspec validate --specs` before committing.
 5. Populate `eyeseetea-docs/upgrade/<client>/upgrade-validation-checklist.md` with the manual validation flows that will matter in future upgrades.
 
 ### 5. Mark the customization boundaries
 
-1. Ensure shared custom code uses `// EyeSeeTea customization - [title]` where relevant.
+1. Ensure shared custom code uses `// EyeSeeTea customization - [Title]` where `[Title]` matches the top-level `# heading` of the matching `openspec/specs/<capability>/spec.md`.
 2. Add `Base behavior:` only when the customization replaces or restricts the base behavior.
 3. Keep flavor-only branding and resource differences out of shared-code commentary.
 
@@ -62,6 +62,6 @@ Use `eyeseetea-docs/README.md` to understand the model first. Use this file as t
 ## Done when
 
 1. `customization-files.md` is the technical inventory for this fork.
-2. `customization-specs.md` is the functional reference for this fork.
+2. `openspec/specs/` contains one validated spec per customization and is the functional reference for this fork (`openspec validate --specs` passes).
 3. `upgrade-validation-checklist.md` is the manual validation reference for this fork.
 4. `conflict-rules.md` remains the shared upgrade guide used later when this fork is upgraded.

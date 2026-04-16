@@ -11,8 +11,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS_ROOT = ROOT / "eyeseetea-docs"
+OPENSPEC_ROOT = ROOT / "openspec"
 COMMENT_RE = re.compile(r"EyeSeeTea customization - (.+)")
 LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+OPENSPEC_H1_RE = re.compile(r"^#\s+(.+)$")
 
 
 def run_git(*args: str) -> subprocess.CompletedProcess[str]:
@@ -64,6 +66,33 @@ def parse_titles(path: Path, pattern: re.Pattern[str]) -> list[str]:
         match = pattern.match(line.strip())
         if match:
             titles.append(match.group(1).strip())
+    return titles
+
+
+def collect_openspec_titles() -> set[str]:
+    """Return the set of human titles extracted from openspec/specs/*/spec.md.
+
+    The canonical title is the first `# <Title>` line in each spec.md file.
+    This is the string that must match code comments and customization-files.md
+    headings after Phase 4 of the onboarding guide.
+
+    Returns an empty set if openspec/ is not present or contains no specs — the
+    caller then falls back to the legacy `customization-specs.md` location.
+    """
+    titles: set[str] = set()
+    specs_dir = OPENSPEC_ROOT / "specs"
+    if not specs_dir.is_dir():
+        return titles
+    for spec_file in sorted(specs_dir.rglob("spec.md")):
+        try:
+            text = spec_file.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        for line in text.splitlines():
+            match = OPENSPEC_H1_RE.match(line.strip())
+            if match:
+                titles.add(match.group(1).strip())
+                break  # only the first H1 is the spec title
     return titles
 
 
@@ -163,20 +192,39 @@ def main() -> int:
     inventory_heading_re = re.compile(r"^#{2,3}\s+2\.\d+\s+(.+)$")
     documented_titles: set[str] = set()
 
+    # The functional source of truth is `openspec/specs/<capability>/spec.md`
+    # (Phase 4 of the onboarding guide). Each spec's first `# <Title>` line is
+    # the canonical title used in code comments and in customization-files.md.
+    openspec_titles = collect_openspec_titles()
+    openspec_available = bool(openspec_titles)
+
     for client in clients:
-        spec_path = DOCS_ROOT / "customizations" / client / "customization-specs.md"
+        legacy_spec_path = DOCS_ROOT / "customizations" / client / "customization-specs.md"
         inventory_path = DOCS_ROOT / "customizations" / client / "customization-files.md"
         checklist_path = (
             DOCS_ROOT / "upgrade" / client / "upgrade-validation-checklist.md"
         )
 
-        spec_titles = set(parse_titles(spec_path, spec_heading_re))
+        if openspec_available:
+            # Post-Phase-4 state: OpenSpec is the functional source of truth.
+            spec_titles = set(openspec_titles)
+            spec_source_label = "openspec/specs/"
+            if legacy_spec_path.exists():
+                issues.append(
+                    f"{client}: both openspec/specs/ and customization-specs.md exist — "
+                    "delete customization-specs.md per onboarding-fork-guide Phase 4"
+                )
+        else:
+            # Brownfield onboarding still in Phase 3: fall back to the narrative draft.
+            spec_titles = set(parse_titles(legacy_spec_path, spec_heading_re))
+            spec_source_label = f"customizations/{client}/customization-specs.md"
+            for issue in parse_status_missing(legacy_spec_path, spec_heading_re):
+                issues.append(issue)
+
         inventory_titles = set(parse_titles(inventory_path, inventory_heading_re))
         checklist_titles = set(parse_titles(checklist_path, spec_heading_re))
         documented_titles.update(spec_titles | inventory_titles)
 
-        for issue in parse_status_missing(spec_path, spec_heading_re):
-            issues.append(issue)
         for issue in parse_status_missing(inventory_path, inventory_heading_re):
             issues.append(issue)
 
@@ -189,7 +237,7 @@ def main() -> int:
         spec_inventory_mismatch = sorted(spec_titles ^ inventory_titles)
         for title in spec_inventory_mismatch:
             issues.append(
-                f"{client}: title mismatch between spec and inventory for '{title}'"
+                f"{client}: title mismatch between {spec_source_label} and inventory for '{title}'"
             )
 
     undocumented_comments = sorted(title for title in comment_titles if title not in documented_titles)

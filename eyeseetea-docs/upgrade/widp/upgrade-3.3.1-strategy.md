@@ -94,7 +94,7 @@ Status: `completed` (2026-04-02)
 
 Steps:
 1. ~~Bring shared eyeseetea-docs from develop-eyeseetea~~ (done)
-2. ~~Create customizations/widp/customization-specs.md~~ (done)
+2. ~~Create customizations/widp/customization-specs.md~~ (done, then **deleted 2026-04-15** — replaced by `openspec/specs/` as part of Phase B)
 3. ~~Create customizations/widp/customization-files.md~~ (done)
 4. ~~Create upgrade/widp/upgrade-validation-checklist.md~~ (done)
 5. ~~Complete the technical inventory by analyzing the full diff~~ (done — verified all 8 original customizations against develop-eyeseetea using two-dot diff)
@@ -119,18 +119,18 @@ Findings:
 
 ### Phase B: OpenSpec formalization
 
-Status: `pending`
+Status: `completed` (2026-04-15)
+
+Scope of this phase: install OpenSpec and migrate the current WIDP customizations to OpenSpec specs. **The upgrade proposal itself is NOT created here** — it is the first step of Phase D (Upgrade execution).
 
 Steps:
-1. Install OpenSpec CLI: `npm install -g @fission-ai/openspec@latest`
-2. Initialize: `openspec init`
-3. Adapt `openspec/config.yaml` from Sports PR #306 — add:
-   - customization code placement hierarchy rule (flavor > new file > end of file > inline)
-   - reference to WIDP flavor and customization-specs.md
-4. Adapt `openspec/project.md` from Sports PR #306
-5. Create specs for the 5 confirmed customizations
-6. Each spec includes: purpose, MUST/SHALL requirements, Given-When-Then scenarios
-7. Model the upgrade as a change: `openspec/changes/upgrade-widp-to-3.3.1/`
+1. ~~Install OpenSpec CLI: `npm install -g @fission-ai/openspec@latest`~~ (done, v1.2.0)
+2. ~~Initialize: `openspec init --tools claude`~~ (done — scaffold in `openspec/`, Claude skills/commands in `.claude/`)
+3. ~~Create `openspec/config.yaml`~~ (done — note: `project.md` is legacy in OpenSpec ≥1.2.0; the new location for project context is `config.yaml` under a `context:` field, plus per-artifact `rules:`). The config includes the customization code placement hierarchy rule (flavor > new file > end of file > inline) and the WIDP identity block.
+4. ~~Create specs for the 5 confirmed customizations~~ (done — `openspec/specs/{change-server-url, image-upload-no-resize, notifications, two-factor-auth, url-data-element}/spec.md`). Each spec uses the exact human title from the prior `customization-specs.md` as its top-level heading so code comments and `customization-files.md` keep matching titles.
+5. ~~Each spec includes: purpose, SHALL/MUST requirements, WHEN/THEN scenarios~~ (done, validated with `openspec validate --specs` → 5/5 passed).
+6. ~~Delete `customizations/widp/customization-specs.md`~~ (done 2026-04-15 — `openspec/specs/` is now the single functional source of truth. References in `customization-files.md`, `upgrade-validation-checklist.md`, and this strategy were updated accordingly). This is a WIDP-specific deviation from the previous shared onboarding model; the change was promoted back to the shared `onboarding-fork-guide.md`, `new-fork.md`, `README.md`, templates, `conflict-rules.md`, `upgrade-plan-client-forks.md`, and `scripts/check_upgrade_docs.py` as part of this same phase.
+7. ~~Align code comment titles and the technical inventory with the canonical OpenSpec titles~~ (done — 9 non-canonical `// EyeSeeTea customization - …` comments in `settings.gradle.kts`, `commons/build.gradle.kts`, `CredentialsScreen.kt`, `CredentialsViewModel.kt`, `login/.../strings.xml` renamed to `2FA support`; `customization-files.md` section `### 2.3 Notifications system (includes translations)` renamed to `### 2.3 Notifications system`). `python3 eyeseetea-docs/scripts/check_upgrade_docs.py --client widp` passes.
 
 ### Phase C: Claude Code tooling
 
@@ -142,7 +142,7 @@ Steps:
 1. Adapt `CLAUDE.md` from Sports PR #306. Add:
    - WIDP-specific identity (flavor: `widp`, paths: `app/src/widp/`, `app/src/widpDebug/`)
    - customization code placement hierarchy rule
-   - reference to WIDP customization-specs.md and upgrade strategy
+   - reference to `openspec/specs/` (functional source of truth for WIDP customizations) and this upgrade strategy
 2. Bring the 3 upgrade agents from Sports PR #306
 3. Bring the 4 OpenSpec commands from Sports PR #306
 4. Bring selectively: android-testing skill, android-flavor-management skill, OpenSpec skills, settings.json
@@ -154,20 +154,21 @@ Steps:
 Status: `pending`
 
 Steps:
-1. Create `eyeseetea-docs/upgrade/widp/upgrade-3.3.1-notes.md` from template
-2. Merge `develop-eyeseetea` into this branch
-3. Classify conflicts using `conflict-rules.md`:
+1. **Create the upgrade proposal as an OpenSpec change** at `openspec/changes/upgrade-widp-to-3.3.1/` with `proposal.md`, `design.md`, and `tasks.md`. Use `/opsx:propose upgrade-widp-to-3.3.1` (now available because Phase C installed Claude tooling). The proposal lists 3.3.1 as the upstream target, the expected conflict surface (~450 shared-code diffs), the SDK fork dependency, and an ordered task breakdown that mirrors steps 2-11 below. This is the first action of the upgrade and happens **before** any merge.
+2. Create `eyeseetea-docs/upgrade/widp/upgrade-3.3.1-notes.md` from template
+3. Merge `develop-eyeseetea` into this branch
+4. Classify conflicts using `conflict-rules.md`:
    - `accept_ours` for `app/src/widp/**` and `app/src/widpDebug/**`
    - `accept_theirs` for pure formatting, import, and shared test changes
    - `manual_reapply_on_theirs` for shared files with confirmed customizations
    - `defer_after_build_verification` for unclear cases
-4. Resolve easy conflicts first
-5. Pause for developer review after the easy batch
-6. Resolve manual conflicts by reapplying minimum client-specific logic
-7. Fix URL data element rendering (#5) — reimplement in Compose UI
-8. Fix SMS 2FA string typo (#4) if confirmed
-9. Clean up PSI leftovers
-10. Update customization-files.md with confirmed surviving customizations
+5. Resolve easy conflicts first
+6. Pause for developer review after the easy batch
+7. Resolve manual conflicts by reapplying minimum client-specific logic
+8. Fix URL data element rendering (#5) — reimplement in Compose UI
+9. Fix SMS 2FA string typo (#4) if confirmed
+10. Clean up PSI leftovers
+11. Update customization-files.md with confirmed surviving customizations
 
 ### Phase E: Tests and cleanup
 

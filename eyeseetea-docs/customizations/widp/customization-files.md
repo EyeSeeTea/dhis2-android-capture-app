@@ -76,7 +76,7 @@ Main implementation points:
 Technical note:
 - Marked with `// EyeSeeTea customization no resize`. Changes `saveFileResource(filePath, valueType == ValueType.IMAGE)` to `saveFileResource(filePath, false)`, disabling resize for all image uploads.
 
-### 2.3 Notifications system (includes translations)
+### 2.3 Notifications system
 
 Status: `active`
 
@@ -169,5 +169,5 @@ Action required:
 
 - This inventory reflects the verified branch state as of 2026-04-02.
 - If files are merged, renamed, reverted, or reworked, regenerate this file from the current code and the diff against `develop-eyeseetea`.
-- The source of truth for functional titles remains `customization-specs.md`.
-- If code comments and functional titles diverge, prefer the title defined in `customization-specs.md` and update the code comment when possible.
+- The source of truth for functional behavior and canonical titles is `openspec/specs/<capability>/spec.md`. Each spec starts with `# <Title>`; that `<Title>` is the exact string to use here and in code comments.
+- If code comments and functional titles diverge, prefer the title defined in the matching OpenSpec spec and update the code comment when possible.

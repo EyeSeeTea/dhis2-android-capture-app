@@ -545,6 +545,6 @@ Rules:
 ## Comment labeling reminder during merge
 
 When a surviving flavor customization remains in shared code:
-- add one nearby `EyeSeeTea customization - [title]` comment
-- use the exact functional title from `customization-specs.md`
+- add one nearby `EyeSeeTea customization - [Title]` comment
+- use the exact functional title from the top-level `#` heading of the matching `openspec/specs/<capability>/spec.md`
 - do not add these comments blindly before the final surviving logic is clear
