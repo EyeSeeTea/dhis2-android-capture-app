@@ -134,20 +134,16 @@ Steps:
 
 ### Phase C: Claude Code tooling
 
-Status: `pending`
+Status: `completed` (2026-04-16)
 
-Source: Sports PR #306 (`feature-sports/setup-claude-dev-environment`) provides a complete `.claude/` setup.
+Approach: minimalist setup from scratch (deliberately not copied from Sports PR #306, to compare approaches in the coding dojo). Only 2 new files — no custom agents, no additional skills, no new commands.
 
 Steps:
-1. Adapt `CLAUDE.md` from Sports PR #306. Add:
-   - WIDP-specific identity (flavor: `widp`, paths: `app/src/widp/`, `app/src/widpDebug/`)
-   - customization code placement hierarchy rule
-   - reference to `openspec/specs/` (functional source of truth for WIDP customizations) and this upgrade strategy
-2. Bring the 3 upgrade agents from Sports PR #306
-3. Bring the 4 OpenSpec commands from Sports PR #306
-4. Bring selectively: android-testing skill, android-flavor-management skill, OpenSpec skills, settings.json
-5. Do NOT bring: design agents, Pencil workflow, ClickUp PM skill, UX wireframing
-6. Verify a fresh Claude session can orient using CLAUDE.md
+1. ~~Create `CLAUDE.md` at repo root~~ (done — project identity, module structure, build commands, customization table, placement rules with Oslo-minimization principle, documentation index, upgrade context, automation extraction rule)
+2. ~~Create `.claude/settings.json`~~ (done — shared permissions for gradle, openspec, git read-only, config files)
+3. ~~Decided NOT to create custom agents or skills~~ (justified: no repetitive pattern demonstrated yet; if one emerges during Phase D/E, extract then)
+4. ~~OpenSpec commands and skills already existed from Phase B~~ (4 commands + 4 skills)
+5. ~~Added automation extraction rule to CLAUDE.md~~ (Claude will proactively suggest creating agents/skills when it detects 3+ repetitions of the same task structure)
 
 ### Phase D: Upgrade execution
 
@@ -185,6 +181,23 @@ Steps:
 3. Execute manual validation per checklist
 4. Run `check_upgrade_docs.py --client widp`
 5. Ensure code comments use `// EyeSeeTea customization - [title]` with exact spec titles
+
+### Phase F: Promote tooling to develop-eyeseetea
+
+Status: `pending`
+
+Goal: carry the infrastructure back to `develop-eyeseetea` so that any new fork starts with everything ready — no manual OpenSpec install or Claude setup needed. **No client-specific specs or changes should go to the baseline.**
+
+Steps:
+1. Decide exactly what to promote (candidates listed below, final decision at execution time):
+   - `eyeseetea-docs/` — shared docs, templates, scripts, onboarding guide updated with OpenSpec phases
+   - `openspec/` — CLI scaffold (`config.yaml` with generic context, empty `specs/`, empty `changes/archive/`). No WIDP specs.
+   - `.claude/` — CLAUDE.md (generic EyeSeeTea baseline, no WIDP identity), commands, skills, settings. No WIDP-specific agents or rules.
+   - `.gitignore` updates (`.claude/settings.local.json`, etc.)
+2. Review each file for client-specific references and strip them (WIDP paths, WIDP flavor mentions, WIDP customization titles)
+3. Cherry-pick or create a clean commit onto `develop-eyeseetea`
+4. Verify that a fresh fork from `develop-eyeseetea` can run `openspec validate` and start a Claude session with working CLAUDE.md without errors
+5. Verify no conflict is introduced for existing forks that merge `develop-eyeseetea`
 
 ## Risk areas
 
