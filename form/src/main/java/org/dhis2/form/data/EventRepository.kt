@@ -6,9 +6,9 @@ import io.reactivex.Flowable
 import io.reactivex.Single
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import org.dhis2.commons.bindings.blockingGetValueCheck
+import org.dhis2.bindings.blockingGetValueCheck
+import org.dhis2.bindings.userFriendlyValue
 import org.dhis2.commons.bindings.program
-import org.dhis2.commons.bindings.userFriendlyValue
 import org.dhis2.commons.date.DateUtils
 import org.dhis2.commons.extensions.inDateRange
 import org.dhis2.commons.extensions.inOrgUnit
@@ -286,7 +286,8 @@ class EventRepository(
             editable = isEventEditable(),
             description = null,
             eventCategories = categories,
-            url = null
+            // EyeSeeTea customization - URL data element field
+            url = null,
         )
     }
 
@@ -368,7 +369,7 @@ class EventRepository(
                     .categoryModule()
                     .categoryCombos()
                     .withCategories()
-                    .uid(program.categoryComboUid())
+                    .uid(program.categoryCombo()?.uid())
                     .get()
             }.blockingGet()
 
@@ -430,7 +431,8 @@ class EventRepository(
             editable = accessDataWrite && !shouldBlockEdition,
             description = null,
             featureType = featureType,
-            url = null
+            // EyeSeeTea customization - URL data element field
+            url = null,
         )
     }
 
@@ -464,7 +466,8 @@ class EventRepository(
             editable = eventMode == EventMode.NEW,
             description = null,
             orgUnitSelectorScope = programUid?.let { OrgUnitSelectorScope.ProgramCaptureScope(it) },
-            url = null
+            // EyeSeeTea customization - URL data element field
+            url = null,
         )
 
     private fun getStoredOrgUnit(): String? =
@@ -504,7 +507,8 @@ class EventRepository(
             editable = isEventEditable(),
             description = null,
             periodSelector = getPeriodSelector(),
-            url = null
+            // EyeSeeTea customization - URL data element field
+            url = null,
         )
     }
 
@@ -748,7 +752,7 @@ class EventRepository(
                 optionSetConfig,
                 featureType,
                 customIntentModel = customIntent,
-                url = url
+                url = url,
             )
 
         if (!error.isNullOrEmpty()) {

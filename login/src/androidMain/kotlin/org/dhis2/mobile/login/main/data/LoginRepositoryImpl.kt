@@ -97,6 +97,7 @@ class LoginRepositoryImpl(
         username: String,
         password: String,
         isNetworkAvailable: Boolean,
+        // EyeSeeTea customization - 2FA support
         twoFactorCode: String?,
     ) = withContext(dispatcher.io) {
         try {
@@ -185,8 +186,7 @@ class LoginRepositoryImpl(
     override suspend fun initialSyncDone(
         serverUrl: String,
         username: String,
-    ): Boolean =
-        withContext(dispatcher.io) { isImportedDatabase(serverUrl, username) or entryExists() }
+    ): Boolean = withContext(dispatcher.io) { isImportedDatabase(serverUrl, username) or entryExists() }
 
     override suspend fun canLoginWithBiometrics(serverUrl: String): Boolean =
         withContext(dispatcher.io) {

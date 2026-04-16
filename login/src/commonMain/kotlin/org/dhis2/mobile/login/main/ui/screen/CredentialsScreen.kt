@@ -223,7 +223,7 @@ fun CredentialsScreen(
         LoginStatus(
             isLoggingIn = isLoggingIn,
             loginErrorMessage = screenState.errorMessage,
-            loginInfoMessage = screenState.infoMessage,
+            loginInfoMessage = screenState.infoMessage, // EyeSeeTea customization - 2FA support
             onCancelLogin = viewModel::cancelLogin,
         )
         if (isLoggingIn.not()) {
@@ -476,7 +476,7 @@ private fun getInputState(
 private fun LoginStatus(
     isLoggingIn: Boolean,
     loginErrorMessage: String?,
-    loginInfoMessage: String?,
+    loginInfoMessage: String?, // EyeSeeTea customization - 2FA support
     onCancelLogin: () -> Unit,
 ) {
     if (isLoggingIn) {
@@ -895,3 +895,4 @@ private fun TwoFactorContainer(
         }
     }
 }
+

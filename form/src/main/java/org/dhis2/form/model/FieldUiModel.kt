@@ -71,6 +71,7 @@ interface FieldUiModel {
 
     val periodSelector: PeriodSelector?
 
+    // EyeSeeTea customization - URL data element field
     val url: String?
 
     fun setCallback(callback: Callback)

@@ -1,8 +1,6 @@
 @file:Suppress("UnstableApiUsage")
-@file:OptIn(KspExperimental::class)
 
 import com.android.build.api.variant.impl.VariantOutputImpl
-import com.google.devtools.ksp.KspExperimental
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -15,6 +13,7 @@ plugins {
     id("kotlin-parcelize")
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.compose.compiler)
+    alias(libs.plugins.sentry)
 }
 apply(from = "${project.rootDir}/jacoco/jacoco.gradle.kts")
 
@@ -163,15 +162,8 @@ android {
         create("dhis2Training") {
             signingConfig = signingConfigs.getByName("training")
         }
-        create("widp") {
-            applicationId = "com.eyeseetea.widp"
-            dimension = "default"
-            versionCode = libs.versions.vCode.get().toInt()
-            versionName = libs.versions.vName.get()
-        }
-
-        create("psi") {
-            applicationId = "org.dhis2.psi"
+        create("eyeseetea") {
+            applicationId = "com.eyeseetea.dhis2"
             dimension = "default"
             versionCode = libs.versions.vCode.get().toInt()
             versionName = libs.versions.vName.get()
@@ -295,6 +287,7 @@ dependencies {
     implementation(libs.analytics.customactivityoncrash)
     implementation(libs.koin.core)
     implementation(libs.koin.android)
+    implementation(libs.lottie.compose)
 
     coreLibraryDesugaring(libs.desugar)
 
@@ -329,11 +322,39 @@ dependencies {
     androidTestImplementation(libs.test.rx2.idler)
     androidTestImplementation(libs.test.compose.ui.test)
     androidTestImplementation(libs.test.hamcrest)
+}
 
-    //EyeSeeTea customization
-    implementation(libs.eyeseetea.atv)
-    implementation(libs.eyeseetea.markwon)
-    implementation(libs.eyeseetea.coroutinesCore)
-    implementation(libs.eyeseetea.coroutinesAndroid)
+sentry {
+    org.set("dhis2")
+    projectName.set("dhis2-android-capture")
 
+    val sentryAuthToken = System.getenv("SENTRY_AUTH_TOKEN")
+    if (!sentryAuthToken.isNullOrBlank()) {
+        authToken.set(sentryAuthToken)
+
+        // Enable ProGuard/R8 mapping upload for deobfuscation, maps are available in the build folder
+        includeProguardMapping.set(true)
+        // Upload the mapping on every release build
+        autoUploadProguardMapping.set(true)
+    } else {
+        // When no auth token is available (e.g., local development), disable uploads
+        includeProguardMapping.set(false)
+        autoUploadProguardMapping.set(false)
+    }
+
+    // Disable native symbols upload (not needed for this project)
+    uploadNativeSymbols.set(false)
+    includeNativeSources.set(false)
+
+    // Enable auto-installation of Sentry components (sentry-android SDK and okhttp, timber, fragment and compose integrations).
+    autoInstallation {
+        enabled.set(false)
+        sentryVersion.set(libs.versions.sentry)
+    }
+
+    // Disabled to avoid uploading source code to Sentry; rely on ProGuard/R8 mappings instead.
+    includeSourceContext.set(false)
+
+    // Telemetry
+    telemetry.set(false)
 }

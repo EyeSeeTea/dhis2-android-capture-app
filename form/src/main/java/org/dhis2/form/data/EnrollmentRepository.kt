@@ -268,6 +268,7 @@ class EnrollmentRepository(
                 optionSetConfig,
                 if (valueType == ValueType.COORDINATE) FeatureType.POINT else null,
                 customIntentModel = attributeCustomIntent,
+                // EyeSeeTea customization - URL data element field
                 url = null,
             )
 
@@ -463,7 +464,8 @@ class EnrollmentRepository(
             null,
             null,
             selectableDates = getAllowedDatesForEnrollmentDate(),
-            url = null
+            // EyeSeeTea customization - URL data element field
+            url = null,
         )
 
     private fun getIncidentDateField(
@@ -490,6 +492,7 @@ class EnrollmentRepository(
             null,
             null,
             null,
+            // EyeSeeTea customization - URL data element field
             url = null,
         )
 
@@ -512,6 +515,7 @@ class EnrollmentRepository(
             null,
             null,
             orgUnitSelectorScope = programUid?.let { OrgUnitSelectorScope.ProgramCaptureScope(it) },
+            // EyeSeeTea customization - URL data element field
             url = null,
         )
 
@@ -536,6 +540,7 @@ class EnrollmentRepository(
             null,
             null,
             featureType,
+            // EyeSeeTea customization - URL data element field
             url = null,
         )
     }
@@ -558,6 +563,7 @@ class EnrollmentRepository(
             null,
             null,
             featureType,
+            // EyeSeeTea customization - URL data element field
             url = null,
         )
 
