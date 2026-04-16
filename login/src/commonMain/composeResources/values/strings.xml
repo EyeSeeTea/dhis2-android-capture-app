@@ -45,7 +45,7 @@
     <string name="openid_or">Or</string>
     <string name="action_openid_log_in">Log in with openID</string>
     <string name="action_manage_account">Manage accounts</string>
-    <!-- EyeSeeTea customization - Two Factor Authentication strings -->
+    <!-- EyeSeeTea customization - 2FA support -->
     <string name="two_factor_totp_hint">TOTP Code</string>
     <string name="two_factor_email_hint">Email Verification Code</string>
     <string name="two_factor_sms_hint">SMS Verification Code</string>

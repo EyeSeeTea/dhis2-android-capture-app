@@ -252,8 +252,8 @@ class CredentialsViewModel(
                             },
                         twoFactorState = null,
                         twoFactorCode = "",
-                        errorMessage = null, // EyeSeeTea customization - Clear error message on successful login
-                        infoMessage = null, // EyeSeeTea customization - Clear info message on successful login
+                        errorMessage = null, // EyeSeeTea customization - 2FA support
+                        infoMessage = null, // EyeSeeTea customization - 2FA support
                     )
                 }
             }
@@ -284,10 +284,11 @@ class CredentialsViewModel(
                         )
                     }
                     
-                    // EyeSeeTea customization - Determine if message is error or info based on 2FA type
-                    // EMAIL_TWO_FACTOR_CODE_SENT and SMS_TWO_FACTOR_CODE_SENT are info messages (blue)
-                    // INCORRECT_TWO_FACTOR_CODE_* are error messages (red)
-                    // For TOTP: show error only if field is already visible
+                    // EyeSeeTea customization - 2FA support
+                    // Determine if the message is error or info based on 2FA type:
+                    // EMAIL_TWO_FACTOR_CODE_SENT and SMS_TWO_FACTOR_CODE_SENT are info messages (blue).
+                    // INCORRECT_TWO_FACTOR_CODE_* are error messages (red).
+                    // For TOTP: show error only if the field is already visible.
                     val isInfoMessage = result.type == TwoFactorType.EMAIL || result.type == TwoFactorType.SMS
                     val shouldShowError = when {
                         isInfoMessage -> false // EMAIL/SMS code sent is always info
