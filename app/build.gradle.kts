@@ -168,7 +168,6 @@ android {
             versionCode = libs.versions.vCode.get().toInt()
             versionName = libs.versions.vName.get()
         }
-        // EyeSeeTea customization - WIDP flavor
         create("widp") {
             applicationId = "com.eyeseetea.widp"
             dimension = "default"
@@ -330,7 +329,7 @@ dependencies {
     androidTestImplementation(libs.test.compose.ui.test)
     androidTestImplementation(libs.test.hamcrest)
 
-    // EyeSeeTea customization - Notifications system (Markwon for markdown rendering)
+    // EyeSeeTea customization - Notifications system
     implementation(libs.eyeseetea.markwon)
 }
 

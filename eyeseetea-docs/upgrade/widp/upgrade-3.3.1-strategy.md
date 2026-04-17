@@ -59,13 +59,13 @@ Originally 8 customizations were assumed. After verification against `develop-ey
 
 ### 5. URL data element field
 
-- Status: `broken` — data plumbing intact, rendering lost in upstream Compose migration
+- Status: `active` — rendering reimplemented 2026-04-17 in Compose supporting text
 - Risk: **medium**
-- Reason: form rendering is conflict-prone per conflict-rules.md. Original rendering (`onDescriptionClick` + `ShowDescriptionLabelDialog`) was removed in upstream refactor.
-- Key files: `EventRepository.kt` (line ~729), `FieldUiModel.kt`, `FieldUiModelImpl.kt`, `FieldViewModelFactoryImpl.kt`, `EnrollmentRepository.kt`
+- Reason: form rendering is conflict-prone per conflict-rules.md. Original rendering (`onDescriptionClick` + `ShowDescriptionLabelDialog`) was removed in upstream refactor; new rendering is inline supporting text.
+- Key files: `EventRepository.kt` (line ~729), `FieldUiModel.kt`, `FieldUiModelImpl.kt`, `FieldViewModelFactoryImpl.kt`, `EnrollmentRepository.kt`, `FieldUiModelExtensions.kt` (new rendering)
 - Original commit: `c556b7ab7` ("Implement show data element url", Nov 2022)
-- Testing strategy: after reimplementation, unit test for URL concatenation to description
-- Action required: reimplement URL display in current Compose UI (find where description/info dialog is rendered)
+- Reimplementation: `FieldUiModelExtensions.supportingText()` — appends URL to description line
+- Testing strategy: unit test for `supportingText()` URL concatenation behavior
 
 ## Removed customizations (verified 2026-04-02)
 
@@ -77,14 +77,14 @@ Originally 8 customizations were assumed. After verification against `develop-ey
 
 ## Cleanup items
 
-### PSI leftovers
-The WIDP fork may contain files from a previous PSI fork that are not part of any active WIDP customization. These should be identified and removed so the branch matches `develop-eyeseetea` in non-customized areas.
+### PSI leftovers — `resolved` (2026-04-17)
+Verified already clean at the source level; PSI flavor files were removed in commit `2c49aa577`. Only stale `.idea/` references remain and those are gitignored.
 
-### URL data element rendering (#5)
-The rendering part of this customization was lost during the upstream Compose migration. The data plumbing (reading URL from SDK, storing in FieldUiModel) is intact but the display logic needs reimplementation.
+### URL data element rendering (#5) — `resolved` (2026-04-17)
+Reimplemented in `form/src/main/java/org/dhis2/form/extensions/FieldUiModelExtensions.kt` — `supportingText()` now appends `url` to the description line, so the URL renders inline under each field in the Compose supporting-text surface.
 
-### SMS 2FA string typo (#4)
-The string for `SMS_TWO_FACTOR_CODE_SENT` may show "Email with two factor code sent" instead of "SMS with two factor code sent". Verify and fix if confirmed.
+### SMS 2FA string typo (#4) — `resolved` (2026-04-17)
+Fixed in `commonskmm/src/commonMain/composeResources/values/strings.xml:217`. `sms_two_factor_code_sent` now reads "SMS with two factor code sent".
 
 ## Execution phases
 
@@ -147,24 +147,20 @@ Steps:
 
 ### Phase D: Upgrade execution
 
-Status: `pending`
+Status: `completed` (2026-04-17)
 
 Steps:
-1. **Create the upgrade proposal as an OpenSpec change** at `openspec/changes/upgrade-widp-to-3.3.1/` with `proposal.md`, `design.md`, and `tasks.md`. Use `/opsx:propose upgrade-widp-to-3.3.1` (now available because Phase C installed Claude tooling). The proposal lists 3.3.1 as the upstream target, the expected conflict surface (~450 shared-code diffs), the SDK fork dependency, and an ordered task breakdown that mirrors steps 2-11 below. This is the first action of the upgrade and happens **before** any merge.
-2. Create `eyeseetea-docs/upgrade/widp/upgrade-3.3.1-notes.md` from template
-3. Merge `develop-eyeseetea` into this branch
-4. Classify conflicts using `conflict-rules.md`:
-   - `accept_ours` for `app/src/widp/**` and `app/src/widpDebug/**`
-   - `accept_theirs` for pure formatting, import, and shared test changes
-   - `manual_reapply_on_theirs` for shared files with confirmed customizations
-   - `defer_after_build_verification` for unclear cases
-5. Resolve easy conflicts first
-6. Pause for developer review after the easy batch
-7. Resolve manual conflicts by reapplying minimum client-specific logic
-8. Fix URL data element rendering (#5) — reimplement in Compose UI
-9. Fix SMS 2FA string typo (#4) if confirmed
-10. Clean up PSI leftovers
-11. Update customization-files.md with confirmed surviving customizations
+1. ~~Create the upgrade proposal as an OpenSpec change~~ (done — `openspec/changes/upgrade-widp-to-3-3-1/` with proposal, design, tasks, delta spec)
+2. ~~Create `eyeseetea-docs/upgrade/widp/upgrade-3.3.1-notes.md` from template~~ (done — updated post-merge with automerge casualties, follow-ups, new rules)
+3. ~~Merge `develop-eyeseetea` into this branch~~ (done — revert-the-revert `git revert 7389d1043`, commit `1af395c30`)
+4. ~~Classify conflicts using `conflict-rules.md`~~ (done — 20 `accept_ours` + 10 `manual_reapply_on_theirs`)
+5. ~~Resolve easy conflicts first~~ (done)
+6. ~~Pause for developer review after the easy batch~~ (done)
+7. ~~Resolve manual conflicts by reapplying minimum client-specific logic~~ (done — 8 build iterations recovered ~20 files silently dropped by automerge; captured as **Automerge verification rule** and **Post-merge fork identity check** in `conflict-rules.md`; build 10 passed)
+8. ~~Fix URL data element rendering (#5)~~ (done — reimplemented in `FieldUiModelExtensions.supportingText()` appending URL to description, spec updated, status `active`)
+9. ~~Fix SMS 2FA string typo (#4)~~ (done — `sms_two_factor_code_sent` in `commonskmm/.../values/strings.xml` corrected)
+10. ~~Clean up PSI leftovers~~ (done — verified already clean; residual references only in `.idea/` which is gitignored)
+11. ~~Update customization-files.md with confirmed surviving customizations~~ (done — added DI wiring, preferences layer, SDK wiring, and marked #5 as active)
 
 ### Phase E: Tests and cleanup
 

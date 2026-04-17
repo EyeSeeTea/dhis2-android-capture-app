@@ -140,7 +140,7 @@ android {
         create("eyeseetea") {
             buildConfigField("String", "LOGIN_TEST", "\"test\"")
         }
-        // EyeSeeTea customization - WIDP flavor
+        // EyeSeeTea customization - 2FA support
         create("widp") {
             buildConfigField("String", "LOGIN_TEST", "\"test\"")
         }

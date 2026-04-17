@@ -7,10 +7,10 @@ Technical inventory of the WIDP customization surface on top of `develop-eyeseet
 - Client: `widp`
 - Flavor: `widp`
 - Base branch: `develop-eyeseetea`
-- Base commit: `83269ca92`
+- Base commit: `b1e8cdb9b`
 - Generated on: `2026-03-25`
-- Last updated: `2026-04-02`
-- Working tree status: `dirty`
+- Last updated: `2026-04-17`
+- Working tree status: `clean` (post-merge to 3.3.1, build OK)
 
 This file is intentionally separate from `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md`:
 - `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md` documents the shared EyeSeeTea reference branch
@@ -32,7 +32,7 @@ This file is not a full raw diff dump. Its goal is to answer:
 ## Validated customization count
 
 Originally 8 customizations were assumed. After verification against `develop-eyeseetea`:
-- **5 confirmed** (3 active, 1 active with SDK dependency, 1 broken)
+- **5 confirmed, all active** (3 active, 1 active with SDK dependency, 1 reimplemented in 3.3.1)
 - **3 removed**: #4 Notification translations (merged into #3), #5 Access to indicators from form (exists in baseline since 2019), #6 Events filter for text-type data elements (no diff found, never existed or was removed)
 
 ## 1. Direct WIDP flavor surface
@@ -64,7 +64,11 @@ Main implementation points (all new files, not in develop-eyeseetea):
 
 Supporting files:
 - `app/src/widp/res/menu/main_menu.xml` (menu entry for change URL)
-- DI wiring in AppComponent / App
+
+DI wiring (shared files with WIDP-only bindings):
+- `app/src/main/java/org/dhis2/App.java` — `ChangeServerURLComponent` holder + plus(ChangeServerURLModule)
+- `app/src/main/java/org/dhis2/data/user/UserComponent.java` — `plus(ChangeServerURLModule)` subcomponent
+- `app/src/main/res/values/strings.xml` — change server URL strings
 
 ### 2.2 Image upload without resizing
 
@@ -100,14 +104,31 @@ Presentation layer (all new files):
 - `app/src/main/java/org/dhis2/usescases/notifications/di/NotificationsComponent.kt` — commented out subcomponent
 
 UI integration (modified existing files):
-- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements NotificationsView, renders dialogs, handles translations via `getNotificationContent()`
+- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements NotificationsView, renders dialogs, handles translations via `getNotificationContent()`, Markwon rendering
 - `app/src/main/java/org/dhis2/data/service/SyncPresenterImpl.kt` — calls `syncNotifications()` during metadata sync
+
+DI wiring (shared files with WIDP-only bindings):
+- `app/src/main/java/org/dhis2/App.java` — NotificationsModule instantiation in component builder
+- `app/src/main/java/org/dhis2/AppComponent.java` — NotificationsModule in `@Component(modules)` + Builder method
+- `app/src/main/java/org/dhis2/data/service/SyncInitWorkerModule.kt` — `notificationRepository` parameter
+- `app/src/main/java/org/dhis2/data/service/SyncDataWorkerModule.kt` — `notificationRepository` parameter
+- `app/src/main/java/org/dhis2/data/service/SyncMetadataWorkerModule.kt` — `notificationRepository` parameter
+- `app/src/main/java/org/dhis2/data/service/SyncGranularRxModule.kt` — `notificationRepository` parameter
+
+SharedPreferences layer (all WIDP additions on top of commons):
+- `commons/src/main/java/org/dhis2/commons/prefs/Preference.kt` — `NOTIFICATIONS` key
+- `commons/src/main/java/org/dhis2/commons/prefs/BasicPreferenceProvider.kt` — interface (WIDP-only file)
+- `commons/src/main/java/org/dhis2/commons/prefs/BasicPreferenceProviderImpl.kt` — impl (WIDP-only file)
+- `commons/src/main/java/org/dhis2/commons/prefs/PreferenceModule.kt` — provides BasicPreferenceProvider
+- `commons/src/main/java/org/dhis2/commons/prefs/PreferenceProvider.kt` — interface methods for notifications
+- `commons/src/main/java/org/dhis2/commons/prefs/PreferenceProviderImpl.kt` — impl of notifications methods
+- `commonskmm/src/commonMain/kotlin/org/dhis2/mobile/commons/providers/PreferenceConstants.kt` — `BASIC_SHARE_PREFS` constant
+
+Build config:
+- `commons/build.gradle.kts` — Markwon dependency
 
 Tests:
 - `app/src/test/java/org/dhis2/data/notifications/NotificationD2RepositoryTest.kt`
-
-SharedPreferences:
-- `commons/src/main/java/org/dhis2/commons/prefs/Preference.kt` — `NOTIFICATIONS` key
 
 ### 2.4 2FA support
 
@@ -132,27 +153,32 @@ SDK patch (in dhis2-android-sdk EyeSeeTea fork):
 - `core/.../user/internal/LoginPayload.kt` — `twoFactorCode: String?` parameter
 - `core/.../maintenance/D2ErrorCode.java` — new error codes (lines ~96-104)
 
+SDK wiring (build config — present only because of the SDK fork dependency):
+- `settings.gradle.kts` — includeBuild of `dhis2-android-sdk` and `dhis2-rule-engine`
+- `commons/build.gradle.kts` — SDK dependency pinned to EyeSeeTea fork
+- `login/build.gradle.kts` — `widp` flavor declaration (needed for `TwoFASettingsActivity` to resolve)
+- `app/build.gradle.kts` — `widp` product flavor declaration
+
+Strings:
+- `commonskmm/src/commonMain/composeResources/values/strings.xml` — 2FA string resources
+
 ### 2.5 URL data element field
 
-Status: `broken` — data plumbing exists, rendering lost in upstream Compose migration
+Status: `active` — rendering reimplemented 2026-04-17 in `FieldUiModelExtensions.supportingText()` (appends URL to the description line in the Compose supporting text)
 
 Original commit: `c556b7ab7` ("Implement show data element url", Nov 2022)
 
-Data plumbing (still present, verified in diff):
+Data plumbing:
 - `form/src/main/java/org/dhis2/form/data/EventRepository.kt` (line ~729) — reads `de?.url()` and passes to factory
 - `form/src/main/java/org/dhis2/form/model/FieldUiModel.kt` (line ~74) — `val url: String?`
 - `form/src/main/java/org/dhis2/form/model/FieldUiModelImpl.kt` — `override val url: String? = null`
+- `form/src/main/java/org/dhis2/form/model/SectionUiModelImpl.kt` — `url` positional parameter in constructor
 - `form/src/main/java/org/dhis2/form/ui/FieldViewModelFactory.kt` — `url` parameter in interface
 - `form/src/main/java/org/dhis2/form/ui/FieldViewModelFactoryImpl.kt` — passes `url` through to model
 - `form/src/main/java/org/dhis2/form/data/EnrollmentRepository.kt` — passes `url = null` (not applicable to enrollments)
 
-Rendering (LOST):
-- Original: `FieldUiModelImpl.onDescriptionClick()` concatenated URL to description in `ShowDescriptionLabelDialog`
-- Current: `onDescriptionClick()` and `ShowDescriptionLabelDialog` were removed during upstream Compose migration. URL value is stored but never displayed.
-
-Action required:
-- Find where field description/info dialog is rendered in current Compose UI
-- Reimplement URL concatenation to description there
+Rendering (reimplemented 2026-04-17):
+- `form/src/main/java/org/dhis2/form/extensions/FieldUiModelExtensions.kt` — `supportingText()` appends URL to description via `listOfNotNull(description, url).joinToString("\n")`. URL shows inline under the field in every Compose input instead of the legacy dialog.
 
 ## 3. Removed customizations (verified 2026-04-02)
 
@@ -167,7 +193,8 @@ Action required:
 
 ## 4. Notes
 
-- This inventory reflects the verified branch state as of 2026-04-02.
+- This inventory reflects the verified branch state as of 2026-04-17 (post-merge to 3.3.1).
+- The DI wiring, preferences layer, SDK wiring, and build config files listed per customization were added in the 2026-04-17 update after the upgrade merge revealed them as silent automerge casualties. They were missing from the original 2026-04-02 inventory, which focused on functional code only.
 - If files are merged, renamed, reverted, or reworked, regenerate this file from the current code and the diff against `develop-eyeseetea`.
 - The source of truth for functional behavior and canonical titles is `openspec/specs/<capability>/spec.md`. Each spec starts with `# <Title>`; that `<Title>` is the exact string to use here and in code comments.
 - If code comments and functional titles diverge, prefer the title defined in the matching OpenSpec spec and update the code comment when possible.
