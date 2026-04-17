@@ -92,35 +92,67 @@ class DashboardViewModel(
                 async {
                     repository.getDashboardModel()
                 }
-            withContext(dispatcher.ui()) {
-                try {
-                    val model = result.await()
-                    _dashboardModel.postValue(model)
-                    if (model is DashboardEnrollmentModel) {
-                        _showFollowUpBar.value =
-                            model.currentEnrollment.followUp() ?: false
-                        _syncNeeded.value =
-                            model.currentEnrollment.aggregatedSyncState() != SYNCED
-                        _showStatusBar.value = model.currentEnrollment.status()
-                        _state.value =
-                            model.currentEnrollment.aggregatedSyncState()
-                        _noEnrollmentSelected.value = false
-                        loadNavigationBarItems()
-                    } else {
-                        _noEnrollmentSelected.value = true
-                    }
-                } catch (e: Exception) {
-                    Timber.e(e)
+            try {
+                val model = result.await()
+                _dashboardModel.postValue(model)
+                if (model is DashboardEnrollmentModel) {
+                    _showFollowUpBar.value =
+                        model.currentEnrollment.followUp() ?: false
+                    _syncNeeded.value =
+                        model.currentEnrollment.aggregatedSyncState() != SYNCED
+                    _showStatusBar.value = model.currentEnrollment.status()
+                    _state.value =
+                        model.currentEnrollment.aggregatedSyncState()
+                    _noEnrollmentSelected.postValue(false)
+                    // Navigation bar predicates (displayAnalytics, displayRelationships)
+                    // transitively evaluate analytics and touch the DB. Must stay on IO
+                    // to avoid ANR on TEI dashboard open. _navigationBarUIState is a
+                    // MutableStateFlow and accepts value= from any thread.
+                    loadNavigationBarItems()
+                } else {
+                    _noEnrollmentSelected.postValue(true)
                 }
+            } catch (e: Exception) {
+                Timber.e(e)
             }
         }
     }
 
     private fun loadNavigationBarItems() {
-        val enrollmentItems = mutableListOf<NavigationBarItem<TEIDashboardItems>>()
+        // Phase 1: publish the cheap tabs (Details, Notes) immediately so the fragment
+        // mounts and the user sees content while the expensive predicates run.
+        _navigationBarUIState.value = _navigationBarUIState.value.copy(
+            items = buildNavigationBarItems(
+                includeAnalytics = false,
+                includeRelationships = false,
+            ),
+        )
+        if (navigationBarUIState.value.items.none { it.id == navigationBarUIState.value.selectedItem }) {
+            onNavigationItemSelected(
+                navigationBarUIState.value.items
+                    .first()
+                    .id,
+            )
+        }
+
+        // Phase 2: evaluate the expensive predicates (we are on IO) and republish the
+        // final item list. Compose/Lifecycle collectors pick the update up on main.
+        _navigationBarUIState.value = _navigationBarUIState.value.copy(
+            items = buildNavigationBarItems(
+                includeAnalytics = pageConfigurator.displayAnalytics(),
+                includeRelationships = pageConfigurator.displayRelationships(),
+            ),
+        )
+    }
+
+    private fun buildNavigationBarItems(
+        includeAnalytics: Boolean,
+        includeRelationships: Boolean,
+    ): List<NavigationBarItem<TEIDashboardItems>> {
+        val items = mutableListOf<NavigationBarItem<TEIDashboardItems>>()
 
         if (isPortrait()) {
-            enrollmentItems.add(
+            items.add(
                 NavigationBarItem(
                     id = TEIDashboardItems.DETAILS,
                     icon = Icons.AutoMirrored.Outlined.Assignment,
@@ -130,8 +162,8 @@ class DashboardViewModel(
             )
         }
 
-        if (pageConfigurator.displayAnalytics()) {
-            enrollmentItems.add(
+        if (includeAnalytics) {
+            items.add(
                 NavigationBarItem(
                     id = TEIDashboardItems.ANALYTICS,
                     icon = Icons.Outlined.BarChart,
@@ -141,8 +173,8 @@ class DashboardViewModel(
             )
         }
 
-        if (pageConfigurator.displayRelationships()) {
-            enrollmentItems.add(
+        if (includeRelationships) {
+            items.add(
                 NavigationBarItem(
                     id = TEIDashboardItems.RELATIONSHIPS,
                     icon = Icons.Outlined.Hub,
@@ -152,7 +184,7 @@ class DashboardViewModel(
             )
         }
 
-        enrollmentItems.add(
+        items.add(
             NavigationBarItem(
                 id = TEIDashboardItems.NOTES,
                 icon = Icons.AutoMirrored.Outlined.StickyNote2,
@@ -161,15 +193,7 @@ class DashboardViewModel(
             ),
         )
 
-        _navigationBarUIState.value = _navigationBarUIState.value.copy(items = enrollmentItems)
-
-        if (navigationBarUIState.value.items.none { it.id == navigationBarUIState.value.selectedItem }) {
-            onNavigationItemSelected(
-                navigationBarUIState.value.items
-                    .first()
-                    .id,
-            )
-        }
+        return items
     }
 
     private fun fetchGrouping() {
