@@ -9,8 +9,8 @@ Technical inventory of the WIDP customization surface on top of `develop-eyeseet
 - Base branch: `develop-eyeseetea`
 - Base commit: `b1e8cdb9b`
 - Generated on: `2026-03-25`
-- Last updated: `2026-04-17`
-- Working tree status: `clean` (post-merge to 3.3.1, build OK)
+- Last updated: `2026-04-20`
+- Working tree status: `clean` (post-merge to 3.3.1, build OK, Notifications wiring restored)
 
 This file is intentionally separate from `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md`:
 - `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md` documents the shared EyeSeeTea reference branch
@@ -104,8 +104,11 @@ Presentation layer (all new files):
 - `app/src/main/java/org/dhis2/usescases/notifications/di/NotificationsComponent.kt` — commented out subcomponent
 
 UI integration (modified existing files):
-- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements NotificationsView, renders dialogs, handles translations via `getNotificationContent()`, Markwon rendering
+- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements NotificationsView, renders dialogs, handles translations via `getNotificationContent()`, Markwon rendering, triggers `notificationsPresenter.refresh(this)` in `onCreate` and `onResume`
 - `app/src/main/java/org/dhis2/data/service/SyncPresenterImpl.kt` — calls `syncNotifications()` during metadata sync
+- `app/src/main/java/org/dhis2/usescases/main/MainView.kt` — exposes `markShowNotificationsAsPending()` and `refreshNotifications()` on the view contract
+- `app/src/main/java/org/dhis2/usescases/main/MainPresenter.kt` — triggers pending/refresh in `checkSingleProgramNavigation()` after sync completes
+- `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` — overrides view methods delegating to `notificationsPresenter`; triggers pending/refresh on `sync_manager` and `menu_home` navigation
 
 DI wiring (shared files with WIDP-only bindings):
 - `app/src/main/java/org/dhis2/App.java` — NotificationsModule instantiation in component builder
@@ -191,10 +194,44 @@ Rendering (reimplemented 2026-04-17):
 ### Events filter for text-type data elements (originally #7)
 - **Does not exist in code**: zero diff between branches for filter/event-related files. No EyeSeeTea customization comments found. Was either never implemented or was removed before 3.3.0.1.
 
-## 4. Notes
+## 4. Feat commits (inventory cross-check)
 
-- This inventory reflects the verified branch state as of 2026-04-17 (post-merge to 3.3.1).
+For each customization, these are the original feature commits that introduced its surface. Run `git show <sha> --stat` on every SHA listed and cross-check that every file appears above under the corresponding section. If a file from a feat commit is missing from the inventory, the automerge verification rule will not fire on it — a silent automerge can drop wiring with no conflict markers and no detection. Used by `check_upgrade_docs.py` for the post-merge inventory completeness check.
+
+### 2.1 Change Server URL
+- `61fec4f60` — feat: show dialog to change url
+- `1024c356f` — feat: show warning to change server url
+- `161d8f5ae` — Execute login after server url is changed
+- `384286190` — feat: Avoid login and overwrite url in preferences and accounts
+
+### 2.2 Image upload without resizing
+- `5015ae0d4` — Avoid resize images
+- `696de3918` — Link commit to fix avoid resize images to download in SDK
+- `e248c3347` — Avoid resize images using new param in SDK
+
+### 2.3 Notifications system
+- `71655b603` — feat: create infrastructure to retrieve notifications from the data store
+- `27c7a4e74` — feat: show notifications from program dashboard onResume
+- `9cb2558cf` — feat: invoke sync notifications when sync metadata
+- `4afb24308` — feat: request userGroups to the api
+- `6b16ba128` — feat: mark notification as read when the user click on ok
+- `3182eaf5f` — Restore notifications feature using new httpClient in the SDK with suspend functions + Flow
+- `134532f92` — Launch notifications from base activity (wiring in `MainActivity`/`MainView`/`MainPresenter`; silently dropped by 3.3.1 automerge, restored 2026-04-20)
+- `0ddcaed56` — new: Align new Notification response implementations
+- `39beb59d9` — Implement notification translations
+- `0c8b70cd9` — Fix serialization of notifications using new SDK Http client with Ktor
+
+### 2.4 2FA support
+- `ecf4a1321` — Restore WIDP customizations after 3.3.1 upgrade merge (current reference; original EyeSeeTea 2FA work predates the login module split and is not traceable to a single commit on this branch)
+
+### 2.5 URL data element field
+- `c556b7ab7` — Implement show data element url (original, Nov 2022; rendering reimplemented 2026-04-17 in `FieldUiModelExtensions.supportingText()`)
+
+## 5. Notes
+
+- This inventory reflects the verified branch state as of 2026-04-20 (post-merge to 3.3.1, with Notifications wiring restored in `MainActivity`/`MainView`/`MainPresenter`).
 - The DI wiring, preferences layer, SDK wiring, and build config files listed per customization were added in the 2026-04-17 update after the upgrade merge revealed them as silent automerge casualties. They were missing from the original 2026-04-02 inventory, which focused on functional code only.
+- The `MainActivity`/`MainView`/`MainPresenter` wiring under 2.3 was added 2026-04-20 after the same automerge dropped it silently during manual testing — this also drove the extension of the verification rule to all inventoried files (not only files with conflict markers).
 - If files are merged, renamed, reverted, or reworked, regenerate this file from the current code and the diff against `develop-eyeseetea`.
 - The source of truth for functional behavior and canonical titles is `openspec/specs/<capability>/spec.md`. Each spec starts with `# <Title>`; that `<Title>` is the exact string to use here and in code comments.
 - If code comments and functional titles diverge, prefer the title defined in the matching OpenSpec spec and update the code comment when possible.

@@ -189,16 +189,27 @@ Automerge verification rule:
 
 Git automerge resolves hunks without conflicts silently. It can drop customization code that is not in a conflicting hunk — for example, a parameter added at the end of a function call when only the beginning of the file conflicts. An IDE three-way merge view shows all changes (conflicting and auto-resolved), but the CLI only shows conflict markers. Code comments (`// EyeSeeTea customization`) may also be missing from some insertion points, so they are not a reliable check.
 
-After resolving a file that contains a known customization, verify the full delta — not just the conflicted hunks:
+**This rule applies to every file listed in `customization-files.md` after any merge of the baseline — not only files that git marked as conflicted.** If `develop-eyeseetea` contains commits that removed customization code (as happened in the WIDP 3.3.1 upgrade with commits like `31baf8306 Remove notifications customization`), git can apply those deletions as a clean automerge with no conflict markers, dropping entire customization wiring silently.
+
+For every file in the customization inventory, verify the full delta — not just the conflicted hunks:
 
 ```bash
 git diff develop-eyeseetea -- path/to/file
 ```
 
-- the diff must contain ALL the customization lines for that file, not just the ones that were in conflict
+- the diff must contain ALL the customization lines for that file, whether or not git reported a conflict
 - compare the diff against `customization-files.md` to check that every documented insertion point for that customization survived
 - if the diff is smaller than expected (fewer customization lines than documented), the automerge silently dropped code — recover it before staging
 - do not trust conflict markers as the complete picture of what changed; they only cover hunks where both sides touched the same lines
+
+**Inventory completeness is load-bearing.** This rule only catches files that are listed in `customization-files.md`. If a customization's wiring is spread across files that the inventory never captured (e.g. `MainActivity`, `MainView`, `MainPresenter` for the Notifications system, missed in WIDP 3.3.1 post-merge), the rule cannot fire. Keep the inventory complete by deriving it from the feature commits:
+
+```bash
+# for each customization, list all files the original feature commit touched
+git show <feat-commit-sha> --stat
+```
+
+Every file in that output must appear in `customization-files.md` under the corresponding section. `customization-files.md` should track the `Feat commits` SHAs for each customization so this check is reproducible.
 
 This rule applies to both human and agent resolution. It is the CLI equivalent of reviewing the full three-way diff in an IDE.
 

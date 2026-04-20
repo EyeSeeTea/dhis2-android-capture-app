@@ -574,6 +574,8 @@ class MainActivity :
             R.id.sync_manager -> {
                 presenter.onClickSyncManager()
                 mainNavigator.openSettings()
+                // EyeSeeTea customization - Notifications system
+                notificationsPresenter.markShowNotificationsAsPending()
             }
 
             R.id.qr_scan -> {
@@ -597,6 +599,8 @@ class MainActivity :
 
             R.id.menu_home -> {
                 mainNavigator.openHome()
+                // EyeSeeTea customization - Notifications system
+                notificationsPresenter.refresh(this)
             }
 
             R.id.menu_troubleshooting -> {
@@ -755,5 +759,14 @@ class MainActivity :
     private fun launchUrl(uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
         startActivity(intent)
+    }
+
+    // EyeSeeTea customization - Notifications system
+    override fun markShowNotificationsAsPending() {
+        notificationsPresenter.markShowNotificationsAsPending()
+    }
+
+    override fun refreshNotifications() {
+        notificationsPresenter.refresh(this)
     }
 }

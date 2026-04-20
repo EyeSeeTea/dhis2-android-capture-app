@@ -67,4 +67,9 @@ interface MainView : AbstractActivityContracts.View {
     fun obtainFileView(): File?
 
     fun cancelNotifications()
+
+    // EyeSeeTea customization - Notifications system
+    fun markShowNotificationsAsPending()
+
+    fun refreshNotifications()
 }

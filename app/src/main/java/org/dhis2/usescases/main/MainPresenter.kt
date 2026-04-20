@@ -388,6 +388,12 @@ class MainPresenter(
                     _singleProgramNavigationChannel.send(it)
                 }
             }
+            // EyeSeeTea customization - Notifications system
+            view.markShowNotificationsAsPending()
+        } else {
+            // EyeSeeTea customization - Notifications system
+            view.markShowNotificationsAsPending()
+            view.refreshNotifications()
         }
     }
 
