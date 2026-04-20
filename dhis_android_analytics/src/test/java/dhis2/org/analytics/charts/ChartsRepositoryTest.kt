@@ -34,6 +34,7 @@ import org.hisp.dhis.android.core.settings.AnalyticsTeiData
 import org.hisp.dhis.android.core.settings.AnalyticsTeiSetting
 import org.hisp.dhis.android.core.settings.ChartType
 import org.hisp.dhis.android.core.visualization.Visualization
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.Mockito
@@ -806,5 +807,44 @@ class ChartsRepositoryTest {
         whenever(
             analyticsFilterProvider.visualizationOrgUnits(any()),
         ) doReturn orgUnits
+    }
+
+    @Test
+    fun `programHasAnalyticsMetadata returns true when visualization settings are configured`() {
+        mockVisualizationSettings("programUid", returnProgram = true)
+        assertEquals(true, repository.programHasAnalyticsMetadata("programUid"))
+    }
+
+    @Test
+    fun `programHasAnalyticsMetadata returns true when a repeatable stage has a numeric data element`() {
+        mockVisualizationSettings("otherProgramUid", returnProgram = true)
+        mockRepeatableStagesCall()
+        mockNumericDataElements(emptyList = false)
+        assertEquals(true, repository.programHasAnalyticsMetadata("programUid"))
+    }
+
+    @Test
+    fun `programHasAnalyticsMetadata returns false when there are no repeatable stages`() {
+        mockVisualizationSettings("otherProgramUid", returnProgram = true)
+        mockRepeatableStagesCall()
+        whenever(
+            d2
+                .programModule()
+                .programStages()
+                .byProgramUid()
+                .eq("programUid")
+                .byRepeatable()
+                .eq(true)
+                .blockingGet(),
+        ) doReturn emptyList()
+        assertEquals(false, repository.programHasAnalyticsMetadata("programUid"))
+    }
+
+    @Test
+    fun `programHasAnalyticsMetadata returns false when repeatable stages have no numeric data elements`() {
+        mockVisualizationSettings("otherProgramUid", returnProgram = true)
+        mockRepeatableStagesCall()
+        mockNumericDataElements(emptyList = true)
+        assertEquals(false, repository.programHasAnalyticsMetadata("programUid"))
     }
 }

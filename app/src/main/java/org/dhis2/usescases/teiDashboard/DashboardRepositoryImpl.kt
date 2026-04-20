@@ -807,7 +807,7 @@ class DashboardRepositoryImpl(
                     .eq(programUid)
                     .blockingIsEmpty()
             val hasCharts =
-                enrollmentUid?.let { charts.geEnrollmentCharts(enrollmentUid).isNotEmpty() }
+                enrollmentUid?.let { charts.programHasAnalyticsMetadata(programUid!!) }
                     ?: false
             hasDisplayRuleActions || hasProgramIndicator || hasCharts
         } else {

@@ -9,6 +9,8 @@ import org.hisp.dhis.android.core.settings.AnalyticsDhisVisualizationsGroup
 interface ChartsRepository {
     fun getAnalyticsForEnrollment(enrollmentUid: String): List<Graph>
 
+    fun programHasAnalyticsMetadata(programUid: String): Boolean
+
     fun getProgramVisualization(
         groupUid: String?,
         programUid: String,

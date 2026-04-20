@@ -50,6 +50,32 @@ class ChartsRepositoryImpl(
         }
     }
 
+    override fun programHasAnalyticsMetadata(programUid: String): Boolean {
+        val hasConfiguredVisualizations =
+            d2
+                .settingModule()
+                .analyticsSetting()
+                .visualizationsSettings()
+                .blockingGet()
+                ?.program()
+                ?.get(programUid)
+                ?.isNotEmpty() == true
+        if (hasConfiguredVisualizations) return true
+
+        val repeatableStages =
+            d2
+                .programModule()
+                .programStages()
+                .byProgramUid()
+                .eq(programUid)
+                .byRepeatable()
+                .eq(true)
+                .blockingGet()
+        return repeatableStages.any { stage ->
+            getNumericDataElements(stage.uid()).isNotEmpty()
+        }
+    }
+
     override fun getVisualizationGroups(uid: String?): List<AnalyticsDhisVisualizationsGroup> =
         d2
             .settingModule()

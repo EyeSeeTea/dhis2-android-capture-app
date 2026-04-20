@@ -21,9 +21,9 @@
 
 ## 4. Follow-ups (deferred)
 
-- [ ] 4.1 [BE] **Unit test** — pin `pageConfigurator.displayAnalytics()` evaluation off the UI dispatcher via a test dispatcher. Intentionally deferred to keep this change narrow; will land alongside Fix B tests.
-- [ ] 4.2 [BE] **Fix B** — metadata-only `programHasAnalytics`. Tracked as separate OpenSpec change `fix-program-has-analytics-metadata-only`.
-- [ ] 4.3 [BE] **Audit `programHasRelationships()`** — at `DashboardRepositoryImpl.kt:767` it calls `relationshipsForTeiType(...).blockingFirst()`. Verify it is metadata-only; if not, include in Fix B scope.
+- [ ] 4.1 [BE] **Unit test** — pin `pageConfigurator.displayAnalytics()` evaluation off the UI dispatcher via a test dispatcher. Still deferred: `buildNavigationBarItems` calls top-level `isPortrait()` → `Resources.getSystem()` which NPEs in plain JVM tests. Follow-up change `refactor-dashboard-viewmodel-orientation-injection` tracks the refactor.
+- [x] 4.2 [BE] **Fix B** — metadata-only `programHasAnalytics`. Tracked as separate OpenSpec change `fix-program-has-analytics-metadata-only`.
+- [x] 4.3 [BE] **Audit `programHasRelationships()`** — at `DashboardRepositoryImpl.kt:767` it calls `relationshipsForTeiType(...).blockingFirst()`. Confirmed metadata-only (queries `relationshipTypes`), no change needed.
 
 ## 5. Upstream contribution
 

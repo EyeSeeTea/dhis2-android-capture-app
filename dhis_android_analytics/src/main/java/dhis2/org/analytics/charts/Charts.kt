@@ -18,6 +18,8 @@ interface Charts {
 
     fun geEnrollmentCharts(enrollmentUid: String): List<Graph>
 
+    fun programHasAnalyticsMetadata(programUid: String): Boolean
+
     fun getProgramVisualizations(
         groupUid: String?,
         programUid: String,
