@@ -811,7 +811,23 @@ class ChartsRepositoryTest {
 
     @Test
     fun `programHasAnalyticsMetadata returns true when visualization settings are configured`() {
+        // No repeatable-stage mocks needed: the visualization-settings short-circuit returns
+        // true before the stage fallback runs. Do not add those mocks "defensively".
         mockVisualizationSettings("programUid", returnProgram = true)
+        assertEquals(true, repository.programHasAnalyticsMetadata("programUid"))
+    }
+
+    @Test
+    fun `programHasAnalyticsMetadata falls back to repeatable stages when settings are null`() {
+        whenever(
+            d2
+                .settingModule()
+                .analyticsSetting()
+                .visualizationsSettings()
+                .blockingGet(),
+        ) doReturn null
+        mockRepeatableStagesCall()
+        mockNumericDataElements(emptyList = false)
         assertEquals(true, repository.programHasAnalyticsMetadata("programUid"))
     }
 

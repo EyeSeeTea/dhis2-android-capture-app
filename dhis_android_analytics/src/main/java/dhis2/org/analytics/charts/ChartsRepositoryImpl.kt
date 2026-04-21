@@ -71,6 +71,8 @@ class ChartsRepositoryImpl(
                 .byRepeatable()
                 .eq(true)
                 .blockingGet()
+        // any { } short-circuits across stages; the per-stage helper short-circuits on
+        // the first numeric DE found. Bounded by metadata shape, not by event count.
         return repeatableStages.any { stage ->
             getNumericDataElements(stage.uid()).isNotEmpty()
         }

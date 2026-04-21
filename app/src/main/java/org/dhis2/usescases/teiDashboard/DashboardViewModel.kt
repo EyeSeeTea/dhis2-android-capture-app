@@ -104,10 +104,13 @@ class DashboardViewModel(
                     _state.value =
                         model.currentEnrollment.aggregatedSyncState()
                     _noEnrollmentSelected.postValue(false)
-                    // Navigation bar predicates (displayAnalytics, displayRelationships)
-                    // transitively evaluate analytics and touch the DB. Must stay on IO
-                    // to avoid ANR on TEI dashboard open. _navigationBarUIState is a
-                    // MutableStateFlow and accepts value= from any thread.
+                    // This block runs on IO (by design, to keep the navigation-bar
+                    // predicates off the main thread). Thread-safety rules per type:
+                    //   - LiveData writes (`_noEnrollmentSelected`, `_dashboardModel`)
+                    //     MUST use `postValue(...)`.
+                    //   - MutableStateFlow writes (`_showFollowUpBar`, `_syncNeeded`,
+                    //     `_showStatusBar`, `_state`, `_navigationBarUIState`) can use
+                    //     `value = ...` from any thread.
                     loadNavigationBarItems()
                 } else {
                     _noEnrollmentSelected.postValue(true)
@@ -119,21 +122,17 @@ class DashboardViewModel(
     }
 
     private fun loadNavigationBarItems() {
-        // Phase 1: publish the cheap tabs (Details, Notes) immediately so the fragment
-        // mounts and the user sees content while the expensive predicates run.
+        // Phase 1: publish the cheap tabs (Details, Notes) immediately so the navigation
+        // bar is not blank while Phase 2's predicates run. Selection is intentionally
+        // NOT resolved here: items.first() in landscape would be NOTES (Details is
+        // portrait-only, Analytics/Relationships are deferred), clobbering the pre-fix
+        // default and the user's prior selection on refresh.
         _navigationBarUIState.value = _navigationBarUIState.value.copy(
             items = buildNavigationBarItems(
                 includeAnalytics = false,
                 includeRelationships = false,
             ),
         )
-        if (navigationBarUIState.value.items.none { it.id == navigationBarUIState.value.selectedItem }) {
-            onNavigationItemSelected(
-                navigationBarUIState.value.items
-                    .first()
-                    .id,
-            )
-        }
 
         // Phase 2: evaluate the expensive predicates (we are on IO) and republish the
         // final item list. Compose/Lifecycle collectors pick the update up on main.
@@ -143,6 +142,16 @@ class DashboardViewModel(
                 includeRelationships = pageConfigurator.displayRelationships(),
             ),
         )
+        // Resolve the selection against the FINAL item set so first-load picks the
+        // pre-fix default (e.g. ANALYTICS in landscape) and refresh preserves the
+        // user's prior selection (matches pre-fix single-phase behavior).
+        if (navigationBarUIState.value.items.none { it.id == navigationBarUIState.value.selectedItem }) {
+            onNavigationItemSelected(
+                navigationBarUIState.value.items
+                    .first()
+                    .id,
+            )
+        }
     }
 
     private fun buildNavigationBarItems(
@@ -151,6 +160,9 @@ class DashboardViewModel(
     ): List<NavigationBarItem<TEIDashboardItems>> {
         val items = mutableListOf<NavigationBarItem<TEIDashboardItems>>()
 
+        // TODO: inject OrientationProvider instead of calling the top-level isPortrait()
+        // (tracked in openspec/changes/refactor-dashboard-viewmodel-orientation-injection).
+        // This unblocks the deferred DashboardViewModelTest dispatcher/timing assertion.
         if (isPortrait()) {
             items.add(
                 NavigationBarItem(

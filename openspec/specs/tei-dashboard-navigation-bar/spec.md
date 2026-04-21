@@ -35,3 +35,15 @@ The two-phase publish SHALL converge to the same final tab set as the pre-fix si
 - **WHEN** the navigation bar is rendered for a given program/enrollment input
 - **THEN** the set of visible tabs SHALL be identical to the pre-fix behavior (same result of `displayDetails`, `displayAnalytics`, `displayRelationships`, `displayNotes`)
 
+### Requirement: Selected tab semantics preserved
+
+The auto-selected tab on first load SHALL match the pre-fix default, and the user's prior selection SHALL be preserved across refreshes (`updateDashboard`).
+
+#### Scenario: First load lands on the pre-fix default
+- **WHEN** the user opens a TEI dashboard for the first time
+- **THEN** the auto-selected tab SHALL be the first item of the FINAL item list (post-Phase-2), not the first item of the Phase-1 list — specifically, `ANALYTICS` in landscape when the program configures analytics, and `DETAILS` in portrait
+
+#### Scenario: Refresh preserves user selection
+- **WHEN** the user has selected the `ANALYTICS` tab and `updateDashboard` triggers a re-fetch
+- **THEN** the selected tab SHALL remain `ANALYTICS` after the two-phase publish completes
+
