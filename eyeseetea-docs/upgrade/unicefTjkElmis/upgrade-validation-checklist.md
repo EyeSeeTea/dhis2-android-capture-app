@@ -14,7 +14,7 @@ Preconditions:
 Manual flow:
 1. From the main repo root, run `./gradlew assembleUnicefTjkElmisDebug`. Build must succeed.
 2. Install the produced APK on the device or emulator (`adb install` or via the IDE).
-3. Open the launcher. Confirm the entry shows the launcher name `UNICEF TJK eLMIS` (the launcher icon in PR 01 is the inherited Oslo default — final UNICEF / MoH TJK icon ships in PR 03 once Daler X1 is resolved).
+3. Open the launcher. Confirm the entry shows the launcher name `UNICEF TJK eLMIS` and the UNICEF launcher icon (UNICEF logo on white background — placeholder until the final UNICEF / MoH TJK / combined branding decision is resolved).
 4. Tap the launcher entry. The splash and login screen open without crashing.
 5. In the login screen, enter:
    - Server URL: `http://172.16.0.99:18081`
@@ -28,7 +28,7 @@ Expected result:
 - Home screen renders. No `CLEARTEXT communication ... not permitted` error appears in logcat.
 
 Notes:
-- If the login fails with `CLEARTEXT communication ... not permitted`, the flavor's `AndroidManifest.xml` did not pick up `android:networkSecurityConfig`. Verify the manifest merger output under `app/build/intermediates/merged_manifest/unicefTjkElmisDebug/AndroidManifest.xml` includes the attribute.
+- If the login fails with `CLEARTEXT communication ... not permitted`, the SDK fork's bundled `res/xml/network_security_configuration.xml` (which carries `<base-config cleartextTrafficPermitted="true">` today and is referenced from the merged manifest) has been tightened upstream — that file is the effective cleartext policy for every flavor in this repo. Inspect the merged manifest at `app/build/intermediates/merged_manifest/unicefTjkElmisDebug/processUnicefTjkElmisDebugMainManifest/AndroidManifest.xml` and the SDK's resolved XML at `~/.gradle/caches/<...>/jetified-dhis2-android-sdk-<version>/res/xml/network_security_configuration.xml`. If the SDK no longer permits cleartext, the fix is to add a flavor-scoped `network_security_config.xml` in a dedicated change proposal.
 - VPN access is required for step 5 only. The build itself does not require VPN.
 
 ## Maintenance rule

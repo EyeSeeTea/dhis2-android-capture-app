@@ -24,20 +24,34 @@ This inventory is based on:
 
 ### 1.1 Flavor code
 
-(none — PR 01 ships no Kotlin/Java in `app/src/unicefTjkElmis/java/`. Kotlin/Java sources arrive with the first functional customization.)
+- `app/src/unicefTjkElmis/java/org/dhis2/utils/granularsync/GranularSyncModule.kt` — Dagger module required by the Oslo build's annotation processor; every flavor ships its own copy. This is build-wiring boilerplate, not a customization. Contents are copied verbatim from the `dhis2` flavor's version.
+
+(no other Kotlin/Java sources — UNICEF-specific Kotlin/Java arrives with the first functional customization PR.)
 
 ### 1.2 Flavor resources and branding
 
-- `app/src/unicefTjkElmis/AndroidManifest.xml` — declares `android:networkSecurityConfig="@xml/network_security_config"` for the cleartext exception
-- `app/src/unicefTjkElmis/res/values/strings.xml` — `app_name = "UNICEF TJK eLMIS"`, placeholder `logo_text` and `logo_number`
-- `app/src/unicefTjkElmis/res/xml/network_security_config.xml` — cleartext exception scoped to `172.16.0.99`
+- `app/src/unicefTjkElmis/res/values/strings.xml` — default-locale `app_name`, `logo_text`, `logo_number`
+- `app/src/unicefTjkElmis/res/values-{ar,ckb,cs,es,es-rES,fr,id,km,lo,nb,nl,pt,ru,sv,uk,uz,uz-rUZ,vi,zh,zh-rCN}/strings.xml` — same three keys per locale, overriding the translated brand strings declared by `app/src/main/res/values-<locale>/strings.xml`. The UNICEF brand does not translate, so every locale uses identical values.
+- `app/src/unicefTjkElmis/res/values/ic_launcher_background.xml` — `ic_launcher_background = #FFFFFF`
+- `app/src/unicefTjkElmis/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher.webp` — UNICEF logo on white, square (48-192 px)
+- `app/src/unicefTjkElmis/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher_round.webp` — same logo, masked round at runtime
+- `app/src/unicefTjkElmis/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher_foreground.webp` — adaptive icon foreground, transparent canvas with logo in central safe zone (108-432 px)
+- `app/src/unicefTjkElmis/res/mipmap-anydpi-v26/ic_launcher.xml` — adaptive icon wrapper (background `@color/ic_launcher_background`, foreground `@mipmap/ic_launcher_foreground`)
+- `app/src/unicefTjkElmis/res/mipmap-anydpi-v26/ic_launcher_round.xml` — same wrapper for the round variant
+- `app/src/unicefTjkElmis/ic_launcher-playstore.png` — 512×512 Play Store icon
+- `app/src/unicefTjkElmisDebug/res/values/strings.xml` — debug-build-type override of `app_name`, `logo_text`, `logo_number`. Required because `app/src/debug/res/values/strings.xml` declares `app_name="Dhis2 Dev"` and Android resource merging applies build-type overrides after flavor overrides; without this file, the launcher renders `Dhis2 Dev` instead of `UNICEF TJK eLMIS` on debug installs.
+- `app/src/unicefTjkElmisDebug/res/values/ic_launcher_background.xml` — `ic_launcher_background = #FFFFFF` (identical to the release flavor; debug installs are differentiated by `applicationIdSuffix=".debug"`, not by icon)
+- `app/src/unicefTjkElmisDebug/res/values-{ar,ckb,cs,es,es-rES,fr,id,km,lo,nb,nl,pt,ru,sv,uk,uz,uz-rUZ,vi,zh,zh-rCN}/strings.xml` — debug-variant locale overrides for `app_name`, `logo_text`, `logo_number` (same content as the release flavor; explicit per-locale override so debug installs render the UNICEF brand consistently across system locales)
+- `app/src/unicefTjkElmisDebug/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher{,_round,_foreground}.webp` — debug-variant icon set. Note: the `ic_launcher.webp` and `ic_launcher_round.webp` legacy files were generated with a warm-tinted pixel background that pre-dates the decision to make debug visually identical to release. On Android API 26+ the adaptive icon (`mipmap-anydpi-v26/ic_launcher.xml` referencing `@color/ic_launcher_background = #FFFFFF`) takes precedence and the launcher renders pure white; on pre-API 26 devices the legacy webp would render with a warm tint. Not regenerated because the target population is Android 8+ where the adaptive icon wins.
+- `app/src/unicefTjkElmisDebug/ic_launcher-playstore.png` — debug variant of the Play Store icon
 
-**Launcher icons (deferred):** `app/src/unicefTjkElmis/res/mipmap-*/`, `app/src/unicefTjkElmisDebug/res/mipmap-*/`, `app/src/unicefTjkElmisRelease/res/mipmap-*/`, and `ic_launcher-web.png` are intentionally **not created** in PR 01. UNICEF generic logo assets are not yet available, and the final UNICEF / MoH TJK / combined logo decision is still pending. PR 01 inherits the Oslo default launcher icons from `app/src/main/res/mipmap-*/`. A dedicated branding PR replaces them once the logo decision lands.
+**Branding placeholder note:** the launcher icon set is a UNICEF-only placeholder generated from a single source PNG. The final UNICEF / MoH TJK / combined branding decision is tracked in a separate change proposal; when that decision lands, the assets here are replaced wholesale (no merge or migration needed because every file in this list is flavor-scoped).
 
 ### 1.3 Build wiring
 
 - `app/build.gradle.kts` — `productFlavors { create("unicefTjkElmis") { ... } }` block declaring `applicationId = "org.unicef.tjk.elmis"`, `dimension = "default"`, `versionCode = libs.versions.vCode.get().toInt()`, `versionName = libs.versions.vName.get()`
 - `login/build.gradle.kts` — `productFlavors { create("unicefTjkElmis") { buildConfigField("String", "LOGIN_TEST", "\"test\"") } }` block
+- `gradle/libs.versions.toml` — `vName = "3.3.1-unicefTjkElmis-fork-1"` (branch-wide; this branch only distributes the unicefTjkElmis flavor)
 
 ## 2. Shared-code customization implementation points
 

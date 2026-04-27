@@ -58,12 +58,9 @@ When a customization lands, add a row to the table above, create the correspondi
 
 ## Network and security
 
-The UNICEF TJK eLMIS server runs on plain HTTP behind a VPN. The flavor declares a scoped `network_security_config.xml` for cleartext access to `172.16.0.99` only:
+The UNICEF TJK eLMIS server runs on plain HTTP (`http://172.16.0.99:18081`) behind a UNICEF VPN. HTTP access works at runtime because the SDK fork (`com.github.EyeSeeTea:dhis2-android-sdk`) ships its own `res/xml/network_security_configuration.xml` declaring `<base-config cleartextTrafficPermitted="true">`, and references it from its `<application>` element. Android resolves the merged manifest's `android:networkSecurityConfig` first; per the platform docs, when `networkSecurityConfig` is set, `usesCleartextTraffic` is ignored. So the effective cleartext policy for every flavor in this repo (including `unicefTjkElmis`) is "allow cleartext globally", inherited from the SDK without any flavor-scoped configuration.
 
-- `app/src/unicefTjkElmis/AndroidManifest.xml` — references `@xml/network_security_config`
-- `app/src/unicefTjkElmis/res/xml/network_security_config.xml` — `<domain-config cleartextTrafficPermitted="true">` scoped to `172.16.0.99`
-
-The cleartext exception MUST stay flavor-scoped. Do not modify `app/src/main/AndroidManifest.xml` or other flavors. When the UNICEF server moves to TLS, remove the exception in a dedicated change proposal.
+The security boundary the deployment relies on is the UNICEF VPN, not a per-host whitelist on the device. A repo-wide hardening of the cleartext stance (a stricter `network_security_configuration.xml` in the SDK fork or in `app/src/main/`, with per-flavor opt-in for the hosts that need cleartext) is the correct long-term direction but is tracked as a separate change proposal — it touches the SDK fork or all four sibling flavors and is not the bootstrap of a new flavor.
 
 ## Key documentation
 
