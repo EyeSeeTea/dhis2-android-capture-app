@@ -168,6 +168,12 @@ android {
             versionCode = libs.versions.vCode.get().toInt()
             versionName = libs.versions.vName.get()
         }
+        create("unicefTjkElmis") {
+            applicationId = "org.unicef.tjk.elmis"
+            dimension = "default"
+            versionCode = libs.versions.vCode.get().toInt()
+            versionName = libs.versions.vName.get()
+        }
     }
 
     compileOptions {

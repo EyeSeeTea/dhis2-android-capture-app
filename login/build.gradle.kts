@@ -140,6 +140,9 @@ android {
         create("eyeseetea") {
             buildConfigField("String", "LOGIN_TEST", "\"test\"")
         }
+        create("unicefTjkElmis") {
+            buildConfigField("String", "LOGIN_TEST", "\"test\"")
+        }
     }
 }
 
