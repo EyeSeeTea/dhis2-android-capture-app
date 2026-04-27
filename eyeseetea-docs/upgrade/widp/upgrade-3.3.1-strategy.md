@@ -180,20 +180,20 @@ Steps:
 
 ### Phase F: Promote tooling to develop-eyeseetea
 
-Status: `pending`
+Status: `completed` (2026-04-27)
 
 Goal: carry the infrastructure back to `develop-eyeseetea` so that any new fork starts with everything ready — no manual OpenSpec install or Claude setup needed. **No client-specific specs or changes should go to the baseline.**
 
-Steps:
-1. Decide exactly what to promote (candidates listed below, final decision at execution time):
-   - `eyeseetea-docs/` — shared docs, templates, scripts, onboarding guide updated with OpenSpec phases
-   - `openspec/` — CLI scaffold (`config.yaml` with generic context, empty `specs/`, empty `changes/archive/`). No WIDP specs.
-   - `.claude/` — CLAUDE.md (generic EyeSeeTea baseline, no WIDP identity), commands, skills, settings. No WIDP-specific agents or rules.
-   - `.gitignore` updates (`.claude/settings.local.json`, etc.)
-2. Review each file for client-specific references and strip them (WIDP paths, WIDP flavor mentions, WIDP customization titles)
-3. Cherry-pick or create a clean commit onto `develop-eyeseetea`
-4. Verify that a fresh fork from `develop-eyeseetea` can run `openspec validate` and start a Claude session with working CLAUDE.md without errors
-5. Verify no conflict is introduced for existing forks that merge `develop-eyeseetea`
+What was promoted (single commit on `develop-eyeseetea`, 20 files, +418/-133 lines):
+
+- `eyeseetea-docs/` updates (8 files): `README.md`, `new-fork.md`, `onboarding-fork-guide.md` (Phase 1, 4, 5 updated to reference templates and skip `openspec init`; 2 stale conflict markers from Phase B resolved), `upgrade/conflict-rules.md` (+100 lines: post-merge fork identity check, expanded automerge verification), `scripts/check_upgrade_docs.py` (+176 lines: `check_feat_commit_coverage`, symbol parsing helpers), `customizations/template/customization-files-template.md` (Feat commits section), `upgrade/template/upgrade-validation-checklist-template.md`, `upgrade/upgrade-plan-client-forks.md`
+- `eyeseetea-docs/templates/` (new directory, 2 files): `CLAUDE.md.template`, `openspec-config.yaml.template` — both with `UPPER_SNAKE_CASE` placeholders and EyeSeeTea-wide rules already filled in
+- `.claude/` (new in baseline, 9 files): `settings.json`, 4 OpenSpec commands under `commands/opsx/`, 4 OpenSpec skills under `skills/openspec-*/`. **Reverses the S3 decision** — generic scaffold has zero cost in baseline and removes setup friction for new forks
+- `.gitignore` (+3 lines): ignores `.claude/settings.local.json`
+
+What was deliberately NOT promoted: `CLAUDE.md` and `openspec/config.yaml` as files (they live in baseline only as templates because they carry per-fork identity); `openspec/specs/` (client capabilities, per-fork by definition); `openspec/changes/` (client upgrade proposals); WIDP-specific docs (`customizations/widp/`, `upgrade/widp/`).
+
+The S3 policy of "neutral baseline, no client-specific content" is preserved — the templates make EyeSeeTea-wide rules available without forcing any fork to use OpenSpec or Claude tooling.
 
 ## Risk areas
 

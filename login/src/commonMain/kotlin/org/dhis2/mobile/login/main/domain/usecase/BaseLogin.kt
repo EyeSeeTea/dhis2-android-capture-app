@@ -2,6 +2,7 @@ package org.dhis2.mobile.login.main.domain.usecase
 
 import org.dhis2.mobile.login.main.data.LoginRepository
 import org.dhis2.mobile.login.main.domain.model.LoginResult
+import org.dhis2.mobile.login.main.domain.model.TwoFactorRequiredException
 
 abstract class BaseLogin(
     val repository: LoginRepository,
@@ -28,7 +29,17 @@ abstract class BaseLogin(
             )
         }
 
-        else -> LoginResult.Error(result.exceptionOrNull()?.message)
+        // EyeSeeTea customization - 2FA support
+        else -> {
+            when (val exception = result.exceptionOrNull()) {
+                is TwoFactorRequiredException ->
+                    LoginResult.TwoFactorError(
+                        type = exception.type,
+                        message = exception.errorMessage,
+                    )
+                else -> LoginResult.Error(exception?.message)
+            }
+        }
     }
 
     private suspend fun checkDeleteBiometrics() {

@@ -178,7 +178,7 @@ class CredentialsViewModelTest {
             whenever(getIsSessionLockedUseCase()) doReturn false
 
             whenever(
-                loginUser.invoke(any(), any(), any(), any()),
+                loginUser.invoke(any(), any(), any(), any(), any()),
             ) doReturn LoginResult.Success(initialSyncDone = true, displayTrackingMessage = false)
 
             initViewModel()
@@ -223,7 +223,7 @@ class CredentialsViewModelTest {
             whenever(getIsSessionLockedUseCase()) doReturn false
 
             whenever(
-                loginUser.invoke(any(), any(), any(), any()),
+                loginUser.invoke(any(), any(), any(), any(), any()),
             ) doReturn LoginResult.Error(errorMessage)
 
             initViewModel()
@@ -287,7 +287,7 @@ class CredentialsViewModelTest {
                 whenever(getIsSessionLockedUseCase()) doReturn false
 
                 whenever(biometricLogin.invoke()) doReturn Result.success(testPassword)
-                whenever(loginUser.invoke(any(), any(), any(), any())) doReturn
+                whenever(loginUser.invoke(any(), any(), any(), any(), any())) doReturn
                     LoginResult.Success(
                         true,
                         false,
@@ -356,7 +356,7 @@ class CredentialsViewModelTest {
             whenever(getIsSessionLockedUseCase()) doReturn false
 
             whenever(
-                loginUser.invoke(any(), any(), any(), any()),
+                loginUser.invoke(any(), any(), any(), any(), any()),
             ) doReturn LoginResult.Success(initialSyncDone = true, displayTrackingMessage = false)
 
             initViewModel()
@@ -402,7 +402,7 @@ class CredentialsViewModelTest {
             whenever(getIsSessionLockedUseCase()) doReturn false
 
             whenever(
-                loginUser.invoke(any(), any(), any(), any()),
+                loginUser.invoke(any(), any(), any(), any(), any()),
             ) doReturn LoginResult.Success(initialSyncDone = true, displayTrackingMessage = false)
 
             initViewModel()
@@ -448,7 +448,7 @@ class CredentialsViewModelTest {
             whenever(getIsSessionLockedUseCase()) doReturn false
 
             whenever(
-                loginUser.invoke(any(), any(), any(), any()),
+                loginUser.invoke(any(), any(), any(), any(), any()),
             ) doReturn LoginResult.Success(initialSyncDone = true, displayTrackingMessage = false)
 
             initViewModel()
@@ -496,7 +496,7 @@ class CredentialsViewModelTest {
             whenever(getIsSessionLockedUseCase()) doReturn false
 
             whenever(
-                loginUser.invoke(any(), any(), any(), any()),
+                loginUser.invoke(any(), any(), any(), any(), any()),
             ) doReturn LoginResult.Error(errorMessage)
 
             initViewModel()
