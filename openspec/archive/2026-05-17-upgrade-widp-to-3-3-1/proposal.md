@@ -29,3 +29,9 @@ None. This is a baseline upgrade, not a feature addition.
 - **Flavor-isolated files** (`app/src/widp/**`, `app/src/widpDebug/**`): ~89 files, all `accept_ours` — zero conflict risk.
 - **SDK dependency**: moves from `1.13.0.1-eyeseetea-fork-1` to `1.13.1-eyeseetea-fork-2`. The 2FA patches in the SDK fork must remain compatible.
 - **Build tooling**: Gradle `8.9.3` → `8.13.2`, Kotlin `2.2.20` → `2.2.21`, compile SDK 36 (unchanged). Build scripts and CI may need minor adjustments.
+
+## Closure Notes
+
+- The WIDP `3.3.1` upgrade is considered functionally complete and manually validated.
+- Documentation alignment and upgrade consistency checks are complete.
+- Remaining `androidTest` instability comes from the legacy `3.3.x` `login` test wiring and is intentionally deferred to the `3.4` upgrade path rather than being solved in this change.
