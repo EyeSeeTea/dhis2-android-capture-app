@@ -116,21 +116,19 @@ Expected result:
 
 ## 5. URL data element field
 
-Status: `broken` — validate after reimplementation
+Status: `active` — reimplemented as inline supporting text in the Compose form
 
 Preconditions:
 - Use a program with a data element that has a `url` property configured on the server.
 
 Manual flow:
-1. Open a data entry form containing that data element.
-2. Tap the info/description icon on the field.
+1. Open an event data entry form containing that data element.
+2. Locate the field in the form.
 
-Expected result (after fix):
-- the description dialog shows the field description followed by the URL on a new line
-- the URL is visible and accessible to the user
-
-Current state:
-- the URL value is loaded from the SDK but NOT displayed anywhere — the rendering was lost during the upstream Compose migration. This test will fail until the rendering is reimplemented.
+Expected result:
+- the field supporting text shows the field description followed by the URL on a new line
+- if the field has no description and has a URL, the supporting text shows only the URL
+- the URL is visible inline under the field without opening a separate dialog
 
 ## Maintenance rule
 

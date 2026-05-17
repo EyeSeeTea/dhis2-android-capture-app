@@ -92,7 +92,7 @@ Root cause: `develop-eyeseetea` was created by copying WIDP and then explicitly 
 - `app/src/widp/**` source sets: deleted → restored
 - `markwon` dependency: deleted → restored
 - `widp` flavor in `app/build.gradle.kts`: deleted → re-added
-- `widp` flavor in `login/build.gradle.kts`: never existed → added (needed for `TwoFASettingsActivity` to resolve)
+- `widp` flavor in `login/build.gradle.kts`: never existed → added (needed to keep the WIDP-specific login module wiring compiling after the 3.3.1 merge)
 
 ## Follow-ups resolved 2026-04-17
 
@@ -104,7 +104,6 @@ Root cause: `develop-eyeseetea` was created by copying WIDP and then explicitly 
 Still pending (moved to Phase E):
 
 - Unit tests per customization
-- Manual validation per `upgrade-validation-checklist.md`
 
 ## New rules promoted to `conflict-rules.md`
 
@@ -115,11 +114,12 @@ Still pending (moved to Phase E):
 
 - build: `assembleWidpDebug` OK (build 10)
 - targeted tests: pending (Phase E)
-- manual flows checked: pending (Phase E)
+- manual flows checked: `yes` (validated manually by Jorge after the 3.3.1 upgrade; active customizations exercised against the current build)
+- `check_upgrade_docs.py --client widp`: `yes` (passes after inventory/doc alignment)
 
 ## Finalization
 
-- surviving customizations moved to `customization-files.md`: `no` (pending follow-up above)
+- surviving customizations moved to `customization-files.md`: `yes`
 - stable rules moved to `conflict-rules.md`: `yes` (automerge verification + post-merge fork identity)
 - temporary notes ready to archive/remove: `no`
 - unexplained shared drift remaining: `none known`

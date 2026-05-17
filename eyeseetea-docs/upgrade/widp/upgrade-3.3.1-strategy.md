@@ -164,7 +164,7 @@ Steps:
 
 ### Phase E: Tests and cleanup
 
-Status: `pending`
+Status: `in_progress`
 
 Steps:
 1. Add unit tests per customization, priority order:
@@ -174,9 +174,9 @@ Steps:
    - **#2 Image upload** (low risk, single behavior)
    - **#5 URL data element** (after reimplementation)
 2. Run full build
-3. Execute manual validation per checklist
-4. Run `check_upgrade_docs.py --client widp`
-5. Ensure code comments use `// EyeSeeTea customization - [title]` with exact spec titles
+3. ~~Execute manual validation per checklist~~ (done — validated manually after the 3.3.1 upgrade; active customizations exercised on the current build)
+4. ~~Run `check_upgrade_docs.py --client widp`~~ (done — passes after the inventory and WIDP upgrade docs were aligned with the current branch state)
+5. ~~Ensure code comments use `// EyeSeeTea customization - [title]` with exact spec titles~~ (done — inventory, specs, and code comment titles aligned; doc check passes)
 
 ### Phase F: Promote tooling to develop-eyeseetea
 

@@ -67,8 +67,11 @@ Supporting files:
 
 DI wiring (shared files with WIDP-only bindings):
 - `app/src/main/java/org/dhis2/App.java` — `ChangeServerURLComponent` holder + plus(ChangeServerURLModule)
+- `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` — opens the change-server dialog from the WIDP main menu action
 - `app/src/main/java/org/dhis2/data/user/UserComponent.java` — `plus(ChangeServerURLModule)` subcomponent
 - `app/src/main/res/values/strings.xml` — change server URL strings
+- `commons/src/main/java/org/dhis2/commons/prefs/PreferenceProvider.kt` — preference API used to persist the overridden server URL
+- `commons/src/main/java/org/dhis2/commons/prefs/PreferenceProviderImpl.kt` — preference implementation used by the presenter
 
 ### 2.2 Image upload without resizing
 
@@ -76,6 +79,8 @@ Status: `active`
 
 Main implementation points:
 - `form/src/main/java/org/dhis2/form/data/FormValueStore.kt` (line ~274)
+- `app/src/main/java/org/dhis2/data/forms/dataentry/ValueStoreImpl.kt` — legacy pre-Compose value-store implementation from the original feature commit history
+- `app/src/main/java/org/dhis2/data/server/ServerModule.kt` — historical SDK/server wiring touched by the final no-resize rollout
 
 Technical note:
 - Marked with `// EyeSeeTea customization no resize`. Changes `saveFileResource(filePath, valueType == ValueType.IMAGE)` to `saveFileResource(filePath, false)`, disabling resize for all image uploads.
@@ -109,6 +114,9 @@ UI integration (modified existing files):
 - `app/src/main/java/org/dhis2/usescases/main/MainView.kt` — exposes `markShowNotificationsAsPending()` and `refreshNotifications()` on the view contract
 - `app/src/main/java/org/dhis2/usescases/main/MainPresenter.kt` — triggers pending/refresh in `checkSingleProgramNavigation()` after sync completes
 - `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` — overrides view methods delegating to `notificationsPresenter`; triggers pending/refresh on `sync_manager` and `menu_home` navigation
+- `app/src/main/java/org/dhis2/usescases/main/program/ProgramFragment.kt` — historical program-dashboard integration point used by the original on-resume notification flow
+- `app/src/main/java/org/dhis2/usescases/main/program/ProgramModule.kt` — historical wiring for the program-dashboard notification flow
+- `app/src/main/java/org/dhis2/usescases/main/MainModule.kt` — historical Dagger wiring for notifications in the main screen
 
 DI wiring (shared files with WIDP-only bindings):
 - `app/src/main/java/org/dhis2/App.java` — NotificationsModule instantiation in component builder
@@ -147,9 +155,16 @@ Modified files (EyeSeeTea customization markers):
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/ui/screen/CredentialsScreen.kt` — TwoFactorContainer composable (lines ~212, ~507, ~773-896)
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/ui/state/CredentialsUiState.kt` — 2FA fields (line ~18)
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/LoginResult.kt` — TwoFactorError sealed variant (line ~14)
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/usecase/BaseLogin.kt` — maps repository failures into `LoginResult.TwoFactorError`
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/usecase/LoginUser.kt` — login use case flow carrying the two-factor code
 - `commonskmm/src/androidMain/kotlin/org/dhis2/mobile/commons/resources/D2ErrorMessageProviderImpl.kt` — error messages for 2FA codes (lines ~227-256)
 - `commonskmm/src/androidMain/kotlin/org/dhis2/mobile/commons/error/DomainErrorMapper.kt` — 2FA error code mapping
+- `commonskmm/src/commonMain/kotlin/org/dhis2/mobile/commons/error/DomainError.kt` — shared domain error model used by the 2FA error mapping
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/data/LoginRepository.kt` — interface changes
+
+Legacy Android login integration still present in HEAD:
+- `app/src/main/java/org/dhis2/data/server/UserManager.java` — legacy Android login/session integration touched by the original 2FA rollout
+- `app/src/main/java/org/dhis2/data/server/UserManagerImpl.java` — legacy Android login/session integration touched by the original 2FA rollout
 
 SDK patch (in dhis2-android-sdk EyeSeeTea fork):
 - `core/.../user/internal/LogInCall.kt` — `generate2FAErrorIfRequired()` (lines ~260-302)
@@ -159,8 +174,6 @@ SDK patch (in dhis2-android-sdk EyeSeeTea fork):
 SDK wiring (build config — present only because of the SDK fork dependency):
 - `settings.gradle.kts` — includeBuild of `dhis2-android-sdk` and `dhis2-rule-engine`
 - `commons/build.gradle.kts` — SDK dependency pinned to EyeSeeTea fork
-- `login/build.gradle.kts` — `widp` flavor declaration (needed for `TwoFASettingsActivity` to resolve)
-- `app/build.gradle.kts` — `widp` product flavor declaration
 
 Strings:
 - `commonskmm/src/commonMain/composeResources/values/strings.xml` — 2FA string resources
@@ -173,6 +186,7 @@ Original commit: `c556b7ab7` ("Implement show data element url", Nov 2022)
 
 Data plumbing:
 - `form/src/main/java/org/dhis2/form/data/EventRepository.kt` (line ~729) — reads `de?.url()` and passes to factory
+- `app/src/main/java/org/dhis2/usescases/eventsWithoutRegistration/eventDetails/data/EventDetailsRepository.kt` — original event-details repository path from the pre-Compose implementation history
 - `form/src/main/java/org/dhis2/form/model/FieldUiModel.kt` (line ~74) — `val url: String?`
 - `form/src/main/java/org/dhis2/form/model/FieldUiModelImpl.kt` — `override val url: String? = null`
 - `form/src/main/java/org/dhis2/form/model/SectionUiModelImpl.kt` — `url` positional parameter in constructor
@@ -199,17 +213,20 @@ Rendering (reimplemented 2026-04-17):
 For each customization, these are the original feature commits that introduced its surface. Run `git show <sha> --stat` on every SHA listed and cross-check that every file appears above under the corresponding section. If a file from a feat commit is missing from the inventory, the automerge verification rule will not fire on it — a silent automerge can drop wiring with no conflict markers and no detection. Used by `check_upgrade_docs.py` for the post-merge inventory completeness check.
 
 ### 2.1 Change Server URL
+Status: `active`
 - `61fec4f60` — feat: show dialog to change url
 - `1024c356f` — feat: show warning to change server url
 - `161d8f5ae` — Execute login after server url is changed
 - `384286190` — feat: Avoid login and overwrite url in preferences and accounts
 
 ### 2.2 Image upload without resizing
+Status: `active`
 - `5015ae0d4` — Avoid resize images
 - `696de3918` — Link commit to fix avoid resize images to download in SDK
 - `e248c3347` — Avoid resize images using new param in SDK
 
 ### 2.3 Notifications system
+Status: `active`
 - `71655b603` — feat: create infrastructure to retrieve notifications from the data store
 - `27c7a4e74` — feat: show notifications from program dashboard onResume
 - `9cb2558cf` — feat: invoke sync notifications when sync metadata
@@ -222,9 +239,13 @@ For each customization, these are the original feature commits that introduced i
 - `0c8b70cd9` — Fix serialization of notifications using new SDK Http client with Ktor
 
 ### 2.4 2FA support
-- `ecf4a1321` — Restore WIDP customizations after 3.3.1 upgrade merge (current reference; original EyeSeeTea 2FA work predates the login module split and is not traceable to a single commit on this branch)
+Status: `active`
+- `87c5da010` — Remove 2factor customization (best surviving provenance anchor for the current login-challenge files; used here because it touches the exact current paths later restored in WIDP)
+- `64f8e168b` — chore: D2Error to DomainError (covers the domain error mapping path used by login 2FA)
+- `78afccf05` — refactor: include error when device doesn't have network available on login screen (covers the current `D2ErrorMessageProviderImpl` / `CredentialsViewModel` login path)
 
 ### 2.5 URL data element field
+Status: `active`
 - `c556b7ab7` — Implement show data element url (original, Nov 2022; rendering reimplemented 2026-04-17 in `FieldUiModelExtensions.supportingText()`)
 
 ## 5. Notes
