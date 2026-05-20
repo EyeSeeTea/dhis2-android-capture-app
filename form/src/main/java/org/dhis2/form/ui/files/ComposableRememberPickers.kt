@@ -22,6 +22,7 @@ fun rememberFilePicker(onResult: (String) -> Unit) =
                     uris
                         .firstOrNull()
                         ?.toFileOverWrite(context = this)
+                        ?.rotateImage(this)
                         ?.path
                         ?.let(onResult)
                 },
