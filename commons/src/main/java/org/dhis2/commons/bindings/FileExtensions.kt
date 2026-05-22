@@ -33,9 +33,9 @@ fun File.rotateImage(context: Context): File {
     val bitmap =
         BitmapFactory.decodeFile(
             this.path,
-            // EyeSeeTea - Avoid resize
+            // EyeSeeTea customization  - Avoid resize
             //BitmapFactory.Options().apply { inSampleSize = 4 },
-        ) ?: return this
+        ) ?: return this // EyeSeeTea customization - Avoid crash for non images
 
     val rotatedBitmap =
         when (orientation) {
@@ -59,7 +59,7 @@ fun File.rotateImage(context: Context): File {
 private fun rotateImage(
     source: Bitmap,
     angle: Float,
-): Bitmap? {
+): Bitmap {
     val matrix = Matrix()
     matrix.postRotate(angle)
     return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
