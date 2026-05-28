@@ -37,6 +37,7 @@ import org.hisp.dhis.android.core.program.Program
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityType
 import org.hisp.dhis.mobile.ui.designsystem.component.navigationBar.NavigationBarItem
 import org.junit.After
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
