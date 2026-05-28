@@ -264,6 +264,43 @@ class SearchTEIViewModelTest {
         assertTrue(values2?.contains("testingValue2") == true)
     }
 
+    // EyeSeeTea fix - TEI search blank value filter (Oslo ANDROAPP-6844, introduced 3.3.0)
+    // Remove these tests when Oslo ships the upstream fix.
+    @Test
+    fun `Should remove query data entry when value is blank`() {
+        viewModel.onParameterIntent(
+            FormIntent.OnSave(
+                uid = "testingUid",
+                value = "someValue",
+                valueType = ValueType.TEXT,
+            ),
+        )
+        assertTrue(viewModel.queryData.containsKey("testingUid"))
+
+        viewModel.onParameterIntent(
+            FormIntent.OnSave(
+                uid = "testingUid",
+                value = "",
+                valueType = ValueType.TEXT,
+            ),
+        )
+
+        assertFalse(viewModel.queryData.containsKey("testingUid"))
+    }
+
+    @Test
+    fun `Should remove query data entry when value is whitespace only`() {
+        viewModel.onParameterIntent(
+            FormIntent.OnSave(
+                uid = "testingUid",
+                value = "   ",
+                valueType = ValueType.TEXT,
+            ),
+        )
+
+        assertFalse(viewModel.queryData.containsKey("testingUid"))
+    }
+
     @ExperimentalCoroutinesApi
     @Test
     fun `Should return local results LiveData if not searching and displayInList is true`() =
