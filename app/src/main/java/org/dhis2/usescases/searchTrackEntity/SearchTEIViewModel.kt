@@ -380,10 +380,13 @@ class SearchTEIViewModel(
         uid: String,
         values: List<String>?,
     ) {
-        if (values.isNullOrEmpty()) {
+        // EyeSeeTea fix - TEI search blank value filter (Oslo ANDROAPP-6844, introduced 3.3.0)
+        // Remove when Oslo fixes the empty-value guard in updateQuery() upstream.
+        val nonBlankValues = values?.filter { it.isNotBlank() }
+        if (nonBlankValues.isNullOrEmpty()) {
             queryData.remove(uid)
         } else {
-            queryData[uid] = values
+            queryData[uid] = nonBlankValues
         }
 
         updateSearchParameters(uid, values)

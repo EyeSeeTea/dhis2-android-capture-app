@@ -54,3 +54,11 @@ In **DomainErrorMapper.kt** and **D2ErrorMessageProviderImpl.kt** this repo expl
 ## 4. Only in this repository (not in Oslo)
 
 - **CI/CD:** `.github/workflows/eyeseetea-main.yml`
+
+## 5. Oslo bug fixes active in this baseline
+
+Patches for Oslo regressions that affect all forks. Each entry documents the ticket, affected version, fix location, and retirement condition.
+
+| Fix | Ticket | Introduced | File | Retire when |
+|-----|--------|------------|------|-------------|
+| TEI search blank value filter | ANDROAPP-6844 | 3.3.0 | `SearchTEIViewModel.kt` — `updateQuery()` | Oslo fixes the empty-value guard in `updateQuery()` |
