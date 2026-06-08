@@ -44,21 +44,24 @@ flowchart LR
 
 ### What the developer does
 
-1. Create the new client branch from `develop-eyeseetea`.
+1. Create the new client branch from `develop-eyeseetea`. The Claude Code scaffolding (`.claude/commands/opsx/*`, `.claude/skills/openspec-*`, `.claude/settings.json`) is inherited automatically.
 2. Define the client identity and flavor paths.
-3. Initialize OpenSpec and create one functional spec per customization:
-   - `npm install -g @fission-ai/openspec@latest && openspec init --tools claude`
-   - one `openspec/specs/<capability>/spec.md` per customization, with SHALL/MUST requirements and WHEN/THEN scenarios
-4. Copy the templates for the non-OpenSpec docs:
-   - `customization-files.md` (technical inventory)
-   - `upgrade-validation-checklist.md` (manual QA flows)
-5. Create the flavor surface in code and resources.
-6. Build the first inventory of flavor files and shared customizations.
-7. Mark shared surviving custom code with `// EyeSeeTea customization - [Title]` where `[Title]` is the top-level `# heading` of the matching OpenSpec spec.
+3. Install the OpenSpec CLI: `npm install -g @fission-ai/openspec@latest`. **Do not run `openspec init --tools claude`** — the `.claude/` scaffolding is already in baseline; running init would overwrite it. Just create empty `openspec/specs/` and `openspec/changes/` directories.
+4. Copy the templates and fill in placeholders:
+   - `templates/CLAUDE.md.template` → `CLAUDE.md` at repo root (project identity, customizations table)
+   - `templates/openspec-config.yaml.template` → `openspec/config.yaml` (project context + per-artifact rules)
+   - `customizations/template/customization-files-template.md` → `customizations/<client>/customization-files.md` (technical inventory)
+   - `upgrade/template/upgrade-validation-checklist-template.md` → `upgrade/<client>/upgrade-validation-checklist.md` (manual QA flows)
+5. Create one `openspec/specs/<capability>/spec.md` per customization, with SHALL/MUST requirements and WHEN/THEN scenarios.
+6. Create the flavor surface in code and resources.
+7. Build the first inventory of flavor files and shared customizations.
+8. Mark shared surviving custom code with `// EyeSeeTea customization - [Title]` where `[Title]` is the top-level `# heading` of the matching OpenSpec spec.
 
 ```mermaid
 flowchart TD
-    openspec[openspec init] --> clientSpecs[openspec/specs/&lt;capability&gt;/spec.md]
+    claudeTemplate[templates/CLAUDE.md.template] --> claudeMd[CLAUDE.md]
+    openspecTemplate[templates/openspec-config.yaml.template] --> openspecConfig[openspec/config.yaml]
+    clientSpecs[openspec/specs/&lt;capability&gt;/spec.md created manually]
     templateFiles[customization-files-template.md] --> clientFiles[customizations/&lt;client&gt;/customization-files.md]
     templateChecklist[upgrade-validation-checklist-template.md] --> clientChecklist[upgrade/&lt;client&gt;/upgrade-validation-checklist.md]
 ```
@@ -238,7 +241,7 @@ flowchart TD
 - `upgrade/<client>/upgrade-<version>-notes.md`
   Temporary file for one upgrade only. Do not treat it as stable documentation.
 
-> **Migration note (2026-04):** the `customizations/<client>/customization-specs.md` file is **no longer a stable artifact**. Its former role (functional titles + lifecycle status + expected behavior) now lives in `openspec/specs/`. It survives only as an **optional narrative draft during brownfield onboarding** (`onboarding-fork-guide.md` Phase 3): a cheap markdown place to dump and review customizations before installing OpenSpec. It is deleted at the end of Phase 4 once the content has been moved into OpenSpec specs. New greenfield forks can skip it entirely and go straight to `openspec init`. Existing forks that still carry a stable `customization-specs.md` should migrate during their next upgrade cycle.
+> **Migration note (2026-04):** the `customizations/<client>/customization-specs.md` file is **no longer a stable artifact**. Its former role (functional titles + lifecycle status + expected behavior) now lives in `openspec/specs/`. It survives only as an **optional narrative draft during brownfield onboarding** (`onboarding-fork-guide.md` Phase 3): a cheap markdown place to dump and review customizations before installing OpenSpec. It is deleted at the end of Phase 4 once the content has been moved into OpenSpec specs. New greenfield forks can skip it entirely and go straight to creating `openspec/specs/<capability>/spec.md` files from the OpenSpec workflow. Existing forks that still carry a stable `customization-specs.md` should migrate during their next upgrade cycle.
 
 ## 4. Templates and support files
 
@@ -257,11 +260,13 @@ flowchart TD
 
 ### Templates
 
-- `customizations/template/customization-files-template.md`
-- `upgrade/template/upgrade-validation-checklist-template.md`
-- `upgrade/template/upgrade-notes-template.md`
+- `templates/CLAUDE.md.template` — project identity for the fork (placement hierarchy, comment convention, automerge verification, post-merge check hierarchy already filled in)
+- `templates/openspec-config.yaml.template` — OpenSpec project context + per-artifact rules (proposal/specs/design/tasks)
+- `customizations/template/customization-files-template.md` — technical file inventory per customization
+- `upgrade/template/upgrade-validation-checklist-template.md` — manual QA flow per customization
+- `upgrade/template/upgrade-notes-template.md` — per-upgrade conflict log
 
-Functional specs are created with OpenSpec (`openspec init --tools claude`), not from a markdown template.
+Functional specs themselves are created manually under `openspec/specs/<capability>/spec.md` (one per customization), not from a markdown template — the OpenSpec CLI validates them.
 
 ### Support automation
 
