@@ -37,6 +37,7 @@ import org.hisp.dhis.android.core.program.Program
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityType
 import org.hisp.dhis.mobile.ui.designsystem.component.navigationBar.NavigationBarItem
 import org.junit.After
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -262,6 +263,43 @@ class SearchTEIViewModelTest {
         assertTrue(values2?.size == 2)
         assertTrue(values2?.contains("testingValue") == true)
         assertTrue(values2?.contains("testingValue2") == true)
+    }
+
+    // EyeSeeTea fix - TEI search blank value filter (Oslo ANDROAPP-6844, introduced 3.3.0)
+    // Remove these tests when Oslo ships the upstream fix.
+    @Test
+    fun `Should remove query data entry when value is blank`() {
+        viewModel.onParameterIntent(
+            FormIntent.OnSave(
+                uid = "testingUid",
+                value = "someValue",
+                valueType = ValueType.TEXT,
+            ),
+        )
+        assertTrue(viewModel.queryData.containsKey("testingUid"))
+
+        viewModel.onParameterIntent(
+            FormIntent.OnSave(
+                uid = "testingUid",
+                value = "",
+                valueType = ValueType.TEXT,
+            ),
+        )
+
+        assertFalse(viewModel.queryData.containsKey("testingUid"))
+    }
+
+    @Test
+    fun `Should remove query data entry when value is whitespace only`() {
+        viewModel.onParameterIntent(
+            FormIntent.OnSave(
+                uid = "testingUid",
+                value = "   ",
+                valueType = ValueType.TEXT,
+            ),
+        )
+
+        assertFalse(viewModel.queryData.containsKey("testingUid"))
     }
 
     @ExperimentalCoroutinesApi
