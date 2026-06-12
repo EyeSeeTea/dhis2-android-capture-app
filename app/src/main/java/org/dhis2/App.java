@@ -43,11 +43,13 @@ import org.dhis2.data.user.UserModule;
 import org.dhis2.di.KoinInitialization;
 import org.dhis2.maps.MapController;
 import org.dhis2.usescases.crash.CrashActivity;
+// EyeSeeTea customization - Notifications system
 import org.dhis2.usescases.notifications.di.NotificationsModule;
 import org.dhis2.usescases.teiDashboard.TeiDashboardComponent;
 import org.dhis2.usescases.teiDashboard.TeiDashboardModule;
 import org.dhis2.utils.analytics.AnalyticsModule;
 import org.dhis2.utils.granularsync.SyncStatusDialogProvider;
+// EyeSeeTea customization - Change server URL dialog
 import org.dhis2.utils.session.ChangeServerURLComponent;
 import org.dhis2.utils.session.ChangeServerURLModule;
 import org.dhis2.utils.session.PinModule;
@@ -95,6 +97,7 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
     @Nullable
     private SessionComponent sessionComponent;
 
+    // EyeSeeTea customization - Change server URL dialog
     @Nullable
     private ChangeServerURLComponent changeServerURLComponent;
 
@@ -212,6 +215,7 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
                 .sessionManagerService(new SessionManagerModule())
                 .coroutineDispatchers(new DispatcherModule())
                 .featureConfigModule(new FeatureConfigModule())
+                // EyeSeeTea customization - Notifications system
                 .notificationsModule(new NotificationsModule());
     }
 
@@ -300,6 +304,7 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
         return (sessionComponent = userComponent.plus(pinModule));
     }
 
+    // EyeSeeTea customization - Change server URL dialog
     @NotNull
     public ChangeServerURLComponent createChangeServerULComponent(ChangeServerURLModule changeServerURLModule) {
         return (changeServerURLComponent = userComponent.plus(changeServerURLModule));
