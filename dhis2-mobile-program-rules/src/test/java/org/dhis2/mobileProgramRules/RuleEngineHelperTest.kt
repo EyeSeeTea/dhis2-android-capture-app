@@ -12,6 +12,8 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.util.Date
 
@@ -92,5 +94,45 @@ class RuleEngineHelperTest {
                 ruleEffects.map { it.data },
                 listOf("Rule1", "Rule4", "Rule2", "Rule3"),
             )
+        }
+
+    // EyeSeeTea customization - rule engine bulk context
+    private suspend fun stubEnrollmentContext() {
+        whenever(rulesRepository.rules(any(), anyOrNull())) doReturn emptyList()
+        whenever(rulesRepository.ruleVariables(any())) doReturn emptyList()
+        whenever(rulesRepository.supplementaryData(any())) doReturn emptyMap()
+        whenever(rulesRepository.constants()) doReturn emptyMap()
+        whenever(rulesRepository.enrollmentEvents(any())) doReturn emptyList()
+        whenever(rulesRepository.getRuleEnrollment(any())) doReturn createEnrollment()
+        whenever(rulesRepository.queryAttributeValues(any())) doReturn emptyList()
+        whenever(rulesRepository.enrollmentProgram(any())) doReturn Pair("program", "orgunit")
+    }
+
+    @Test
+    fun `should build the context once across consecutive evaluations`() =
+        runTest {
+            stubEnrollmentContext()
+            val engineHelper =
+                RuleEngineHelper(EvaluationType.Enrollment("enrollment"), rulesRepository)
+
+            engineHelper.evaluate()
+            engineHelper.evaluate()
+
+            verify(rulesRepository, times(1)).enrollmentEvents("enrollment")
+            verify(rulesRepository, times(1)).rules("program", null)
+        }
+
+    @Test
+    fun `should rebuild the context after refreshContext`() =
+        runTest {
+            stubEnrollmentContext()
+            val engineHelper =
+                RuleEngineHelper(EvaluationType.Enrollment("enrollment"), rulesRepository)
+
+            engineHelper.evaluate()
+            engineHelper.refreshContext()
+            engineHelper.evaluate()
+
+            verify(rulesRepository, times(2)).enrollmentEvents("enrollment")
         }
 }

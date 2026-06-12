@@ -3,6 +3,8 @@ package org.dhis2.mobileProgramRules
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.dhis2.commons.rules.RuleEngineContextData
 import org.hisp.dhis.rules.api.RuleEngine
 import org.hisp.dhis.rules.api.RuleEngineContext
@@ -17,6 +19,13 @@ class RuleEngineHelper(
     private val ruleEngine by lazy { RuleEngine.getInstance() }
     private lateinit var contextData: RuleEngineContextData
     private var refreshContext: Boolean = false
+
+    // EyeSeeTea customization - rule engine bulk context
+    // Separate flag for the evaluation target (cheap single-entity queries) so the
+    // expensive context rebuild can clear its own flag under the mutex without
+    // suppressing the target refresh.
+    private var refreshTarget: Boolean = false
+    private val contextMutex = Mutex()
     private lateinit var targetEnrollment: RuleEnrollment
     private lateinit var targetEvent: RuleEvent
 
@@ -60,36 +69,43 @@ class RuleEngineHelper(
     }
 
     private suspend fun buildRuleEngineContextData(targetUid: String) {
-        if (::contextData.isInitialized.not() || refreshContext) {
-            val (programUid, orgUnitUid) = getProgramAndOrgUnit(targetUid)
+        // EyeSeeTea customization - rule engine bulk context
+        // Mutex guarantees a single in-flight context build: concurrent evaluations
+        // wait here, re-check the condition, and reuse the freshly built context
+        // instead of each rebuilding it (the build loads every enrollment event).
+        contextMutex.withLock {
+            if (::contextData.isInitialized.not() || refreshContext) {
+                val (programUid, orgUnitUid) = getProgramAndOrgUnit(targetUid)
 
-            coroutineScope {
-                val rules =
-                    async {
-                        rulesRepository.rules(
-                            programUid = programUid,
-                            eventUid = targetUid.takeIf { evaluationType !is EvaluationType.Enrollment },
+                coroutineScope {
+                    val rules =
+                        async {
+                            rulesRepository.rules(
+                                programUid = programUid,
+                                eventUid = targetUid.takeIf { evaluationType !is EvaluationType.Enrollment },
+                            )
+                        }
+
+                    val ruleVariables = async { rulesRepository.ruleVariables(programUid = programUid) }
+                    val supplData = async { rulesRepository.supplementaryData(orgUnitUid = orgUnitUid) }
+                    val constants = async { rulesRepository.constants() }
+                    val ruleEnrollment = async { getRuleEnrollment(targetUid) }
+                    val ruleEvents = async { getRuleEvents(targetUid) }
+
+                    contextData =
+                        RuleEngineContextData(
+                            ruleEngineContext =
+                                RuleEngineContext(
+                                    rules = rules.await(),
+                                    ruleVariables = ruleVariables.await(),
+                                    supplementaryData = supplData.await(),
+                                    constantsValues = constants.await(),
+                                ),
+                            ruleEnrollment = ruleEnrollment.await(),
+                            ruleEvents = ruleEvents.await(),
                         )
-                    }
-
-                val ruleVariables = async { rulesRepository.ruleVariables(programUid = programUid) }
-                val supplData = async { rulesRepository.supplementaryData(orgUnitUid = orgUnitUid) }
-                val constants = async { rulesRepository.constants() }
-                val ruleEnrollment = async { getRuleEnrollment(targetUid) }
-                val ruleEvents = async { getRuleEvents(targetUid) }
-
-                contextData =
-                    RuleEngineContextData(
-                        ruleEngineContext =
-                            RuleEngineContext(
-                                rules = rules.await(),
-                                ruleVariables = ruleVariables.await(),
-                                supplementaryData = supplData.await(),
-                                constantsValues = constants.await(),
-                            ),
-                        ruleEnrollment = ruleEnrollment.await(),
-                        ruleEvents = ruleEvents.await(),
-                    )
+                }
+                refreshContext = false
             }
         }
     }
@@ -122,24 +138,25 @@ class RuleEngineHelper(
         }
 
     private fun buildTargetEnrollment(enrollmentUid: String): RuleEnrollment {
-        if (::targetEnrollment.isInitialized.not() || refreshContext) {
+        if (::targetEnrollment.isInitialized.not() || refreshTarget) {
             targetEnrollment = rulesRepository.getRuleEnrollment(enrollmentUid)
         }
 
-        refreshContext = false
+        refreshTarget = false
         return targetEnrollment
     }
 
     private fun buildTargetEvent(eventUid: String): RuleEvent {
-        if (::targetEvent.isInitialized.not() || refreshContext) {
+        if (::targetEvent.isInitialized.not() || refreshTarget) {
             targetEvent = rulesRepository.getRuleEvent(eventUid)
         }
 
-        refreshContext = false
+        refreshTarget = false
         return targetEvent
     }
 
     fun refreshContext() {
         refreshContext = true
+        refreshTarget = true
     }
 }

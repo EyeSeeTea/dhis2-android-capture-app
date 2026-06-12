@@ -181,6 +181,8 @@
     <string name="log_out">Log Out</string>
     <string name="block_session">Block Session</string>
     <string name="show_more_events">Show %s more…</string>
+    <!-- EyeSeeTea customization - bounded TEI event list -->
+    <string name="show_more_events_paged">Show %1$s more (%2$s remaining)…</string>
     <string name="show_less_events">Show less…</string>
 
     <!-- SYNC -->
