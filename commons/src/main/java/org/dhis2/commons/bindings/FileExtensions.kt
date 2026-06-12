@@ -30,14 +30,14 @@ fun File.rotateImage(context: Context): File {
     val ei = ExifInterface(this.path)
     val orientation =
         ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-    var bitmap =
+    val bitmap =
         BitmapFactory.decodeFile(
             this.path,
-            // EyeSeeTea - Avoid resize
+            // EyeSeeTea customization  - Avoid resize
             //BitmapFactory.Options().apply { inSampleSize = 4 },
-        )
+        ) ?: return this // EyeSeeTea customization - Avoid crash for non images
 
-    bitmap =
+    val rotatedBitmap =
         when (orientation) {
             ExifInterface.ORIENTATION_ROTATE_90 -> rotateImage(bitmap, 90F)
             ExifInterface.ORIENTATION_ROTATE_180 -> rotateImage(bitmap, 180F)
@@ -51,7 +51,7 @@ fun File.rotateImage(context: Context): File {
             "tempFile.jpg",
         )
 
-    file.writeBitmap(bitmap, Bitmap.CompressFormat.JPEG, 100)
+    file.writeBitmap(rotatedBitmap, Bitmap.CompressFormat.JPEG, 100)
 
     return file
 }
@@ -59,7 +59,7 @@ fun File.rotateImage(context: Context): File {
 private fun rotateImage(
     source: Bitmap,
     angle: Float,
-): Bitmap? {
+): Bitmap {
     val matrix = Matrix()
     matrix.postRotate(angle)
     return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)

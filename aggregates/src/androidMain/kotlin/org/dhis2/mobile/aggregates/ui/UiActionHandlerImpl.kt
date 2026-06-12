@@ -72,7 +72,7 @@ class UiActionHandlerImpl(
             contract = GetFileResource(),
         ) { uris ->
             if (uris.isNotEmpty()) {
-                callback?.invoke(uris.firstOrNull()?.toFileOverWrite(context = context)?.path)
+                callback?.invoke(uris.firstOrNull()?.toFileOverWrite(context = context)?.rotateImage(context)?.path)
             } else {
                 onFailure?.invoke()
             }
