@@ -24,7 +24,8 @@ class SyncGranularRxModule {
         analyticsHelper: AnalyticsHelper,
         syncStatusController: SyncStatusController,
         syncRepository: SyncRepository,
-        notificationsRepository: NotificationRepository
+        // EyeSeeTea customization - Notifications system
+        notificationRepository: NotificationRepository,
     ): SyncPresenter =
         SyncPresenterImpl(
             d2,
@@ -33,6 +34,6 @@ class SyncGranularRxModule {
             analyticsHelper,
             syncStatusController,
             syncRepository,
-            notificationsRepository
+            notificationRepository,
         )
 }

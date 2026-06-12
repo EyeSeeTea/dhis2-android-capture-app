@@ -36,6 +36,23 @@ Per the [onboarding fork guide](https://github.com/EyeSeeTea/dhis2-android-captu
 
 _(No existing specs to modify)_
 
+## Referenced Specs
+
+The following OpenSpec specs define the active sports customizations that must survive the upgrade:
+
+- [`openspec/specs/sports-branding/spec.md`](../../specs/sports-branding/spec.md) -- launcher icons and localized app name
+- [`openspec/specs/sports-flavor-build-config/spec.md`](../../specs/sports-flavor-build-config/spec.md) -- product flavor, source sets, flavor stubs
+- [`openspec/specs/notifications-system/spec.md`](../../specs/notifications-system/spec.md) -- server-side notifications with Markdown and i18n
+- [`openspec/specs/change-server-url-dialog/spec.md`](../../specs/change-server-url-dialog/spec.md) -- in-app server URL change dialog
+
+## Referenced Documentation
+
+- `eyeseetea-docs/upgrade/conflict-rules.md` -- conflict classification and resolution rules governing the merge
+- `eyeseetea-docs/customizations/sports/customization-specs.md` -- functional inventory of sports customizations
+- `eyeseetea-docs/customizations/sports/customization-files.md` -- technical file inventory grouped by customization
+- `eyeseetea-docs/upgrade/sports/upgrade-validation-checklist.md` -- manual validation flows per active customization
+- `eyeseetea-docs/onboarding-fork-guide.md` -- 8-phase guide for onboarding forks without documentation
+
 ## Impact
 
 - **Documentation**: New `eyeseetea-docs/customizations/sports/` and `eyeseetea-docs/upgrade/sports/` directories

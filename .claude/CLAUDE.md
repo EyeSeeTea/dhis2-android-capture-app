@@ -146,6 +146,12 @@ EyeSeeTea maintains a documentation structure for fork management in `eyeseetea-
 - **`eyeseetea-docs/upgrade/<client>/upgrade-validation-checklist.md`** — Manual validation flows
 - **`eyeseetea-docs/upgrade/<client>/upgrade-<version>-notes.md`** — Temporary merge progress tracking
 
+### Sports Fork Documentation
+
+- **`eyeseetea-docs/customizations/sports/customization-specs.md`** — Sports functional customization inventory
+- **`eyeseetea-docs/customizations/sports/customization-files.md`** — Sports technical file inventory
+- **`eyeseetea-docs/upgrade/sports/upgrade-validation-checklist.md`** — Sports upgrade validation flows
+
 ### Key rules from conflict-rules.md
 - Prefer `develop-eyeseetea` by default; only keep confirmed client-specific logic
 - Classify conflicts as: `accept_ours`, `accept_theirs`, `manual_reapply_on_theirs`, `defer_after_build_verification`
