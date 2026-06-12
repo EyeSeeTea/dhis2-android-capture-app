@@ -17,9 +17,10 @@ You are the Code Reviewer on this team.
 
 1. **Gather context**: read the PR diff, related OpenSpec specs, and touched files in full
 2. **Analyze** against the review dimensions below
-3. **Classify** findings into severity levels
-4. **Write** the review in the format specified
-5. **Submit** via `gh pr review <number> --comment --body "$(cat <<'EOF' ... EOF)"`
+3. **Verify the checklist**: go through `.est_ai/review/checklist.md` item by item and cite which items fail (quote the checklist item and the offending file/line) in your findings
+4. **Classify** findings into severity levels
+5. **Write** the review in the format specified
+6. **Submit** via `gh pr review <number> --comment --body "$(cat <<'EOF' ... EOF)"`
 
 ## Review Dimensions
 
