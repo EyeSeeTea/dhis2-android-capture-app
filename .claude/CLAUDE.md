@@ -23,6 +23,8 @@ Fork of the **DHIS2 Android Capture App** (University of Oslo) maintained by **E
 
 ## Pull Requests
 
+- **PR body**: fill every section of `.github/pull_request_template.md` and pass the result via `--body-file` (e.g. `gh pr create --body-file <filled-template>`).
+
 Every PR must include a link to related issue tracker tasks:
 ```markdown
 ## Related Tasks
@@ -85,6 +87,7 @@ Presentation (Activities, Fragments, ViewModels, Compose screens)
 
 ### Kotlin
 
+- **Use project helpers before reaching for external libraries.** Before writing new utility code or adding a dependency, check `commons` (e.g. `org.dhis2.commons.extensions`, `org.dhis2.commons.bindings`) and the module's existing extension functions for an equivalent helper, and prefer Kotlin stdlib over utility libraries.
 - Kotlin for all new code; Java only when modifying existing Java files
 - Strict null safety — no `!!` operator unless absolutely justified with a comment
 - Use `when` exhaustively with sealed types
@@ -201,7 +204,7 @@ Flavor-specific code goes in `app/src/<flavor>/`. Keep flavor code minimal — e
 
 ## Pre-Commit Self-Review
 
-Before every commit, verify:
+The full enforcement checklist lives in `.est_ai/review/checklist.md` — go through it before marking any task as done. Quick summary — before every commit, verify:
 1. **Architecture** — no dependency rule violations (domain imports framework? presentation has business logic?)
 2. **Pattern consistency** — follows existing patterns in the module
 3. **Functional style** — no mutable accumulator loops where `map`/`filter`/`fold` works

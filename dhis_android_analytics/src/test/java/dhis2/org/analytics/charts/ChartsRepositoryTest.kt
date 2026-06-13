@@ -34,6 +34,7 @@ import org.hisp.dhis.android.core.settings.AnalyticsTeiData
 import org.hisp.dhis.android.core.settings.AnalyticsTeiSetting
 import org.hisp.dhis.android.core.settings.ChartType
 import org.hisp.dhis.android.core.visualization.Visualization
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.Mockito
@@ -806,5 +807,81 @@ class ChartsRepositoryTest {
         whenever(
             analyticsFilterProvider.visualizationOrgUnits(any()),
         ) doReturn orgUnits
+    }
+
+    @Test
+    fun `programHasAnalyticsMetadata returns true when TEI analytics settings are configured`() {
+        // Mirrors getSettingsAnalytics: the TEI analytics settings (teis()) are the source
+        // the enrollment Analytics tab actually renders, so the tab is shown. No
+        // repeatable-stage mocks are set up on purpose: branch 1 short-circuits to true
+        // before the stage fallback runs. Do not add those mocks "defensively".
+        mockAnalyticsSettingsCall(mockedAnalyticsSettings())
+        assertEquals(true, repository.programHasAnalyticsMetadata("programUid"))
+    }
+
+    @Test
+    fun `programHasAnalyticsMetadata falls back to repeatable stages when no TEI analytics settings`() {
+        mockAnalyticsSettingsCall(emptyList())
+        mockRepeatableStagesCall()
+        mockNumericDataElements(emptyList = false)
+        assertEquals(true, repository.programHasAnalyticsMetadata("programUid"))
+    }
+
+    @Test
+    fun `programHasAnalyticsMetadata returns true when a repeatable stage has a numeric data element`() {
+        mockAnalyticsSettingsCall(emptyList())
+        mockRepeatableStagesCall()
+        mockNumericDataElements(emptyList = false)
+        assertEquals(true, repository.programHasAnalyticsMetadata("programUid"))
+    }
+
+    @Test
+    fun `programHasAnalyticsMetadata returns true when a repeatable stage has a display-in-form indicator`() {
+        // getDefaultAnalytics renders program indicators per repeatable stage, so the
+        // predicate must consider them too — not only numeric data elements.
+        mockAnalyticsSettingsCall(emptyList())
+        mockRepeatableStagesCall()
+        mockNumericDataElements(emptyList = true)
+        mockIndicators(emptyList = false)
+        assertEquals(true, repository.programHasAnalyticsMetadata("programUid"))
+    }
+
+    @Test
+    fun `programHasAnalyticsMetadata returns false when there are no repeatable stages`() {
+        mockAnalyticsSettingsCall(emptyList())
+        mockRepeatableStagesCall()
+        whenever(
+            d2
+                .programModule()
+                .programStages()
+                .byProgramUid()
+                .eq("programUid")
+                .byRepeatable()
+                .eq(true)
+                .blockingGet(),
+        ) doReturn emptyList()
+        assertEquals(false, repository.programHasAnalyticsMetadata("programUid"))
+    }
+
+    @Test
+    fun `programHasAnalyticsMetadata returns false when repeatable stages have no numeric data elements nor indicators`() {
+        mockAnalyticsSettingsCall(emptyList())
+        mockRepeatableStagesCall()
+        mockNumericDataElements(emptyList = true)
+        mockIndicators(emptyList = true)
+        assertEquals(false, repository.programHasAnalyticsMetadata("programUid"))
+    }
+
+    @Test
+    fun `programHasAnalyticsMetadata ignores program visualization settings`() {
+        // Visualization settings feed the program/home visualizations, not the enrollment
+        // Analytics tab. A program with only those (no TEI settings, no default analytics)
+        // must NOT show the tab — otherwise it renders empty.
+        mockVisualizationSettings("programUid", returnProgram = true)
+        mockAnalyticsSettingsCall(emptyList())
+        mockRepeatableStagesCall()
+        mockNumericDataElements(emptyList = true)
+        mockIndicators(emptyList = true)
+        assertEquals(false, repository.programHasAnalyticsMetadata("programUid"))
     }
 }

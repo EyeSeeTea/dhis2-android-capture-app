@@ -20,6 +20,8 @@ class DhisAnalyticCharts
 
         override fun geEnrollmentCharts(enrollmentUid: String): List<Graph> = chartsRepository.getAnalyticsForEnrollment(enrollmentUid)
 
+        override fun programHasAnalyticsMetadata(programUid: String): Boolean = chartsRepository.programHasAnalyticsMetadata(programUid)
+
         override fun getProgramVisualizations(
             groupUid: String?,
             programUid: String,
