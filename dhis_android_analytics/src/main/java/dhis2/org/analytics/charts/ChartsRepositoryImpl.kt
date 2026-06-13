@@ -51,31 +51,50 @@ class ChartsRepositoryImpl(
     }
 
     override fun programHasAnalyticsMetadata(programUid: String): Boolean {
-        val hasConfiguredVisualizations =
+        // This predicate must be true exactly when getAnalyticsForEnrollment would render
+        // charts, so the Analytics tab is shown iff it has content. That method reads two
+        // sources: getSettingsAnalytics (TEI analytics settings) and, when empty,
+        // getDefaultAnalytics (repeatable stages -> numeric data elements or program
+        // indicators). It does NOT read visualizationsSettings().program(), which feeds the
+        // program/home visualizations on a different screen — so checking it here both
+        // hid the tab for programs with TEI-settings analytics (false negative) and showed
+        // an empty tab for visualization-only programs (false positive).
+        //
+        // This is a deliberate metadata-only over-approximation of getAnalyticsForEnrollment:
+        // it does NOT replicate getDefaultAnalytics' `filter { it.canBeShown() }` (which needs
+        // evaluated series data) nor the analyticsTeiSettingsToGraph mapping, because those
+        // would require scanning events (forbidden by the metadata-only requirement). The
+        // approximation is one-directional — it may show the tab for a program whose charts
+        // are empty (no events), never hide a tab that should appear. The Analytics screen
+        // handles empty-data states (see spec: "Tab visibility for metadata-only analytics").
+
+        // Branch 1: settings-based TEI analytics — same source as getSettingsAnalytics.
+        val hasTeiAnalyticsSettings =
             d2
                 .settingModule()
                 .analyticsSetting()
-                .visualizationsSettings()
-                .blockingGet()
-                ?.program()
-                ?.get(programUid)
-                ?.isNotEmpty() == true
-        if (hasConfiguredVisualizations) return true
-
-        val repeatableStages =
-            d2
-                .programModule()
-                .programStages()
-                .byProgramUid()
+                .teis()
+                .byProgram()
                 .eq(programUid)
-                .byRepeatable()
-                .eq(true)
                 .blockingGet()
+                .isNotEmpty()
+        if (hasTeiAnalyticsSettings) return true
+
+        // Branch 2: default analytics — same sources as getDefaultAnalytics. Repeatable
+        // stages drive the chart list; each contributes its numeric data elements and the
+        // program's display-in-form indicators. With no repeatable stage nothing renders.
+        val repeatableStages = getRepeatableProgramStages(programUid)
+        if (repeatableStages.isEmpty()) return false
+
         // any { } short-circuits across stages; the per-stage helper short-circuits on
         // the first numeric DE found. Bounded by metadata shape, not by event count.
-        return repeatableStages.any { stage ->
-            getNumericDataElements(stage.uid()).isNotEmpty()
-        }
+        val hasNumericDataElement =
+            repeatableStages.any { stage ->
+                getNumericDataElements(stage.uid()).isNotEmpty()
+            }
+        if (hasNumericDataElement) return true
+
+        return getStageIndicators(programUid).isNotEmpty()
     }
 
     override fun getVisualizationGroups(uid: String?): List<AnalyticsDhisVisualizationsGroup> =
