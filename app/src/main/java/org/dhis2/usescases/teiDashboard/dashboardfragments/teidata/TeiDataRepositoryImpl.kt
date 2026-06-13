@@ -7,6 +7,7 @@ import org.dhis2.commons.bindings.program
 import org.dhis2.commons.data.EventModel
 import org.dhis2.commons.data.EventViewModelType
 import org.dhis2.commons.data.StageSection
+import org.dhis2.commons.data.visibleEventCount
 import org.dhis2.commons.date.DateUtils
 import org.dhis2.commons.resources.DhisPeriodUtils
 import org.dhis2.commons.resources.MetadataIconProvider
@@ -49,7 +50,7 @@ class TeiDataRepositoryImpl(
         return if (groupedByStage) {
             getGroupedEvents(eventRepo, selectedStage)
         } else {
-            getTimelineEvents(eventRepo, selectedStage.showAllEvents)
+            getTimelineEvents(eventRepo, selectedStage.revealedEventCount)
         }
     }
 
@@ -228,9 +229,15 @@ class TeiDataRepositoryImpl(
                                 )
                         } ?: false
 
-                    val showAllEvents =
-                        selectedStage.showAllEvents &&
-                            selectedStage.stageUid == programStage.uid()
+                    // EyeSeeTea customization - bounded TEI event list
+                    val revealedCount =
+                        if (selectedStage.stageUid == programStage.uid()) {
+                            selectedStage.revealedEventCount
+                        } else {
+                            0
+                        }
+                    val visibleCount =
+                        visibleEventCount(eventList.size, maxEventToShow, revealedCount)
 
                     eventModels.add(
                         EventModel(
@@ -255,9 +262,8 @@ class TeiDataRepositoryImpl(
                         ),
                     )
                     eventList
-                        .take(
-                            if (showAllEvents) eventList.size else maxEventToShow,
-                        ).forEachIndexed { index, event ->
+                        .take(visibleCount)
+                        .forEachIndexed { index, event ->
                             val showTopShadow = index == 0
                             val showBottomShadow = index == eventList.size - 1
                             eventModels.add(
@@ -313,8 +319,9 @@ class TeiDataRepositoryImpl(
                                 groupedByStage = true,
                                 displayDate = null,
                                 nameCategoryOptionCombo = null,
-                                showAllEvents = showAllEvents,
-                                maxEventsToShow = maxEventToShow,
+                                // EyeSeeTea customization - bounded TEI event list
+                                showAllEvents = visibleCount >= eventList.size,
+                                maxEventsToShow = visibleCount,
                                 metadataIconData =
                                     metadataIconProvider(
                                         programStage.style(),
@@ -330,7 +337,7 @@ class TeiDataRepositoryImpl(
 
     private fun getTimelineEvents(
         eventRepository: EventCollectionRepository,
-        showAllEvents: Boolean,
+        revealedEventCount: Int,
     ): Single<List<EventModel>> {
         val eventModels = mutableListOf<EventModel>()
         val maxEventToShow = 5
@@ -342,10 +349,12 @@ class TeiDataRepositoryImpl(
             .isFalse
             .get()
             .map { eventList ->
+                // EyeSeeTea customization - bounded TEI event list
+                val visibleCount =
+                    visibleEventCount(eventList.size, maxEventToShow, revealedEventCount)
                 eventList
-                    .take(
-                        if (showAllEvents) eventList.size else maxEventToShow,
-                    ).forEachIndexed { _, event ->
+                    .take(visibleCount)
+                    .forEachIndexed { _, event ->
                         val programStage =
                             d2
                                 .programModule()
@@ -411,8 +420,9 @@ class TeiDataRepositoryImpl(
                             groupedByStage = false,
                             displayDate = null,
                             nameCategoryOptionCombo = null,
-                            showAllEvents = showAllEvents,
-                            maxEventsToShow = maxEventToShow,
+                            // EyeSeeTea customization - bounded TEI event list
+                            showAllEvents = visibleCount >= eventList.size,
+                            maxEventsToShow = visibleCount,
                             metadataIconData =
                                 metadataIconProvider(
                                     programStage.style(),

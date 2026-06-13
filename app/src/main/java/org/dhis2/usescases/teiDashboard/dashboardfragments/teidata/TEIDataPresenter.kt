@@ -92,13 +92,26 @@ class TEIDataPresenter(
     fun init() {
         programUid?.let {
             val program = d2.program(it) ?: throw NullPointerException()
+            // EyeSeeTea customization - rule engine bulk context
+            // Refresh once per screen (re)entry — covers returning from event forms and
+            // sync. Stage-filter/grouping emissions below reuse the cached context.
+            ruleEngineHelper?.refreshContext()
             val sectionFlowable =
                 view
                     .observeStageSelection(program)
-                    .startWith(StageSection("", false, false))
-                    .map { (stageUid, showOptions, showAllEvents) ->
-                        currentStage = if (stageUid == currentStage && !showOptions) "" else stageUid
-                        StageSection(currentStage, showOptions, showAllEvents)
+                    .startWith(StageSection("", false, 0))
+                    .map { (stageUid, showOptions, revealedEventCount) ->
+                        // EyeSeeTea customization - bounded TEI event list
+                        // Paging emissions (revealedEventCount > 0) must keep the stage
+                        // selected: the same-stage reset below would otherwise collapse
+                        // the stage on the second "show more" tap.
+                        currentStage =
+                            when {
+                                revealedEventCount > 0 -> stageUid
+                                stageUid == currentStage && !showOptions -> ""
+                                else -> stageUid
+                            }
+                        StageSection(currentStage, showOptions, revealedEventCount)
                     }
             val programHasGrouping = dashboardRepository.getGrouping()
             val groupingFlowable = groupingProcessor.startWith(programHasGrouping)
@@ -119,7 +132,10 @@ class TEIDataPresenter(
                                         stageAndGrouping.second,
                                     ).toFlowable(),
                                 Flowable.fromCallable {
-                                    ruleEngineHelper?.refreshContext()
+                                    // EyeSeeTea customization - rule engine bulk context
+                                    // No refreshContext() here: stage filtering and grouping
+                                    // are pure view changes; the context is refreshed in
+                                    // init() (screen re-entry) and on data mutations.
                                     (ruleEngineHelper?.evaluate() ?: emptyList())
                                         .let { ruleEffects -> Result.success(ruleEffects) }
                                 },
@@ -458,6 +474,10 @@ class TEIDataPresenter(
     }
 
     fun fetchEvents() {
+        // EyeSeeTea customization - rule engine bulk context
+        // fetchEvents() is the post-mutation hook (event created/edited/scheduled),
+        // so the rule-engine context must be rebuilt before re-evaluating.
+        ruleEngineHelper?.refreshContext()
         groupingProcessor.onNext(dashboardRepository.getGrouping())
     }
 

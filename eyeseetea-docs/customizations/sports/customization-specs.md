@@ -82,9 +82,35 @@ Expected behavior:
 - After changing the URL, the app reconnects to the new server on next sync.
 - The new URL is persisted in shared preferences.
 
+### 5. Bounded TEI dashboard event list
+
+Status:
+- `active`
+
+Functional intent:
+- Prevent ANR/OOM on the TEI dashboard for enrollments with large event histories (observed: 1036 events). The dashboard RecyclerView lives in a NestedScrollView, so every bound event card is inflated eagerly; the upstream binary "show more" expanded the full list at once.
+
+Expected behavior:
+- The event list initially shows the upstream caps (3 events per stage grouped, 5 in timeline).
+- "Show more" reveals events in pages of 25 (`EVENTS_PAGE_SIZE`) and displays the remaining count; "show less" collapses back to the initial cap.
+- No user action binds the full event list in a single pass.
+
+### 6. Rule engine bulk context
+
+Status:
+- `active`
+
+Functional intent:
+- Make program-rule evaluation affordable on large enrollments: bulk metadata lookups instead of 2 SDK queries per event, and context reuse across pure view changes (stage filter, grouping).
+
+Expected behavior:
+- Rule effects are identical to upstream behavior.
+- The rule-engine context is rebuilt on screen re-entry and after event mutations (create/edit/schedule), not on stage-filter or grouping changes.
+- Concurrent evaluations share a single in-flight context build.
+
 ## Removed / Cleaned Up
 
-### 5. PSI feedback tree view (atv dependency)
+### 7. PSI feedback tree view (atv dependency)
 
 Status:
 - `removed`

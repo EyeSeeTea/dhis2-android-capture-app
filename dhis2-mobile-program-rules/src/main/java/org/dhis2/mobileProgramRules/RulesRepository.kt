@@ -108,6 +108,28 @@ class RulesRepository(
             .withProgramRuleActions()
             .blockingGet()
 
+    // EyeSeeTea customization - rule engine bulk context
+    // One query per metadata type instead of one per event: building the context for
+    // enrollments with 1000+ events used to issue 2 SDK queries per event (N+1).
+    private fun programStageNamesByUid(events: List<Event>): Map<String, String> =
+        d2
+            .programModule()
+            .programStages()
+            .byUid()
+            .`in`(events.mapNotNull { it.programStage() }.distinct())
+            .blockingGet()
+            .associateBy({ it.uid() }, { it.name() ?: "" })
+
+    // EyeSeeTea customization - rule engine bulk context
+    private fun orgUnitCodesByUid(events: List<Event>): Map<String, String?> =
+        d2
+            .organisationUnitModule()
+            .organisationUnits()
+            .byUid()
+            .`in`(events.mapNotNull { it.organisationUnit() }.distinct())
+            .blockingGet()
+            .associateBy({ it.uid() }, { it.code() })
+
     suspend fun otherEvents(eventUidToEvaluate: String): List<RuleEvent> =
         d2
             .eventModule()
@@ -115,18 +137,16 @@ class RulesRepository(
             .uid(eventUidToEvaluate)
             .blockingGet()
             ?.let { eventToEvaluate ->
-                getOtherEventList(eventToEvaluate)
+                val otherEvents = getOtherEventList(eventToEvaluate)
+                // EyeSeeTea customization - rule engine bulk context
+                val stageNames = programStageNamesByUid(otherEvents)
+                val orgUnitCodes = orgUnitCodesByUid(otherEvents)
+                otherEvents
                     .map { event ->
                         RuleEvent(
                             event = event.uid(),
                             programStage = event.programStage()!!,
-                            programStageName =
-                                d2
-                                    .programModule()
-                                    .programStages()
-                                    .uid(event.programStage())
-                                    .blockingGet()!!
-                                    .name()!!,
+                            programStageName = stageNames.getValue(event.programStage()!!),
                             status =
                                 if (event.status() == EventStatus.VISITED) {
                                     RuleEventStatus.ACTIVE
@@ -149,14 +169,8 @@ class RulesRepository(
                                         .date
                                 },
                             organisationUnit = event.organisationUnit()!!,
-                            organisationUnitCode =
-                                d2
-                                    .organisationUnitModule()
-                                    .organisationUnits()
-                                    .uid(
-                                        event.organisationUnit(),
-                                    ).blockingGet()
-                                    ?.code(),
+                            // EyeSeeTea customization - rule engine bulk context
+                            organisationUnitCode = orgUnitCodes[event.organisationUnit()],
                             createdDate =
                                 event
                                     .created()
@@ -238,31 +252,30 @@ class RulesRepository(
                 }
         }
 
-    suspend fun enrollmentEvents(enrollmentUid: String): List<RuleEvent> =
-        d2
-            .eventModule()
-            .events()
-            .byEnrollmentUid()
-            .eq(enrollmentUid)
-            .byStatus()
-            .notIn(EventStatus.SCHEDULE, EventStatus.SKIPPED, EventStatus.OVERDUE)
-            .byEventDate()
-            .beforeOrEqual(Date())
-            .byDeleted()
-            .isFalse
-            .withTrackedEntityDataValues()
-            .blockingGet()
+    suspend fun enrollmentEvents(enrollmentUid: String): List<RuleEvent> {
+        val events =
+            d2
+                .eventModule()
+                .events()
+                .byEnrollmentUid()
+                .eq(enrollmentUid)
+                .byStatus()
+                .notIn(EventStatus.SCHEDULE, EventStatus.SKIPPED, EventStatus.OVERDUE)
+                .byEventDate()
+                .beforeOrEqual(Date())
+                .byDeleted()
+                .isFalse
+                .withTrackedEntityDataValues()
+                .blockingGet()
+        // EyeSeeTea customization - rule engine bulk context
+        val stageNames = programStageNamesByUid(events)
+        val orgUnitCodes = orgUnitCodesByUid(events)
+        return events
             .map { event ->
                 RuleEvent(
                     event = event.uid(),
                     programStage = event.programStage()!!,
-                    programStageName =
-                        d2
-                            .programModule()
-                            .programStages()
-                            .uid(event.programStage())
-                            .blockingGet()!!
-                            .name()!!,
+                    programStageName = stageNames.getValue(event.programStage()!!),
                     status =
                         if (event.status() == EventStatus.VISITED) {
                             RuleEventStatus.ACTIVE
@@ -273,13 +286,8 @@ class RulesRepository(
                     dueDate = event.dueDate()?.toRuleEngineLocalDate(),
                     completedDate = event.completedDate()?.toRuleEngineLocalDate(),
                     organisationUnit = event.organisationUnit()!!,
-                    organisationUnitCode =
-                        d2
-                            .organisationUnitModule()
-                            .organisationUnits()
-                            .uid(event.organisationUnit())
-                            .blockingGet()
-                            ?.code(),
+                    // EyeSeeTea customization - rule engine bulk context
+                    organisationUnitCode = orgUnitCodes[event.organisationUnit()],
                     createdDate =
                         event
                             .created()
@@ -289,6 +297,7 @@ class RulesRepository(
                         event.trackedEntityDataValues()?.toRuleDataValue() ?: emptyList(),
                 )
             }.toList()
+    }
 
     suspend fun enrollment(eventUid: String): RuleEnrollment {
         val event =

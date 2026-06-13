@@ -88,6 +88,38 @@ Supporting files in the same workflow:
 Technical note:
 - Self-contained feature with its own Dagger component. Integration into MainActivity is the main shared-code touch point.
 
+### 2.3 Bounded TEI dashboard event list
+
+Status: `active`
+
+Marker: `// EyeSeeTea customization - bounded TEI event list`
+
+Main implementation points:
+- `commons/src/main/java/org/dhis2/commons/data/StageSection.kt` — `revealedEventCount` field, `EVENTS_PAGE_SIZE`, `visibleEventCount()` helper
+- `app/src/main/java/org/dhis2/usescases/teiDashboard/dashboardfragments/teidata/TeiDataRepositoryImpl.kt` — visible-window computation in `getGroupedEvents` / `getTimelineEvents`
+- `app/src/main/java/org/dhis2/usescases/teiDashboard/dashboardfragments/teidata/teievents/ToggleStageEventsButtonHolder.kt` — paged "show more (N remaining)" / "show less"
+- `app/src/main/java/org/dhis2/usescases/teiDashboard/dashboardfragments/teidata/teievents/StageViewHolder.kt` — `StageSection` construction
+- `app/src/main/java/org/dhis2/usescases/teiDashboard/dashboardfragments/teidata/TEIDataPresenter.kt` — paging-aware stage selection map
+- `app/src/main/res/values/strings.xml` — `show_more_events_paged`
+
+Tests:
+- `commons/src/test/kotlin/org/dhis2/commons/data/StageSectionTest.kt`
+
+### 2.4 Rule engine bulk context
+
+Status: `active`
+
+Marker: `// EyeSeeTea customization - rule engine bulk context`
+
+Main implementation points:
+- `dhis2-mobile-program-rules/src/main/java/org/dhis2/mobileProgramRules/RulesRepository.kt` — `programStageNamesByUid` / `orgUnitCodesByUid` bulk lookups in `enrollmentEvents` and `otherEvents`
+- `dhis2-mobile-program-rules/src/main/java/org/dhis2/mobileProgramRules/RuleEngineHelper.kt` — context-build mutex, split `refreshContext`/`refreshTarget` flags
+- `app/src/main/java/org/dhis2/usescases/teiDashboard/dashboardfragments/teidata/TEIDataPresenter.kt` — context refresh moved to `init()` and `fetchEvents()` (mutation hook), removed from the per-emission pipeline
+
+Tests:
+- `dhis2-mobile-program-rules/src/test/java/org/dhis2/mobileProgramRules/RuleEngineHelperTest.kt` — context reuse/rebuild
+- `dhis2-mobile-program-rules/src/test/java/org/dhis2/mobileProgramRules/RulesRepositoryTest.kt` — bulk lookups
+
 ## 3. Shared drift still differing
 
 ### 3.1 PSI/WIDP flavor artifacts — resolved
