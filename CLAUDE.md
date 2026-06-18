@@ -32,11 +32,11 @@ Java 17 required. Gradle 8.9.3 with parallel execution.
 
 ## Customizations
 
-None active yet. PR 01 (this baseline) is a flavor scaffold only — no functional customization is shipped. Functional capabilities are blocked on external inputs:
+PR 01 (baseline) was a flavor scaffold only — no functional customization. PR 02 adds the first functional capability:
 
 | # | Spec slug | Status | Risk | Blocker |
 |---|-----------|--------|------|---------|
-| – | (none yet) | – | – | – |
+| 1 | `lot-number-field` | Implemented (build/tests pass; pending manual emulator validation, see upgrade-validation-checklist.md) | Low — additive/append-only edits across `:form`, `:app`, `:commons`; no flavor-override modules | None — UIDs and datastore shape resolved against the live server |
 
 When a customization lands, add a row to the table above, create the corresponding `openspec/specs/<capability>/spec.md`, and update `eyeseetea-docs/customizations/unicefTjkElmis/customization-files.md`.
 

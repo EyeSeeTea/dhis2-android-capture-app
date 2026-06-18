@@ -38,6 +38,8 @@ import org.dhis2.form.data.MissingMandatoryResult
 import org.dhis2.form.data.NotSavedResult
 import org.dhis2.form.data.RulesUtilsProviderConfigurationError
 import org.dhis2.form.data.SuccessfulResult
+import org.dhis2.form.data.lotnumber.LOT_NUMBER_DE_UIDS
+import org.dhis2.form.data.lotnumber.PRODUCT_DE_UID
 import org.dhis2.form.model.ActionType
 import org.dhis2.form.model.FieldListConfiguration
 import org.dhis2.form.model.FieldUiModel
@@ -280,6 +282,8 @@ class FormViewModel(
             } else {
                 repository.updateValueOnList(action.id, action.value, action.valueType)
             }
+            // EyeSeeTea customization - Lot Number Search Field
+            clearLotNumbersOnProductChange(action.id)
         } else {
             repository.updateErrorList(
                 action.copy(
@@ -1072,6 +1076,22 @@ class FormViewModel(
         repository.reEvaluateRequestParams(customIntentUid)
 
     fun fetchPeriods(): Flow<PagingData<Period>> = repository.fetchPeriods().flowOn(dispatcher.io())
+
+    // EyeSeeTea customization - Lot Number Search Field
+    fun recordUid(): String = repository.recordUid()
+
+    // EyeSeeTea customization - Lot Number Search Field
+    // A lot number is only valid for the product it was entered against. When the product
+    // changes, clear every lot DataElement of the event (products render different lot DEs,
+    // so the stale value may live on a field that is no longer composed).
+    private fun clearLotNumbersOnProductChange(savedFieldUid: String) {
+        if (savedFieldUid != PRODUCT_DE_UID) return
+
+        LOT_NUMBER_DE_UIDS.forEach { lotUid ->
+            repository.save(lotUid, null, null)
+            repository.updateValueOnList(lotUid, null, null)
+        }
+    }
 
     companion object {
         const val TAG = "FormViewModel"

@@ -2,6 +2,7 @@ package org.dhis2.data.services
 
 import io.reactivex.Completable
 import io.reactivex.Observable
+import kotlinx.coroutines.runBlocking
 import org.dhis2.commons.bindings.program
 import org.dhis2.commons.prefs.PreferenceProvider
 import org.dhis2.data.service.SyncPresenterImpl
@@ -9,6 +10,7 @@ import org.dhis2.data.service.SyncRepository
 import org.dhis2.data.service.SyncResult
 import org.dhis2.data.service.SyncStatusController
 import org.dhis2.data.service.workManager.WorkManagerController
+import org.dhis2.form.model.lotnumber.RefreshLotNumbersCacheUseCase
 import org.dhis2.utils.analytics.AnalyticsHelper
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.arch.call.BaseD2Progress
@@ -47,9 +49,12 @@ class SyncPresenterTest {
     private val analyticsHelper: AnalyticsHelper = mock()
     private val syncStatusController: SyncStatusController = mock()
     private val syncRepository: SyncRepository = mock()
+    private val refreshLotNumbersCache: RefreshLotNumbersCacheUseCase = mock()
 
     @Before
     fun setUp() {
+        runBlocking { whenever(refreshLotNumbersCache()) doReturn Unit }
+
         presenter =
             SyncPresenterImpl(
                 d2,
@@ -58,6 +63,7 @@ class SyncPresenterTest {
                 analyticsHelper,
                 syncStatusController,
                 syncRepository,
+                refreshLotNumbersCache,
             )
     }
 

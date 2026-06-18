@@ -911,4 +911,7 @@ class FormRepositoryImpl(
     override fun isEvent(): Boolean = dataEntryRepository.isEvent()
 
     override fun isEventEditable(): Boolean? = dataEntryRepository.isEventEditable()
+
+    // EyeSeeTea customization - Lot Number Search Field
+    override fun recordUid(): String = formValueStore.recordUid()
 }

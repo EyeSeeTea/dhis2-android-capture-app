@@ -28,6 +28,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.dhis2.commons.resources.ResourceManager
 import org.dhis2.form.data.EventRepository.Companion.EVENT_ORG_UNIT_UID
+import org.dhis2.form.data.lotnumber.LOT_NUMBER_DE_UIDS
 import org.dhis2.form.extensions.autocompleteList
 import org.dhis2.form.extensions.inputState
 import org.dhis2.form.extensions.legend
@@ -38,6 +39,7 @@ import org.dhis2.form.model.UiRenderType
 import org.dhis2.form.ui.event.RecyclerViewUiEvents
 import org.dhis2.form.ui.intent.FormIntent
 import org.dhis2.form.ui.keyboard.keyboardAsState
+import org.dhis2.form.ui.provider.inputfield.lotnumber.LotNumberFieldInput
 import org.dhis2.form.ui.provider.onFieldFocusChanged
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.mobile.ui.designsystem.component.InputEmail
@@ -68,6 +70,8 @@ fun FieldProvider(
     onNextClicked: () -> Unit,
     onFileSelected: (String) -> Unit,
     reEvaluateCustomIntentRequestParameters: Boolean,
+    // EyeSeeTea customization - Lot Number Search Field
+    recordUid: String = "",
 ) {
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val focusRequester = remember { FocusRequester() }
@@ -105,6 +109,20 @@ fun FieldProvider(
         if (fieldUiModel.focused) {
             bringIntoViewRequester.bringIntoView(visibleArea)
         }
+    }
+
+    // EyeSeeTea customization - Lot Number Search Field
+    if (fieldUiModel.uid in LOT_NUMBER_DE_UIDS) {
+        LotNumberFieldInput(
+            modifier = modifierWithFocus,
+            inputStyle = inputStyle,
+            fieldUiModel = fieldUiModel,
+            intentHandler = intentHandler,
+            focusManager = focusManager,
+            onNextClicked = onNextClicked,
+            eventUid = recordUid,
+        )
+        return
     }
 
     when {

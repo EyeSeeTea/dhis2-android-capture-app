@@ -6,6 +6,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.ListenableWorker
 import io.reactivex.Completable
 import io.reactivex.Observable
+import kotlinx.coroutines.rx2.rxCompletable
 import org.dhis2.bindings.toSeconds
 import org.dhis2.commons.bindings.enrollment
 import org.dhis2.commons.bindings.program
@@ -25,6 +26,7 @@ import org.dhis2.commons.prefs.PreferenceProvider
 import org.dhis2.data.service.workManager.WorkManagerController
 import org.dhis2.data.service.workManager.WorkerItem
 import org.dhis2.data.service.workManager.WorkerType
+import org.dhis2.form.model.lotnumber.RefreshLotNumbersCacheUseCase
 import org.dhis2.utils.analytics.AnalyticsHelper
 import org.dhis2.utils.analytics.matomo.DEFAULT_EXTERNAL_TRACKER_NAME
 import org.hisp.dhis.android.core.D2
@@ -49,6 +51,8 @@ class SyncPresenterImpl(
     private val analyticsHelper: AnalyticsHelper,
     private val syncStatusController: SyncStatusController,
     private val syncRepository: SyncRepository,
+    // EyeSeeTea customization - Lot Number Search Field
+    private val refreshLotNumbersCache: RefreshLotNumbersCacheUseCase,
 ) : SyncPresenter {
     override fun initSyncControllerMap() {
         Completable
@@ -266,6 +270,9 @@ class SyncPresenterImpl(
                         .eq(FileResourceDomainType.ICON)
                         .download(),
                 ),
+                // EyeSeeTea customization - Lot Number Search Field
+            ).andThen(
+                rxCompletable { refreshLotNumbersCache() },
             ).blockingAwait()
     }
 

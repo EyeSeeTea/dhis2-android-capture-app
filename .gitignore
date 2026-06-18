@@ -18,3 +18,8 @@ __pycache__/
 
 # Claude Code local overrides
 .claude/settings.local.json
+
+.journal
+
+# OpenSpec local review files
+openspec/changes/**/review-walkthrough.md

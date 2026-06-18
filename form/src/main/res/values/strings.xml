@@ -94,4 +94,9 @@
     <string name="custom_intent_error">Couldn\'t retrieve data</string>
     <string name="custom_intent_launch">Launch</string>
 
+    <!-- EyeSeeTea customization - Lot Number Search Field -->
+    <string name="lot_number_select_product_first">Select a product first to search for available lot numbers.</string>
+    <string name="lot_number_none_found">No lot numbers found for this product. You can type it manually.</string>
+    <string name="lot_number_select_title">Select a lot number</string>
+
 </resources>

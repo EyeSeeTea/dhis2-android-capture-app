@@ -92,4 +92,7 @@ interface FormRepository {
     fun isEvent(): Boolean
 
     fun isEventEditable(): Boolean?
+
+    // EyeSeeTea customization - Lot Number Search Field
+    fun recordUid(): String
 }
