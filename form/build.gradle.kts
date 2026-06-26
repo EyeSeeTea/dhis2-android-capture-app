@@ -5,6 +5,8 @@ plugins {
     kotlin("android")
     id("com.google.devtools.ksp")
     alias(libs.plugins.kotlin.compose.compiler)
+    // EyeSeeTea customization - Lot Number Search Field
+    alias(libs.plugins.kotlin.serialization)
 }
 apply(from = "${project.rootDir}/jacoco/jacoco.gradle.kts")
 
@@ -66,6 +68,9 @@ dependencies {
     implementation(project(":dhis2_android_maps"))
     implementation(project(":dhis2-mobile-program-rules"))
     implementation(libs.androidx.activity.compose)
+    // EyeSeeTea customization - Lot Number Search Field
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.lifecycle.runtime.compose)
     testImplementation(libs.bundles.form.test)
     testImplementation(libs.test.junit)
     androidTestImplementation(libs.test.compose.ui.test)

@@ -46,5 +46,8 @@ class Preference {
 
         const val DATE_PICKER = "DATE_PICKER"
         const val PREF_COMPLETED_EVENT = "COMPLETED_EVENT"
+
+        // EyeSeeTea customization - Lot Number Search Field
+        const val LOT_NUMBERS_CACHE = "LOT_NUMBERS_CACHE"
     }
 }

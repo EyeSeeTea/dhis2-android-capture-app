@@ -10,14 +10,14 @@ This file is **not** for: raw full diff dumps, temporary upgrade progress, stabl
 - Flavor: `unicefTjkElmis`
 - Base branch: `develop-eyeseetea`
 - Base commit: `8a4866305`
-- Generated on: `2026-04-27`
-- Working tree status: `clean` (untracked `dhis2-android-sdk/` and `dhis2-rule-engine/` are local SDK fork checkouts no longer needed by `develop-eyeseetea` since 2FA was removed; they do not impact this inventory)
+- Generated on: `2026-06-15`
+- Working tree status: untracked `dhis2-android-sdk/` and `dhis2-rule-engine/` are local SDK fork checkouts no longer needed by `develop-eyeseetea` since 2FA was removed; they do not impact this inventory. PR 02 (`add-unicef-tjk-elmis-lot-number-field`, §2/§4) changes are uncommitted at time of writing.
 
 ## Scope
 
 This inventory is based on:
 - direct flavor files under `app/src/unicefTjkElmis/`, `app/src/unicefTjkElmisDebug/`, `app/src/unicefTjkElmisRelease/`
-- shared-code implementation points marked with `// EyeSeeTea customization` (none in PR 01)
+- shared-code implementation points marked with `// EyeSeeTea customization` (introduced by PR 02, see §2)
 - current diffs against `develop-eyeseetea` used only as supporting evidence
 
 ## 1. Direct unicefTjkElmis flavor surface
@@ -55,17 +55,63 @@ This inventory is based on:
 
 ## 2. Shared-code customization implementation points
 
-(none in PR 01 — functional customizations land in subsequent PRs as external blockers are resolved.)
+### 2.1 Lot Number Field (PR 02, `add-unicef-tjk-elmis-lot-number-field`)
+
+Spec: `openspec/specs/lot-number-field/spec.md`. Title used in `// EyeSeeTea customization - Lot Number Search Field` comments matches the spec heading "Lot Number Field" (comment text predates a later spec title tweak — both refer to the same capability; treat as equivalent, no action needed unless the spec title is itself revised).
+
+**New files, isolated (no Oslo file touched):**
+
+Domain/model layer (`form/src/main/java/org/dhis2/form/model/lotnumber/`):
+- `LotNumberRepository.kt` — repository interface (domain layer): `suspend fun getLotNumbers(eventUid: String): LotNumbersResult` + `suspend fun refreshCache()`
+- `GetLotNumbersUseCase.kt` — delegates to `LotNumberRepository`; also defines `LotNumbersResult` sealed class (three states: `NoProductSelected`, `NotFound`, `Available`)
+- `RefreshLotNumbersCacheUseCase.kt` — domain use case that delegates `suspend fun invoke()` to `LotNumberRepository.refreshCache()`. Invoked by the sync layer so the repository is only ever reached through a use case (Clean Architecture); replaces the former `LotNumberSyncRepository` wrapper.
+
+Data layer (`form/src/main/java/org/dhis2/form/data/lotnumber/`):
+- `LotNumberDataElements.kt` — single source of truth for the DataElement UIDs: `PRODUCT_DE_UID = "BzKc72LZLxw"` (top-level const) and `LOT_NUMBER_DE_UIDS` (top-level `Set<String>` of the 4 product-family lot DataElements). Lives in the data layer so `FormViewModel` can reference it without depending on the UI layer.
+- `LotNumbersApiResponse.kt` — `@Serializable` DTOs, shape `{orgUnitCode: {productCode: {lotNumbers: [...]}}}` (`LotNumbersApiResponse` typealias + `LotNumbersEntry` data class)
+- `LotNumbersApi.kt` — `d2.httpServiceClient()` GET `dataStore/openboxes-dhis2-sync/available-lot-numbers`; `LOT_NUMBERS_DATASTORE_NAMESPACE` / `LOT_NUMBERS_DATASTORE_KEY` declared here as top-level consts
+- `LotNumberD2Repository.kt` — implements `LotNumberRepository`; resolves product code and org unit code from D2, then does network-first/cache-fallback lookup. Both `getLotNumbers` and `refreshCache` are `suspend` and wrap their blocking work (D2 `blockingGet`, synchronous HTTP, Gson cache) in `withContext(ioDispatcher)` — the repository owns main-safety (per Android guidance). `ioDispatcher: CoroutineDispatcher = Dispatchers.IO` is injected via the constructor so the unit test can drive it with a `StandardTestDispatcher`. The shared "fetch from remote, cache locally" logic lives in a single private `fetchFromRemoteAndCache()` reused by both methods.
+
+DI factory (`form/src/main/java/org/dhis2/form/di/lotnumber/`):
+- `LotNumberInjector.kt` — no-Dagger factory (`D2Manager.getD2()` + `PreferenceProviderImpl(context)`), mirrors `form/src/main/java/org/dhis2/form/di/Injector.kt`
+
+UI — dialog (`form/src/main/java/org/dhis2/form/ui/dialog/lotnumber/`):
+- `LotNumberDialog.kt` — screen-level Composable; obtains `LotNumberDialogViewModel` via the Compose `viewModel(key = eventUid, factory = ...)` and collects its `result` with `collectAsStateWithLifecycle()`, then hoists state down to `LotNumberDialogScreen` (the lower composables never see the ViewModel). `BottomSheetShell` provides its own `ModalBottomSheet`, so no `Dialog` wrapper is used.
+- `LotNumberDialogViewModel.kt` — `ViewModel` that owns the lot-number load coroutine: launches `GetLotNumbersUseCase` in `viewModelScope` (survives configuration changes, structured cancellation) and exposes the outcome as `StateFlow<LotNumbersResult?>`. Includes a `Factory` taking `eventUid` + the use case. Replaces the earlier `LaunchedEffect`-in-the-view approach so the view no longer triggers business logic directly (per Android's coroutine/architecture guidance). Keyed by `eventUid` so a different event/product yields a fresh instance.
+- `LotNumberDialogScreen.kt` — pure-presentation Composable, three states (loading / no product / not found / selectable list)
+
+UI — field input (`form/src/main/java/org/dhis2/form/ui/provider/inputfield/lotnumber/`):
+- `LotNumberFieldInput.kt` — text field + clear/search button Composable (UIDs consumed from `LotNumberDataElements.LOT_NUMBER_DE_UIDS`). `InputText` is rendered with `showDeleteButton = false`; the clear (`Icons.Outlined.Cancel`) and search (`Icons.Filled.Search`) buttons and the single vertical separator between them are overlaid on top via a `Box` + `Row` anchored to `TopEnd` (with `top` padding 8dp = `InputShell` paddingValues top), replicating the internal `InputShellButtonSeparator` layout (`VerticalDivider` height=40dp, color=`Ash600`/`0xFFC5CED6`, button slot 48dp, separator drawn only between the two buttons). `showDeleteButton = false` is required because otherwise the design system's built-in clear button and our overlaid search button would render as two overlapping icons. This overlay workaround is necessary because `BasicTextInput` — the only component that exposes a `secondaryButton` slot matching the design system's button-area layout — is marked `internal` in `designsystem 0.7.0` and is not accessible from outside the module. If a future version of the design system exposes that slot publicly (e.g., via an `actionButton` parameter on `InputText`), this overlay should be replaced.
+
+Tests:
+- `form/src/test/java/org/dhis2/form/data/lotnumber/LotNumberD2RepositoryTest.kt` — unit tests for `LotNumberD2Repository` (network-first, cache fallback, empty cache, no product)
+- `form/src/androidTest/kotlin/org/dhis2/form/ui/dialog/lotnumber/LotNumberDialogScreenTest.kt` — Compose UI test for `LotNumberDialogScreen`'s three states + cancel
+
+**Modified Oslo files (marked `// EyeSeeTea customization - Lot Number Search Field`, minimal/append-only edits):**
+- `form/src/main/java/org/dhis2/form/data/FormRepository.kt` + `FormRepositoryImpl.kt` — new `recordUid(): String`
+- `form/src/main/java/org/dhis2/form/ui/FormViewModel.kt` — new `recordUid(): String = repository.recordUid()` accessor; plus `clearLotNumbersOnProductChange(savedFieldUid)` (new private fn) called inside `handleOnSaveAction` after a successful save: when the saved field is `PRODUCT_DE_UID`, every `LOT_NUMBER_DE_UIDS` value of the event is cleared (`repository.save(lotUid, null, null)` + `updateValueOnList(lotUid, null, null)`). Centralized here — not in the composable — because each product renders a different lot DataElement, so the stale value may live on a field that is no longer composed. The inline call site is a single line; the bulk lives in the new private fn.
+- `form/src/main/java/org/dhis2/form/ui/FormView.kt`, `Form.kt` — thread `recordUid()` down to `FieldProvider`
+- `form/src/main/java/org/dhis2/form/ui/provider/inputfield/FieldProvider.kt` — accept `eventUid` param + early-return guard on `fieldUiModel.uid in LOT_NUMBER_DE_UIDS` constructing `LotNumberFieldInput`
+- `form/src/main/res/values/strings.xml` — append `lot_number_select_product_first`, `lot_number_none_found`, `lot_number_select_title`
+- `form/build.gradle.kts` — append `alias(libs.plugins.kotlin.serialization)` to `plugins {}` (needed for `@Serializable` DTOs); append `implementation(libs.androidx.lifecycle.viewmodel.compose)` (Compose `viewModel()`) and `implementation(libs.lifecycle.runtime.compose)` (`collectAsStateWithLifecycle`) — the module already had `lifecycle-viewmodel-ktx` transitively (used by `FormViewModel`), but neither Compose↔lifecycle bridge artifact was present, as `LotNumberDialog` is the first ViewModel consumed directly from a Composable in `:form`
+- `app/src/main/java/org/dhis2/data/service/SyncPresenterImpl.kt` — new constructor param `refreshLotNumbersCache: RefreshLotNumbersCacheUseCase` + `.andThen(rxCompletable { refreshLotNumbersCache() })` appended to `syncMetadata()`. The `suspend` use case is adapted to the sync's RxJava chain with `kotlinx.coroutines.rx2.rxCompletable { }` — the coroutine↔Rx conversion lives only at this boundary; the rest of the lot-number stack stays `suspend`.
+- `app/src/main/java/org/dhis2/data/service/SyncInitWorkerModule.kt`, `SyncDataWorkerModule.kt`, `SyncGranularRxModule.kt`, `SyncMetadataWorkerModule.kt` — each `syncPresenter` `@Provides` gains a `refreshLotNumbersCache: RefreshLotNumbersCacheUseCase` param (referenced by fully-qualified name to avoid touching the import block), forwarded to `SyncPresenterImpl(...)`. All four live in `app/src/main` only — **no flavor-override module**, so no desync risk on future Oslo upgrades to these files.
+- `app/src/main/java/org/dhis2/data/user/UserModule.kt` — new `@Provides @PerUser fun refreshLotNumbersCacheUseCase(d2: D2, preferenceProvider: PreferenceProvider): RefreshLotNumbersCacheUseCase` that builds the real `LotNumberD2Repository` and wraps it in the use case. **No flavor gate / no no-op:** this branch only ever builds the `unicefTjkElmis` flavor, so the former `BuildConfig.FLAVOR` check and `LotNumberSyncRepositoryNoOp` were removed as defensive complexity for a case that cannot occur here. Single construction point for the repository.
+- `app/src/test/java/org/dhis2/data/services/SyncPresenterTest.kt` — mocked `RefreshLotNumbersCacheUseCase` passed to `SyncPresenterImpl`; its `suspend operator fun invoke()` is stubbed inside `runBlocking { }`
+- `commons/src/main/java/org/dhis2/commons/prefs/Preference.kt` — append `LOT_NUMBERS_CACHE` key constant
 
 ## 3. Shared drift still differing
 
-(empty — UNICEF branch matches `develop-eyeseetea` baseline at HEAD `8a4866305` for all shared code.)
+PR 02 (§2.1) is the only shared-code drift against `develop-eyeseetea` baseline at HEAD `8a4866305`; all entries are additive/append-only as listed above. No other shared-code drift.
 
 ## 4. Feat commits
 
 Tracks the commits that implement each customization, for cross-checking against §2 during automerge verification.
 
 PR 01 (`feat/new_unicefTjkElmis_flavor`):
+- (commits will be listed by SHA after merge)
+
+PR 02 (`add-unicef-tjk-elmis-lot-number-field`):
 - (commits will be listed by SHA after merge)
 
 ## 5. Notes

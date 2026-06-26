@@ -115,3 +115,4 @@ rules:
     - "Each task is small enough to complete in one focused session. Tasks that span multiple customizations must be split per customization."
     - "Tests for client customizations are prioritized by risk: high > medium > low."
     - "Every customization-preservation task has a matching manual-validation entry in `eyeseetea-docs/upgrade/unicefTjkElmis/upgrade-validation-checklist.md`."
+    - "Every change must include a final task to generate `openspec/changes/<name>/review-walkthrough.md`: a file-by-file review checklist with `- [ ]` checkboxes for every new and modified file, grouped by layer (new domain/model files, new data files, new DI files, new UI files, new app-layer files, modified Oslo files, tests, docs), with a suggested review order within each group and a 'Useful commands' section at the end with git commands to diff or view each file."

@@ -47,6 +47,8 @@ fun Form(
     intentHandler: (FormIntent) -> Unit,
     uiEventHandler: (RecyclerViewUiEvents) -> Unit,
     resources: ResourceManager,
+    // EyeSeeTea customization - Lot Number Search Field
+    recordUid: String = "",
 ) {
     val scrollState = rememberLazyListState()
     val focusManager = LocalFocusManager.current
@@ -134,6 +136,8 @@ fun Form(
                                     intentHandler = intentHandler,
                                     resources = resources,
                                     focusManager = focusManager,
+                                    // EyeSeeTea customization - Lot Number Search Field
+                                    recordUid = recordUid,
                                     onNextClicked = {
                                         manageOnNextEvent(
                                             focusManager,

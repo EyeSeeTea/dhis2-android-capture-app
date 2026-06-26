@@ -23,6 +23,8 @@ class SyncMetadataWorkerModule {
         analyticsHelper: AnalyticsHelper,
         syncStatusController: SyncStatusController,
         syncRepository: SyncRepository,
+        // EyeSeeTea customization - Lot Number Search Field
+        refreshLotNumbersCache: org.dhis2.form.model.lotnumber.RefreshLotNumbersCacheUseCase,
     ): SyncPresenter =
         SyncPresenterImpl(
             d2,
@@ -31,5 +33,6 @@ class SyncMetadataWorkerModule {
             analyticsHelper,
             syncStatusController,
             syncRepository,
+            refreshLotNumbersCache,
         )
 }

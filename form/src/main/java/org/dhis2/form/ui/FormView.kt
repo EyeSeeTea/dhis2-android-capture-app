@@ -220,6 +220,8 @@ class FormView : Fragment() {
                     intentHandler = ::intentHandler,
                     uiEventHandler = ::uiEventHandler,
                     resources = Injector.provideResourcesManager(context),
+                    // EyeSeeTea customization - Lot Number Search Field
+                    recordUid = viewModel.recordUid(),
                 )
 
                 resultDialogData?.let {
