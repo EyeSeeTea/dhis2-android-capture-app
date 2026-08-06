@@ -70,7 +70,9 @@ Bring the shared `eyeseetea-docs/` structure from `develop-eyeseetea` into the c
 - `eyeseetea-docs/upgrade/template/`
 - `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md`
 - `eyeseetea-docs/customizations/template/`
+- `eyeseetea-docs/templates/` — CLAUDE.md and openspec/config.yaml templates used in Phase 4 / Phase 5
 - `eyeseetea-docs/scripts/`
+- `.claude/` — generic Claude Code scaffolding (`commands/opsx/*`, `skills/openspec-*/`, `settings.json`). Do **not** bring `.claude/settings.local.json` (per-developer overrides, gitignored).
 
 ### How
 
@@ -134,11 +136,7 @@ Why narrative first: installing OpenSpec and learning its syntax adds friction t
 2. Populate `customization-files.md` with the technical inventory grouped by customization.
 3. Populate `upgrade-validation-checklist.md` with manual validation flows per customization.
 4. List files that still differ but have no confirmed customization title in section 3 of `customization-files.md`.
-<<<<<<< HEAD
 5. Review the narrative draft with the developer who owns the fork. Do not move to Phase 4 until the list of customizations is confirmed stable.
-=======
-5. **Review customization comments in code**: for every file listed in `customization-files.md`, verify that the `// EyeSeeTea customization - [title]` comment exists and uses the exact title from `customization-specs.md`. Add missing comments, fix titles that don't match. Do NOT place comments on import lines (Oslo GitHub action rejects them).
->>>>>>> parent of 7389d1043 (Revert "Merge branch 'develop-eyeseetea' into feature-widp/bring_last_changes_3_3_1")
 
 ### Done when
 
@@ -171,12 +169,8 @@ This phase only installs OpenSpec and migrates the current customization specs. 
 ### Steps
 
 1. Install OpenSpec CLI: `npm install -g @fission-ai/openspec@latest` (requires Node 20.19.0+).
-2. Initialize at the repo root: `openspec init --tools claude`. This creates `openspec/specs/`, `openspec/changes/`, and the Claude Code commands/skills under `.claude/`.
-3. Create `openspec/config.yaml` manually (the init step does not generate it). Minimum fields:
-   - `schema: spec-driven`
-   - `context:` — short project identity (upstream repo, fork owner, flavor, flavor source sets, application ID, baseline branch, SDK fork if any) plus the customization code placement hierarchy (flavor > new file > end of file > inline) and a table of active capabilities.
-   - `rules:` — per-artifact rules that encode project conventions (e.g. specs must use SHALL/MUST and 4-hashtag scenarios; upgrade tasks must mirror the client upgrade-strategy phases).
-   - Do **not** create an `openspec/project.md` file — that name is legacy in OpenSpec ≥1.2.0 and triggers a migration warning. All project context goes into `config.yaml`.
+2. The Claude Code scaffolding (`.claude/commands/opsx/*`, `.claude/skills/openspec-*`, `.claude/settings.json`) is already inherited from `develop-eyeseetea` in Phase 1 — **do not run `openspec init --tools claude`** (it would overwrite the baseline-provided files). Just create empty `openspec/specs/` and `openspec/changes/` directories at the repo root.
+3. Copy `eyeseetea-docs/templates/openspec-config.yaml.template` to `openspec/config.yaml` and fill in the placeholders (`{{CLIENT_NAME}}`, `{{FLAVOR}}`, `{{APPLICATION_ID}}`, etc.). The template already contains the EyeSeeTea-wide `rules:` section (proposal/specs/design/tasks conventions); only the `context:` block needs fork-specific values. Do **not** create an `openspec/project.md` file — that name is legacy in OpenSpec ≥1.2.0 and triggers a migration warning. All project context goes into `config.yaml`.
 4. Convert each section of the Phase 3 `customization-specs.md` narrative draft into one `openspec/specs/<capability>/spec.md`:
    - folder name is kebab-case (e.g. `change-server-url`)
    - top-level `# heading` is the **human title** from the draft (e.g. `# Change Server URL`). This title is the string that MUST appear in code comments as `// EyeSeeTea customization - Change Server URL` and as the section heading in `customization-files.md`.
@@ -230,30 +224,31 @@ The app SHALL show an explicit warning dialog before applying the new server URL
 
 Configure Claude Code to assist with the upgrade process.
 
-### CLAUDE.md
+### What is already in the baseline
 
-Create a `CLAUDE.md` at the repository root with:
+When you bring `develop-eyeseetea` into the fork (Phase 1), you inherit:
 
-- project identity: app name, fork name, flavor, baseline branch
-- branch model: `develop-eyeseetea` is baseline, never merge Oslo directly
-- key documentation paths: `eyeseetea-docs/README.md`, `conflict-rules.md`, client specs
-- rules: same golden rules from `eyeseetea-docs/README.md`
-- reference to `openspec/` — Phase 4 is a prerequisite for Phase 5
+- `.claude/settings.json` — generic permissions for `./gradlew *`, `openspec *`, common `git *` and reads under `eyeseetea-docs/**` and `openspec/**`
+- `.claude/commands/opsx/*.md` — 4 OpenSpec commands (`/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive`)
+- `.claude/skills/openspec-*/SKILL.md` — 4 OpenSpec skills covering the same workflow
 
-### Agents (optional)
+These are generic and ready to use. **No action needed unless you want to extend them for your fork.**
 
-Create specialized agents under `.claude/agents/` if the team wants reusable automation:
+### CLAUDE.md (required)
 
-- `classify-conflicts.md` — classifies conflicted files using `conflict-rules.md` rules
-- `resolve-easy-conflicts.md` — resolves `accept_ours` and `accept_theirs` files automatically
+Copy `eyeseetea-docs/templates/CLAUDE.md.template` to `CLAUDE.md` at the repository root and fill in the placeholders (`{{CLIENT_NAME}}`, `{{FLAVOR}}`, `{{APPLICATION_ID}}`, `{{CURRENT_VERSION}}`, etc.). The template already includes the EyeSeeTea-wide rules (placement hierarchy, comment convention, automerge verification, post-merge check hierarchy, automation extraction rule); your customizations table and identity are the only fork-specific parts to fill.
+
+### Agents (optional, on demand)
+
+Do not create agents speculatively. Wait until a repetitive pattern emerges (3+ identical task structures during the upgrade) and then extract per the **Automation extraction rule** in `CLAUDE.md`. Examples that may surface:
+
+- `classify-conflicts.md` — classifies conflicted files using `conflict-rules.md`
+- `resolve-easy-conflicts.md` — resolves `accept_ours` / `accept_theirs` files automatically
 - `inventory-customizations.md` — analyzes diff and updates `customization-files.md`
 
-### Skills
+### Additional skills (optional)
 
-OpenSpec generates `.claude/skills/` and `.claude/commands/opsx/` automatically as part of `openspec init --tools claude` (Phase 4). Additional manual skills for repository-specific operations can be added here:
-
-- `/upgrade-status` — shows current upgrade progress from `upgrade-<version>-notes.md`
-- `/classify-conflicts` — runs conflict classification
+Beyond the 4 OpenSpec skills already in the baseline, you may add fork-specific skills under `.claude/skills/` if a need emerges (e.g., `/upgrade-status` reading `upgrade-<version>-notes.md`).
 
 ### Done when
 
@@ -326,11 +321,7 @@ Start with:
 1. Remove files that belong to absorbed or removed customizations.
 2. Remove leftover files from previous forks or clients that are not part of any active customization.
 3. Confirm section 3 of `customization-files.md` is empty or contains only items with an explicit reason and next action.
-<<<<<<< HEAD
 4. Ensure code comments use exact titles from `openspec/specs/<capability>/spec.md` top-level `#` heading: `// EyeSeeTea customization - [Title]`.
-=======
-4. Ensure ALL customization code has `// EyeSeeTea customization - [title]` comments with exact titles from `customization-specs.md` (see "Customization comment rule" above). This includes flavor files, new files, blocks at end of files, and inline changes. Never on import lines.
->>>>>>> parent of 7389d1043 (Revert "Merge branch 'develop-eyeseetea' into feature-widp/bring_last_changes_3_3_1")
 5. Run `python3 eyeseetea-docs/scripts/check_upgrade_docs.py --client <client>` to validate consistency.
 
 ### Done when
