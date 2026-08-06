@@ -81,7 +81,7 @@ import dhis2.org.analytics.charts.ui.di.AnalyticsFragmentModule;
 
 @PerUser
 @Subcomponent(modules = UserModule.class)
-public interface UserComponent extends UserComponentFlavor{
+public interface UserComponent {
 
     FilterPresenter filterPresenter();
 
@@ -191,8 +191,8 @@ public interface UserComponent extends UserComponentFlavor{
     SessionComponent plus(PinModule pinModule);
 
     @NonNull
-    ChangeServerURLComponent plus(ChangeServerURLModule changeServerURLModule);
-
-    @NonNull
     SchedulingComponent plus(SchedulingModule schedulingModule);
+
+    // EyeSeeTea customization - Change Server URL
+    ChangeServerURLComponent plus(ChangeServerURLModule changeServerURLModule);
 }

@@ -12,9 +12,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -74,11 +76,21 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         ServerComponent serverComponent = ((App) getApplicationContext()).getServerComponent();
 
+        // EyeSeeTea customization - Notifications system
         if (notificationsPresenter != null){
             notificationsPresenter.refresh(this);
         }
 
         super.onCreate(savedInstanceState);
+    }
+
+    // EyeSeeTea customization - Notifications system
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (notificationsPresenter != null) {
+            notificationsPresenter.refresh(this);
+        }
     }
 
     @Override
@@ -231,29 +243,29 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     }
 
     private void showNotification(Notification notification) {
-
-
         String content = getNotificationContent(notification);
+        Markwon markwon = Markwon.create(getContext());
 
-        new MaterialAlertDialogBuilder(this, R.style.DhisMaterialDialog)
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this, R.style.DhisMaterialDialog)
                 .setTitle("Notification")
                 .setMessage(content)
-                .setPositiveButton(getContext().getString(R.string.wipe_data_ok), (dialog, which) -> {
+                .setPositiveButton(getContext().getString(R.string.wipe_data_ok), (d, which) -> {
                     notificationsPresenter.markNotificationAsRead(notification);
                 })
                 .setCancelable(true)
                 .show();
+
+        TextView messageView = dialog.findViewById(android.R.id.message);
+        if (messageView != null) {
+            markwon.setMarkdown(messageView, content);
+        }
     }
 
     private String getNotificationContent(Notification notification) {
-        Markwon markwon = Markwon.create(getContext());
-
         String language = Locale.getDefault().getLanguage();
-
         if (notification.getTranslations() != null && notification.getTranslations().containsKey(language)) {
-            return String.valueOf(markwon.toMarkdown(notification.getTranslations().get(language)));
-        } else  {
-            return String.valueOf(markwon.toMarkdown(String.valueOf(markwon.toMarkdown(notification.getContent()))));
+            return notification.getTranslations().get(language);
         }
+        return notification.getContent();
     }
 }

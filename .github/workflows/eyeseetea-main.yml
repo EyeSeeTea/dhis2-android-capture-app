@@ -35,7 +35,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Run App unit tests
+      - name: Run App unit tests (widp flavor)
         run: ./gradlew :app:testWidpDebugUnitTest
 
       - name: Upload test results

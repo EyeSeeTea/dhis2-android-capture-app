@@ -1,3 +1,4 @@
+// EyeSeeTea customization - Notifications system
 /*
 package org.dhis2.usescases.notifications.di
 

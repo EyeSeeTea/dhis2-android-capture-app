@@ -30,6 +30,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
@@ -178,7 +179,7 @@ class CredentialsViewModelTest {
             whenever(getIsSessionLockedUseCase()) doReturn false
 
             whenever(
-                loginUser.invoke(any(), any(), any(), any()),
+                loginUser.invoke(any(), any(), any(), any(), anyOrNull()),
             ) doReturn LoginResult.Success(initialSyncDone = true, displayTrackingMessage = false)
 
             initViewModel()
@@ -223,7 +224,7 @@ class CredentialsViewModelTest {
             whenever(getIsSessionLockedUseCase()) doReturn false
 
             whenever(
-                loginUser.invoke(any(), any(), any(), any()),
+                loginUser.invoke(any(), any(), any(), any(), anyOrNull()),
             ) doReturn LoginResult.Error(errorMessage)
 
             initViewModel()
@@ -287,7 +288,7 @@ class CredentialsViewModelTest {
                 whenever(getIsSessionLockedUseCase()) doReturn false
 
                 whenever(biometricLogin.invoke()) doReturn Result.success(testPassword)
-                whenever(loginUser.invoke(any(), any(), any(), any())) doReturn
+                whenever(loginUser.invoke(any(), any(), any(), any(), anyOrNull())) doReturn
                     LoginResult.Success(
                         true,
                         false,
@@ -301,10 +302,11 @@ class CredentialsViewModelTest {
                     val updatedPasswordState = awaitItem()
                     assertEquals(testPassword, updatedPasswordState.credentialsInfo.password)
                     verify(loginUser).invoke(
-                        serverUrl = "https://test.server.org",
-                        username = "Joe",
-                        password = testPassword,
-                        isNetworkAvailable = true,
+                        serverUrl = eq("https://test.server.org"),
+                        username = eq("Joe"),
+                        password = eq(testPassword),
+                        isNetworkAvailable = eq(true),
+                        twoFactorCode = anyOrNull(),
                     )
                     cancelAndIgnoreRemainingEvents()
                 }
@@ -340,6 +342,7 @@ class CredentialsViewModelTest {
                         username = any(),
                         password = any(),
                         isNetworkAvailable = any(),
+                        twoFactorCode = anyOrNull(),
                     )
                     cancelAndIgnoreRemainingEvents()
                 }
@@ -356,7 +359,7 @@ class CredentialsViewModelTest {
             whenever(getIsSessionLockedUseCase()) doReturn false
 
             whenever(
-                loginUser.invoke(any(), any(), any(), any()),
+                loginUser.invoke(any(), any(), any(), any(), anyOrNull()),
             ) doReturn LoginResult.Success(initialSyncDone = true, displayTrackingMessage = false)
 
             initViewModel()
@@ -386,6 +389,7 @@ class CredentialsViewModelTest {
                     username = any(),
                     password = any(),
                     isNetworkAvailable = any(),
+                    twoFactorCode = anyOrNull(),
                 )
 
                 cancelAndIgnoreRemainingEvents()
@@ -402,7 +406,7 @@ class CredentialsViewModelTest {
             whenever(getIsSessionLockedUseCase()) doReturn false
 
             whenever(
-                loginUser.invoke(any(), any(), any(), any()),
+                loginUser.invoke(any(), any(), any(), any(), anyOrNull()),
             ) doReturn LoginResult.Success(initialSyncDone = true, displayTrackingMessage = false)
 
             initViewModel()
@@ -432,6 +436,7 @@ class CredentialsViewModelTest {
                     username = eq("secondUser"),
                     password = any(),
                     isNetworkAvailable = any(),
+                    twoFactorCode = anyOrNull(),
                 )
 
                 cancelAndIgnoreRemainingEvents()
@@ -448,7 +453,7 @@ class CredentialsViewModelTest {
             whenever(getIsSessionLockedUseCase()) doReturn false
 
             whenever(
-                loginUser.invoke(any(), any(), any(), any()),
+                loginUser.invoke(any(), any(), any(), any(), anyOrNull()),
             ) doReturn LoginResult.Success(initialSyncDone = true, displayTrackingMessage = false)
 
             initViewModel()
@@ -478,6 +483,7 @@ class CredentialsViewModelTest {
                     username = eq("user3"),
                     password = any(),
                     isNetworkAvailable = any(),
+                    twoFactorCode = anyOrNull(),
                 )
 
                 cancelAndIgnoreRemainingEvents()
@@ -496,7 +502,7 @@ class CredentialsViewModelTest {
             whenever(getIsSessionLockedUseCase()) doReturn false
 
             whenever(
-                loginUser.invoke(any(), any(), any(), any()),
+                loginUser.invoke(any(), any(), any(), any(), anyOrNull()),
             ) doReturn LoginResult.Error(errorMessage)
 
             initViewModel()
@@ -526,6 +532,7 @@ class CredentialsViewModelTest {
                     username = any(),
                     password = any(),
                     isNetworkAvailable = any(),
+                    twoFactorCode = anyOrNull(),
                 )
 
                 cancelAndIgnoreRemainingEvents()

@@ -29,14 +29,14 @@ abstract class BaseLogin(
             )
         }
 
+        // EyeSeeTea customization - 2FA support
         else -> {
             when (val exception = result.exceptionOrNull()) {
-                is TwoFactorRequiredException -> {
+                is TwoFactorRequiredException ->
                     LoginResult.TwoFactorError(
                         type = exception.type,
-                        message = exception.message,
+                        message = exception.errorMessage,
                     )
-                }
                 else -> LoginResult.Error(exception?.message)
             }
         }

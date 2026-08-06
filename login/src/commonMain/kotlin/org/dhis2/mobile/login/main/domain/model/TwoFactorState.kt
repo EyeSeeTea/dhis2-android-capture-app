@@ -1,7 +1,7 @@
 package org.dhis2.mobile.login.main.domain.model
 
 /**
- * EyeSeeTea customization - Two Factor Authentication State
+ * EyeSeeTea customization - 2FA support
  * Represents the different states of 2FA verification during login
  */
 sealed class TwoFactorState(val code: String) {

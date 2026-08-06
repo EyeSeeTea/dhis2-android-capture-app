@@ -57,6 +57,7 @@ class FieldViewModelFactoryImpl(
         eventCategories: List<EventCategory>?,
         periodSelector: PeriodSelector?,
         customIntentModel: CustomIntentModel?,
+        // EyeSeeTea customization - URL data element field
         url: String?
     ): FieldUiModel {
         isNull(valueType, "type must be supplied")
@@ -107,6 +108,7 @@ class FieldViewModelFactoryImpl(
             eventCategories = eventCategories,
             periodSelector = periodSelector,
             customIntent = customIntentModel,
+            // EyeSeeTea customization - URL data element field
             url = url,
         )
     }
@@ -134,7 +136,6 @@ class FieldViewModelFactoryImpl(
             null,
             null,
             true,
-            null,
             0,
             0,
             0,
@@ -174,7 +175,6 @@ class FieldViewModelFactoryImpl(
             null,
             null,
             isOpen,
-            null,
             totalFields,
             completedFields,
             0,
@@ -206,7 +206,6 @@ class FieldViewModelFactoryImpl(
             null,
             null,
             false,
-            null,
             0,
             0,
             0,

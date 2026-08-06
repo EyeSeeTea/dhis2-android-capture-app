@@ -226,7 +226,8 @@ open class PreferenceProviderImpl(
 
     // endregion
 
+    // EyeSeeTea customization - Change Server URL
     override fun updateServerURL(serverUrl: String) {
-        sharedPreferences.edit().putString(SECURE_SERVER_URL, serverUrl).apply()
+        setValue(SECURE_SERVER_URL, serverUrl)
     }
 }

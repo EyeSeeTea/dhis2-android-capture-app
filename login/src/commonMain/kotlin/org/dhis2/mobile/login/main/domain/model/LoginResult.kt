@@ -11,7 +11,7 @@ sealed interface LoginResult {
     ) : LoginResult
 
     /**
-     * EyeSeeTea customization - Two Factor Authentication Error
+     * EyeSeeTea customization - 2FA support
      * @param type The type of 2FA required (TOTP, EMAIL, SMS)
      * @param message Message from the repository (can be error or info message)
      */

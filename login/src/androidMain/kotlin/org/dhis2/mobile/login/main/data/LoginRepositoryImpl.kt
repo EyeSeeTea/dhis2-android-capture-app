@@ -97,6 +97,7 @@ class LoginRepositoryImpl(
         username: String,
         password: String,
         isNetworkAvailable: Boolean,
+        // EyeSeeTea customization - 2FA support
         twoFactorCode: String?,
     ) = withContext(dispatcher.io) {
         try {
@@ -104,7 +105,7 @@ class LoginRepositoryImpl(
             kotlin.Result.success(Unit)
         } catch (e: Exception) {
             if (e is D2Error && isTwoFactorError(e.errorCode())) {
-                // EyeSeeTea customization - Detect 2FA errors
+                // EyeSeeTea customization - 2FA support
                 handleTwoFactorError(e, isNetworkAvailable)
             } else {
                 kotlin.Result.failure(
@@ -185,8 +186,7 @@ class LoginRepositoryImpl(
     override suspend fun initialSyncDone(
         serverUrl: String,
         username: String,
-    ): Boolean =
-        withContext(dispatcher.io) { isImportedDatabase(serverUrl, username) or entryExists() }
+    ): Boolean = withContext(dispatcher.io) { isImportedDatabase(serverUrl, username) or entryExists() }
 
     override suspend fun canLoginWithBiometrics(serverUrl: String): Boolean =
         withContext(dispatcher.io) {
@@ -255,10 +255,6 @@ class LoginRepositoryImpl(
                 crashReportController.trackServer(
                     currentAccount?.serverUrl(),
                     systemInfo?.version(),
-                )
-                crashReportController.trackUser(
-                    currentAccount?.username(),
-                    currentAccount?.serverUrl(),
                 )
             }
         }
@@ -423,7 +419,7 @@ class LoginRepositoryImpl(
             }
         }
 
-    // EyeSeeTea customization -
+    // EyeSeeTea customization - 2FA support
     private fun isTwoFactorError(errorCode: D2ErrorCode): Boolean {
         return errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE ||
                 errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP ||

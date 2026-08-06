@@ -37,7 +37,8 @@ interface FieldViewModelFactory {
         eventCategories: List<EventCategory>? = null,
         periodSelector: PeriodSelector? = null,
         customIntentModel: CustomIntentModel? = null,
-        url: String?,
+        // EyeSeeTea customization - URL data element field
+        url: String? = null,
     ): FieldUiModel
 
     fun createSingleSection(singleSectionName: String): FieldUiModel

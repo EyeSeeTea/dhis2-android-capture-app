@@ -59,10 +59,6 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(kotlin("test"))
-                // Koin Test features
-                implementation(libs.koin.test)
-                implementation(libs.koin.test.junit5)
-                implementation(libs.koin.test.junit4)
                 implementation(libs.test.turbine)
                 implementation(libs.test.kotlinCoroutines)
                 implementation(libs.test.mockitoKotlin)
@@ -137,10 +133,11 @@ android {
         create("dhis2Training") {
             buildConfigField("String", "LOGIN_TEST", "\"test\"")
         }
-        create("widp") {
+        create("eyeseetea") {
             buildConfigField("String", "LOGIN_TEST", "\"test\"")
         }
-        create("psi") {
+        // EyeSeeTea customization - 2FA support
+        create("widp") {
             buildConfigField("String", "LOGIN_TEST", "\"test\"")
         }
     }

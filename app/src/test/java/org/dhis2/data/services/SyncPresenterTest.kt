@@ -48,6 +48,8 @@ class SyncPresenterTest {
     private val analyticsHelper: AnalyticsHelper = mock()
     private val syncStatusController: SyncStatusController = mock()
     private val syncRepository: SyncRepository = mock()
+
+    // EyeSeeTea customization - Notifications system
     private val notificationRepository: NotificationRepository = mock()
 
     @Before
@@ -60,7 +62,8 @@ class SyncPresenterTest {
                 analyticsHelper,
                 syncStatusController,
                 syncRepository,
-                notificationRepository
+                // EyeSeeTea customization - Notifications system
+                notificationRepository,
             )
     }
 

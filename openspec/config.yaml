@@ -1,0 +1,124 @@
+schema: spec-driven
+
+context: |
+  # DHIS2 Android Capture App — WIDP fork
+
+  This repository is the WIDP fork of `dhis2/dhis2-android-capture-app`, maintained by
+  EyeSeeTea. It tracks an upstream release (Oslo-based) plus a small set of
+  client-specific customizations required by the WIDP programme.
+
+  OpenSpec is used here to:
+    - Document WIDP-specific capabilities as durable specs (not just commit history).
+    - Plan periodic upgrades from upstream as explicit `changes/` proposals.
+    - Give an AI assistant enough project context to help with merges, conflict
+      resolution and regression testing.
+
+  ## Identity
+
+    - Upstream repo:      dhis2/dhis2-android-capture-app
+    - Fork owner:         EyeSeeTea (EyeSeeTea/dhis2-android-capture-app)
+    - Active flavor:      widp
+    - Flavor source sets: app/src/widp/, app/src/widpDebug/, app/src/widpRelease/
+    - Application ID:     com.eyeseetea.widp
+    - Current version:    3.3.0.1-widp-fork-1 (target: 3.3.1-widp-fork-1)
+    - Upgrade branch:     feature-widp/bring_last_changes_3_3_1
+    - Base branch:        develop-eyeseetea
+    - SDK fork:           EyeSeeTea/dhis2-android-sdk (carries 2FA + auth patches)
+
+  ## Repository layout (relevant)
+
+    - app/                             — Android app module (multi-flavor Gradle)
+    - app/src/main/                    — shared code across all flavors
+    - app/src/widp{,Debug,Release}/    — WIDP-only code, resources, manifests
+    - commons/, commonskmm/, form/,
+      compose-table/                   — shared modules
+    - dhis2-android-sdk/               — local checkout of the SDK fork (if present)
+    - eyeseetea-docs/                  — human-facing upgrade/customization docs
+    - openspec/                        — machine-checkable specs + changes (this tree)
+
+  ## Customization code placement hierarchy
+
+  When introducing or preserving a WIDP-specific change, pick the FIRST applicable
+  option:
+
+    1. Flavor source set (app/src/widp/...). Prefer for resources, manifests, and
+       anything that can live as a widp override file.
+    2. New file in shared code, marked with a header comment
+       "// EyeSeeTea customization - <spec title>". Prefer when the change is a
+       self-contained class, module, or DI component.
+    3. Append at the end of an existing shared file, with a clear
+       "// EyeSeeTea customization - <spec title>" comment. Prefer this to reduce
+       conflict surface with upstream.
+    4. Inline edit inside an existing shared file. Only when nothing above is
+       feasible (e.g., a one-line branch inside an upstream function). Keep it
+       minimal and wrap multi-line blocks with
+       "// EyeSeeTea customization - <spec title> — begin/end" markers.
+
+  Why this order matters: every line touched inside an Oslo file is a future merge
+  conflict. Minimizing in-place edits is the single biggest lever we have to keep
+  upgrades cheap. This rule is enforced in code review and when an AI assistant
+  proposes edits.
+
+  ## Upgrade model
+
+  Upgrades are modeled as OpenSpec "changes" under `openspec/changes/`. Each upgrade:
+    - Lists the upstream target version in its proposal.
+    - Preserves all active WIDP capabilities unchanged at the requirements level —
+      only the implementation baseline moves.
+    - Documents conflict resolution strategy in design.md.
+    - Breaks work into ordered tasks.md mirroring the phases in
+      `eyeseetea-docs/upgrade/widp/upgrade-3.3.1-strategy.md`.
+
+  Human-facing upgrade docs live in `eyeseetea-docs/upgrade/widp/`. OpenSpec is the
+  machine-checkable mirror, not a replacement.
+
+  ## Active WIDP capabilities (as of 2026-04-15)
+
+    | Capability                     | Spec folder             | Risk   | Status |
+    |--------------------------------|-------------------------|--------|--------|
+    | Change server URL at runtime   | change-server-url       | medium | active |
+    | Image upload without resizing  | image-upload-no-resize  | low    | active |
+    | WIDP notifications system      | notifications           | high   | active |
+    | Two-factor authentication      | two-factor-auth         | medium | active |
+    | URL data element field         | url-data-element        | medium | broken |
+
+  The URL data element rendering is broken: data plumbing is intact but the
+  rendering was lost during the upstream migration of forms to Jetpack Compose.
+  Restoring it is tracked in `openspec/changes/upgrade-widp-to-3.3.1/`.
+
+  For the technical file-level inventory see
+  `eyeseetea-docs/customizations/widp/customization-files.md`. For manual
+  validation flows see `eyeseetea-docs/upgrade/widp/upgrade-validation-checklist.md`.
+  Functional behavior (the "what" the app must do) lives only in this OpenSpec
+  tree — the previous `customization-specs.md` file has been removed for WIDP.
+
+  ## Out of scope for OpenSpec (here)
+
+    - Upstream Oslo behavior that WIDP inherits unchanged — documented upstream.
+    - Build system, signing, release scripts — live in eyeseetea-docs/ and Jenkinsfile.
+    - Other flavors (dhis2, psi, etc.) — this OpenSpec tree is WIDP-only.
+
+rules:
+  proposal:
+    - "Always state the upstream target version explicitly in the Why or Impact section when the change is an upstream upgrade."
+    - "Under Impact, call out which files live in app/src/widp/** vs shared code, so reviewers can assess conflict surface before approving."
+    - "When proposing a new WIDP customization, justify why it cannot live entirely in the widp flavor source set before falling back to shared-file edits."
+
+  specs:
+    - "Spec folders and file names use kebab-case and match the `openspec/specs/<capability>/spec.md` layout."
+    - "Use SHALL and MUST for normative requirements. Avoid should/may."
+    - "Every Requirement has at least one `#### Scenario:` with WHEN/THEN."
+    - "Scenarios use exactly 4 hashtags (####). 3 hashtags or bullets fail silently."
+    - "Specs describe behavior, not implementation. Do not reference specific Kotlin classes, DI components, or file paths inside requirement text. Move those to design.md or tasks.md."
+    - "When documenting a WIDP customization, include the placement hierarchy consequence in the purpose section if relevant (e.g., why this change cannot live in the widp flavor alone)."
+
+  design:
+    - "Every design.md for a WIDP change references `eyeseetea-docs/upgrade/conflict-rules.md` when touching shared code that has a history of upstream conflicts."
+    - "Call out SDK fork dependencies explicitly. If a capability requires an EyeSeeTea SDK patch, list the patch surface (classes / error codes) in the Decisions section."
+    - "For upgrade changes, classify expected conflict areas using the four categories from conflict-rules.md: accept_ours, accept_theirs, manual_reapply_on_theirs, defer_after_build_verification."
+
+  tasks:
+    - "Upgrade tasks follow the phase order from `eyeseetea-docs/upgrade/widp/upgrade-3.3.1-strategy.md`: Documentation → OpenSpec → Claude tooling → Upgrade execution → Tests and cleanup."
+    - "Each task is small enough to complete in one focused session. Tasks that span multiple customizations must be split per customization."
+    - "Tests for WIDP customizations are prioritized by risk: notifications > change-server-url > 2fa > image-upload > url-data-element."
+    - "Every customization-preservation task has a matching manual-validation entry in `eyeseetea-docs/upgrade/widp/upgrade-validation-checklist.md`."

@@ -19,8 +19,6 @@ interface PreferenceProvider {
 
     fun getBiometricCredentials(): CiphertextWrapper?
 
-    fun updateServerURL(serverUrl: String)
-
     fun areCredentialsSet(): Boolean
 
     fun areSameCredentials(
@@ -100,4 +98,7 @@ interface PreferenceProvider {
         key: String,
         default: List<String>,
     ): List<String>
+
+    // EyeSeeTea customization - Change Server URL
+    fun updateServerURL(serverUrl: String)
 }

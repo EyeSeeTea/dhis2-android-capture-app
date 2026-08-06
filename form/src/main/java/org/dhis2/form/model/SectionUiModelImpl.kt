@@ -31,7 +31,6 @@ data class SectionUiModelImpl(
     override val keyboardActionType: KeyboardActionType? = null,
     override val fieldMask: String? = null,
     var isOpen: Boolean? = false,
-    override val url: String? = null,
     var totalFields: Int = 0,
     var completedFields: Int = 0,
     var errors: Int = 0,
@@ -46,6 +45,8 @@ data class SectionUiModelImpl(
     override val eventCategories: List<EventCategory>? = null,
     override val periodSelector: PeriodSelector? = null,
     override var customIntent: CustomIntentModel? = null,
+    // EyeSeeTea customization - URL data element field
+    override val url: String? = null,
 ) : FieldUiModel {
     private var sectionNumber: Int = 0
     private var showBottomShadow: Boolean = false

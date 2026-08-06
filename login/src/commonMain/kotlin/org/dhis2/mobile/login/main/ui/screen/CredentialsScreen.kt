@@ -209,7 +209,7 @@ fun CredentialsScreen(
                 }
             },
         )
-        // EyeSeeTea customization - Two Factor Authentication fields
+        // EyeSeeTea customization - 2FA support
         if (screenState.twoFactorState != null) {
             TwoFactorContainer(
                 twoFactorState = screenState.twoFactorState!!,
@@ -223,7 +223,7 @@ fun CredentialsScreen(
         LoginStatus(
             isLoggingIn = isLoggingIn,
             loginErrorMessage = screenState.errorMessage,
-            loginInfoMessage = screenState.infoMessage,
+            loginInfoMessage = screenState.infoMessage, // EyeSeeTea customization - 2FA support
             onCancelLogin = viewModel::cancelLogin,
         )
         if (isLoggingIn.not()) {
@@ -476,7 +476,7 @@ private fun getInputState(
 private fun LoginStatus(
     isLoggingIn: Boolean,
     loginErrorMessage: String?,
-    loginInfoMessage: String?,
+    loginInfoMessage: String?, // EyeSeeTea customization - 2FA support
     onCancelLogin: () -> Unit,
 ) {
     if (isLoggingIn) {
@@ -504,7 +504,7 @@ private fun LoginStatus(
             },
         )
     } else if (loginInfoMessage != null) {
-        // EyeSeeTea customization - Show info message in blue (e.g., "Email with two factor code sent")
+        // EyeSeeTea customization - 2FA support
         InfoBar(
             modifier = Modifier,
             text = loginInfoMessage,
@@ -770,7 +770,7 @@ private fun BiometricsDialog(onPermissionResult: (granted: Boolean) -> Unit) {
     )
 }
 
-// EyeSeeTea customization - Two Factor Authentication container
+// EyeSeeTea customization - 2FA support
 @Composable
 private fun TwoFactorContainer(
     twoFactorState: TwoFactorState,
@@ -780,10 +780,11 @@ private fun TwoFactorContainer(
     onResendEmail: () -> Unit,
     onResendSms: () -> Unit,
 ) {
-    // EyeSeeTea customization - Preserve cursor position by not resetting on twoFactorCode changes
-    // Use twoFactorState type as key to only reset when 2FA type changes (TOTP -> Email -> SMS)
-    // This prevents the cursor from jumping to the beginning when the user types
-    // Pattern follows InputProvider.kt: use a stable key (type) instead of the value
+    // EyeSeeTea customization - 2FA support
+    // Preserve cursor position by not resetting on twoFactorCode changes:
+    // use twoFactorState type as key to only reset when 2FA type changes (TOTP -> Email -> SMS).
+    // This prevents the cursor from jumping to the beginning when the user types.
+    // Pattern follows InputProvider.kt: use a stable key (type) instead of the value.
     val twoFactorTypeKey = when (twoFactorState) {
         is TwoFactorState.TotpVerification -> "TOTP"
         is TwoFactorState.EmailVerification -> "EMAIL"
@@ -894,3 +895,4 @@ private fun TwoFactorContainer(
         }
     }
 }
+

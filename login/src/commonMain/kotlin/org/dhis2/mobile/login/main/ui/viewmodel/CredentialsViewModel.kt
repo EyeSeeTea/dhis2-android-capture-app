@@ -9,13 +9,14 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import org.dhis2.mobile.commons.domain.invoke
 import org.dhis2.mobile.commons.extensions.launchUseCase
 import org.dhis2.mobile.commons.extensions.withMinimumDuration
 import org.dhis2.mobile.commons.network.NetworkStatusProvider
 import org.dhis2.mobile.login.main.domain.model.LoginResult
-import org.dhis2.mobile.login.main.domain.model.LoginScreenState
 import org.dhis2.mobile.login.main.domain.model.TwoFactorState
 import org.dhis2.mobile.login.main.domain.model.TwoFactorType
+import org.dhis2.mobile.login.main.domain.model.LoginScreenState
 import org.dhis2.mobile.login.main.domain.usecase.BiometricLogin
 import org.dhis2.mobile.login.main.domain.usecase.GetAvailableUsernames
 import org.dhis2.mobile.login.main.domain.usecase.GetBiometricInfo
@@ -88,6 +89,7 @@ class CredentialsViewModel(
             hasOtherAccounts = false,
             isSessionLocked = false,
             displayBiometricsDialog = false,
+            // EyeSeeTea customization - 2FA support
             twoFactorState = null,
             twoFactorCode = "",
             infoMessage = null,
@@ -134,6 +136,7 @@ class CredentialsViewModel(
                     hasOtherAccounts = getHasOtherAccounts(),
                     isSessionLocked = getIsSessionLockedUseCase(),
                     displayBiometricsDialog = biometricInfo.canUseBiometrics && !fromHome,
+                    // EyeSeeTea customization - 2FA support
                     twoFactorState = null,
                     twoFactorCode = "",
                     infoMessage = null,
@@ -158,7 +161,7 @@ class CredentialsViewModel(
                         LoginState.Disabled
                     },
                 errorMessage = null,
-                infoMessage = null,
+                infoMessage = null, // EyeSeeTea customization - 2FA support
             )
         }
     }
@@ -179,7 +182,7 @@ class CredentialsViewModel(
                         LoginState.Disabled
                     },
                 errorMessage = null,
-                infoMessage = null,
+                infoMessage = null, // EyeSeeTea customization - 2FA support
             )
         }
     }
@@ -191,6 +194,7 @@ class CredentialsViewModel(
                 username = _credentialsScreenState.value.credentialsInfo.username,
                 password = _credentialsScreenState.value.credentialsInfo.password,
                 isNetworkAvailable = isNetworkOnline.value,
+                // EyeSeeTea customization - 2FA support
                 twoFactorCode = _credentialsScreenState.value.twoFactorCode.takeIf {
                     _credentialsScreenState.value.twoFactorState != null
                 },
@@ -252,8 +256,8 @@ class CredentialsViewModel(
                             },
                         twoFactorState = null,
                         twoFactorCode = "",
-                        errorMessage = null, // EyeSeeTea customization - Clear error message on successful login
-                        infoMessage = null, // EyeSeeTea customization - Clear info message on successful login
+                        errorMessage = null, // EyeSeeTea customization - 2FA support
+                        infoMessage = null, // EyeSeeTea customization - 2FA support
                     )
                 }
             }
@@ -266,7 +270,7 @@ class CredentialsViewModel(
                 }
             }
 
-            // EyeSeeTea customization - Two Factor Authentication required
+            // EyeSeeTea customization - 2FA support
             is LoginResult.TwoFactorError -> {
                 _credentialsScreenState.update {
                     val code = it.twoFactorState?.code ?: ""
@@ -283,18 +287,19 @@ class CredentialsViewModel(
                             resendEnabled = true
                         )
                     }
-                    
-                    // EyeSeeTea customization - Determine if message is error or info based on 2FA type
-                    // EMAIL_TWO_FACTOR_CODE_SENT and SMS_TWO_FACTOR_CODE_SENT are info messages (blue)
-                    // INCORRECT_TWO_FACTOR_CODE_* are error messages (red)
-                    // For TOTP: show error only if field is already visible
+
+                    // EyeSeeTea customization - 2FA support
+                    // Determine if the message is error or info based on 2FA type:
+                    // EMAIL_TWO_FACTOR_CODE_SENT and SMS_TWO_FACTOR_CODE_SENT are info messages (blue).
+                    // INCORRECT_TWO_FACTOR_CODE_* are error messages (red).
+                    // For TOTP: show error only if the field is already visible.
                     val isInfoMessage = result.type == TwoFactorType.EMAIL || result.type == TwoFactorType.SMS
                     val shouldShowError = when {
                         isInfoMessage -> false // EMAIL/SMS code sent is always info
                         it.twoFactorState == null && result.type == TwoFactorType.TOTP -> false // First time TOTP, don't show error
                         else -> true // TOTP code incorrect or other errors
                     }
-                    
+
                     it.copy(
                         twoFactorState = newTwoFactorState,
                         errorMessage = if (shouldShowError && result.message != null) result.message else null,
@@ -430,7 +435,7 @@ class CredentialsViewModel(
         }
     }
 
-    // EyeSeeTea customization - Two Factor Authentication methods
+    // EyeSeeTea customization - 2FA support
     fun updateTwoFactorCode(code: String) {
         _credentialsScreenState.update {
             val updatedState = when (val currentState = it.twoFactorState) {

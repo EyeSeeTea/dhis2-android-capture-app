@@ -23,7 +23,11 @@ fun FieldUiModel.supportingText() =
                 SupportingTextState.WARNING,
             )
         },
-        description?.let {
+        // EyeSeeTea customization - URL data element field
+        listOfNotNull(
+            description?.takeIf { it.isNotBlank() },
+            url?.takeIf { it.isNotBlank() },
+        ).joinToString("\n").takeIf { it.isNotBlank() }?.let {
             SupportingTextData(
                 it,
                 SupportingTextState.DEFAULT,
