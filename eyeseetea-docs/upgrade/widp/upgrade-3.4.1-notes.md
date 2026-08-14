@@ -234,6 +234,32 @@ which is what it should have been doing all along.
 - manual flows checked: none yet — the whole checklist in
   `upgrade-validation-checklist.md` is still outstanding.
 
+## Known tooling inconsistency (pre-existing, not introduced by this upgrade)
+
+`check_upgrade_docs.py --client widp` ends with one remaining issue:
+
+```
+code comment title 'Include SDK's modules' not documented in selected client docs
+```
+
+`settings.gradle.kts` carries `// EyeSeeTea customization - Include SDK's modules` on the
+composite-build block. The script requires every comment title to exist as a **heading** in the
+inventory or specs, and every such heading to have both a spec and a manual-validation entry. But
+`openspec/config.yaml` states that the build system is explicitly out of OpenSpec scope, so this
+marker can never satisfy the rule.
+
+Not fixed here, deliberately: `settings.gradle.kts` and the comment are inherited from the shared
+EyeSeeTea baseline. Changing them in a client PR would create exactly the cross-branch drift the
+fork rules exist to prevent.
+
+**Proposed fix, for the baseline:** either reserve the `EyeSeeTea customization - <Title>` prefix
+for functional capabilities and use a different marker for build tooling, or teach
+`check_upgrade_docs.py` an explicit allowlist for build-level titles.
+
+Also worth fixing in the script: when `develop-eyeseetea` does not exist as a **local** branch, the
+git error message is used as a file path, producing `OSError: File name too long` instead of a
+clear diagnostic.
+
 ## Process improvement proposed for `conflict-rules.md`
 
 Every one of the four build failures was findable statically, in minutes, instead of through

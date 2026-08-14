@@ -9,8 +9,11 @@ Technical inventory of the WIDP customization surface on top of `develop-eyeseet
 - Base branch: `develop-eyeseetea`
 - Base commit: `b1e8cdb9b`
 - Generated on: `2026-03-25`
-- Last updated: `2026-04-20`
-- Working tree status: `clean` (post-merge to 3.3.1, build OK, Notifications wiring restored)
+- Last updated: `2026-08-14`
+- Working tree status: `clean` (post-merge to **3.4.1**, build OK, ktlint OK, unit tests OK).
+  Manual validation still outstanding — see
+  `eyeseetea-docs/upgrade/widp/upgrade-validation-checklist.md`.
+- Upstream version: `3.4.1` / `3.4.1-widp-fork-1`, vCode 156, SDK `1.14.1-eyeseetea-fork-1`
 
 This file is intentionally separate from `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md`:
 - `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md` documents the shared EyeSeeTea reference branch
@@ -39,9 +42,13 @@ Originally 8 customizations were assumed. After verification against `develop-ey
 
 ### 1.1 WIDP flavor code
 
-- `app/src/widp/java/org.dhis2.utils/CustomizableConstants.kt`
-- `app/src/widp/java/org.dhis2.utils/granularsync/GranularSyncModule.kt`
+- `app/src/widp/java/org/dhis2/utils/CustomizableConstants.kt`
+- `app/src/widp/java/org/dhis2/utils/granularsync/GranularSyncModule.kt` — flavor-scoped Dagger module. Carries **no** client-specific logic; it must simply track the canonical version in `app/src/dhis2/java/…`
+- `app/src/widp/java/org/dhis2/usescases/main/domain/DownloadNewVersion.kt` — required from 3.4: upstream ships this use case per flavor and provides it only for its own flavors
 - `app/src/widp/java/org/dhis2/data/user/UserComponentFlavor.kt`
+
+> The malformed path `app/src/widp/java/org.dhis2.utils/` (dots instead of directory separators)
+> was corrected during the 3.4.1 upgrade.
 
 ### 1.2 WIDP flavor resources and branding
 
@@ -66,10 +73,10 @@ Supporting files:
 - `app/src/widp/res/menu/main_menu.xml` (menu entry for change URL)
 
 DI wiring (shared files with WIDP-only bindings):
-- `app/src/main/java/org/dhis2/App.java` — `ChangeServerURLComponent` holder + plus(ChangeServerURLModule)
+- `app/src/main/java/org/dhis2/App.kt` — `changeServerURLComponent` holder, `createChangeServerULComponent()` and `releaseChangeServerURLComponent()` (was `App.java` until 3.4.1)
 - `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` — opens the change-server dialog from the WIDP main menu action
 - `app/src/main/java/org/dhis2/data/user/UserComponent.java` — `plus(ChangeServerURLModule)` subcomponent
-- `app/src/main/res/values/strings.xml` — change server URL strings
+- `app/src/main/res/values/strings.xml` — change server URL strings, **plus `url_hint` and `login_https`**, which upstream deleted in 3.4.1 and the dialog layout still needs
 - `commons/src/main/java/org/dhis2/commons/prefs/PreferenceProvider.kt` — preference API used to persist the overridden server URL
 - `commons/src/main/java/org/dhis2/commons/prefs/PreferenceProviderImpl.kt` — preference implementation used by the presenter
 
@@ -100,6 +107,7 @@ Domain layer (all new files):
 - `app/src/main/java/org/dhis2/usescases/notifications/domain/NotificationRepository.kt` — repository interface
 - `app/src/main/java/org/dhis2/usescases/notifications/domain/GetNotifications.kt` — use case
 - `app/src/main/java/org/dhis2/usescases/notifications/domain/MarkNotificationAsRead.kt` — use case
+- `app/src/main/java/org/dhis2/usescases/notifications/domain/SyncNotifications.kt` — use case (added in 3.4.1; wraps `NotificationRepository.sync()` now that the metadata-sync hook is gone)
 - `app/src/main/java/org/dhis2/usescases/notifications/domain/User.kt` — user model
 - `app/src/main/java/org/dhis2/usescases/notifications/domain/UserRepository.kt` — user repository interface
 
@@ -110,21 +118,27 @@ Presentation layer (all new files):
 
 UI integration (modified existing files):
 - `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements NotificationsView, renders dialogs, handles translations via `getNotificationContent()`, Markwon rendering, triggers `notificationsPresenter.refresh(this)` in `onCreate` and `onResume`
-- `app/src/main/java/org/dhis2/data/service/SyncPresenterImpl.kt` — calls `syncNotifications()` during metadata sync
-- `app/src/main/java/org/dhis2/usescases/main/MainView.kt` — exposes `markShowNotificationsAsPending()` and `refreshNotifications()` on the view contract
-- `app/src/main/java/org/dhis2/usescases/main/MainPresenter.kt` — triggers pending/refresh in `checkSingleProgramNavigation()` after sync completes
-- `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` — overrides view methods delegating to `notificationsPresenter`; triggers pending/refresh on `sync_manager` and `menu_home` navigation
+- `app/src/main/java/org/dhis2/usescases/main/MainViewModel.kt` — emits `HomeEffect.SyncNotifications` when a sync finishes (`running == false`)
+- `app/src/main/java/org/dhis2/usescases/main/ui/model/HomeEffect.kt` — `SyncNotifications` effect
+- `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` — handles `HomeEffect.SyncNotifications` → `notificationsPresenter.syncNotifications()`; marks pending on `HomeEffect.SingleProgramNavigation`; marks pending on `sync_manager`, and marks pending + refreshes on `menu_home`
+- `app/src/main/java/org/dhis2/usescases/main/program/ProgramFragment.kt` — historical integration point, no marker
+No longer part of this customization after 3.4.1 (kept here so the inventory cross-check can
+resolve the paths touched by the feat commits):
+
+- `app/src/main/java/org/dhis2/data/service/SyncPresenterImpl.kt` — **no longer customized**: upstream moved metadata sync to the `:sync` module and the class no longer takes `NotificationRepository`
+- `app/src/main/java/org/dhis2/usescases/main/MainView.kt` — **deleted upstream** in 3.4 (MVP → MVVM); call path ported to the effects above
+- `app/src/main/java/org/dhis2/usescases/main/MainPresenter.kt` — **deleted upstream** in 3.4 (MVP → MVVM); call path ported to the effects above
 - `app/src/main/java/org/dhis2/usescases/main/program/ProgramFragment.kt` — historical program-dashboard integration point used by the original on-resume notification flow
 - `app/src/main/java/org/dhis2/usescases/main/program/ProgramModule.kt` — historical wiring for the program-dashboard notification flow
 - `app/src/main/java/org/dhis2/usescases/main/MainModule.kt` — historical Dagger wiring for notifications in the main screen
 
 DI wiring (shared files with WIDP-only bindings):
-- `app/src/main/java/org/dhis2/App.java` — NotificationsModule instantiation in component builder
+- `app/src/main/java/org/dhis2/App.kt` — `.notificationsModule(NotificationsModule())` in the component builder (was `App.java` until 3.4.1)
 - `app/src/main/java/org/dhis2/AppComponent.java` — NotificationsModule in `@Component(modules)` + Builder method
-- `app/src/main/java/org/dhis2/data/service/SyncInitWorkerModule.kt` — `notificationRepository` parameter
-- `app/src/main/java/org/dhis2/data/service/SyncDataWorkerModule.kt` — `notificationRepository` parameter
-- `app/src/main/java/org/dhis2/data/service/SyncMetadataWorkerModule.kt` — `notificationRepository` parameter
-- `app/src/main/java/org/dhis2/data/service/SyncGranularRxModule.kt` — `notificationRepository` parameter
+- `app/src/main/java/org/dhis2/data/service/SyncInitWorkerModule.kt` — **deleted upstream** in 3.4: worker moved to the `:sync` module and is registered with Koin, leaving this Dagger module without a consumer
+- `app/src/main/java/org/dhis2/data/service/SyncDataWorkerModule.kt` — **deleted upstream** in 3.4, same reason
+- `app/src/main/java/org/dhis2/data/service/SyncMetadataWorkerModule.kt` — **deleted upstream** in 3.4, same reason
+- `app/src/main/java/org/dhis2/data/service/SyncGranularRxModule.kt` — **no longer customized** (the `notificationRepository` argument went with `SyncPresenterImpl`)
 
 SharedPreferences layer (all WIDP additions on top of commons):
 - `commons/src/main/java/org/dhis2/commons/prefs/Preference.kt` — `NOTIFICATIONS` key
@@ -144,6 +158,12 @@ Tests:
 ### 2.4 2FA support
 
 Status: `active`
+
+> 3.4.1 note: `login/build.gradle.kts` is no longer a customization point. Upstream migrated
+> `:login` to the KMP `androidLibrary {}` DSL and removed the whole `productFlavors` block for
+> every flavor. The `create("widp")` entry only declared a `LOGIN_TEST` buildConfigField identical
+> to the other flavors'; the 2FA implementation lives in `commonMain`/`androidMain` and is
+> unaffected.
 
 New files (not in develop-eyeseetea):
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorState.kt` — sealed class (TotpVerification, EmailVerification, SmsVerification) + TwoFactorType enum
@@ -249,6 +269,38 @@ Status: `active`
 - `c556b7ab7` — Implement show data element url (original, Nov 2022; rendering reimplemented 2026-04-17 in `FieldUiModelExtensions.supportingText()`)
 
 ## 5. Notes
+
+### Build-level marker: "Include SDK's modules"
+
+`settings.gradle.kts` carries `// EyeSeeTea customization - Include SDK's modules`: the
+composite-build support that resolves the DHIS2 SDK either from a local checkout or from JitPack,
+driven by `dhis2.useLocalSdk`. See `eyeseetea-docs/SDK_Setup.md`.
+
+It is documented here as a note rather than as a numbered customization section on purpose:
+`openspec/config.yaml` puts the build system explicitly out of OpenSpec scope, and
+`check_upgrade_docs.py` requires every numbered section to have a matching spec **and** a manual
+validation entry. It is also inherited from the shared EyeSeeTea baseline, not WIDP-specific.
+
+It was undocumented until the 3.4.1 upgrade flagged it.
+
+### 3.4.1 upgrade — files that gained a marker
+
+These four carried customization content but no `EyeSeeTea customization` comment, so a
+marker-based audit could not see them. Markers added during the 3.4.1 upgrade:
+
+- `app/src/main/java/org/dhis2/AppComponent.java` — `NotificationsModule` in the Dagger graph
+- `commons/src/main/java/org/dhis2/commons/prefs/Preference.kt` — `NOTIFICATIONS` key
+- `app/src/test/java/org/dhis2/data/notifications/NotificationD2RepositoryTest.kt` — wholly a customization
+- `app/src/main/res/layout/dialog_change_server_url.xml` — wholly a customization
+
+### 3.4.1 upgrade — audit method correction
+
+The root `CLAUDE.md` says to diff every inventory file against `develop-eyeseetea`. For WIDP that
+diff is meaningless: the baseline carries **none** of the five customizations. The comparison that
+actually detects loss is against the pre-merge client branch (`develop-widp`), counting
+customization markers per file.
+
+
 
 - This inventory reflects the verified branch state as of 2026-04-20 (post-merge to 3.3.1, with Notifications wiring restored in `MainActivity`/`MainView`/`MainPresenter`).
 - The DI wiring, preferences layer, SDK wiring, and build config files listed per customization were added in the 2026-04-17 update after the upgrade merge revealed them as silent automerge casualties. They were missing from the original 2026-04-02 inventory, which focused on functional code only.

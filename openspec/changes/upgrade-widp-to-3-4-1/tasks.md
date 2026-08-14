@@ -58,7 +58,7 @@
 - [x] 7.1 **Skipped — absorbed upstream.** The patch swapped `mergeWith` for `concatWith` in three granular-sync methods; `origin/upstream/3.4.1` already ships `concatWith` in all three. Verified against the upstream ref, not just the merged tree
 - [x] 7.2 **Applied.** Bug confirmed still present in 3.4.1: in the `EventStatus.COMPLETED` branch the `if` returning `FormActions.OnFinish` is not the last expression, so its value is discarded and `resultAction` is always returned. Cherry-picked with its test; `customizations-eyeseetea.md` deliberately excluded (another client's doc)
 - [x] 7.3 **Skipped — absorbed upstream.** The patch added a `lastSearchPagingData` identity guard; `origin/upstream/3.4.1` ships exactly that guard, plus `collectLatest`
-- [ ] 7.4 Re-run `assembleWidpDebug` + `testWidpDebugUnitTest` after the cherry-picks
+- [x] 7.4 `assembleWidpDebug` + `testWidpDebugUnitTest` + `ktlintCheck` green after the cherry-pick
 
 ## 8. Manual validation
 
@@ -72,8 +72,8 @@
 
 ## 9. Close out
 
-- [ ] 9.1 Update `eyeseetea-docs/customizations/widp/customization-files.md` with the surviving file surface after the port (line anchors changed for notifications and 2FA)
-- [ ] 9.2 Run `python3 eyeseetea-docs/scripts/check_upgrade_docs.py --client widp`
-- [ ] 9.3 Run `openspec validate --strict`
+- [x] 9.1 Inventory updated: header (3.4.1 / vCode 156 / SDK tag), corrected flavor paths and the new `DownloadNewVersion.kt`, `SyncNotifications.kt`, the `MainViewModel`/`HomeEffect` wiring, the files that stopped being customizations, the restored `url_hint`/`login_https` strings, the `:login` flavor-block note, the four files that gained a marker, and the audit-method correction
+- [x] 9.2 `check_upgrade_docs.py --client widp` run. Fixed the 4 feat-commit path warnings. **One known issue left, deliberately unfixed**: the build-level marker `Include SDK's modules` in `settings.gradle.kts` can never satisfy the script, because it demands a spec while `openspec/config.yaml` puts the build system out of OpenSpec scope. Inherited from the baseline; fixing it in a client PR would create cross-branch drift. Documented with a proposed fix in the notes file
+- [x] 9.3 `openspec validate --strict` green: 1 change + 5 specs, 0 failures
 - [ ] 9.4 Open the PR against `develop-widp` with the clean incremental diff, listing target version, SDK tag, customizations verified, and validation flows executed
 - [ ] 9.5 Record the follow-up: move notifications wiring into `app/src/widp/` to shrink the Oslo footprint (deferred from design.md D3), and the separate `url-data-element` rendering restoration
