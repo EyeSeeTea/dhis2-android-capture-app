@@ -15,6 +15,7 @@ data class CredentialsUiState(
     val displayBiometricsDialog: Boolean,
     val hasOtherAccounts: Boolean,
     val isSessionLocked: Boolean,
+    val oAuthEnable: Boolean,
     // EyeSeeTea customization - 2FA support
     val twoFactorState: TwoFactorState? = null,
     val twoFactorCode: String = "",
@@ -42,6 +43,7 @@ sealed class OidcInfo(
     val buttonText: String?,
     val oidcClientId: String,
     val oidcRedirectUri: String,
+    val userPrompt: String?,
 ) {
     @Serializable
     data class Discovery(
@@ -50,7 +52,14 @@ sealed class OidcInfo(
         val clientId: String,
         val redirectUri: String,
         val discoveryUri: String,
-    ) : OidcInfo(server, loginButtonText, clientId, redirectUri)
+        val prompt: String?,
+    ) : OidcInfo(
+            serverUrl = server,
+            buttonText = loginButtonText,
+            oidcClientId = clientId,
+            oidcRedirectUri = redirectUri,
+            userPrompt = prompt,
+        )
 
     @Serializable
     data class Token(
@@ -60,7 +69,14 @@ sealed class OidcInfo(
         val redirectUri: String,
         val authorizationUrl: String,
         val tokenUrl: String,
-    ) : OidcInfo(server, loginLabel, clientId, redirectUri)
+        val prompt: String?,
+    ) : OidcInfo(
+            serverUrl = server,
+            buttonText = loginLabel,
+            oidcClientId = clientId,
+            oidcRedirectUri = redirectUri,
+            userPrompt = prompt,
+        )
 
     fun discoveryUri() =
         when (this) {

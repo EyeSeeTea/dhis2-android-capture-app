@@ -48,15 +48,16 @@ involved — see the 2FA entries below.
 ## Progress
 
 - baseline prepared: `yes`
-- merge started: `no`
-- easy conflicts resolved: `no`
-- manual conflicts pending: `yes`
+- merge started: `yes` (merge of `origin/upstream/3.4.1`, uncommitted)
+- easy conflicts resolved: `yes` (10 of 27 — mechanical pass done)
+- manual conflicts pending: `yes` (17: 6 login/2FA, 10 notifications + change-server-url, 1 prefs)
 - validation started: `no`
 
 ## Predicted conflict surface
 
 27 files, from `git merge-tree --write-tree develop-widp origin/upstream/3.4.1` run before the
-merge: 21 content conflicts, 6 modify/delete. Plus **8 files that auto-merge silently** despite
+merge: 21 content conflicts, 6 modify/delete. **The real merge produced exactly those 27 files** —
+the prediction was accurate, no surprises. Plus **8 files that auto-merge silently** despite
 being customized and touched upstream — those are the highest-risk items because nothing prompts
 a review.
 
@@ -64,33 +65,38 @@ a review.
 
 | File | Classification | Expected delta | Customization | Status | Notes |
 |------|----------------|----------------|---------------|--------|-------|
-| `app/src/androidTest/assets/databases/dhis_test.db` | accept_theirs | upstream test fixture | n/a | pending | binary, no WIDP content |
-| `gradle.properties` | accept_theirs | build tuning | n/a | pending | |
-| `CLAUDE.md` | accept_ours | fork identity doc | n/a | pending | add/add conflict |
-| `gradle/libs.versions.toml` | manual_reapply_on_theirs | SDK tag + version + vCode | fork identity | pending | `dhis2sdk=1.14.1-eyeseetea-fork-1`, `vName=3.4.1-widp-fork-1`, `vCode=156` |
-| `app/build.gradle.kts` | manual_reapply_on_theirs | widp flavor block | fork identity | pending | applicationId `com.eyeseetea.widp` |
-| `login/build.gradle.kts` | manual_reapply_on_theirs | 2FA deps | 2FA support | pending | |
-| `app/src/main/res/values/strings.xml` | manual_reapply_on_theirs | WIDP strings appended | several | pending | |
-| `commonskmm/src/commonMain/composeResources/values/strings.xml` | manual_reapply_on_theirs | WIDP strings appended | several | pending | |
-| `app/src/main/java/org/dhis2/usescases/searchTrackEntity/listView/SearchTEList.kt` | manual_reapply_on_theirs | Oslo search patch | n/a (Oslo fix) | pending | from PR #315 |
-| `app/src/main/java/org/dhis2/usescases/searchTrackEntity/SearchTEIViewModel.kt` | manual_reapply_on_theirs | Oslo search patch | n/a (Oslo fix) | pending | from PR #315 |
-| `app/src/test/java/org/dhis2/data/services/SyncPresenterTest.kt` | manual_reapply_on_theirs | notifications ctor arg | Notifications system | pending | |
-| `login/src/androidMain/.../LoginRepositoryImpl.kt` | manual_reapply_on_theirs | real `twoFactorCode` arg | 2FA support | pending | ⚠ baseline passes `null` — **do not copy** |
-| `login/src/commonMain/.../LoginUser.kt` | manual_reapply_on_theirs | 2FA result plumbing | 2FA support | pending | |
-| `login/src/commonMain/.../CredentialsUiState.kt` | manual_reapply_on_theirs | 2FA state fields | 2FA support | pending | |
-| `login/src/commonMain/.../CredentialsViewModel.kt` | manual_reapply_on_theirs | type detection, resend, cooldown | 2FA support | pending | |
-| `login/src/commonMain/.../CredentialsScreen.kt` | manual_reapply_on_theirs | 2FA UI per type | 2FA support | pending | |
-| `commonskmm/.../PreferenceConstants.kt` | manual_reapply_on_theirs | server URL pref key | Change Server URL | pending | |
-| `app/src/main/java/org/dhis2/data/user/UserComponent.java` | manual_reapply_on_theirs | `plus(ChangeServerURLModule)` | Change Server URL | pending | file survives upstream |
-| `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` | manual_reapply_on_theirs | menu entry + notif calls | Change Server URL, Notifications | pending | holds `notificationsPresenter` |
-| `app/src/main/java/org/dhis2/data/service/SyncPresenterImpl.kt` | manual_reapply_on_theirs | `syncNotifications()` | Notifications system | pending | verify the trigger survives |
-| `app/src/main/java/org/dhis2/data/service/SyncGranularRxModule.kt` | manual_reapply_on_theirs | provides `NotificationRepository` | Notifications system | pending | DI landing site, survives |
-| `app/src/main/java/org/dhis2/App.java` | **port** | Dagger wiring → `App.kt` | Notifications, Change Server URL | pending | deleted upstream (Kotlin migration) |
-| `app/src/main/java/org/dhis2/usescases/main/MainPresenter.kt` | **port** | call path → `MainViewModel` | Notifications system | pending | deleted upstream (ANDROAPP-7340) |
-| `app/src/main/java/org/dhis2/usescases/main/MainView.kt` | **port** | interface → activity state | Notifications system | pending | deleted upstream |
-| `app/src/main/java/org/dhis2/data/service/SyncDataWorkerModule.kt` | **port** | provider consolidated | Notifications system | pending | worker removed upstream |
-| `app/src/main/java/org/dhis2/data/service/SyncInitWorkerModule.kt` | **port** | provider consolidated | Notifications system | pending | worker removed upstream |
-| `app/src/main/java/org/dhis2/data/service/SyncMetadataWorkerModule.kt` | **port** | provider consolidated | Notifications system | pending | worker removed upstream |
+| `app/src/androidTest/assets/databases/dhis_test.db` | accept_theirs | upstream test fixture | n/a | resolved_keep_theirs | binary, no WIDP content |
+| `gradle.properties` | accept_theirs | build tuning | n/a | resolved_keep_theirs | verified: WIDP had no customization here vs merge-base |
+| `CLAUDE.md` | accept_ours | fork identity doc | n/a | resolved_keep_ours | add/add. Upstream's new file only does `@AGENTS.md`; WIDP fork identity kept. Version header still says 3.3.0.1 — fix in task 9.1 |
+| `gradle/libs.versions.toml` | manual_reapply_on_theirs | SDK tag + version + vCode | fork identity | resolved_manual_merge | upstream values + `vName=3.4.1-widp-fork-1`, `dhis2sdk=1.14.1-eyeseetea-fork-1`. **`markwon=4.6.0` preserved** — WIDP-only (used by `app/build.gradle.kts`), absent from the baseline, would have been lost by copying its resolution |
+| `app/build.gradle.kts` | manual_reapply_on_theirs | widp flavor block | fork identity | resolved_manual_merge | kept upstream koin test deps + `implementation(libs.eyeseetea.markwon)`. `create("widp")` flavor auto-merged intact |
+| `login/build.gradle.kts` | accept_theirs (reclassified) | flavor block absorbed upstream | 2FA support | resolved_keep_theirs | ⚠ **a customization marker was dropped here.** Upstream migrated `:login` to the KMP `androidLibrary {}` DSL and removed the whole `android {}` / `productFlavors` block for *every* flavor, not just widp. The `// EyeSeeTea customization - 2FA support` comment sat on `create("widp") { buildConfigField("LOGIN_TEST") }`, which only existed so the module had a matching flavor dimension; the 2FA implementation lives in `commonMain`/`androidMain` and is unaffected. Baseline resolved this identically (its file is byte-identical to upstream). **Needs developer confirmation** that no widp-only `buildConfigField` was relied on. |
+| `app/src/main/res/values/strings.xml` | manual_reapply_on_theirs | WIDP strings appended | Change Server URL | resolved_manual_merge | both sides kept, WIDP strings appended after upstream block. XML validated |
+| `commonskmm/src/commonMain/composeResources/values/strings.xml` | manual_reapply_on_theirs | WIDP strings appended | 2FA support | resolved_manual_merge | 6 2FA strings kept; comment normalised from `<!--EyeSeeTea customization-->` to the convention `<!-- EyeSeeTea customization - 2FA support -->`. XML validated |
+| `app/src/main/java/org/dhis2/usescases/searchTrackEntity/listView/SearchTEList.kt` | accept_theirs (reclassified) | **absorbed upstream** | n/a (Oslo fix) | resolved_keep_theirs | Oslo 3.4.1 now ships `lastSearchPagingData` + `collectLatest` + `hideStaleProgramResults()`. The WIDP comment said "Remove when Oslo clears liveAdapter…" — that condition is met. `onInitDataLoaded()`/`CoroutineTracker` preserved in upstream's refactor |
+| `app/src/main/java/org/dhis2/usescases/searchTrackEntity/SearchTEIViewModel.kt` | manual_reapply_on_theirs | Oslo search patch | n/a (Oslo fix) | resolved_manual_merge | ANDROAPP-6844 still present in 3.4.1 (`values.isNullOrEmpty()` does not filter blanks). Re-applied `nonBlankValues` onto the new `queryDataList` API — result is byte-identical to the baseline resolution |
+| `app/src/test/java/org/dhis2/data/services/SyncPresenterTest.kt` | accept_theirs (reclassified) | ctor arg gone | Notifications system | resolved_keep_theirs | `SyncPresenterImpl` no longer takes `NotificationRepository` (see below) |
+| `login/src/androidMain/.../LoginRepositoryImpl.kt` | manual_reapply_on_theirs | real `twoFactorCode` arg | 2FA support | resolved_manual_merge | only the import conflicted; body auto-merged keeping `blockingLogIn(username, password, serverUrl, twoFactorCode)`. Baseline's `null` **not** copied |
+| `login/src/commonMain/.../LoginUser.kt` | manual_reapply_on_theirs | 2FA result plumbing | 2FA support | resolved_manual_merge | upstream's `username.trim()` + WIDP's `twoFactorCode` argument |
+| `login/src/commonMain/.../CredentialsUiState.kt` | manual_reapply_on_theirs | 2FA state fields | 2FA support | resolved_manual_merge | upstream `oAuthEnable` + the 3 WIDP fields |
+| `login/src/commonMain/.../CredentialsViewModel.kt` | manual_reapply_on_theirs | type detection, resend, cooldown | 2FA support | resolved_manual_merge | 3 hunks: 2 state constructions + `onLoginClicked`, where upstream's OAuth branch now wraps the login job and the 2FA code is passed inside the `else` |
+| `login/src/commonMain/.../CredentialsScreen.kt` | manual_reapply_on_theirs | 2FA UI per type | 2FA support | resolved_manual_merge | upstream wrapped `CredentialsContainer` in `if (!oAuthEnable)`; `TwoFactorContainer` kept outside that branch (`twoFactorState` is only populated by the password path) |
+| `commonskmm/.../PreferenceConstants.kt` | manual_reapply_on_theirs | `BASIC_SHARE_PREFS` | Notifications system (not Change Server URL — marker corrected) | resolved_manual_merge | upstream constants kept, WIDP const appended |
+| `app/src/main/java/org/dhis2/data/user/UserComponent.java` | manual_reapply_on_theirs | `plus(ChangeServerURLModule)` | Change Server URL | resolved_manual_merge | kept the 2 ChangeServerURL imports; dropped `PinModule`/`SessionComponent` imports — upstream deleted both classes and the body no longer references them |
+| `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` | manual_reapply_on_theirs | menu entry + notif calls | Change Server URL, Notifications | resolved_manual_merge | 7 hunks. Upstream moved the screen to Compose but kept the drawer (`binding.navView` + `initCurrentScreen()`), so `R.id.change_url` still works — the menu item itself lives in `app/src/widp/res/menu/main_menu.xml` (flavor source set, untouched). Dropped `isPinLayoutVisible`/`mainNavigator`/`backPressed`/`onLockClick`/`setFilters`/`hideFilters` (deleted upstream, PIN moved to the composable) and with them `isChangeServerURLVisible`, whose only reader was `backPressed` |
+| `app/src/main/java/org/dhis2/data/service/SyncPresenterImpl.kt` | accept_theirs (reclassified) | **hook lost, re-anchored** | Notifications system | resolved_keep_theirs | Upstream reduced this class to granular sync only; `syncMetadata()` (and with it the `syncNotifications()` call) moved to the `:sync` module. See "Notifications sync re-anchoring" below |
+| `app/src/main/java/org/dhis2/data/service/SyncGranularRxModule.kt` | accept_theirs (reclassified) | provider no longer needed | Notifications system | resolved_keep_theirs | `SyncPresenterImpl` stopped taking `NotificationRepository`, so the provider argument went with it |
+| `app/src/main/java/org/dhis2/App.java` | **port** | Dagger wiring → `App.kt` | Notifications, Change Server URL | resolved_manual_merge | ported to `App.kt`: `.notificationsModule(NotificationsModule())` in the builder, the `changeServerURLComponent` field and `createChangeServerULComponent()` (following the existing `createDashboardComponent` pattern). `AppComponent.java` already carried `NotificationsModule` through the automerge. Comments moved off import lines |
+| `app/src/main/java/org/dhis2/usescases/main/MainPresenter.kt` | **port** | call path → effects | Notifications system | resolved_manual_merge | `checkSingleProgramNavigation()`'s asymmetry maps onto 3.4.1's effects: the single-program branch is `HomeEffect.SingleProgramNavigation` (mark pending only), the other branch is `initCurrentScreen()`'s `R.id.menu_home` (mark + refresh) |
+| `app/src/main/java/org/dhis2/usescases/main/MainView.kt` | **port** | interface removed | Notifications system | resolved_manual_merge | `markShowNotificationsAsPending()`/`refreshNotifications()` were only indirection; calls now go straight to `notificationsPresenter` from `MainActivity` |
+| `app/src/main/java/org/dhis2/data/service/SyncDataWorkerModule.kt` | accept deletion | consumer gone | Notifications system | resolved_keep_theirs | its worker moved to the new `:sync` module and is registered with Koin (`workerOf`), leaving this Dagger module without a consumer |
+| `app/src/main/java/org/dhis2/data/service/SyncInitWorkerModule.kt` | accept deletion | consumer gone | Notifications system | resolved_keep_theirs | its worker moved to the new `:sync` module and is registered with Koin (`workerOf`), leaving this Dagger module without a consumer |
+| `app/src/main/java/org/dhis2/data/service/SyncMetadataWorkerModule.kt` | accept deletion | consumer gone | Notifications system | resolved_keep_theirs | its worker moved to the new `:sync` module and is registered with Koin (`workerOf`), leaving this Dagger module without a consumer |
+
+### Silent automerge — audit results
+
+All 2FA and Change Server URL entries below were **verified intact after the merge**; the
+`defaultError()` degradation did not materialise.
 
 ### Silent automerge — audit required (no conflict will be raised)
 
@@ -104,6 +110,25 @@ a review.
 | `form/src/main/java/org/dhis2/form/data/EnrollmentRepository.kt` | URL data element | pending | plumbing only, rendering out of scope |
 | `form/src/main/java/org/dhis2/form/data/EventRepository.kt` | URL data element | pending | plumbing only, rendering out of scope |
 | `app/src/test/java/.../SearchTEIViewModelTest.kt` | n/a (Oslo fix) | pending | PR #315 patches |
+
+## Notifications sync re-anchoring (behaviour deviation — read this)
+
+Upstream 3.4 extracted the full sync into the new KMP module `:sync`. `SyncPresenterImpl` kept
+only granular sync; `syncMetadata()` — whose `doOnComplete` called `syncNotifications()` — is gone.
+The notifications capability lives in `:app`, and `:app` depends on `:sync`, not the reverse, so
+the download could not be re-hooked inside the metadata sync.
+
+**Re-anchored as:** `MainViewModel.handleDownloadProcess()` emits a new
+`HomeEffect.SyncNotifications` when a sync finishes (`running == false`); `MainActivity` handles
+that effect and calls `notificationsPresenter.syncNotifications()`, backed by a new
+`SyncNotifications` use case (new file, level 2 of the placement hierarchy).
+
+**Known deviation:** the spec says notifications are fetched *"during metadata sync"*. They are now
+fetched *after a sync completes, with the main screen alive*. This covers initial sync after login,
+manual sync, and periodic sync while the app is in the foreground. It does **not** cover a periodic
+background sync with the app closed — in that case notifications arrive at the next sync with the
+app open. Decision taken with the developer on 2026-08-13: accept for this upgrade, revisit in a
+separate change that may decouple the download from sync entirely (and update the spec).
 
 ## Notifications port — semantics to preserve
 
@@ -135,11 +160,94 @@ WIDP already carries ANDROAPP-6844, the stale-search-results fix and the search 
 - Whether `SyncPresenterImpl.syncNotifications()` still has a live invocation path now that the
   three sync workers that drove it were removed upstream.
 
+## Build failures found and fixed
+
+### 1. Change Server URL dialog lost two strings (build-breaking)
+
+```
+dialog_change_server_url.xml:91: error: resource string/url_hint not found.
+dialog_change_server_url.xml:103: error: resource string/login_https not found.
+```
+
+Upstream 3.4.1 deleted `url_hint` ("Server url") and `login_https` ("https://") from
+`app/src/main/res/values/strings.xml` as part of its translation cleanup — they belonged to the
+old login screen, which was rewritten. `layout/dialog_change_server_url.xml` (Change Server URL
+customization) was their last consumer, so the resource link failed.
+
+Restored both in the Change Server URL block of the shared `strings.xml`. They cannot live in
+`app/src/widp/res/` — the layout sits in shared code, so every flavor compiles it.
+
+**Audit lesson (worth promoting to `conflict-rules.md`):** the automerge audit checks files that
+*carry* a customization marker. This failure was in a file that carries no marker but that a
+customization *depends on*. A deleted plain resource is invisible to a marker-based audit. Add a
+step: for every customization, resolve the resource references of its layouts/files against the
+post-merge resource set. Here it surfaced at build time only because a layout referenced it — a
+deleted string used solely from Kotlin would have failed at runtime instead.
+
+### 2. WIDP flavor source set was stale (build-breaking, three separate faults)
+
+`app/src/widp/**` never conflicts — which also means upstream refactors never reach it. Three
+faults accumulated silently and only surfaced at build time:
+
+| Fault | Detail | Fix |
+|---|---|---|
+| Malformed source path | `app/src/widp/java/org.dhis2.utils/` used dots instead of directory separators | renamed to `app/src/widp/java/org/dhis2/utils/` |
+| `GranularSyncModule.kt` outdated | upstream moved `GranularSyncRepository` to `…granularsync.data`, moved `SyncUiStateMapper` to `…granularsync.ui`, added a `provideSyncUiStateMapper` provider and a 9th `mapper` argument to `GranularSyncViewModelFactory` | replaced with the canonical flavor version (`app/src/dhis2/…`, byte-identical to `dhis2Training`). Verified beforehand that the WIDP copy held **no** client-specific logic — the pre-merge differences were purely stylistic (trailing commas, expression bodies) |
+| `main_menu.xml` overrides outdated | `menu_dev` was missing from `app/src/widp/` and `app/src/widpDebug/`; `MainActivity.initCurrentScreen()` references `R.id.menu_dev`, and a full-file override removes the shared definition | added the `menu_dev` item to both, **keeping** `change_url` |
+
+The baseline hit the same three faults in its own flavor (`8f7bb2679 fix: restore eyeseetea flavor
+build after 3.4.1 merge`) and resolved the menu one by **deleting** its overrides. WIDP cannot do
+that: `change_url` (Change Server URL) lives in that file.
+
+Note: `app/src/eyeseetea/**` in this branch still carries the same staleness. It is another
+client's flavor, out of scope for this PR, and already fixed on `develop-eyeseetea`.
+
+**Audit lesson:** flavor source sets are the safest placement against merge conflicts and the most
+dangerous against silent drift. Add to the post-merge checklist: diff every
+`app/src/<flavor>/**` override against its shared counterpart (resource IDs, and class shape for
+per-flavor DI modules). A sweep of all 29 WIDP overrides found no further dangling IDs.
+
+### 3. `DownloadNewVersion` missing for the WIDP flavor (build-breaking)
+
+Upstream 3.4 introduced `DownloadNewVersion` as a **per-flavor** use case, shipping it only for
+`dhis2`, `dhis2PlayServices` and `dhis2Training`. `MainModule`/`MainViewModel` in shared code
+require it, so every flavor must supply one. Added
+`app/src/widp/java/org/dhis2/usescases/main/domain/DownloadNewVersion.kt`, copied from the
+`dhis2` variant (non-Play-Services; byte-identical to `dhis2Training`). Deliberately **not**
+copied from the eyeseetea flavor, to avoid pulling another client's code.
+
+### 4. `releaseSessionComponent()` removed with `SessionComponent` (build-breaking)
+
+`ChangeServerUrlDialog.dismiss()` called `app().releaseSessionComponent()`. That method only did
+`sessionComponent = null` and belonged to the PIN dialog; this dialog called it by copy-paste
+inheritance. Upstream deleted `SessionComponent` and `PinModule` entirely, so it was replaced with
+a new `App.releaseChangeServerURLComponent()` that releases the dialog's **own** subcomponent —
+which is what it should have been doing all along.
+
 ## Validation Notes
 
-- build:
-- targeted tests:
-- manual flows checked:
+- build: `./gradlew assembleWidpDebug` **BUILD SUCCESSFUL** (after the four fixes above).
+  APK: `dhis2-v3.4.1-widp-fork-1-feature-upgrade_widp_to_3_4_1.apk`.
+- SDK resolved: `com.github.EyeSeeTea:dhis2-android-sdk:1.14.1-eyeseetea-fork-1` (JitPack).
+- ktlint: pending
+- unit tests: pending
+- manual flows checked: none yet — the whole checklist in
+  `upgrade-validation-checklist.md` is still outstanding.
+
+## Process improvement proposed for `conflict-rules.md`
+
+Every one of the four build failures was findable statically, in minutes, instead of through
+seven-minute build cycles. Proposed pre-build verification step for the post-merge checklist:
+
+1. **Resource references** — resolve every `@string/`, `@drawable/`, `@id/` used by customization
+   files against the post-merge resource set (catches fault 1).
+2. **Flavor override drift** — diff each `app/src/<flavor>/**` file against its shared or
+   sibling-flavor counterpart: resource IDs and, for per-flavor DI modules, the class shape
+   (catches fault 2).
+3. **New per-flavor obligations** — list classes that upstream provides once per flavor and check
+   the client flavor has its own (catches fault 3).
+4. **Deleted symbols still referenced** — grep customization files for symbols that no longer
+   exist anywhere in the tree (catches fault 4).
 
 ## Finalization
 

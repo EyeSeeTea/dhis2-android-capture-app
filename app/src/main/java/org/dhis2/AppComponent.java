@@ -41,6 +41,7 @@ import dagger.Component;
         DispatcherModule.class,
         FeatureConfigModule.class,
         NetworkUtilsModule.class,
+        // EyeSeeTea customization - Notifications system
         NotificationsModule.class
 })
 public  interface AppComponent {

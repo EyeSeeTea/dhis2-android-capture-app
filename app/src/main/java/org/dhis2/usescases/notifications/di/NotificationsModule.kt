@@ -11,6 +11,7 @@ import org.dhis2.data.notifications.UserGroupsApi
 import org.dhis2.usescases.notifications.domain.GetNotifications
 import org.dhis2.usescases.notifications.domain.MarkNotificationAsRead
 import org.dhis2.usescases.notifications.domain.NotificationRepository
+import org.dhis2.usescases.notifications.domain.SyncNotifications
 import org.dhis2.usescases.notifications.domain.UserRepository
 import org.dhis2.usescases.notifications.presentation.NotificationsPresenter
 import org.hisp.dhis.android.core.D2Manager
@@ -22,12 +23,22 @@ class NotificationsModule () {
     @Singleton
     internal fun notificationsPresenter(
         getNotifications: GetNotifications,
-        markNotificationAsRead: MarkNotificationAsRead
+        markNotificationAsRead: MarkNotificationAsRead,
+        syncNotifications: SyncNotifications
     ): NotificationsPresenter {
         return NotificationsPresenter(
             getNotifications,
-            markNotificationAsRead
+            markNotificationAsRead,
+            syncNotifications
         )
+    }
+
+    @Provides
+    @Singleton
+    internal fun getSyncNotifications(
+        notificationRepository: NotificationRepository,
+    ): SyncNotifications {
+        return SyncNotifications(notificationRepository)
     }
 
     @Provides

@@ -111,7 +111,7 @@ class ChangeServerUrlDialog() : DialogFragment(), ChangeServerURLView {
     }
 
     override fun dismiss() {
-        app().releaseSessionComponent()
+        app().releaseChangeServerURLComponent()
         dismissAllowingStateLoss()
     }
 

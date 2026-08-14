@@ -7,11 +7,23 @@ import kotlinx.coroutines.launch
 import org.dhis2.usescases.notifications.domain.GetNotifications
 import org.dhis2.usescases.notifications.domain.MarkNotificationAsRead
 import org.dhis2.usescases.notifications.domain.Notification
+import org.dhis2.usescases.notifications.domain.SyncNotifications
 
 class NotificationsPresenter(
     private val getNotifications: GetNotifications,
-    private val markNotificationAsRead: MarkNotificationAsRead
+    private val markNotificationAsRead: MarkNotificationAsRead,
+    private val syncNotifications: SyncNotifications
 ) {
+    /**
+     * Downloads notifications from the server. Called when a sync finishes; before 3.4.0 this
+     * ran inside the metadata sync worker.
+     */
+    fun syncNotifications() {
+        CoroutineScope(Dispatchers.IO).launch {
+            syncNotifications.invoke().collect {}
+        }
+    }
+
     fun refresh(notificationsView: NotificationsView,) {
         if (ShowNotifications.isPending) {
             ShowNotifications.isPending = false
