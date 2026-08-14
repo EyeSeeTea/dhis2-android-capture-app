@@ -55,9 +55,9 @@
 
 ## 7. Oslo patches missing from WIDP
 
-- [ ] 7.1 Cherry-pick `1e4149f01` (ANDROAPP-7661, granular sync image download race); verify it still applies to 3.4.1 or record why it was skipped
-- [ ] 7.2 Cherry-pick `48058eb9a` (ANDROAPP-7666, completed-event dialog always shown); same verification
-- [ ] 7.3 Cherry-pick `726f3bd7e` (empty list on return from TEI after search); same verification
+- [x] 7.1 **Skipped — absorbed upstream.** The patch swapped `mergeWith` for `concatWith` in three granular-sync methods; `origin/upstream/3.4.1` already ships `concatWith` in all three. Verified against the upstream ref, not just the merged tree
+- [x] 7.2 **Applied.** Bug confirmed still present in 3.4.1: in the `EventStatus.COMPLETED` branch the `if` returning `FormActions.OnFinish` is not the last expression, so its value is discarded and `resultAction` is always returned. Cherry-picked with its test; `customizations-eyeseetea.md` deliberately excluded (another client's doc)
+- [x] 7.3 **Skipped — absorbed upstream.** The patch added a `lastSearchPagingData` identity guard; `origin/upstream/3.4.1` ships exactly that guard, plus `collectLatest`
 - [ ] 7.4 Re-run `assembleWidpDebug` + `testWidpDebugUnitTest` after the cherry-picks
 
 ## 8. Manual validation
