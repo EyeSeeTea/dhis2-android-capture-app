@@ -70,7 +70,48 @@ Additional checks:
 - a notification targeting a different user group should NOT appear
 - a notification already in readBy for this user should NOT appear
 
+### 3.a Added for the 3.4.1 upgrade — the download trigger moved
+
+The notification **download** used to run inside the metadata sync worker. Upstream 3.4 moved the
+whole sync into the `:sync` module, which cannot see this capability, so the download is now
+triggered by `HomeEffect.SyncNotifications`, emitted when a sync finishes with the main screen
+alive. This is the highest-risk change of the whole upgrade and no automated test covers it.
+
+Flow A — download still happens (the critical one):
+1. Publish a **new** notification in the datastore for the test user.
+2. With the app open on the main screen, trigger a sync (pull to refresh or the sync button).
+3. **Expected:** once the sync finishes, the new notification appears without restarting the app.
+
+Flow B — the branch asymmetry survives (ported from `MainPresenter.checkSingleProgramNavigation`):
+1. Log in with a user who has **more than one** program → lands on Home.
+   **Expected:** notifications are marked pending *and* refreshed → the dialog appears.
+2. Log in with a user who has **exactly one** program → the app auto-navigates into it.
+   **Expected:** no dialog on the program screen; it appears when returning to Home.
+
+Flow C — known deviation, confirm the scope of the loss:
+1. Close the app completely and let a periodic background sync run.
+2. **Expected (accepted):** notifications published in the meantime do **not** arrive until the
+   next sync with the app open. Confirm this is acceptable in the field, or escalate.
+
+Flow D — refresh on resume still works:
+1. With the app open, send the app to background and return.
+2. **Expected:** `ActivityGlobalAbstract.onResume()` refreshes and shows any pending notification.
+
+### 3.b Added for the 3.4.1 upgrade — menu entry points
+
+1. Open the side menu → "Sync manager".
+   **Expected:** notifications are marked pending (no dialog while in Settings).
+2. Open the side menu → "Home".
+   **Expected:** notifications are marked pending and refreshed → pending dialog appears.
+
 ## 4. 2FA support
+
+> 3.4.1 note: this capability was re-applied by hand onto a rewritten login screen. Upstream added
+> an OAuth branch to `onLoginClicked()` and wrapped `CredentialsContainer` in `if (!oAuthEnable)`.
+> The whole flow below must be re-run — passing unit tests say nothing about it. Pay particular
+> attention to the seven error messages: the shared baseline maps those same `D2ErrorCode` values
+> to a generic error, and copying that resolution would look correct while silently destroying
+> every scenario below.
 
 Preconditions:
 - Use a server (DHIS2 v2.42+) that has 2FA enabled for the test user.

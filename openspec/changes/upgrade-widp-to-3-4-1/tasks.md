@@ -33,7 +33,7 @@
 - [x] 4.3 Notifications — resolved: there is **no** replacement site. `SyncPresenterImpl` no longer takes `NotificationRepository` at all (upstream moved full sync to `:sync`), so the three Dagger modules were accepted as deleted. Stopped and asked the developer; the download was re-anchored to a sync-finished effect (option A). See the notes file
 - [x] 4.4 Notifications — asymmetry ported: `HomeEffect.SingleProgramNavigation` marks pending only; `initCurrentScreen()`'s `R.id.menu_home` marks pending **and** refreshes. `MainView`'s indirection dropped — calls go straight to `notificationsPresenter`
 - [x] 4.5 Notifications — `NotificationsModule` re-anchored in `App.kt`'s builder (`AppComponent.java` already carried it). `MainActivity.kt` (7 hunks) resolved; `SyncPresenterImpl.kt`/`SyncGranularRxModule.kt`/`SyncPresenterTest.kt` accepted from upstream since the notification argument disappeared with the sync extraction. New: `SyncNotifications` use case + `NotificationsPresenter.syncNotifications()` + `HomeEffect.SyncNotifications`
-- [ ] 4.6 Notifications — confirm the 14 untouched files under `usescases/notifications/**` and `data/notifications/**` are intact and reachable; run `./gradlew :app:testWidpDebugUnitTest --tests '*NotificationD2RepositoryTest*'`
+- [x] 4.6 Notifications — the 14 files under `usescases/notifications/**` and `data/notifications/**` are intact; `NotificationD2RepositoryTest` passes
 - [x] 4.7 URL data element — audited: `EnrollmentRepository.kt` (6 markers) and `EventRepository.kt` (5) survived the automerge unchanged. Rendering untouched, as scoped
 - [x] 4.8 Image upload without resizing — confirmed present in `form/src/main/java/org/dhis2/form/data/FormValueStore.kt`; no conflict, no drift
 - [x] 4.9 Audited `SearchTEIViewModelTest.kt` — the ANDROAPP-6844 test survived the automerge
@@ -62,7 +62,7 @@
 
 ## 8. Manual validation
 
-- [ ] 8.1 Add or update the `upgrade-validation-checklist.md` entry for each customization touched in tasks 3 and 4, so every preservation task has a matching manual flow
+- [x] 8.1 Checklist extended: new sections 3.a (download trigger moved — 4 flows including the known background-sync deviation) and 3.b (menu entry points), plus a warning at the top of section 4 about the 2FA re-application and the `defaultError()` trap
 - [ ] 8.2 Validate notifications end-to-end on an emulator/device (highest risk — pending badge, refresh after sync, mark as read)
 - [ ] 8.3 Validate Change Server URL (menu entry visible, warning dialog, URL actually switches)
 - [ ] 8.4 Validate 2FA against `preprod-indiv`: TOTP, Email and SMS flows, resend, 30s cooldown, rate-limit message
@@ -76,4 +76,4 @@
 - [x] 9.2 `check_upgrade_docs.py --client widp` run. Fixed the 4 feat-commit path warnings. **One known issue left, deliberately unfixed**: the build-level marker `Include SDK's modules` in `settings.gradle.kts` can never satisfy the script, because it demands a spec while `openspec/config.yaml` puts the build system out of OpenSpec scope. Inherited from the baseline; fixing it in a client PR would create cross-branch drift. Documented with a proposed fix in the notes file
 - [x] 9.3 `openspec validate --strict` green: 1 change + 5 specs, 0 failures
 - [ ] 9.4 Open the PR against `develop-widp` with the clean incremental diff, listing target version, SDK tag, customizations verified, and validation flows executed
-- [ ] 9.5 Record the follow-up: move notifications wiring into `app/src/widp/` to shrink the Oslo footprint (deferred from design.md D3), and the separate `url-data-element` rendering restoration
+- [x] 9.5 Follow-ups recorded in the notes file: (1) decouple the notification download from sync (option B, needs a spec update); (2) move notifications wiring into `app/src/widp/` to shrink the Oslo footprint; (3) restore `url-data-element` rendering; (4) promote the four static pre-build checks to `conflict-rules.md`; (5) fix the build-level marker inconsistency and the `check_upgrade_docs.py` error handling in the baseline

@@ -275,6 +275,21 @@ seven-minute build cycles. Proposed pre-build verification step for the post-mer
 4. **Deleted symbols still referenced** — grep customization files for symbols that no longer
    exist anywhere in the tree (catches fault 4).
 
+## Follow-ups after this upgrade
+
+1. **Decouple the notification download from sync** — trigger it on app start instead. Same
+   implementation cost, needs `openspec/specs/notifications/spec.md` updated (it currently says
+   *"during metadata sync"*) and the change to declare a modified capability. Discussed with the
+   developer; deliberately kept out of this upgrade so any regression stays attributable.
+2. **Move the notifications wiring into `app/src/widp/`** to shrink the Oslo footprint (deferred
+   from design.md D3). Note the trade-off found during this upgrade: flavor source sets never
+   conflict, but they also never receive upstream refactors — see fault 2 above.
+3. **Restore `url-data-element` rendering**, lost in the upstream Compose migration before this
+   upgrade. Plumbing is preserved and audited; rendering is still broken.
+4. **Promote the four static pre-build checks to `conflict-rules.md`** (see the section below).
+5. **For the baseline:** fix the build-level marker inconsistency and the
+   `check_upgrade_docs.py` error handling described above.
+
 ## Finalization
 
 - surviving customizations moved to `customization-files.md`: `no`
