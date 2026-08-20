@@ -138,8 +138,67 @@ Extracted from `MainPresenter.checkSingleProgramNavigation()` before the merge d
 - `refreshNotifications()` fires **only** when the app is *not* auto-navigating into a single
   program.
 
-Both are implemented in `MainActivity` (which survives) and delegate to the Dagger-provided
-`notificationsPresenter`. The Dagger graph is not moving; only the call path is.
+Both are implemented in `MainActivity` (which survives) and delegate to `notificationsPresenter`.
+
+> **Correction (2026-08-14).** This section originally read *"delegate to the Dagger-provided
+> `notificationsPresenter`. The Dagger graph is not moving; only the call path is."* That was
+> written in the planning commit (`fe6d21b59`, 2026-08-13), a day **before** the merge, and it was
+> wrong — see "Notifications DI re-anchoring" below. The call path was re-anchored in task 4.5 but
+> this premise was never re-verified against the merged tree.
+
+## Notifications DI re-anchoring (runtime crash — read this)
+
+**Symptom.** The app crashed with an NPE on entering the main screen. Build green, unit tests
+green, ktlint green.
+
+**Cause.** `ActivityGlobalAbstract` declared `@Inject public NotificationsPresenter
+notificationsPresenter`. Nothing injected that field directly: it was populated because each
+concrete activity ran `mainComponent.inject(this)` and Dagger also fills inherited fields.
+Upstream 3.4.1 migrated `MainActivity` to Koin and removed its Dagger injection entirely, so the
+field stayed `null`. The base class guarded it with `if (notificationsPresenter != null)` — which
+silently disabled notifications rather than failing — but `MainActivity` reads it directly in four
+places and crashed.
+
+The customization was therefore depending on an **implementation detail of the Oslo host** (that
+subclasses run a Dagger `inject()`), not on a contract. The fix removes that dependency instead of
+refilling the hole.
+
+**Re-anchored as:** the whole notifications graph moved from Dagger to Koin, following the
+direction upstream is already taking (`:login`, `:sync`, `:commonskmm` are KMP and Koin-only).
+
+| File | Change | Net effect on Oslo footprint |
+|---|---|---|
+| `usescases/notifications/di/NotificationsKoinModule.kt` | **new** — `notificationsModule` Koin graph (level 2) | — |
+| `usescases/notifications/di/NotificationsModule.kt` | **deleted** — Dagger module, no consumer left | — |
+| `usescases/notifications/di/NotificationsComponent.kt` | **deleted** — subcomponent, commented out and dead | — |
+| `di/KoinInitialization.kt` | +2 lines (import + registration) | **+1 file** |
+| `AppComponent.java` | −3 lines (import, `@Component(modules)`, builder method) | **−1 file** |
+| `App.kt` | −2 lines (import, `.notificationsModule(...)`) | −1 line (still customized for Change Server URL) |
+| `ActivityGlobalAbstract.java` | field is now private + `getNotificationsPresenter()` resolving from Koin | already customized |
+| `MainActivity.kt` | **unchanged** | already customized |
+
+Oslo files carrying notifications wiring: **4 → 2**.
+
+Two deliberate choices in the Koin module:
+
+- **`get<D2>()`, not `D2Manager.getD2()`** — Koin already publishes `D2` in `di/ServerModule.kt`.
+  The old Dagger module reached for the static, bypassing the container.
+- **`BasicPreferenceProvider` built inline, not published** — it is an Oslo `commons` type we do
+  not own. Declaring `single<BasicPreferenceProvider>` would clash the day upstream registers it
+  in Koin. It is a stateless wrapper over the same `BASIC_SHARE_PREFS` file, so a second instance
+  is harmless.
+
+`getNotificationsPresenter()` is a Java getter, so Kotlin subclasses keep reading it as the
+`notificationsPresenter` synthetic property — `MainActivity`'s four call sites did not change, and
+that file's merge surface did not grow.
+
+**Regression guard:** `app/src/test/java/org/dhis2/usescases/notifications/di/NotificationsModuleTest.kt`.
+Dagger failed at compile time when a dependency was missing; Koin fails at runtime. This test buys
+that guarantee back. Verified by mutation: removing one `factory` from the module fails all three
+tests.
+
+**Process lesson.** A planning-phase assumption about the host's DI became a documented fact and
+was never re-verified after the merge. Proposed rule for `conflict-rules.md` in the follow-ups.
 
 ## Oslo patches to replicate
 
@@ -281,9 +340,21 @@ seven-minute build cycles. Proposed pre-build verification step for the post-mer
    implementation cost, needs `openspec/specs/notifications/spec.md` updated (it currently says
    *"during metadata sync"*) and the change to declare a modified capability. Discussed with the
    developer; deliberately kept out of this upgrade so any regression stays attributable.
-2. **Move the notifications wiring into `app/src/widp/`** to shrink the Oslo footprint (deferred
-   from design.md D3). Note the trade-off found during this upgrade: flavor source sets never
-   conflict, but they also never receive upstream refactors — see fault 2 above.
+2. ~~**Move the notifications wiring into `app/src/widp/`** to shrink the Oslo footprint (deferred
+   from design.md D3).~~ **Closed as not viable (2026-08-14).** Android flavor source sets override
+   *resources* only; two classes with the same FQN in `main` and `widp` fail the build as a
+   duplicate class. The wiring lives in `ActivityGlobalAbstract` and `MainActivity`, both in
+   `main`, so they cannot move. Only the files that are already 100% ours could relocate — and
+   those touch no Oslo file, so there is no footprint to gain, while they would stop receiving
+   upstream refactors (see fault 2 above). The Dagger→Koin move did the intended job instead:
+   Oslo files carrying notifications wiring went 4 → 2.
+
+6. **Add a `conflict-rules.md` rule for planning-phase assumptions** — this upgrade shipped a
+   runtime NPE because a note written before the merge (*"the Dagger graph is not moving"*) was
+   treated as a fact afterwards. Proposed rule: any statement in the notes file about **how the
+   Oslo host wires a customization** (DI graph, injection site, lifecycle hook) must be re-checked
+   against the merged tree before its task is ticked, and the note updated with the verification.
+   Build/test/lint green does not verify DI wiring in a Koin world.
 3. **Restore `url-data-element` rendering**, lost in the upstream Compose migration before this
    upgrade. Plumbing is preserved and audited; rendering is still broken.
 4. **Promote the four static pre-build checks to `conflict-rules.md`** (see the section below).

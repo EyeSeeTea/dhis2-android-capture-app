@@ -97,6 +97,29 @@ Flow D — refresh on resume still works:
 1. With the app open, send the app to background and return.
 2. **Expected:** `ActivityGlobalAbstract.onResume()` refreshes and shows any pending notification.
 
+### 3.a.bis Added for the 3.4.1 upgrade — the presenter moved from Dagger to Koin
+
+The first pass of this upgrade crashed with an NPE on entering the main screen: `MainActivity`
+stopped running a Dagger `inject()`, so the inherited `notificationsPresenter` stayed `null`. The
+graph now lives in Koin and `ActivityGlobalAbstract.getNotificationsPresenter()` resolves it.
+`NotificationsModuleTest` covers the graph, but **nothing automated covers the activity path**.
+
+Flow E — the app starts at all (smoke test, run this first):
+1. Fresh install, log in, land on the main screen.
+2. **Expected:** no crash. A `NullPointerException` on `notificationsPresenter`, or a Koin
+   `NoBeanDefFoundException` / `InstanceCreationException` in logcat, means the graph regressed.
+
+Flow F — one presenter, one pending flag:
+1. Open the side menu → "Sync manager", then go back to "Home".
+2. **Expected:** the pending dialog appears exactly once. Two presenter instances (a leftover
+   Dagger binding plus the Koin one) would still share `ShowNotifications.isPending`, so watch for
+   a dialog appearing twice or not at all.
+
+Flow G — no notification dialog before login:
+1. Mark notifications pending (open "Sync manager"), then log out.
+2. **Expected:** no notification dialog on the login or splash screen. Pre-existing behaviour, not
+   a regression of this change, but it is now reachable on every activity.
+
 ### 3.b Added for the 3.4.1 upgrade — menu entry points
 
 1. Open the side menu → "Sync manager".

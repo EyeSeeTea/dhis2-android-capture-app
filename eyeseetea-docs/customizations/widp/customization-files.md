@@ -113,11 +113,10 @@ Domain layer (all new files):
 
 Presentation layer (all new files):
 - `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenter.kt` — presenter + ShowNotifications singleton
-- `app/src/main/java/org/dhis2/usescases/notifications/di/NotificationsModule.kt` — Dagger DI module
-- `app/src/main/java/org/dhis2/usescases/notifications/di/NotificationsComponent.kt` — commented out subcomponent
+- `app/src/main/java/org/dhis2/usescases/notifications/di/NotificationsKoinModule.kt` — Koin DI module (`notificationsModule`). **Replaced the Dagger `NotificationsModule.kt` in 3.4.1**, when upstream migrated `MainActivity` to Koin and dropped the `inject()` that populated the presenter. `NotificationsModule.kt` and the commented-out `NotificationsComponent.kt` were deleted
 
 UI integration (modified existing files):
-- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements NotificationsView, renders dialogs, handles translations via `getNotificationContent()`, Markwon rendering, triggers `notificationsPresenter.refresh(this)` in `onCreate` and `onResume`
+- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements NotificationsView, renders dialogs, handles translations via `getNotificationContent()`, Markwon rendering, triggers `getNotificationsPresenter().refresh(this)` in `onCreate` and `onResume`. Since 3.4.1 the presenter is **resolved from Koin** by `getNotificationsPresenter()` instead of being a Dagger `@Inject` field — subclasses no longer run an `inject()` that would fill it. The Java getter keeps Kotlin subclasses reading it as the `notificationsPresenter` synthetic property
 - `app/src/main/java/org/dhis2/usescases/main/MainViewModel.kt` — emits `HomeEffect.SyncNotifications` when a sync finishes (`running == false`)
 - `app/src/main/java/org/dhis2/usescases/main/ui/model/HomeEffect.kt` — `SyncNotifications` effect
 - `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` — handles `HomeEffect.SyncNotifications` → `notificationsPresenter.syncNotifications()`; marks pending on `HomeEffect.SingleProgramNavigation`; marks pending on `sync_manager`, and marks pending + refreshes on `menu_home`
@@ -133,8 +132,9 @@ resolve the paths touched by the feat commits):
 - `app/src/main/java/org/dhis2/usescases/main/MainModule.kt` — historical Dagger wiring for notifications in the main screen
 
 DI wiring (shared files with WIDP-only bindings):
-- `app/src/main/java/org/dhis2/App.kt` — `.notificationsModule(NotificationsModule())` in the component builder (was `App.java` until 3.4.1)
-- `app/src/main/java/org/dhis2/AppComponent.java` — NotificationsModule in `@Component(modules)` + Builder method
+- `app/src/main/java/org/dhis2/di/KoinInitialization.kt` — registers `notificationsModule` in the Koin graph. **The only Oslo DI file this customization touches since 3.4.1**
+- `app/src/main/java/org/dhis2/App.kt` — **no longer customized for notifications** (still customized for Change Server URL): the Dagger `.notificationsModule(...)` builder call is gone
+- `app/src/main/java/org/dhis2/AppComponent.java` — **no longer customized**: `NotificationsModule` removed from `@Component(modules)` and the Builder
 - `app/src/main/java/org/dhis2/data/service/SyncInitWorkerModule.kt` — **deleted upstream** in 3.4: worker moved to the `:sync` module and is registered with Koin, leaving this Dagger module without a consumer
 - `app/src/main/java/org/dhis2/data/service/SyncDataWorkerModule.kt` — **deleted upstream** in 3.4, same reason
 - `app/src/main/java/org/dhis2/data/service/SyncMetadataWorkerModule.kt` — **deleted upstream** in 3.4, same reason
@@ -154,6 +154,7 @@ Build config:
 
 Tests:
 - `app/src/test/java/org/dhis2/data/notifications/NotificationD2RepositoryTest.kt`
+- `app/src/test/java/org/dhis2/usescases/notifications/di/NotificationsModuleTest.kt` — resolves the whole graph from Koin. Added in 3.4.1: Dagger failed at compile time when a binding was missing, Koin only fails at runtime, and this capability crashed the app for exactly that reason
 
 ### 2.4 2FA support
 
