@@ -52,7 +52,6 @@ import org.dhis2.mobile.commons.domain.invoke
 import org.dhis2.mobile.commons.network.NetworkStatusProvider
 import org.dhis2.mobile.sync.domain.CheckPeriodicJobs
 import org.dhis2.usescases.crash.CrashActivity
-import org.dhis2.usescases.notifications.di.NotificationsModule
 import org.dhis2.usescases.teiDashboard.TeiDashboardComponent
 import org.dhis2.usescases.teiDashboard.TeiDashboardModule
 import org.dhis2.utils.analytics.AnalyticsModule
@@ -204,8 +203,6 @@ open class App : Application(), Components, DefaultLifecycleObserver {
             .sessionManagerService(SessionManagerModule())
             .coroutineDispatchers(DispatcherModule())
             .featureConfigModule(FeatureConfigModule())
-            // EyeSeeTea customization - Notifications system
-            .notificationsModule(NotificationsModule())
     }
 
     override fun appComponent(): AppComponent {
