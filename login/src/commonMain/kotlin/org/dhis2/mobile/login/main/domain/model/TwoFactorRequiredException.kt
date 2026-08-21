@@ -9,6 +9,3 @@ class TwoFactorRequiredException(
     val type: TwoFactorType,
     val errorMessage: String? = null,
 ) : Exception("Two factor authentication required: $type")
-
-
-

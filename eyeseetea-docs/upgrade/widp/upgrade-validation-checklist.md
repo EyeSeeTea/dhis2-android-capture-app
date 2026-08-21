@@ -70,7 +70,104 @@ Additional checks:
 - a notification targeting a different user group should NOT appear
 - a notification already in readBy for this user should NOT appear
 
+### 3.a Added for the 3.4.1 upgrade — the download trigger moved
+
+The notification **download** used to run inside the metadata sync worker. Upstream 3.4 moved the
+whole sync into the `:sync` module, which cannot see this capability, so the download is now
+triggered by `HomeEffect.SyncNotifications`, emitted when a sync finishes with the main screen
+alive. This is the highest-risk change of the whole upgrade and no automated test covers it.
+
+Flow A — download still happens (the critical one):
+1. Publish a **new** notification in the datastore for the test user.
+2. With the app open on the main screen, trigger a sync (pull to refresh or the sync button).
+3. **Expected:** once the sync finishes, the new notification appears without restarting the app.
+
+Flow B — the branch asymmetry survives (ported from `MainPresenter.checkSingleProgramNavigation`):
+1. Log in with a user who has **more than one** program → lands on Home.
+   **Expected:** notifications are marked pending *and* refreshed → the dialog appears.
+2. Log in with a user who has **exactly one** program → the app auto-navigates into it.
+   **Expected:** no dialog on the program screen; it appears when returning to Home.
+
+Flow C — known deviation, confirm the scope of the loss:
+1. Close the app completely and let a periodic background sync run.
+2. **Expected (accepted):** notifications published in the meantime do **not** arrive until the
+   next sync with the app open. Confirm this is acceptable in the field, or escalate.
+
+Flow D — refresh on resume still works:
+1. With the app open, send the app to background and return.
+2. **Expected:** `ActivityGlobalAbstract.onResume()` refreshes and shows any pending notification.
+
+### 3.a.bis Added for the 3.4.1 upgrade — the presenter moved from Dagger to Koin
+
+The first pass of this upgrade crashed with an NPE on entering the main screen: `MainActivity`
+stopped running a Dagger `inject()`, so the inherited `notificationsPresenter` stayed `null`. The
+graph now lives in Koin and `ActivityGlobalAbstract.getNotificationsPresenter()` resolves it.
+`NotificationsModuleTest` covers the graph, but **nothing automated covers the activity path**.
+
+Flow E — the app starts at all (smoke test, run this first):
+1. Fresh install, log in, land on the main screen.
+2. **Expected:** no crash. A `NullPointerException` on `notificationsPresenter`, or a Koin
+   `NoBeanDefFoundException` / `InstanceCreationException` in logcat, means the graph regressed.
+
+Flow F — one presenter, one pending flag:
+1. Open the side menu → "Sync manager", then go back to "Home".
+2. **Expected:** the pending dialog appears exactly once. Two presenter instances (a leftover
+   Dagger binding plus the Koin one) would still share `ShowNotifications.isPending`, so watch for
+   a dialog appearing twice or not at all.
+
+Flow G — no notification dialog before login:
+1. Mark notifications pending (open "Sync manager"), then log out.
+2. **Expected:** no notification dialog on the login or splash screen. Pre-existing behaviour, not
+   a regression of this change, but it is now reachable on every activity.
+
+### 3.a.ter Added for the 3.4.1 upgrade — the single-program case (run this one first)
+
+Two display defects were found here on 2026-08-21 and fixed. This is the flow that catches them,
+and it needs a user with **exactly one program** — the WIDP production profile.
+
+Preconditions:
+- a user with exactly one program, so the app auto-navigates into it after the initial sync
+- a notification published in the datastore, targeted at that user or one of their groups
+- the account must be able to read `users/{id}?fields=userGroups`, otherwise group-targeted
+  notifications are discarded silently (see finding 3 in the notes)
+
+Flow H — the dialog appears without navigating away:
+1. Log in. The app auto-navigates into the single program.
+2. Come back to Home and **stay there**. Do not open the side menu.
+3. **Expected:** the notification dialog appears on its own once the download finishes.
+   **Before the fix** it never appeared here — the program screen consumed the pending flag while
+   the download was still in flight, and nothing re-checked when it landed.
+
+Flow I — a resume during the download does not lose the notification:
+1. Trigger a sync from Home and immediately open any screen that leaves Home (a program, About).
+2. Come back.
+3. **Expected:** the notification still appears. The pending flag must survive a refresh that
+   found nothing to show.
+
+Flow J — no repeats:
+1. Press OK on the dialog.
+2. Sync again and return to Home.
+3. **Expected:** it does not reappear, and the server `readBy` lists the user.
+
+> Known and deliberately unfixed (see findings 3 and 4 in the notes): several pending
+> notifications are shown as stacked dialogs and only the last is visible; and a permission
+> failure reading user groups is silent. Do not report these as new.
+
+### 3.b Added for the 3.4.1 upgrade — menu entry points
+
+1. Open the side menu → "Sync manager".
+   **Expected:** notifications are marked pending (no dialog while in Settings).
+2. Open the side menu → "Home".
+   **Expected:** notifications are marked pending and refreshed → pending dialog appears.
+
 ## 4. 2FA support
+
+> 3.4.1 note: this capability was re-applied by hand onto a rewritten login screen. Upstream added
+> an OAuth branch to `onLoginClicked()` and wrapped `CredentialsContainer` in `if (!oAuthEnable)`.
+> The whole flow below must be re-run — passing unit tests say nothing about it. Pay particular
+> attention to the seven error messages: the shared baseline maps those same `D2ErrorCode` values
+> to a generic error, and copying that resolution would look correct while silently destroying
+> every scenario below.
 
 Preconditions:
 - Use a server (DHIS2 v2.42+) that has 2FA enabled for the test user.

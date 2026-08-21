@@ -44,7 +44,7 @@ class DomainErrorMapper(
             D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_EMAIL,
             D2ErrorCode.TWO_FACTOR_MANY_SEND_ATTEMPTS,
             D2ErrorCode.SMS_TWO_FACTOR_CODE_SENT,
-            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_SMS
+            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_SMS,
             -> DomainError.AuthenticationError(errorMessage)
 
             // User account issues (disabled, locked)
@@ -87,6 +87,7 @@ class DomainErrorMapper(
             D2ErrorCode.NO_DHIS2_SERVER,
             D2ErrorCode.SERVER_URL_NULL,
             D2ErrorCode.SERVER_URL_MALFORMED,
+            D2ErrorCode.INVALID_CONFIGURATION,
             D2ErrorCode.INVALID_DHIS_VERSION,
             -> DomainError.ConfigurationError(errorMessage)
 

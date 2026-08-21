@@ -1,7 +1,9 @@
 package org.dhis2.mobile.login.main.data
 
 import coil3.PlatformContext
+import org.dhis2.mobile.login.main.domain.model.OpenIdLoginConfiguration
 import org.dhis2.mobile.login.main.domain.model.ServerValidationResult
+
 typealias UserPassword = String
 
 interface LoginRepository {
@@ -15,6 +17,7 @@ interface LoginRepository {
         username: String,
         password: String,
         isNetworkAvailable: Boolean,
+        // EyeSeeTea customization - 2FA support
         twoFactorCode: String? = null,
     ): Result<Unit>
 
@@ -52,17 +55,21 @@ interface LoginRepository {
 
     suspend fun importDatabase(path: String): Result<Unit>
 
-    suspend fun loginWithOpenId(
-        serverUrl: String,
-        isNetworkAvailable: Boolean,
-        clientId: String,
-        redirectUri: String,
-        discoveryUri: String?,
-        authorizationUri: String?,
-        tokenUrl: String?,
-    ): Result<Unit>
+    suspend fun loginWithOpenId(openIdLoginConfiguration: OpenIdLoginConfiguration): Result<Unit>
 
     suspend fun getUsername(): String
 
     suspend fun logoutUser(): Result<Unit>
+
+    suspend fun getDeviceEnrollmentUrl(serverUrl: String): String
+
+    suspend fun enrollDevice(
+        iat: String,
+        serverURL: String,
+    ): String
+
+    suspend fun loginUserWithOAuth(
+        serverUrl: String,
+        code: String,
+    ): Result<String?>
 }

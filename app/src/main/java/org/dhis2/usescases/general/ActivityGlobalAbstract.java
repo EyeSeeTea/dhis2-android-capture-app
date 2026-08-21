@@ -35,6 +35,7 @@ import org.dhis2.utils.HelpManager;
 import org.dhis2.utils.OnDialogClickListener;
 import org.dhis2.utils.analytics.AnalyticsHelper;
 import org.dhis2.utils.granularsync.SyncStatusDialog;
+import org.koin.java.KoinJavaComponent;
 
 import java.util.List;
 import java.util.Locale;
@@ -55,11 +56,21 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     @Inject
     public CrashReportController crashReportController;
 
-    @Inject
-    public NotificationsPresenter notificationsPresenter;
+    // EyeSeeTea customization - Notifications system
+    private NotificationsPresenter notificationsPresenter;
 
     private CustomDialog descriptionDialog;
 
+    // EyeSeeTea customization - Notifications system
+    // Resolved from Koin instead of injected: upstream activities no longer run a Dagger
+    // inject() that would populate an inherited field. Kotlin subclasses keep reading this
+    // as the `notificationsPresenter` synthetic property, so their call sites are unchanged.
+    public NotificationsPresenter getNotificationsPresenter() {
+        if (notificationsPresenter == null) {
+            notificationsPresenter = KoinJavaComponent.get(NotificationsPresenter.class);
+        }
+        return notificationsPresenter;
+    }
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -77,9 +88,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         ServerComponent serverComponent = ((App) getApplicationContext()).getServerComponent();
 
         // EyeSeeTea customization - Notifications system
-        if (notificationsPresenter != null){
-            notificationsPresenter.refresh(this);
-        }
+        getNotificationsPresenter().refresh(this);
 
         super.onCreate(savedInstanceState);
     }
@@ -88,9 +97,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     @Override
     protected void onResume() {
         super.onResume();
-        if (notificationsPresenter != null) {
-            notificationsPresenter.refresh(this);
-        }
+        getNotificationsPresenter().refresh(this);
     }
 
     @Override
@@ -115,7 +122,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
                     return Unit.INSTANCE;
                 })
                 .onMenuItemClicked(item -> {
-                    analyticsHelper.setEvent(SHOW_HELP, CLICK, SHOW_HELP);
+                    getAnalyticsHelper().setEvent(SHOW_HELP, CLICK, SHOW_HELP);
                     showTutorial(false);
                     return false;
                 })
@@ -232,7 +239,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
 
     @Override
     public AnalyticsHelper analyticsHelper() {
-        return analyticsHelper;
+        return getAnalyticsHelper();
     }
 
     @Override
@@ -250,7 +257,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
                 .setTitle("Notification")
                 .setMessage(content)
                 .setPositiveButton(getContext().getString(R.string.wipe_data_ok), (d, which) -> {
-                    notificationsPresenter.markNotificationAsRead(notification);
+                    getNotificationsPresenter().markNotificationAsRead(notification);
                 })
                 .setCancelable(true)
                 .show();
