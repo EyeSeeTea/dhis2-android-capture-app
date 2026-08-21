@@ -200,6 +200,69 @@ tests.
 **Process lesson.** A planning-phase assumption about the host's DI became a documented fact and
 was never re-verified after the merge. Proposed rule for `conflict-rules.md` in the follow-ups.
 
+## Manual validation findings (2026-08-21) — notifications
+
+Found on device against `portal-uat.who.int/dhis2-indiv` with a **single-program** user. The
+capability downloads and filters correctly; it failed at the point of *showing* the result.
+
+**Evidence.** Logcat, 13:08:32: `Notifications: [Notification(content=test2, ...),
+Notification(content=test3, ...)]` and both present in `BASIC_SHARE_PREFS`. No dialog appeared.
+The notification only surfaced after navigating into a screen and back to Home.
+
+### Finding 1 — nothing refreshed once the asynchronous download landed (FIXED)
+
+`MainViewModel` emits `HomeEffect.SyncNotifications` when a sync finishes; the download then runs
+on `Dispatchers.IO`. Nothing re-checked when it completed, so the result only surfaced if the user
+happened to pass through `initCurrentScreen()`'s `R.id.menu_home` branch afterwards — the only path
+that marks pending **and** refreshes in one step.
+
+Until 3.4.0 this was implicit: the download ran inside `syncMetadata()` and finished before the
+user navigated. Re-anchoring it in task 4.5 turned an ordering guarantee into a race.
+
+**Fix:** `syncNotifications()` now marks pending and refreshes the view when the download
+completes. `MainActivity` passes itself; the parameter is optional so the download still works
+without a view.
+
+### Finding 2 — the pending flag was consumed even with nothing to show (FIXED)
+
+`refresh()` cleared `ShowNotifications.isPending` before knowing whether the list was empty. Every
+activity in the authenticated area extends `ActivityGlobalAbstract`, so
+`ProgramEventDetailActivity.onCreate()` burned the flag milliseconds after
+`HomeEffect.SingleProgramNavigation` set it — while the download was still in flight.
+
+**This made the failure systematic for single-program users**, which is the WIDP production
+profile: the flag was always consumed before the data arrived.
+
+**Fix:** the flag is only consumed when something is actually rendered.
+
+Both fixes live in `NotificationsPresenter.kt` (level 2, ours) plus one argument at the
+`MainActivity` call site. Covered by `NotificationsPresenterTest` (6 tests, both fixes verified by
+mutation). The presenter now takes its dispatchers as constructor parameters, defaulted to
+`Dispatchers.IO`/`Dispatchers.Main`, so the behaviour is testable without Android.
+
+**No spec change required.** `openspec/specs/notifications/spec.md` already requires notifications
+to be shown *"on activity resume ... when there is at least one pending notification"*. The
+behaviour on the branch violated that requirement; these fixes restore conformance.
+
+### Finding 3 — permission failures are silent (NOT fixed, deliberate)
+
+`GET users/{id}?fields=userGroups` returned `403 E1006` for over an hour. The `catch` in
+`getUserGroups()` returns an empty list, so every group-targeted notification was silently
+discarded with no user-visible signal and no way to tell it apart from "you have no groups".
+Diagnosis required reading logcat over adb.
+
+Left out on purpose: `spec.md` has an explicit scenario stating that a datastore error SHALL
+complete without failing. Changing it is a product decision and needs its own OpenSpec change.
+Note the current code is *worse* than that scenario allows — it overwrites the stored
+notifications with an empty list rather than leaving them untouched.
+
+### Finding 4 — simultaneous notifications stack (NOT fixed, deliberate)
+
+`ActivityGlobalAbstract.renderNotifications()` loops over the list and calls `.show()` per
+notification, so N pending notifications produce N stacked dialogs and only the last is visible.
+Observed with test2/test3: only test3 appeared. Needs a spec addition; the spec describes a single
+dialog and says nothing about several at once.
+
 ## Oslo patches to replicate
 
 WIDP already carries ANDROAPP-6844, the stale-search-results fix and the search spinner fix

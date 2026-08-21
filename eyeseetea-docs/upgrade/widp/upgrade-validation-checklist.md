@@ -120,6 +120,39 @@ Flow G — no notification dialog before login:
 2. **Expected:** no notification dialog on the login or splash screen. Pre-existing behaviour, not
    a regression of this change, but it is now reachable on every activity.
 
+### 3.a.ter Added for the 3.4.1 upgrade — the single-program case (run this one first)
+
+Two display defects were found here on 2026-08-21 and fixed. This is the flow that catches them,
+and it needs a user with **exactly one program** — the WIDP production profile.
+
+Preconditions:
+- a user with exactly one program, so the app auto-navigates into it after the initial sync
+- a notification published in the datastore, targeted at that user or one of their groups
+- the account must be able to read `users/{id}?fields=userGroups`, otherwise group-targeted
+  notifications are discarded silently (see finding 3 in the notes)
+
+Flow H — the dialog appears without navigating away:
+1. Log in. The app auto-navigates into the single program.
+2. Come back to Home and **stay there**. Do not open the side menu.
+3. **Expected:** the notification dialog appears on its own once the download finishes.
+   **Before the fix** it never appeared here — the program screen consumed the pending flag while
+   the download was still in flight, and nothing re-checked when it landed.
+
+Flow I — a resume during the download does not lose the notification:
+1. Trigger a sync from Home and immediately open any screen that leaves Home (a program, About).
+2. Come back.
+3. **Expected:** the notification still appears. The pending flag must survive a refresh that
+   found nothing to show.
+
+Flow J — no repeats:
+1. Press OK on the dialog.
+2. Sync again and return to Home.
+3. **Expected:** it does not reappear, and the server `readBy` lists the user.
+
+> Known and deliberately unfixed (see findings 3 and 4 in the notes): several pending
+> notifications are shown as stacked dialogs and only the last is visible; and a permission
+> failure reading user groups is silent. Do not report these as new.
+
 ### 3.b Added for the 3.4.1 upgrade — menu entry points
 
 1. Open the side menu → "Sync manager".

@@ -112,7 +112,7 @@ Domain layer (all new files):
 - `app/src/main/java/org/dhis2/usescases/notifications/domain/UserRepository.kt` — user repository interface
 
 Presentation layer (all new files):
-- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenter.kt` — presenter + ShowNotifications singleton
+- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenter.kt` — presenter + ShowNotifications singleton. Since 3.4.1 it takes its dispatchers as constructor parameters (defaulted to `Dispatchers.IO`/`Main`) so the display logic is testable without Android; `syncNotifications()` refreshes the view when the download completes, and `refresh()` only consumes the pending flag once something is rendered
 - `app/src/main/java/org/dhis2/usescases/notifications/di/NotificationsKoinModule.kt` — Koin DI module (`notificationsModule`). **Replaced the Dagger `NotificationsModule.kt` in 3.4.1**, when upstream migrated `MainActivity` to Koin and dropped the `inject()` that populated the presenter. `NotificationsModule.kt` and the commented-out `NotificationsComponent.kt` were deleted
 
 UI integration (modified existing files):
@@ -155,6 +155,7 @@ Build config:
 Tests:
 - `app/src/test/java/org/dhis2/data/notifications/NotificationD2RepositoryTest.kt`
 - `app/src/test/java/org/dhis2/usescases/notifications/di/NotificationsModuleTest.kt` — resolves the whole graph from Koin. Added in 3.4.1: Dagger failed at compile time when a binding was missing, Koin only fails at runtime, and this capability crashed the app for exactly that reason
+- `app/src/test/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenterTest.kt` — covers when a notification is shown. Added in 3.4.1 after manual validation found that the dialog only surfaced if the user navigated through Home
 
 ### 2.4 2FA support
 

@@ -171,7 +171,7 @@ class MainActivity : ActivityGlobalAbstract() {
                             HomeEffect.ToggleFilters -> showHideFilter()
                             // EyeSeeTea customization - Notifications system
                             HomeEffect.SyncNotifications ->
-                                notificationsPresenter.syncNotifications()
+                                notificationsPresenter.syncNotifications(this@MainActivity)
                         }
                     },
                     onNewState = { state ->
