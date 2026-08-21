@@ -53,7 +53,7 @@
 - [x] 6.2 `./gradlew ktlintCheck` green — two rounds of violations, all in WIDP 2FA code that predated the stricter 3.4.1 ktlint rules. Fixed with `ktlintFormat` scoped to `:login` and `:commonskmm`; diff verified as purely cosmetic
 - [x] 6.3 `./gradlew testWidpDebugUnitTest` green. One failure triaged: `SearchTEIViewModelTest` still used the pre-refactor API (`onParameterIntent`/`FormIntent`/`queryData`) — it survived the automerge textually but not semantically. Adapted to `onValueChange`/`queryDataList`, replicating the baseline's `ecb1c9310`
 - [x] 6.4 SDK verified: resolves to `com.github.EyeSeeTea:dhis2-android-sdk:1.14.1-eyeseetea-fork-1` from JitPack. APK built as `dhis2-v3.4.1-widp-fork-1-feature-upgrade_widp_to_3_4_1.apk`
-- [ ] 6.5 Commit the merge with the developer's git identity
+- [x] 6.5 Merge committed with the developer's git identity (`idelcano`) and pushed to `origin/feature/upgrade_widp_to_3_4_1`
 
 ## 7. Oslo patches missing from WIDP
 
@@ -68,7 +68,7 @@
 - [ ] 8.2 Validate notifications end-to-end on an emulator/device (highest risk — download after sync, dialog appears without navigating away, mark as read). Partially executed 2026-08-21: download and filtering confirmed working on device; the two display defects found there are fixed in 4.5c and still need a re-run
 - [ ] 8.3 Validate Change Server URL (menu entry visible, warning dialog, URL actually switches)
 - [ ] 8.4 Validate 2FA against `preprod-indiv`: TOTP, Email and SMS flows, resend, 30s cooldown, rate-limit message
-- [ ] 8.5 Validate image upload without resizing
+- [x] 8.5 Image upload — **upload path validated on device** (IMAGE data element, camera capture, save, sync: works). Not yet closed: the resolution comparison against the stored file resource, which is what the customization actually asserts. Indirect evidence it is live: `FormValueStoreTest > Should try to resize image` fails because `resize()` is never called
 - [ ] 8.6 Validate login + send an event against DHIS2 2.41 and 2.43 (`dev.eyeseetea`) with the provided test user
 - [ ] 8.7 Record every executed flow and its result in `upgrade-3.4.1-notes.md`
 

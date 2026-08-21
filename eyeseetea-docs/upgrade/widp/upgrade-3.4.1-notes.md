@@ -263,6 +263,61 @@ notification, so N pending notifications produce N stacked dialogs and only the 
 Observed with test2/test3: only test3 appeared. Needs a spec addition; the spec describes a single
 dialog and says nothing about several at once.
 
+## Manual validation executed (2026-08-21)
+
+On device (Samsung SM-S928B) against `portal-uat.who.int/dhis2-indiv`, build
+`3.4.1-widp-fork-1`, with a **single-program** user.
+
+| Flow | Result |
+|---|---|
+| E — fresh start, log in, reach Home without crashing | **pass** — confirms the Koin DI re-anchoring on device |
+| 2FA login (TOTP) | **pass** |
+| Metadata sync, program downloaded | **pass** |
+| Create, save and upload an event | **pass** |
+| H — notification dialog appears without navigating away | **pass**, after the two display fixes |
+| Image data element: capture with camera, save, upload | **pass** (upload path only — see caveat) |
+
+Caveat on the image flow: it proves the path works, not that the image keeps its original
+resolution, which is what the customization exists for. A resized upload would have succeeded
+too. Indirect evidence that the no-resize behaviour is live: `FormValueStoreTest > Should try to
+resize image` fails precisely because `fileController.resize()` is never called. Closing this
+properly needs a dimension comparison between the source photo and the stored file resource.
+
+Still not executed: the 2FA Email/SMS/resend/cooldown/rate-limit flows, Change Server URL (known
+to crash, see below), the notification read-back (`readBy`), and login + event against DHIS2 2.41
+and 2.43.
+
+## Pre-existing defects surfaced during validation (not caused by this upgrade)
+
+All four were verified against `origin/develop-widp` and are already in production. Listed here so
+the upgrade PR is not blamed for them and so they can be picked up as a separate `fix-widp/`
+branch.
+
+1. **2FA required but not enrolled crashes the app.** With the DHIS2 server fork's `R_ENABLE_2FA`
+   role restriction, login returns `{"loginStatus":"REQUIRES_TWO_FACTOR_ENROLMENT"}`. In
+   `LogInCall.generate2FAErrorIfRequired()` of the SDK fork that value falls through to
+   `else -> null`, so no `D2Error` is raised. The failure surfaces as the CustomActivityOnCrash
+   screen, which reads like a handled error but is a crash. Verified in the SDK source; tag
+   `1.14.2-eyeseetea-fork-1` does not fix it. The fix belongs in `EyeSeeTea/dhis2-android-sdk`,
+   and the `else -> null` will reproduce this for any future `loginStatus` DHIS2 adds.
+
+2. **Change Server URL crashes on success.** `ChangeServerURLPresenter.updateUrlInPreference()`
+   calls `view.closeDialog()`, detaching the fragment; `renderSuccess()` then runs
+   `activity as ActivityGlobalAbstract` on a null activity. `ChangeServerURLPresenter.kt` is
+   byte-identical to `develop-widp`. The follow-up `Snackbar.make` NPE in `MainActivity` is Oslo
+   code (unchanged from upstream) and a consequence of the first crash, not an independent defect.
+
+3. **The server list is written under a key nobody reads.** Change Server URL persists to
+   `Constants.PREFS_URLS` (`"pref_urls"`) while the login screen reads `PREF_URLS`
+   (`"PREF_URLS"`). After switching servers and logging out, the login screen still suggests the
+   old one. Broken since upstream `5a41530db` (30 Sep 2025) rewrote the login as a KMP module.
+
+4. **Mis-tap from Log in to Recover account during 2FA.** `CredentialActions` lays the two
+   full-width buttons out with `spacedBy(Spacing.Spacing0)` — Oslo code — and the screen has no
+   `verticalScroll`. When the 2FA field and its info message appear, everything below reflows and
+   a tap aimed at Log in lands on Recover account. Oslo's spacing, but only reachable because of
+   the WIDP 2FA flow.
+
 ## Oslo patches to replicate
 
 WIDP already carries ANDROAPP-6844, the stale-search-results fix and the search spinner fix
