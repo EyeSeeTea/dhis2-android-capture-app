@@ -10,14 +10,22 @@ import org.dhis2.usescases.notifications.domain.Notification
 
 class NotificationsPresenter(
     private val getNotifications: GetNotifications,
-    private val markNotificationAsRead: MarkNotificationAsRead
+    private val markNotificationAsRead: MarkNotificationAsRead,
 ) {
-    fun refresh(notificationsView: NotificationsView,) {
-        if (ShowNotifications.isPending) {
-            ShowNotifications.isPending = false
-            CoroutineScope(Dispatchers.Main).launch {
-                getNotifications().collect {
-                    notificationsView.renderNotifications(it)
+    /**
+     * The pending flag is only consumed once something is actually rendered. Clearing it
+     * unconditionally lost notifications whenever an activity resumed while the download was
+     * still in flight — the common case for single-program users, whose program screen resumes
+     * milliseconds after the flag is set.
+     */
+    fun refresh(notificationsView: NotificationsView) {
+        if (!ShowNotifications.isPending) return
+
+        CoroutineScope(Dispatchers.Main).launch {
+            getNotifications().collect { notifications ->
+                if (notifications.isNotEmpty()) {
+                    ShowNotifications.isPending = false
+                    notificationsView.renderNotifications(notifications)
                 }
             }
         }

@@ -149,6 +149,34 @@ Rules:
 - do not force a functional customization title onto a technical migration if no documented business behavior matches it
 - if the migration is technical rather than functional, keep it in the technical inventory/rules, not in the functional spec
 
+## `CLAUDE.md` ownership change (Oslo 3.4+)
+
+Since Oslo 3.4, upstream owns a root `CLAUDE.md` (`@AGENTS.md` import only) and a root
+`AGENTS.md`. A fork created before that change typically has its own full `CLAUDE.md` written
+from the old `templates/CLAUDE.md.template` — that file is now placement level 4 (worst: an
+inline edit of an Oslo file) and will conflict as a whole file on every future upgrade.
+
+When a merge into a pre-3.4 fork produces an `AA` (add/add) or content conflict on `CLAUDE.md`:
+
+- do not keep the fork's old `CLAUDE.md` content and do not try to merge it hunk-by-hunk with
+  Oslo's version — take Oslo's `CLAUDE.md` verbatim
+- move all fork-specific content (identity, customizations table, placement hierarchy,
+  automation extraction rule, etc.) into a new `AGENTS-<client>.md` at the repo root, using
+  `eyeseetea-docs/templates/AGENTS-FLAVOR.md.template` as the target shape if the fork's old
+  `CLAUDE.md` needs reformatting
+- add exactly one import line to Oslo's `CLAUDE.md`, right after the existing `@AGENTS.md` line,
+  with a customization comment:
+  ```md
+  <!-- EyeSeeTea customization - <Client> fork identity -->
+  @AGENTS-<client>.md
+  ```
+- leave `AGENTS.md` itself untouched — it is Oslo's, not the fork's
+
+This is a one-time migration per fork. After it, future upgrades should only ever conflict on
+those two added lines, not the whole file. Verified against Claude Code's memory docs: multiple
+`@file` imports, arbitrary filenames, relative paths, and up to four hops of nesting are all
+supported.
+
 ## Conflict minimization rule
 
 Before editing a conflicted file, the agent should choose the smallest valid resolution strategy.

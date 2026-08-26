@@ -70,7 +70,7 @@ Bring the shared `eyeseetea-docs/` structure from `develop-eyeseetea` into the c
 - `eyeseetea-docs/upgrade/template/`
 - `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md`
 - `eyeseetea-docs/customizations/template/`
-- `eyeseetea-docs/templates/` — CLAUDE.md and openspec/config.yaml templates used in Phase 4 / Phase 5
+- `eyeseetea-docs/templates/` — AGENTS-<client>.md and openspec/config.yaml templates used in Phase 4 / Phase 5
 - `eyeseetea-docs/scripts/`
 - `.claude/` — generic Claude Code scaffolding (`commands/opsx/*`, `skills/openspec-*/`, `settings.json`). Do **not** bring `.claude/settings.local.json` (per-developer overrides, gitignored).
 
@@ -234,13 +234,24 @@ When you bring `develop-eyeseetea` into the fork (Phase 1), you inherit:
 
 These are generic and ready to use. **No action needed unless you want to extend them for your fork.**
 
-### CLAUDE.md (required)
+### AGENTS-<client>.md (required)
 
-Copy `eyeseetea-docs/templates/CLAUDE.md.template` to `CLAUDE.md` at the repository root and fill in the placeholders (`{{CLIENT_NAME}}`, `{{FLAVOR}}`, `{{APPLICATION_ID}}`, `{{CURRENT_VERSION}}`, etc.). The template already includes the EyeSeeTea-wide rules (placement hierarchy, comment convention, automerge verification, post-merge check hierarchy, automation extraction rule); your customizations table and identity are the only fork-specific parts to fill.
+`CLAUDE.md` at the repository root is an **upstream Oslo file** since 3.4 (it just does `@AGENTS.md`) — never overwrite it; doing so drops Oslo's own import and guarantees a whole-file conflict on every future upgrade.
+
+Copy `eyeseetea-docs/templates/AGENTS-FLAVOR.md.template` to `AGENTS-<client>.md` at the repository root and fill in the placeholders (`{{CLIENT_NAME}}`, `{{FLAVOR}}`, `{{APPLICATION_ID}}`, `{{CURRENT_VERSION}}`, etc.). The template already includes the EyeSeeTea-wide rules (placement hierarchy, comment convention, automerge verification, post-merge check hierarchy, automation extraction rule); your customizations table and identity are the only fork-specific parts to fill.
+
+Then add one import line to `CLAUDE.md`, right after `@AGENTS.md`, with a customization comment:
+
+```md
+<!-- EyeSeeTea customization - <Client> fork identity -->
+@AGENTS-<client>.md
+```
+
+Claude Code's memory system supports multiple `@file` imports, arbitrary filenames, relative paths, and up to four hops of nesting, so this is a supported pattern, not a workaround.
 
 ### Agents (optional, on demand)
 
-Do not create agents speculatively. Wait until a repetitive pattern emerges (3+ identical task structures during the upgrade) and then extract per the **Automation extraction rule** in `CLAUDE.md`. Examples that may surface:
+Do not create agents speculatively. Wait until a repetitive pattern emerges (3+ identical task structures during the upgrade) and then extract per the **Automation extraction rule** in `AGENTS-<client>.md`. Examples that may surface:
 
 - `classify-conflicts.md` — classifies conflicted files using `conflict-rules.md`
 - `resolve-easy-conflicts.md` — resolves `accept_ours` / `accept_theirs` files automatically
@@ -252,8 +263,9 @@ Beyond the 4 OpenSpec skills already in the baseline, you may add fork-specific 
 
 ### Done when
 
-- `CLAUDE.md` exists and references the right docs
-- a fresh Claude session can orient itself by reading `CLAUDE.md`
+- `AGENTS-<client>.md` exists and references the right docs
+- `CLAUDE.md` is untouched from Oslo except the one added `@AGENTS-<client>.md` import line
+- a fresh Claude session can orient itself by reading `CLAUDE.md` → `AGENTS.md` + `AGENTS-<client>.md`
 
 ## Phase 6. Execute the upgrade
 
@@ -338,7 +350,7 @@ Start with:
 | 2. Create client docs | copies templates, fills header | can automate the copy |
 | 3. Inventory customizations | lists known customizations, confirms titles and status | analyzes diff, drafts inventory, flags unclassified diffs |
 | 4. Formalize with OpenSpec | reviews and approves specs | generates spec drafts with requirements and scenarios |
-| 5. Set up Claude tooling | reviews CLAUDE.md content | drafts CLAUDE.md and agent/skill files |
+| 5. Set up Claude tooling | reviews AGENTS-<client>.md content | drafts AGENTS-<client>.md and agent/skill files |
 | 6. Execute upgrade | reviews the upgrade proposal, reviews conflicts, confirms business decisions | drafts the upgrade proposal (`/opsx:propose`), classifies and resolves easy conflicts, drafts notes |
 | 7. Add tests | reviews test logic and coverage | generates test stubs from scenarios |
 | 8. Clean up | confirms what to remove | identifies candidates for removal |

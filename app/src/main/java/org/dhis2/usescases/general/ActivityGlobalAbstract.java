@@ -43,6 +43,7 @@ import javax.inject.Inject;
 
 import io.noties.markwon.Markwon;
 import kotlin.Unit;
+import org.koin.java.KoinJavaComponent;
 
 
 public abstract class ActivityGlobalAbstract extends SessionManagerActivity
@@ -55,10 +56,22 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     @Inject
     public CrashReportController crashReportController;
 
-    @Inject
-    public NotificationsPresenter notificationsPresenter;
+    // EyeSeeTea customization - Notifications system
+    private NotificationsPresenter notificationsPresenter;
 
     private CustomDialog descriptionDialog;
+
+    // EyeSeeTea customization - Notifications system
+    // MainActivity no longer performs Dagger injection (migrated to Koin), so this field can no
+    // longer rely on @Inject populating it as a side effect of inherited-field injection. Every
+    // subclass reads it as the `notificationsPresenter` synthetic property, so their call sites
+    // are unchanged.
+    public NotificationsPresenter getNotificationsPresenter() {
+        if (notificationsPresenter == null) {
+            notificationsPresenter = KoinJavaComponent.get(NotificationsPresenter.class);
+        }
+        return notificationsPresenter;
+    }
 
 
     @Override
@@ -77,9 +90,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         ServerComponent serverComponent = ((App) getApplicationContext()).getServerComponent();
 
         // EyeSeeTea customization - Notifications system
-        if (notificationsPresenter != null){
-            notificationsPresenter.refresh(this);
-        }
+        getNotificationsPresenter().refresh(this);
 
         super.onCreate(savedInstanceState);
     }
@@ -88,9 +99,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     @Override
     protected void onResume() {
         super.onResume();
-        if (notificationsPresenter != null) {
-            notificationsPresenter.refresh(this);
-        }
+        getNotificationsPresenter().refresh(this);
     }
 
     @Override
@@ -115,7 +124,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
                     return Unit.INSTANCE;
                 })
                 .onMenuItemClicked(item -> {
-                    analyticsHelper.setEvent(SHOW_HELP, CLICK, SHOW_HELP);
+                    getAnalyticsHelper().setEvent(SHOW_HELP, CLICK, SHOW_HELP);
                     showTutorial(false);
                     return false;
                 })
@@ -232,7 +241,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
 
     @Override
     public AnalyticsHelper analyticsHelper() {
-        return analyticsHelper;
+        return getAnalyticsHelper();
     }
 
     @Override
@@ -250,7 +259,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
                 .setTitle("Notification")
                 .setMessage(content)
                 .setPositiveButton(getContext().getString(R.string.wipe_data_ok), (d, which) -> {
-                    notificationsPresenter.markNotificationAsRead(notification);
+                    getNotificationsPresenter().markNotificationAsRead(notification);
                 })
                 .setCancelable(true)
                 .show();
