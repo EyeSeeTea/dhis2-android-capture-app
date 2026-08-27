@@ -1,17 +1,21 @@
 package org.dhis2.mobile.sync.domain
 
+import org.dhis2.mobile.commons.domain.PostMetadataSyncAction
 import org.dhis2.mobile.commons.domain.UseCase
 import org.dhis2.mobile.commons.error.DomainError
+import org.dhis2.mobile.commons.logging.logDebug
 import org.dhis2.mobile.sync.data.SyncBackgroundJobAction
 import org.dhis2.mobile.sync.data.SyncRepository
 import org.dhis2.mobile.sync.model.SMSConfigResult
 import org.dhis2.mobile.sync.model.SyncPeriod
 
 private const val SYNC_METADATA_NAME = "SYNC_METADATA"
+private const val POST_METADATA_SYNC_ACTIONS_TAG = "POST_METADATA_SYNC_ACTIONS"
 
 class SyncMetadata(
     private val repository: SyncRepository,
     private val syncBackgroundJobAction: SyncBackgroundJobAction,
+    private val postMetadataSyncActions: List<PostMetadataSyncAction> = emptyList(),
 ) : UseCase<(progress: Int) -> Unit, Unit> {
     override suspend fun invoke(input: (progress: Int) -> Unit): Result<Unit> =
         try {
@@ -43,6 +47,7 @@ class SyncMetadata(
                     }
                 }
                 input(50)
+                runPostMetadataSyncActions()
                 repository.downloadMapMetadata()
                 input(60)
                 repository.downloadFileResources()
@@ -65,6 +70,28 @@ class SyncMetadata(
         } catch (e: Exception) {
             Result.failure(e)
         }
+
+    /**
+     * Runs the registered [PostMetadataSyncAction]s sequentially. Failures are logged
+     * and swallowed on purpose: a downstream action must never fail the metadata sync.
+     */
+    private suspend fun runPostMetadataSyncActions() {
+        postMetadataSyncActions.forEach { action ->
+            // runCatching folds both failure modes — a returned failure and a thrown
+            // exception — into one Result. The logging is wrapped too: nothing an action
+            // does, including a logger that throws, may fail the sync.
+            runCatching { action().getOrThrow() }
+                .exceptionOrNull()
+                ?.let { error ->
+                    runCatching {
+                        logDebug(
+                            POST_METADATA_SYNC_ACTIONS_TAG,
+                            "Post metadata sync action failed: ${error.message}",
+                        )
+                    }
+                }
+        }
+    }
 
     private suspend fun handleMetadataPeriodChange(
         initialMetadataSyncPeriod: SyncPeriod?,
