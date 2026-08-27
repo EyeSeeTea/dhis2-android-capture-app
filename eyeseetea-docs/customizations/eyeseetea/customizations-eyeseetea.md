@@ -65,7 +65,7 @@ The EyeSeeTea flavor uses the APK-file download update flow instead of the URL-b
 
 - **CI/CD:** `.github/workflows/eyeseetea-main.yml`
 
-## 5. Oslo bug fixes active in this baseline
+## 6. Oslo bug fixes active in this baseline
 
 Patches for Oslo regressions that affect all forks. Each entry documents the ticket, affected version, fix location, and retirement condition.
 
@@ -73,3 +73,20 @@ Patches for Oslo regressions that affect all forks. Each entry documents the tic
 |-----|--------|------------|------|-------------|
 | TEI search blank value filter | ANDROAPP-6844 | 3.3.0 | `SearchTEIViewModel.kt` — `updateQuery()` | Oslo fixes the empty-value guard in `updateQuery()` |
 | "Mark as complete?" dialog always shown for completed events | ANDROAPP-7666 | 3.3.1 | `FormViewModel.kt` — `showDataEntryResultDialogDeprecated()`, `EventStatus.COMPLETED` branch | Oslo returns `FormActions.OnFinish` for completed events with no issues |
+
+## 6.1 Post-metadata-sync actions extension point
+
+The `PostMetadataSyncAction` mechanism (see `eyeseetea-docs/customization-techniques.md` — T2) is
+baseline infrastructure. It exists so a fork can run extra work after a metadata sync without
+touching `:sync`, which cannot depend on `:app`.
+
+| Location | What |
+|----------|------|
+| `commonskmm/src/commonMain/.../domain/PostMetadataSyncAction.kt` | The contract: `fun interface PostMetadataSyncAction { suspend operator fun invoke(): Result<Unit> }`. |
+| `sync/src/commonMain/.../domain/SyncMetadata.kt` | Takes `postMetadataSyncActions: List<PostMetadataSyncAction> = emptyList()` and runs them sequentially at `input(50)`, after the sync itself succeeds. Failures are logged and swallowed — an action can never fail the metadata sync. |
+| `sync/src/androidMain/.../di/SyncModule.android.kt` | Explicit `factory { }` (not `factoryOf(::SyncMetadata)`) with `getOrNull() ?: emptyList()`, so a flavor with no actions still resolves. |
+| `app/src/main/.../di/KoinInitialization.kt` | One flavor-agnostic line: `postMetadataSyncModule` in the `modules(...)` list. |
+| `app/src/<flavor>/.../di/PostMetadataSyncModule.kt` | Fork-owned. Must exist in every flavor source set — empty (`val postMetadataSyncModule = module { }`) where the flavor has nothing to run. |
+
+No flavor in this baseline currently registers an action; the file exists in every flavor source
+set as an empty module so `KoinInitialization` can register it unconditionally.
