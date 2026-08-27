@@ -236,6 +236,12 @@ android {
             versionCode = libs.versions.vCode.get().toInt()
             versionName = libs.versions.vName.get()
         }
+        create("oca") {
+            applicationId = "oca.com.dhis2"
+            dimension = "default"
+            versionCode = libs.versions.vCode.get().toInt()
+            versionName = libs.versions.vName.get()
+        }
     }
 
     compileOptions {
