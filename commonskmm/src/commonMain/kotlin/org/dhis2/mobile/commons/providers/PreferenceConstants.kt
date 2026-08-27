@@ -20,5 +20,6 @@ const val TEI_MAX_DEFAULT = 500
 const val LIMIT_BY_ORG_UNIT = "LIMIT_BY_ORG_UNIT"
 const val LIMIT_BY_PROGRAM = "LIMIT_BY_PROGRAM"
 const val MAX_RESERVED_VALUES = 100
+
 // EyeSeeTea customization - Notifications system
 const val BASIC_SHARE_PREFS = "BASIC_SHARE_PREFS"

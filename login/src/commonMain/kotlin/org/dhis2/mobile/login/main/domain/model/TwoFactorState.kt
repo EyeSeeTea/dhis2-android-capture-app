@@ -4,17 +4,21 @@ package org.dhis2.mobile.login.main.domain.model
  * EyeSeeTea customization - 2FA support
  * Represents the different states of 2FA verification during login
  */
-sealed class TwoFactorState(val code: String) {
-    data class TotpVerification(private val totpCode: String) : TwoFactorState(totpCode)
-    
+sealed class TwoFactorState(
+    val code: String,
+) {
+    data class TotpVerification(
+        private val totpCode: String,
+    ) : TwoFactorState(totpCode)
+
     data class EmailVerification(
         private val emailCode: String,
-        val resendEnabled: Boolean
+        val resendEnabled: Boolean,
     ) : TwoFactorState(emailCode)
-    
+
     data class SmsVerification(
         private val smsCode: String,
-        val resendEnabled: Boolean
+        val resendEnabled: Boolean,
     ) : TwoFactorState(smsCode)
 }
 
@@ -24,8 +28,5 @@ sealed class TwoFactorState(val code: String) {
 enum class TwoFactorType {
     TOTP,
     EMAIL,
-    SMS
+    SMS,
 }
-
-
-

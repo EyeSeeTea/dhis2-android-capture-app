@@ -234,31 +234,31 @@ class D2ErrorMessageProviderImpl : D2ErrorMessageProvider {
             // EyeSeeTea customization - 2FA support
             D2ErrorCode.INCORRECT_TWO_FACTOR_CODE, D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP ->
                 getString(
-                    Res.string.incorrect_two_factor_code
+                    Res.string.incorrect_two_factor_code,
                 )
-            D2ErrorCode.EMAIL_TWO_FACTOR_CODE_SENT->
+            D2ErrorCode.EMAIL_TWO_FACTOR_CODE_SENT ->
                 getString(
-                    Res.string.email_two_factor_code_sent
-                )
-
-            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_EMAIL->
-                getString(
-                    Res.string.incorrect_two_factor_code_email
+                    Res.string.email_two_factor_code_sent,
                 )
 
-            D2ErrorCode.TWO_FACTOR_MANY_SEND_ATTEMPTS->
+            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_EMAIL ->
                 getString(
-                    Res.string.two_factor_code_many_send_attemps
+                    Res.string.incorrect_two_factor_code_email,
                 )
 
-            D2ErrorCode.SMS_TWO_FACTOR_CODE_SENT->
+            D2ErrorCode.TWO_FACTOR_MANY_SEND_ATTEMPTS ->
                 getString(
-                    Res.string.sms_two_factor_code_sent
+                    Res.string.two_factor_code_many_send_attemps,
                 )
 
-            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_SMS->
+            D2ErrorCode.SMS_TWO_FACTOR_CODE_SENT ->
                 getString(
-                    Res.string.incorrect_two_factor_code_sms
+                    Res.string.sms_two_factor_code_sent,
+                )
+
+            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_SMS ->
+                getString(
+                    Res.string.incorrect_two_factor_code_sms,
                 )
         }
 

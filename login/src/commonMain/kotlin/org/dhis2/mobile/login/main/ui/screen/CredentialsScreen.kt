@@ -812,12 +812,13 @@ private fun TwoFactorContainer(
     // use twoFactorState type as key to only reset when 2FA type changes (TOTP -> Email -> SMS).
     // This prevents the cursor from jumping to the beginning when the user types.
     // Pattern follows InputProvider.kt: use a stable key (type) instead of the value.
-    val twoFactorTypeKey = when (twoFactorState) {
-        is TwoFactorState.TotpVerification -> "TOTP"
-        is TwoFactorState.EmailVerification -> "EMAIL"
-        is TwoFactorState.SmsVerification -> "SMS"
-        null -> "NONE"
-    }
+    val twoFactorTypeKey =
+        when (twoFactorState) {
+            is TwoFactorState.TotpVerification -> "TOTP"
+            is TwoFactorState.EmailVerification -> "EMAIL"
+            is TwoFactorState.SmsVerification -> "SMS"
+            null -> "NONE"
+        }
 
     // Initialize with the current code, placing cursor at the end
     // State is managed locally and only synced upward via onCodeChanged callback
@@ -922,4 +923,3 @@ private fun TwoFactorContainer(
         }
     }
 }
-

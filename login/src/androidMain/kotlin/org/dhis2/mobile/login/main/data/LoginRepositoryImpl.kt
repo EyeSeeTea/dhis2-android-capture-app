@@ -30,8 +30,8 @@ import org.dhis2.mobile.login.resources.server_url_error
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.arch.helpers.Result
 import org.hisp.dhis.android.core.maintenance.D2Error
-import org.hisp.dhis.android.core.user.oauth2.OAuth2Config
 import org.hisp.dhis.android.core.maintenance.D2ErrorCode
+import org.hisp.dhis.android.core.user.oauth2.OAuth2Config
 import org.hisp.dhis.android.core.user.openid.IntentWithRequestCode
 import org.hisp.dhis.android.core.user.openid.OpenIDConnectConfig
 import org.jetbrains.compose.resources.getString
@@ -486,30 +486,30 @@ class LoginRepositoryImpl(
         }
 
     // EyeSeeTea customization - 2FA support
-    private fun isTwoFactorError(errorCode: D2ErrorCode): Boolean {
-        return errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE ||
-                errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP ||
-                errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_EMAIL ||
-                errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_SMS ||
-                errorCode == D2ErrorCode.TWO_FACTOR_MANY_SEND_ATTEMPTS ||
-                errorCode == D2ErrorCode.EMAIL_TWO_FACTOR_CODE_SENT ||
-                errorCode == D2ErrorCode.SMS_TWO_FACTOR_CODE_SENT
-    }
+    private fun isTwoFactorError(errorCode: D2ErrorCode): Boolean =
+        errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE ||
+            errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP ||
+            errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_EMAIL ||
+            errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_SMS ||
+            errorCode == D2ErrorCode.TWO_FACTOR_MANY_SEND_ATTEMPTS ||
+            errorCode == D2ErrorCode.EMAIL_TWO_FACTOR_CODE_SENT ||
+            errorCode == D2ErrorCode.SMS_TWO_FACTOR_CODE_SENT
 
     private suspend fun handleTwoFactorError(
         e: D2Error,
-        isNetworkAvailable: Boolean
+        isNetworkAvailable: Boolean,
     ): kotlin.Result<Unit> {
         val errorMessage = d2ErrorMessageProvider.getErrorMessage(e, isNetworkAvailable)
 
         when (e.errorCode()) {
             D2ErrorCode.INCORRECT_TWO_FACTOR_CODE,
-            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP -> {
+            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP,
+            -> {
                 return kotlin.Result.failure(
                     TwoFactorRequiredException(
                         type = TwoFactorType.TOTP,
                         errorMessage = errorMessage,
-                    )
+                    ),
                 )
             }
 
@@ -518,7 +518,7 @@ class LoginRepositoryImpl(
                     TwoFactorRequiredException(
                         TwoFactorType.EMAIL,
                         errorMessage = errorMessage,
-                    )
+                    ),
                 )
             }
 
@@ -527,7 +527,7 @@ class LoginRepositoryImpl(
                     TwoFactorRequiredException(
                         type = TwoFactorType.EMAIL,
                         errorMessage = errorMessage,
-                    )
+                    ),
                 )
             }
 
@@ -536,7 +536,7 @@ class LoginRepositoryImpl(
                     TwoFactorRequiredException(
                         TwoFactorType.SMS,
                         errorMessage = errorMessage,
-                    )
+                    ),
                 )
             }
 
@@ -545,7 +545,7 @@ class LoginRepositoryImpl(
                     TwoFactorRequiredException(
                         type = TwoFactorType.SMS,
                         errorMessage = errorMessage,
-                    )
+                    ),
                 )
             }
 

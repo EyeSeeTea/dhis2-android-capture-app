@@ -17,10 +17,10 @@ import org.dhis2.mobile.commons.extensions.withMinimumDuration
 import org.dhis2.mobile.commons.network.NetworkStatusProvider
 import org.dhis2.mobile.login.main.domain.model.DeviceEnrollmentInfo
 import org.dhis2.mobile.login.main.domain.model.LoginResult
-import org.dhis2.mobile.login.main.domain.model.TwoFactorState
-import org.dhis2.mobile.login.main.domain.model.TwoFactorType
 import org.dhis2.mobile.login.main.domain.model.LoginScreenState
 import org.dhis2.mobile.login.main.domain.model.OpenIdLoginConfiguration
+import org.dhis2.mobile.login.main.domain.model.TwoFactorState
+import org.dhis2.mobile.login.main.domain.model.TwoFactorType
 import org.dhis2.mobile.login.main.domain.usecase.BiometricLogin
 import org.dhis2.mobile.login.main.domain.usecase.GetAvailableUsernames
 import org.dhis2.mobile.login.main.domain.usecase.GetBiometricInfo
@@ -329,9 +329,10 @@ class CredentialsViewModel(
                     password = _credentialsScreenState.value.credentialsInfo.password,
                     isNetworkAvailable = isNetworkOnline.value,
                     // EyeSeeTea customization - 2FA support
-                    twoFactorCode = _credentialsScreenState.value.twoFactorCode.takeIf {
-                        _credentialsScreenState.value.twoFactorState != null
-                    },
+                    twoFactorCode =
+                        _credentialsScreenState.value.twoFactorCode.takeIf {
+                            _credentialsScreenState.value.twoFactorState != null
+                        },
                 )
             }
         }
@@ -414,18 +415,21 @@ class CredentialsViewModel(
                 _credentialsScreenState.update {
                     val code = it.twoFactorState?.code ?: ""
 
-                    val newTwoFactorState = when (result.type) {
-                        TwoFactorType.TOTP -> TwoFactorState.TotpVerification(code)
-                        TwoFactorType.EMAIL -> TwoFactorState.EmailVerification(
-                            code,
-                            resendEnabled = true
-                        )
+                    val newTwoFactorState =
+                        when (result.type) {
+                            TwoFactorType.TOTP -> TwoFactorState.TotpVerification(code)
+                            TwoFactorType.EMAIL ->
+                                TwoFactorState.EmailVerification(
+                                    code,
+                                    resendEnabled = true,
+                                )
 
-                        TwoFactorType.SMS -> TwoFactorState.SmsVerification(
-                            code,
-                            resendEnabled = true
-                        )
-                    }
+                            TwoFactorType.SMS ->
+                                TwoFactorState.SmsVerification(
+                                    code,
+                                    resendEnabled = true,
+                                )
+                        }
 
                     // EyeSeeTea customization - 2FA support
                     // Determine if the message is error or info based on 2FA type:
@@ -433,11 +437,12 @@ class CredentialsViewModel(
                     // INCORRECT_TWO_FACTOR_CODE_* are error messages (red).
                     // For TOTP: show error only if the field is already visible.
                     val isInfoMessage = result.type == TwoFactorType.EMAIL || result.type == TwoFactorType.SMS
-                    val shouldShowError = when {
-                        isInfoMessage -> false // EMAIL/SMS code sent is always info
-                        it.twoFactorState == null && result.type == TwoFactorType.TOTP -> false // First time TOTP, don't show error
-                        else -> true // TOTP code incorrect or other errors
-                    }
+                    val shouldShowError =
+                        when {
+                            isInfoMessage -> false // EMAIL/SMS code sent is always info
+                            it.twoFactorState == null && result.type == TwoFactorType.TOTP -> false // First time TOTP, don't show error
+                            else -> true // TOTP code incorrect or other errors
+                        }
 
                     it.copy(
                         twoFactorState = newTwoFactorState,
@@ -577,29 +582,33 @@ class CredentialsViewModel(
     // EyeSeeTea customization - 2FA support
     fun updateTwoFactorCode(code: String) {
         _credentialsScreenState.update {
-            val updatedState = when (val currentState = it.twoFactorState) {
-                is TwoFactorState.TotpVerification -> {
-                    TwoFactorState.TotpVerification(code)
-                }
+            val updatedState =
+                when (val currentState = it.twoFactorState) {
+                    is TwoFactorState.TotpVerification -> {
+                        TwoFactorState.TotpVerification(code)
+                    }
 
-                is TwoFactorState.EmailVerification -> {
-                    TwoFactorState.EmailVerification(code, currentState.resendEnabled)
-                }
+                    is TwoFactorState.EmailVerification -> {
+                        TwoFactorState.EmailVerification(code, currentState.resendEnabled)
+                    }
 
-                is TwoFactorState.SmsVerification -> {
-                    TwoFactorState.SmsVerification(code, currentState.resendEnabled)
-                }
+                    is TwoFactorState.SmsVerification -> {
+                        TwoFactorState.SmsVerification(code, currentState.resendEnabled)
+                    }
 
-                null -> null
-            }
+                    null -> null
+                }
             it.copy(
                 twoFactorState = updatedState,
                 twoFactorCode = code,
-                loginState = if (code.isNotBlank() && it.credentialsInfo.username.isNotBlank() && it.credentialsInfo.password.isNotBlank()) {
-                    LoginState.Enabled
-                } else {
-                    LoginState.Disabled
-                },
+                loginState =
+                    if (code.isNotBlank() && it.credentialsInfo.username.isNotBlank() &&
+                        it.credentialsInfo.password.isNotBlank()
+                    ) {
+                        LoginState.Enabled
+                    } else {
+                        LoginState.Disabled
+                    },
             )
         }
     }
