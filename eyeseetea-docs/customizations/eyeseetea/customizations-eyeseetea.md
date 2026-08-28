@@ -15,6 +15,8 @@ The **eyeseetea** flavor is added.
 | `app/src/eyeseetea/` | Flavor resources (strings, google-services.json, etc.) |
 | `app/src/eyeseeteaDebug/`, `app/src/eyeseeteaRelease/` | Debug/release variants |
 
+**Distribution channel:** EyeSeeTea forks (`eyeseetea`, `oca`, and future client flavors) are published to Google Play by each project's PM — a manual process, not automated in this repo's CI. Because of that, `DownloadNewVersion.kt` in these flavors must use the `dhis2PlayServices` pattern (`versionRepository.getUrl()` → `DownloadMethod.Url`), not the `dhis2`/generic-Oslo pattern (`versionRepository.download()` → `DownloadMethod.File`): once installed from Play, the app should not race Play Store's own update mechanism by downloading and side-loading its own APK. This is **not a client customization** — it is the correct default for any flavor distributed through Play, same as `dhis2PlayServices` itself. A new flavor's `DownloadNewVersion.kt` should be copied from `dhis2PlayServices`, not from `dhis2` or `eyeseetea`'s sibling flavors, unless that specific fork is confirmed to not use Play Store.
+
 ### 1.2 SDK: JitPack and composite build
 
 Oslo uses the official SDK coordinates. Here the EyeSeeTea fork is used via JitPack and optionally a local SDK via composite build.
@@ -51,21 +53,11 @@ The EyeSeeTea baseline keeps compatibility with SDK login methods and error hand
 - **LoginRepositoryImpl.kt**: `blockingLogIn(username, password, serverUrl, null)` uses the SDK overload that accepts a fourth parameter for the 2FA code.
 - **UserManagerImpl.java**: `logIn(username, password, serverUrl, null)` uses the SDK overload that accepts a fourth parameter for the 2FA code.
 
-## 4. App update delivery method
-
-The EyeSeeTea flavor uses the APK-file download update flow instead of the URL-based update flow used by `dhis2PlayServices`.
-
-- **DownloadNewVersion.kt** in `app/src/eyeseetea/`: returns `DownloadMethod.File` after downloading the APK with `versionRepository.download(...)`.
-- **Behavioral implication**: the app downloads the installation file locally and then continues with installation from that file, instead of only exposing an external URL.
-- **Reference comparison**:
-  - `app/src/eyeseetea/java/org/dhis2/usescases/main/domain/DownloadNewVersion.kt`
-  - `app/src/dhis2PlayServices/java/org/dhis2/usescases/main/domain/DownloadNewVersion.kt`
-
-## 5. Only in this repository (not in Oslo)
+## 4. Only in this repository (not in Oslo)
 
 - **CI/CD:** `.github/workflows/eyeseetea-main.yml`
 
-## 6. Oslo bug fixes active in this baseline
+## 5. Oslo bug fixes active in this baseline
 
 Patches for Oslo regressions that affect all forks. Each entry documents the ticket, affected version, fix location, and retirement condition.
 
@@ -74,7 +66,7 @@ Patches for Oslo regressions that affect all forks. Each entry documents the tic
 | TEI search blank value filter | ANDROAPP-6844 | 3.3.0 | `SearchTEIViewModel.kt` — `updateQuery()` | Oslo fixes the empty-value guard in `updateQuery()` |
 | "Mark as complete?" dialog always shown for completed events | ANDROAPP-7666 | 3.3.1 | `FormViewModel.kt` — `showDataEntryResultDialogDeprecated()`, `EventStatus.COMPLETED` branch | Oslo returns `FormActions.OnFinish` for completed events with no issues |
 
-## 6.1 Post-metadata-sync actions extension point
+## 5.1 Post-metadata-sync actions extension point
 
 The `PostMetadataSyncAction` mechanism (see `eyeseetea-docs/customization-techniques.md` — T2) is
 baseline infrastructure. It exists so a fork can run extra work after a metadata sync without
