@@ -70,7 +70,7 @@ Upgrading from `{{CURRENT_VERSION}}` to `{{TARGET_VERSION}}`. Strategy has 6 pha
 ## Automation extraction rule
 
 Track repetitive patterns during the conversation. If you observe the same task structure executed 3+ times with different inputs (e.g., resolving conflicts with the same strategy, writing tests with the same shape, applying the same transformation across files), proactively suggest extracting it into:
-- An **AGENTS-FORK.md rule** if it's a guideline (3-5 repetitions)
+- An **AGENTS-{{CLIENT_SLUG}}.md rule** if it's a guideline (3-5 repetitions)
 - An **agent** if it's a multi-step autonomous task (6+ repetitions)
 - A **skill** if it requires a specialized protocol not derivable from context
 
