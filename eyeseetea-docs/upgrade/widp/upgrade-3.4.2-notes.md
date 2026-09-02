@@ -177,6 +177,29 @@ caught `url_hint` / `login_https`, because the broken file is a *shared* resourc
 deleted symbols are only referenced from a customized layout. A resource-link and a per-flavor
 compile are the only gates that catch this class.
 
+### Pre-existing intermittent test failure (not introduced here)
+
+`:app:testWidpDebugUnitTest` intermittently reports one failure with
+`kotlinx.coroutines.test.UncaughtExceptionsBeforeTest` — an uncaught exception leaked by an
+earlier test and attributed to whichever test starts next. The failing test alternates between
+`MainViewModelTest.shouldSetVersionToUpdate` and
+`MainViewModelIntegrationTest.should hide filter and sync buttons while sync is running`.
+
+Attributed by elimination, not by guessing:
+
+| Experiment | Result |
+|---|---|
+| full suite with both new test classes | 920/921 |
+| full suite with a **trivial** class (`assertTrue(true)`) in `app/src/testWidp/` | 918/919 — **still fails** |
+| same, and with the new presenter tests removed as well | 912/913 — **still fails with none of our code** |
+| full suite with no `testWidp` source set at all | 918/918 once, 917/918 on a later run |
+
+Both failing classes are **byte-identical to `develop-eyeseetea`** and were not touched by this
+upgrade. Adding any class to a source set perturbs test ordering, which is what makes the latent
+leak surface; the flake also occurs with no new class at all. It is inherited, intermittent, and
+out of scope here — but it should be reported to the baseline, because a suite that fails one
+test at random cannot gate anything.
+
 ## Open Questions
 
 - Image upload without resizing: the requirement **is** documented — `openspec/specs/image-upload-no-resize/spec.md`

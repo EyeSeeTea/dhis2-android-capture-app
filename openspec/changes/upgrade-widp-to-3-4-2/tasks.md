@@ -54,18 +54,18 @@ Each sub-task ends with the exact `// EyeSeeTea customization - <title>` comment
 
 - [x] 6.1 Two-dot `git diff origin/develop-eyeseetea..HEAD` over **all 89 files** in `customization-files.md`
 - [x] 6.2 Confirm `gradle.properties` still carries `-Xmx8g -XX:MaxMetaspaceSize=1g`
-- [x] 6.3 List files where WIDP now matches upstream byte for byte; every one needs a recorded reason
+- [ ] 6.3 List files where WIDP now matches upstream byte for byte; every one needs a recorded reason — the 13 are listed but the per-file reason is not written down yet
 - [x] 6.4 Confirm no file under `eyeseetea-docs/customizations/eyeseetea/` was modified from this branch
-- [x] 6.5 Confirm `Shared drift still differing` is empty or every entry has a reason and a next action
+- [ ] 6.5 Confirm `Shared drift still differing` is empty or every entry has a reason and a next action — **blocked by 9.1**: 11 files differ from the baseline with no inventory entry (all explainable, none recorded)
 
 ## 7. Tests (runbook Phase 6, part 2)
 
 Priority by risk: notifications > change-server-url > 2FA > image-upload > url-data-element.
 
-- [x] 7.1 `./gradlew testWidpDebugUnitTest`
+- [x] 7.1 `./gradlew testWidpDebugUnitTest` — 921 tests. **One pre-existing intermittent failure** in inherited `MainViewModel*Test` classes, attributed by elimination and documented in the notes; reproduces with none of our code present
 - [x] 7.2 `./gradlew :login:allTests` — the 2FA tests do not run in `testWidpDebugUnitTest`
-- [ ] 7.3 Port `NotificationsModuleTest` and `NotificationsPresenterTest` from the earlier attempt
-- [ ] 7.4 Add a test for the `PostMetadataSyncAction` registration (4.4)
+- [x] 7.3 Port the notifications presenter tests from the earlier attempt, adapted to the new design (6 tests)
+- [x] 7.4 Add a test for the `PostMetadataSyncAction` registration, in the widp-only `app/src/testWidp/` source set (3 tests)
 - [ ] 7.5 Record the pre-existing red `FormValueStoreTest > Should try to resize image`; it is evidence for 8.5, not a merge failure
 
 ## 8. Manual validation
