@@ -10,7 +10,7 @@ An earlier attempt merged Oslo directly. Three defects traced to that single dec
 
 1. `gradle.properties` reverted to `-Xmx4096M`, dropping the fork's `-Xmx8g -XX:MaxMetaspaceSize=1g`. Via the baseline there is no conflict at all: merge-base, `develop-widp` and `develop-eyeseetea` all carry the same value.
 2. The `eyeseetea` flavor stopped compiling (`:app:kspEyeseeteaDebugKotlin FAILED`): `GranularSyncModule.kt` stayed pre-3.4.1 and kept a malformed package path. Nothing in CI compiles that flavor.
-3. The shared fork docs went stale, including `conflict-rules.md` itself — whose missing step 4 is what would have prevented the wrong merge.
+3. Three shared fork docs were missed entirely — `customization-techniques.md` (which documents the `PostMetadataSyncAction` technique), `templates/AGENTS-CLIENT.md.template` and `customizations/template/customization-specs-template.md` — and `onboarding-fork-guide.md` stayed on its pre-3.4 version.
 
 ## Decisions
 

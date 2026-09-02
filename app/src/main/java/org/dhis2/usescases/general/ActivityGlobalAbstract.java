@@ -31,6 +31,7 @@ import org.dhis2.data.server.ServerComponent;
 import org.dhis2.usescases.notifications.domain.Notification;
 import org.dhis2.usescases.notifications.presentation.NotificationsPresenter;
 import org.dhis2.usescases.notifications.presentation.NotificationsView;
+import org.dhis2.usescases.notifications.presentation.ShowNotifications;
 import org.dhis2.utils.HelpManager;
 import org.dhis2.utils.OnDialogClickListener;
 import org.dhis2.utils.analytics.AnalyticsHelper;
@@ -38,6 +39,8 @@ import org.dhis2.utils.granularsync.SyncStatusDialog;
 
 import java.util.List;
 import java.util.Locale;
+
+import org.koin.java.KoinJavaComponent;
 
 import javax.inject.Inject;
 
@@ -55,8 +58,19 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     @Inject
     public CrashReportController crashReportController;
 
-    @Inject
-    public NotificationsPresenter notificationsPresenter;
+    // EyeSeeTea customization - Notifications system
+    // Upstream 3.4 migrated MainActivity to Koin and stopped running the Dagger inject() that
+    // populated this field, which left it null and crashed on entering the main screen. It is
+    // now resolved lazily from the Koin graph instead.
+    private NotificationsPresenter notificationsPresenter;
+
+    // EyeSeeTea customization - Notifications system
+    public NotificationsPresenter getNotificationsPresenter() {
+        if (notificationsPresenter == null) {
+            notificationsPresenter = KoinJavaComponent.get(NotificationsPresenter.class);
+        }
+        return notificationsPresenter;
+    }
 
     private CustomDialog descriptionDialog;
 
@@ -77,9 +91,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         ServerComponent serverComponent = ((App) getApplicationContext()).getServerComponent();
 
         // EyeSeeTea customization - Notifications system
-        if (notificationsPresenter != null){
-            notificationsPresenter.refresh(this);
-        }
+        getNotificationsPresenter().refresh(this);
 
         super.onCreate(savedInstanceState);
     }
@@ -88,9 +100,19 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     @Override
     protected void onResume() {
         super.onResume();
-        if (notificationsPresenter != null) {
-            notificationsPresenter.refresh(this);
-        }
+        // The download runs after a metadata sync, off any Activity. Registering here means a
+        // notification that lands while the user is standing still on this screen is shown
+        // straight away, and the listener never outlives the visible screen.
+        ShowNotifications.INSTANCE.onPending =
+                () -> runOnUiThread(() -> getNotificationsPresenter().refresh(this));
+        getNotificationsPresenter().refresh(this);
+    }
+
+    // EyeSeeTea customization - Notifications system
+    @Override
+    protected void onPause() {
+        ShowNotifications.INSTANCE.onPending = null;
+        super.onPause();
     }
 
     @Override
@@ -115,7 +137,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
                     return Unit.INSTANCE;
                 })
                 .onMenuItemClicked(item -> {
-                    analyticsHelper.setEvent(SHOW_HELP, CLICK, SHOW_HELP);
+                    getAnalyticsHelper().setEvent(SHOW_HELP, CLICK, SHOW_HELP);
                     showTutorial(false);
                     return false;
                 })
@@ -232,7 +254,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
 
     @Override
     public AnalyticsHelper analyticsHelper() {
-        return analyticsHelper;
+        return getAnalyticsHelper();
     }
 
     @Override
@@ -250,7 +272,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
                 .setTitle("Notification")
                 .setMessage(content)
                 .setPositiveButton(getContext().getString(R.string.wipe_data_ok), (d, which) -> {
-                    notificationsPresenter.markNotificationAsRead(notification);
+                    getNotificationsPresenter().markNotificationAsRead(notification);
                 })
                 .setCancelable(true)
                 .show();

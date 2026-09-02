@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EyeSeeTea customization - Change Server URL -->
+<!--
+    The "Change server URL" menu entry only exists in the widp flavor's main_menu.xml, but the
+    handler for it lives in the shared MainActivity. Declaring the id here makes R.id.change_url
+    resolve for every flavor, so the other flavors still compile while only widp actually shows
+    the entry.
+
+    Without this, `:app:compileEyeseeteaDebugKotlin` fails with "Unresolved reference
+    'change_url'" - which is the state develop-widp was already in, and why that flavor had
+    never been built.
+
+    A new file on purpose: no Oslo resource file is touched, so this cannot conflict upstream.
+-->
+<resources>
+    <item name="change_url" type="id" />
+</resources>
