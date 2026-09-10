@@ -57,10 +57,12 @@ actual val syncModule =
 
         factoryOf(::CheckPeriodicJobs)
 
+        // EyeSeeTea customization - Synced Data Retention Purge
         factoryOf(::RetentionPurge)
 
         workerOf(::SyncDataWorker)
         workerOf(::SyncMetadataWorker)
         workerOf(::SyncSettingsWorker)
+        // EyeSeeTea customization - Synced Data Retention Purge
         workerOf(::RetentionPurgeWorker)
     }

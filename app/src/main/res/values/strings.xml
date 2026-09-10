@@ -120,9 +120,11 @@
     <string name="wipe_data_no">Cancel</string>
     <string name="SYNC_DATA">SYNC Data Now</string>
     <string name="SYNC_META">SYNC Configuration Now</string>
+    <!-- EyeSeeTea customization - Synced Data Retention Purge -->
     <string name="PURGE_RETENTION">Purge Now</string>
     <string name="SYNC_MANAGER">Settings</string>
     <string name="last_data_sync">Last sync on</string>
+    <!-- EyeSeeTea customization - Synced Data Retention Purge -->
     <string name="last_retention_purge">Last purge on</string>
     <string name="purging_retention_data">Purging synced data</string>
     <string name="retention_purge_error_text">Last purge failed</string>
@@ -143,6 +145,7 @@
     <!--region SETTINCS-->
     <string name="settingsSyncData">Sync data</string>
     <string name="settingsSyncMetadata">Sync configuration</string>
+    <!-- EyeSeeTea customization - Synced Data Retention Purge -->
     <string name="settingsRetentionPurge">Data retention purge</string>
     <string name="settingsSyncParameters">Sync parameters</string>
     <string name="settingsReservedValues">Reserved values</string>

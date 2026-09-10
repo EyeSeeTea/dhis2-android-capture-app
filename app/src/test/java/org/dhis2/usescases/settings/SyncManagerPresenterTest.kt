@@ -151,6 +151,7 @@ class SyncManagerPresenterTest {
             syncInProgress = false,
         )
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     private fun mockedRetentionPurgeViewModel(): RetentionPurgeSettingsViewModel =
         RetentionPurgeSettingsViewModel(
             purgePeriod = 0,
@@ -484,6 +485,7 @@ class SyncManagerPresenterTest {
                 LaunchSync.SyncStatusProgress(
                     metadataSyncProgress = LaunchSync.SyncStatus.InProgress,
                     dataSyncProgress = LaunchSync.SyncStatus.InProgress,
+                    // EyeSeeTea customization - Synced Data Retention Purge
                     retentionPurgeProgress = LaunchSync.SyncStatus.None,
                 )
 
@@ -507,6 +509,7 @@ class SyncManagerPresenterTest {
             hasConnection = true,
             metadataSettingsViewModel = mockedMetaViewModel(),
             dataSettingsViewModel = mockedDataViewModel(),
+            // EyeSeeTea customization - Synced Data Retention Purge
             retentionPurgeSettingsViewModel = mockedRetentionPurgeViewModel(),
             syncParametersViewModel = mockedParamsViewModel(),
             reservedValueSettingsViewModel = mockedReservecValuesViewModel(),

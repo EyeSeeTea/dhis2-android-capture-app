@@ -7,6 +7,7 @@ data class SettingsState(
     val hasConnection: Boolean,
     val metadataSettingsViewModel: MetadataSettingsViewModel,
     val dataSettingsViewModel: DataSettingsViewModel,
+    // EyeSeeTea customization - Synced Data Retention Purge
     val retentionPurgeSettingsViewModel: RetentionPurgeSettingsViewModel,
     val syncParametersViewModel: SyncParametersViewModel,
     val reservedValueSettingsViewModel: ReservedValueSettingsViewModel,
@@ -19,5 +20,6 @@ data class SettingsState(
 
     fun canInitMetadataSync() = hasConnection && !metadataSettingsViewModel.syncInProgress
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     fun canInitRetentionPurge() = !retentionPurgeSettingsViewModel.purgeInProgress
 }

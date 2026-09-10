@@ -126,6 +126,7 @@ class SettingsRepositoryTest {
             }
     }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     @Test
     fun `Should return last purge timestamp and successful status from preferences`() {
         givenARetentionPurgeAttempt(wasSuccessful = true)
@@ -241,6 +242,7 @@ class SettingsRepositoryTest {
         }
     }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     private fun givenARetentionPurgeAttempt(wasSuccessful: Boolean) {
         whenever(
             preferencesProvider.getString(LAST_RETENTION_PURGE, "-"),

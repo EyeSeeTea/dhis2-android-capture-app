@@ -29,6 +29,7 @@ class LaunchSync(
             SyncStatusProgress(
                 metadataSyncProgress = SyncStatus.None,
                 dataSyncProgress = SyncStatus.None,
+                // EyeSeeTea customization - Synced Data Retention Purge
                 retentionPurgeProgress = SyncStatus.None,
             ),
         )
@@ -49,6 +50,7 @@ class LaunchSync(
                 syncStatus.updateAndGet { it.copy(dataSyncProgress = currentSyncStatus) }
             }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     private val retentionPurgeWorkInfo =
         syncBackgroundJobAction
             .observeRetentionPurgeJob()
@@ -72,6 +74,7 @@ class LaunchSync(
             val seconds: Int,
         ) : SyncAction
 
+        // EyeSeeTea customization - Synced Data Retention Purge
         data object PurgeRetentionNow : SyncAction
 
         data class UpdateRetentionPurgePeriod(
@@ -92,8 +95,10 @@ class LaunchSync(
     data class SyncStatusProgress(
         val metadataSyncProgress: SyncStatus,
         val dataSyncProgress: SyncStatus,
+        // EyeSeeTea customization - Synced Data Retention Purge
         val retentionPurgeProgress: SyncStatus,
     ) {
+        // EyeSeeTea customization - Synced Data Retention Purge
         fun hasSyncFinished(
             metadataWasRunning: Boolean,
             dataWasRunning: Boolean,
@@ -112,6 +117,7 @@ class LaunchSync(
             SyncAction.SyncData -> syncData()
             is SyncAction.UpdateSyncDataPeriod -> updateSyncDataPeriod(syncAction.seconds)
             is SyncAction.UpdateSyncMetadataPeriod -> updateSyncMetadataPeriod(syncAction.seconds)
+            // EyeSeeTea customization - Synced Data Retention Purge
             SyncAction.PurgeRetentionNow -> purgeRetentionNow()
             is SyncAction.UpdateRetentionPurgePeriod -> updateRetentionPurgePeriod(syncAction.seconds)
         }
@@ -157,10 +163,12 @@ class LaunchSync(
         syncBackgroundJobAction.launchDataSync(seconds.toLong())
     }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     private fun purgeRetentionNow() {
         syncBackgroundJobAction.launchRetentionPurge(0)
     }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     private suspend fun updateRetentionPurgePeriod(seconds: Int) {
         if (seconds != Constants.TIME_MANUAL) {
             preferenceProvider.setValue(TIME_RETENTION_PURGE, seconds)

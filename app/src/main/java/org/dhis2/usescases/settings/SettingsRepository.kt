@@ -104,6 +104,7 @@ class SettingsRepository(
             ),
         )
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     fun retentionPurge(): Single<RetentionPurgeSettingsViewModel> =
         Single.just(
             RetentionPurgeSettingsViewModel(

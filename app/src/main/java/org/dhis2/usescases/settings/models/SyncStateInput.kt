@@ -7,5 +7,6 @@ data class SyncStateInput(
     val hasConnection: Boolean,
     val metadataSyncInProgress: Boolean,
     val dataSyncInProgress: Boolean,
+    // EyeSeeTea customization - Synced Data Retention Purge
     val retentionPurgeInProgress: Boolean,
 )

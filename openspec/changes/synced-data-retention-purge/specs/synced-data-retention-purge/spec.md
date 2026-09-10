@@ -1,3 +1,5 @@
+# Synced Data Retention Purge
+
 ## Purpose
 
 Lets the app periodically shrink its local database by removing

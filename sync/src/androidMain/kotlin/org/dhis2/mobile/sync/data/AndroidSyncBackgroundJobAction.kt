@@ -21,6 +21,8 @@ const val METADATA_SYNC_NOW = "METADATA_SYNC_NOW"
 const val DATA_SYNC = "DATA_SYNC"
 const val DATA_SYNC_NOW = "DATA_SYNC_NOW"
 const val SYNC_SETTINGS = "SYNC_SETTINGS"
+
+// EyeSeeTea customization - Synced Data Retention Purge
 const val RETENTION_PURGE = "RETENTION_PURGE"
 const val RETENTION_PURGE_NOW = "RETENTION_PURGE_NOW"
 
@@ -122,6 +124,7 @@ class AndroidSyncBackgroundJobAction(
         )
     }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     override fun launchRetentionPurge(purgingPeriod: Long) {
         if (purgingPeriod == 0L) {
             val request =
@@ -232,6 +235,7 @@ class AndroidSyncBackgroundJobAction(
                 }
             }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     override fun observeRetentionPurgeJob() =
         workManager
             .getWorkInfosFlow(
@@ -269,6 +273,7 @@ class AndroidSyncBackgroundJobAction(
         workManager.cancelUniqueWork(DATA_SYNC).await()
     }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     override suspend fun cancelRetentionPurge() {
         workManager.cancelUniqueWork(RETENTION_PURGE).await()
     }

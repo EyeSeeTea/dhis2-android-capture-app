@@ -55,12 +55,14 @@ class SettingsTest : BaseTest() {
         }
     }
 
-    // This test covers the retention purge capability flag, disabled by default
+    // EyeSeeTea customization - Synced Data Retention Purge
+    // Covers the retention purge capability flag, enabled on this OCA fork.
     @Test
-    fun shouldNotShowRetentionPurgeOptionWhenCapabilityIsDisabled() {
+    fun shouldShowRetentionPurgeOptionWithEditablePeriod() {
         startActivity()
         settingsRobot(composeTestRule) {
-            checkRetentionPurgeOptionIsNotDisplayed()
+            clickOnRetentionPurge()
+            checkEditPeriodIsEnabledForRetentionPurge()
         }
     }
 

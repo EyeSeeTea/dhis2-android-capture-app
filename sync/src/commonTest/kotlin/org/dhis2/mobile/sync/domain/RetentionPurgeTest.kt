@@ -8,6 +8,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
+// EyeSeeTea customization - Synced Data Retention Purge
 class RetentionPurgeTest {
     private val syncRepository: SyncRepository = mock()
 

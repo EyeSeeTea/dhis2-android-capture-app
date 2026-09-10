@@ -37,6 +37,8 @@ import java.io.File
 
 const val TEST_TAG_DATA_PERIOD = "TestTag_DataPeriod"
 const val TEST_TAG_META_PERIOD = "TestTag_MetaPeriod"
+
+// EyeSeeTea customization - Synced Data Retention Purge
 const val TEST_TAG_RETENTION_PURGE_PERIOD = "TestTag_RetentionPurgePeriod"
 const val TEST_TAG_SYNC_PARAMETERS_LIMIT_SCOPE = "TestTag_SyncParameters_LimitScope"
 const val TEST_TAG_SYNC_PARAMETERS_EVENT_MAX_COUNT = "TestTag_SyncParameters_EventMaxCount"
@@ -124,6 +126,7 @@ fun SettingsScreen(
                         is SettingsUiAction.OnSyncMetaPeriodChanged ->
                             viewmodel.onSyncMetaPeriodChanged(uiAction.periodInSeconds)
 
+                        // EyeSeeTea customization - Synced Data Retention Purge
                         SettingsUiAction.PurgeRetentionNow -> viewmodel.purgeRetentionNow()
                         is SettingsUiAction.OnRetentionPurgePeriodChanged ->
                             viewmodel.onRetentionPurgePeriodChanged(uiAction.periodInSeconds)
@@ -217,6 +220,7 @@ private fun SettingItemList(
             )
         }
 
+        // EyeSeeTea customization - Synced Data Retention Purge — begin
         if (RetentionPurgeCapability.IS_ENABLED) {
             item {
                 RetentionPurgeSettingItem(
@@ -231,6 +235,7 @@ private fun SettingItemList(
                 )
             }
         }
+        // EyeSeeTea customization - Synced Data Retention Purge — end
 
         item {
             SyncParametersSettingItem(

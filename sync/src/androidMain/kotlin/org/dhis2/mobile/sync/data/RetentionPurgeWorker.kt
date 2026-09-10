@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import org.dhis2.mobile.commons.domain.invoke
 import org.dhis2.mobile.sync.domain.RetentionPurge
 
+// EyeSeeTea customization - Synced Data Retention Purge
 class RetentionPurgeWorker(
     context: Context,
     workerParams: WorkerParameters,

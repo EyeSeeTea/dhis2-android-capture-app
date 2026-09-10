@@ -40,6 +40,7 @@ import org.hisp.dhis.mobile.ui.designsystem.theme.Spacing
 import org.hisp.dhis.mobile.ui.designsystem.theme.TextColor
 import org.dhis2.usescases.settings.SettingItem as SettingItemType
 
+// EyeSeeTea customization - Synced Data Retention Purge
 @Composable
 internal fun RetentionPurgeSettingItem(
     retentionPurgeSettings: RetentionPurgeSettingsViewModel,

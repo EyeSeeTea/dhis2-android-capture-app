@@ -176,6 +176,7 @@ class AndroidSyncRepositoryTest {
             verify(analyticsHelper).clearMatomoSecondaryTracker()
         }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     @Test
     fun `Should persist last purge timestamp when purge succeeds`() =
         runTest {
@@ -225,6 +226,7 @@ class AndroidSyncRepositoryTest {
     }
 }
 
+// EyeSeeTea customization - Synced Data Retention Purge
 private class FakePreferenceProvider(
     delegate: PreferenceProvider = mock(),
 ) : PreferenceProvider by delegate {

@@ -364,6 +364,7 @@ class AndroidSyncRepository(
             Result.success(result)
         }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     @OptIn(ExperimentalTime::class)
     override suspend fun purgeRetention(): Result<Unit> {
         val result =

@@ -42,6 +42,7 @@ class LaunchSyncTest {
 
     private val mockedMetadataWorkInfo = MutableStateFlow<List<SyncJobStatus>>(emptyList())
     private val mockedDataWorkInfo = MutableStateFlow<List<SyncJobStatus>>(emptyList())
+    // EyeSeeTea customization - Synced Data Retention Purge
     private val mockedRetentionPurgeWorkInfo = MutableStateFlow<List<SyncJobStatus>>(emptyList())
     private val syncBackgroundJobAction: SyncBackgroundJobAction = mock()
 
@@ -50,6 +51,7 @@ class LaunchSyncTest {
         Dispatchers.setMain(testingDispatcher)
         whenever(syncBackgroundJobAction.observeMetadataJob()) doReturn mockedMetadataWorkInfo
         whenever(syncBackgroundJobAction.observeDataJob()) doReturn mockedDataWorkInfo
+        // EyeSeeTea customization - Synced Data Retention Purge
         whenever(syncBackgroundJobAction.observeRetentionPurgeJob()) doReturn mockedRetentionPurgeWorkInfo
         launchSync =
             LaunchSync(
@@ -112,6 +114,7 @@ class LaunchSyncTest {
             verify(syncBackgroundJobAction, times(1)).cancelMetadataSync()
         }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     @Test
     fun shouldPurgeRetentionNow() =
         runTest {
@@ -119,6 +122,7 @@ class LaunchSyncTest {
             verify(syncBackgroundJobAction, times(1)).launchRetentionPurge(0)
         }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     @Test
     fun shouldUpdateRetentionPurgePeriod() =
         runTest {
@@ -128,6 +132,7 @@ class LaunchSyncTest {
             verify(syncBackgroundJobAction, times(1)).launchRetentionPurge(newPeriod.toLong())
         }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
     @Test
     fun shouldCancelRetentionPurgeIfSwitchToManual() =
         runTest {
