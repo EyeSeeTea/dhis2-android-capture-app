@@ -65,6 +65,18 @@ below follows that document's categories.
   reconcile, so there is nothing to accept from upstream on merge; the flag
   itself lives in shared code precisely so a future upstream contribution
   does not need to be re-plumbed per flavor.
+  As of this writing the flag's value is set directly in the shared
+  constant (`true` on this branch, enabling the capability for every flavor
+  that builds it — currently only `oca`), not through a real per-flavor
+  override mechanism. This is a deliberate YAGNI call: build the
+  expect/actual (or equivalent) override machinery only if and when a
+  second fork actually needs a different value; until then a single shared
+  constant is simpler and has nothing to keep in sync. If that need
+  arises, the baseline default should move back to `false` and each fork
+  needing it on overrides it explicitly — this capability does not need
+  redesigning to support that, only the addition of the override point
+  itself. If this capability is ever proposed upstream to Oslo, the flag
+  is expected to be dropped entirely (no per-fork gating needed upstream).
 - **Status surfaces on the existing Sync Manager screen**, as an additional
   row alongside the existing metadata/data sync rows, not a new screen.
   Reduces UI surface and keeps the mental model ("this is a sync-adjacent

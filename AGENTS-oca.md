@@ -31,12 +31,13 @@ Java 17 required. Gradle 8.9.3 with parallel execution.
 
 ## Customizations
 
-0 confirmed OCA-specific customizations as of this writing. The `oca` flavor exists (product flavor, `applicationId`, branding, and the boilerplate DI/extension-point files every flavor must carry — `PostMetadataSyncModule.kt`, `GranularSyncModule.kt`), but nothing in it diverges functionally from `develop-eyeseetea` yet. See `eyeseetea-docs/customizations/oca/customization-files.md` §1 for the flavor surface inventory.
+1 confirmed OCA-specific customization as of this writing. The `oca` flavor itself (product flavor, `applicationId`, branding, and the boilerplate DI/extension-point files every flavor must carry — `PostMetadataSyncModule.kt`, `GranularSyncModule.kt`) does not diverge functionally from `develop-eyeseetea`. See `eyeseetea-docs/customizations/oca/customization-files.md` §1 for the flavor surface inventory and §2 for the customization below.
 
 When a real business customization is confirmed for OCA, add a row here and create its spec under `openspec/specs/<capability>/spec.md`:
 
 | # | Spec slug | Status | Risk |
 |---|-----------|--------|------|
+| 1 | synced-data-retention-purge | active | low |
 <!-- add one row per active customization; status is one of: active, broken, deprecated -->
 
 ### Customization code rules

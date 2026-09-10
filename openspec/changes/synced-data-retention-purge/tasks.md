@@ -112,12 +112,12 @@ commit.
 
 ## 5. Documentation
 
-- [ ] 5.1 Update `eyeseetea-docs/` customization-files inventories for each
+- [x] 5.1 Update `eyeseetea-docs/` customization-files inventories for each
   fork that enables the capability, to list the new shared files this
   change adds/touches (background job wiring, settings screen row,
   capability flag) so the fork's technical file-level inventory stays
   accurate.
-- [ ] 5.2 Add a manual-validation entry (schedule change, manual trigger,
+- [x] 5.2 Add a manual-validation entry (schedule change, manual trigger,
   status visibility, capability disabled by default) to each enabling
   fork's `upgrade-validation-checklist.md`.
   **Commit:** 5.1 + 5.2 together as one documentation commit, after
