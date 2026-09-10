@@ -62,4 +62,6 @@ interface SyncRepository {
     suspend fun isLoggedIn(): Boolean
 
     suspend fun toggleSMS(enable: Boolean): Result<Unit>
+
+    suspend fun purgeRetention(): Result<Unit>
 }

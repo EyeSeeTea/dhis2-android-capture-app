@@ -90,3 +90,10 @@ below follows that document's categories.
   additive changes only (new job, new settings row) rather than modifying
   existing sync job logic; per `conflict-rules.md`, classified
   `accept_ours` on merge since no equivalent exists upstream yet.
+- [`D2.retentionModule().purge()` reports no intermediate progress, unlike
+  `SyncData`'s per-task progress callbacks — the in-progress notification
+  can only show an indeterminate state, not a percentage] → Accepted for
+  this scope: last-run timestamp and in-progress status (both booleans/
+  timestamps, not progress-dependent) are unaffected. Revisit only if time
+  remains at the end of implementation — not a blocking gap for the
+  requirements in spec.md.

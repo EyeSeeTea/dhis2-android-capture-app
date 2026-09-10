@@ -40,12 +40,17 @@ of the file it extends.
 
 ## 3. Background job: invoke the SDK purge
 
-- [ ] 3.1 Add a test asserting that the background job invokes
-  `D2.retentionModule().purge()` and reports success/failure accordingly,
-  and verify it fails before the job's work logic exists.
-- [ ] 3.2 Implement the job's work logic calling
-  `D2.retentionModule().purge()`, and make the test from 3.1 pass.
-  **Commit:** 3.1 + 3.2 are one commit (red -> green).
+- [x] 3.1 Add a test asserting that the `RetentionPurge` use case invokes
+  the repository's retention purge and reports success/failure accordingly,
+  and verify it fails before the use case exists.
+- [x] 3.2 Implement `RetentionPurge` (use case) and
+  `SyncRepository.purgeRetention()` (calling `D2.retentionModule().purge()`
+  in the Android implementation), wire the use case into
+  `RetentionPurgeWorker.doWork()` and register both in DI, and make the
+  test from 3.1 pass.
+  **Commit:** 3.1 + 3.2 are one commit (red -> green). Verified locally
+  against the real SDK (`dhis2.useLocalSdk=true`) since
+  `D2.retentionModule()` is not yet published to JitPack.
 - [ ] 3.3 Add a test asserting that a successful run persists a "last purge"
   timestamp, and verify it fails before that persistence exists.
 - [ ] 3.4 Implement persistence of the last-purge timestamp, and make the

@@ -362,6 +362,12 @@ class AndroidSyncRepository(
             Result.success(result)
         }
 
+    override suspend fun purgeRetention(): Result<Unit> =
+        execute {
+            d2.retentionModule().purge()
+            Result.success(Unit)
+        }
+
     override suspend fun toggleSMS(enable: Boolean): Result<Unit> =
         execute {
             val currentStatus =
