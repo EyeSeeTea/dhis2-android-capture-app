@@ -22,6 +22,7 @@ const val DATA_SYNC = "DATA_SYNC"
 const val DATA_SYNC_NOW = "DATA_SYNC_NOW"
 const val SYNC_SETTINGS = "SYNC_SETTINGS"
 const val RETENTION_PURGE = "RETENTION_PURGE"
+const val RETENTION_PURGE_NOW = "RETENTION_PURGE_NOW"
 
 class AndroidSyncBackgroundJobAction(
     private val workManager: WorkManager,
@@ -122,24 +123,39 @@ class AndroidSyncBackgroundJobAction(
     }
 
     override fun launchRetentionPurge(purgingPeriod: Long) {
-        val request =
-            PeriodicWorkRequest
-                .Builder(
-                    workerClass = RetentionPurgeWorker::class.java,
-                    repeatInterval = purgingPeriod,
-                    repeatIntervalTimeUnit = TimeUnit.SECONDS,
-                ).addTag(
-                    RETENTION_PURGE,
-                ).setInitialDelay(
-                    purgingPeriod,
-                    TimeUnit.SECONDS,
-                ).build()
+        if (purgingPeriod == 0L) {
+            val request =
+                OneTimeWorkRequest
+                    .Builder(
+                        workerClass = RetentionPurgeWorker::class.java,
+                    ).addTag(
+                        RETENTION_PURGE_NOW,
+                    ).build()
+            workManager.enqueueUniqueWork(
+                uniqueWorkName = RETENTION_PURGE_NOW,
+                existingWorkPolicy = ExistingWorkPolicy.KEEP,
+                request = request,
+            )
+        } else {
+            val request =
+                PeriodicWorkRequest
+                    .Builder(
+                        workerClass = RetentionPurgeWorker::class.java,
+                        repeatInterval = purgingPeriod,
+                        repeatIntervalTimeUnit = TimeUnit.SECONDS,
+                    ).addTag(
+                        RETENTION_PURGE,
+                    ).setInitialDelay(
+                        purgingPeriod,
+                        TimeUnit.SECONDS,
+                    ).build()
 
-        workManager.enqueueUniquePeriodicWork(
-            uniqueWorkName = RETENTION_PURGE,
-            existingPeriodicWorkPolicy = ExistingPeriodicWorkPolicy.UPDATE,
-            request = request,
-        )
+            workManager.enqueueUniquePeriodicWork(
+                uniqueWorkName = RETENTION_PURGE,
+                existingPeriodicWorkPolicy = ExistingPeriodicWorkPolicy.UPDATE,
+                request = request,
+            )
+        }
     }
 
     override fun observeMetadataJob() =

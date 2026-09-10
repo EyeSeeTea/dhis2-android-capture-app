@@ -28,7 +28,7 @@ of the file it extends.
   suite still passes.
   **Commit:** its own commit (no preceding test, matching the existing
   convention for this class).
-- [ ] 2.2 Add a manual "run now" trigger following the same
+- [x] 2.2 Add a manual "run now" trigger following the same
   `launchDataSync`/period-`0` pattern, and verify it compiles and the
   module's existing test suite still passes.
   **Commit:** its own commit.
