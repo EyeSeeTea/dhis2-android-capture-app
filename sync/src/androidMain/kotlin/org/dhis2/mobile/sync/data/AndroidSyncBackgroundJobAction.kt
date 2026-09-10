@@ -232,6 +232,31 @@ class AndroidSyncBackgroundJobAction(
                 }
             }
 
+    override fun observeRetentionPurgeJob() =
+        workManager
+            .getWorkInfosFlow(
+                WorkQuery.fromUniqueWorkNames(
+                    RETENTION_PURGE,
+                    RETENTION_PURGE_NOW,
+                ),
+            ).map { workInfos ->
+                workInfos.map { workInfo ->
+                    SyncJobStatus(
+                        tags = workInfo.tags.toList(),
+                        status =
+                            when (workInfo.state) {
+                                WorkInfo.State.ENQUEUED -> SyncStatus.Enqueue
+                                WorkInfo.State.RUNNING -> SyncStatus.Running
+                                WorkInfo.State.SUCCEEDED -> SyncStatus.Succeed
+                                WorkInfo.State.FAILED -> SyncStatus.Failed
+                                WorkInfo.State.BLOCKED -> SyncStatus.Blocked
+                                WorkInfo.State.CANCELLED -> SyncStatus.Cancelled
+                            },
+                        message = null,
+                    )
+                }
+            }
+
     override suspend fun cancelSyncSettings() {
         workManager.cancelUniqueWork(SYNC_SETTINGS).await()
     }
@@ -242,6 +267,10 @@ class AndroidSyncBackgroundJobAction(
 
     override suspend fun cancelDataSync() {
         workManager.cancelUniqueWork(DATA_SYNC).await()
+    }
+
+    override suspend fun cancelRetentionPurge() {
+        workManager.cancelUniqueWork(RETENTION_PURGE).await()
     }
 
     override suspend fun cancelAll() {

@@ -10,6 +10,7 @@ import org.dhis2.commons.matomo.Categories
 import org.dhis2.commons.prefs.PreferenceProvider
 import org.dhis2.mobile.commons.providers.TIME_DATA
 import org.dhis2.mobile.commons.providers.TIME_META
+import org.dhis2.mobile.commons.providers.TIME_RETENTION_PURGE
 import org.dhis2.mobile.sync.data.SyncBackgroundJobAction
 import org.dhis2.mobile.sync.model.SyncJobStatus
 import org.dhis2.utils.analytics.AnalyticsHelper
@@ -28,6 +29,7 @@ class LaunchSync(
             SyncStatusProgress(
                 metadataSyncProgress = SyncStatus.None,
                 dataSyncProgress = SyncStatus.None,
+                retentionPurgeProgress = SyncStatus.None,
             ),
         )
 
@@ -47,7 +49,15 @@ class LaunchSync(
                 syncStatus.updateAndGet { it.copy(dataSyncProgress = currentSyncStatus) }
             }
 
-    val syncWorkInfo = merge(metadataWorkInfo, dataWorkInfo)
+    private val retentionPurgeWorkInfo =
+        syncBackgroundJobAction
+            .observeRetentionPurgeJob()
+            .map { workStatuses ->
+                val currentSyncStatus = combinedStatus(workStatuses)
+                syncStatus.updateAndGet { it.copy(retentionPurgeProgress = currentSyncStatus) }
+            }
+
+    val syncWorkInfo = merge(metadataWorkInfo, dataWorkInfo, retentionPurgeWorkInfo)
 
     sealed interface SyncAction {
         data object SyncData : SyncAction
@@ -59,6 +69,12 @@ class LaunchSync(
         ) : SyncAction
 
         data class UpdateSyncMetadataPeriod(
+            val seconds: Int,
+        ) : SyncAction
+
+        data object PurgeRetentionNow : SyncAction
+
+        data class UpdateRetentionPurgePeriod(
             val seconds: Int,
         ) : SyncAction
     }
@@ -76,14 +92,18 @@ class LaunchSync(
     data class SyncStatusProgress(
         val metadataSyncProgress: SyncStatus,
         val dataSyncProgress: SyncStatus,
+        val retentionPurgeProgress: SyncStatus,
     ) {
         fun hasSyncFinished(
             metadataWasRunning: Boolean,
             dataWasRunning: Boolean,
+            retentionPurgeWasRunning: Boolean,
         ) = metadataSyncProgress == SyncStatus.Finished &&
                 metadataWasRunning ||
                 dataSyncProgress == SyncStatus.Finished &&
-                dataWasRunning
+                dataWasRunning ||
+                retentionPurgeProgress == SyncStatus.Finished &&
+                retentionPurgeWasRunning
     }
 
     suspend operator fun invoke(syncAction: SyncAction) {
@@ -92,6 +112,8 @@ class LaunchSync(
             SyncAction.SyncData -> syncData()
             is SyncAction.UpdateSyncDataPeriod -> updateSyncDataPeriod(syncAction.seconds)
             is SyncAction.UpdateSyncMetadataPeriod -> updateSyncMetadataPeriod(syncAction.seconds)
+            SyncAction.PurgeRetentionNow -> purgeRetentionNow()
+            is SyncAction.UpdateRetentionPurgePeriod -> updateRetentionPurgePeriod(syncAction.seconds)
         }
     }
 
@@ -133,6 +155,20 @@ class LaunchSync(
     private fun syncData(seconds: Int) {
         preferenceProvider.setValue(TIME_DATA, seconds)
         syncBackgroundJobAction.launchDataSync(seconds.toLong())
+    }
+
+    private fun purgeRetentionNow() {
+        syncBackgroundJobAction.launchRetentionPurge(0)
+    }
+
+    private suspend fun updateRetentionPurgePeriod(seconds: Int) {
+        if (seconds != Constants.TIME_MANUAL) {
+            preferenceProvider.setValue(TIME_RETENTION_PURGE, seconds)
+            syncBackgroundJobAction.launchRetentionPurge(seconds.toLong())
+        } else {
+            preferenceProvider.setValue(TIME_RETENTION_PURGE, 0)
+            syncBackgroundJobAction.cancelRetentionPurge()
+        }
     }
 
     private fun combinedStatus(workStatuses: List<SyncJobStatus>) = when {

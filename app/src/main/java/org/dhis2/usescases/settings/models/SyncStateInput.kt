@@ -7,4 +7,5 @@ data class SyncStateInput(
     val hasConnection: Boolean,
     val metadataSyncInProgress: Boolean,
     val dataSyncInProgress: Boolean,
+    val retentionPurgeInProgress: Boolean,
 )

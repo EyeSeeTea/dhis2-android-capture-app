@@ -24,6 +24,10 @@ class GetSettingsState(
                         settingsRepository.dataSync().blockingGet().copy(
                             syncInProgress = input.dataSyncInProgress,
                         ),
+                    retentionPurgeSettingsViewModel =
+                        settingsRepository.retentionPurge().blockingGet().copy(
+                            purgeInProgress = input.retentionPurgeInProgress,
+                        ),
                     syncParametersViewModel = settingsRepository.syncParameters().blockingGet(),
                     reservedValueSettingsViewModel = settingsRepository.reservedValues().blockingGet(),
                     smsSettingsViewModel =

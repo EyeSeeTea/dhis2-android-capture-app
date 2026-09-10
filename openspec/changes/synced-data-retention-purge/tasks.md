@@ -77,11 +77,15 @@ commit.
   last attempt, and verify they compile/pass.
   **Commit:** its own commit (mirrors an existing pattern, no red->green
   needed for a pure data-mapping addition — tests written alongside).
-- [ ] 4.1b Wire retention purge into `SettingsState`, `GetSettingsState`,
-  `LaunchSync` (schedule/manual-trigger actions, observed job status) and
-  `SyncManagerPresenter`, following the exact shape already used for data
-  sync, with tests for the new `LaunchSync.SyncAction` branches.
-  **Commit:** its own commit.
+- [x] 4.1b Wire retention purge into `SettingsState`, `SyncStateInput`,
+  `GetSettingsState`, `LaunchSync` (schedule/manual-trigger actions,
+  observed job status via new `SyncBackgroundJobAction.observeRetentionPurgeJob()`/
+  `cancelRetentionPurge()`) and `SyncManagerPresenter`, following the exact
+  shape already used for data sync, with tests for the new
+  `LaunchSync.SyncAction` branches.
+  **Commit:** its own commit. Verified locally against the real SDK (same
+  AGP/local-SDK setup as 3.x) since `sync`/`app` depend on
+  `dhis2-android-sdk`.
 - [ ] 4.1c Add the `RetentionPurgeSettingItem` composable (frequency
   dropdown, "run now" button, last-run/status info items) and wire it into
   `SettingsScreen`/`SettingItem` enum/`SettingsUiAction`, and verify it

@@ -16,11 +16,15 @@ interface SyncBackgroundJobAction {
 
     fun observeDataJob(): Flow<List<SyncJobStatus>>
 
+    fun observeRetentionPurgeJob(): Flow<List<SyncJobStatus>>
+
     suspend fun cancelSyncSettings()
 
     suspend fun cancelMetadataSync()
 
     suspend fun cancelDataSync()
+
+    suspend fun cancelRetentionPurge()
 
     suspend fun cancelAll()
 

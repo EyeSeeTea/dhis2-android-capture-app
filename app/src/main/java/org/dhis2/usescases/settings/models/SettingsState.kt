@@ -7,6 +7,7 @@ data class SettingsState(
     val hasConnection: Boolean,
     val metadataSettingsViewModel: MetadataSettingsViewModel,
     val dataSettingsViewModel: DataSettingsViewModel,
+    val retentionPurgeSettingsViewModel: RetentionPurgeSettingsViewModel,
     val syncParametersViewModel: SyncParametersViewModel,
     val reservedValueSettingsViewModel: ReservedValueSettingsViewModel,
     val smsSettingsViewModel: SMSSettingsViewModel,

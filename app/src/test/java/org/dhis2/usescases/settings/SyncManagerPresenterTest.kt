@@ -30,6 +30,7 @@ import org.dhis2.usescases.settings.models.DataSettingsViewModel
 import org.dhis2.usescases.settings.models.ErrorViewModel
 import org.dhis2.usescases.settings.models.MetadataSettingsViewModel
 import org.dhis2.usescases.settings.models.ReservedValueSettingsViewModel
+import org.dhis2.usescases.settings.models.RetentionPurgeSettingsViewModel
 import org.dhis2.usescases.settings.models.SMSSettingsViewModel
 import org.dhis2.usescases.settings.models.SettingsState
 import org.dhis2.usescases.settings.models.SyncParametersViewModel
@@ -79,6 +80,7 @@ class SyncManagerPresenterTest {
     private val mockedSyncedStatusProgress =
         MutableStateFlow(
             LaunchSync.SyncStatusProgress(
+                LaunchSync.SyncStatus.None,
                 LaunchSync.SyncStatus.None,
                 LaunchSync.SyncStatus.None,
             ),
@@ -147,6 +149,14 @@ class SyncManagerPresenterTest {
             dataHasWarnings = false,
             canEdit = false,
             syncInProgress = false,
+        )
+
+    private fun mockedRetentionPurgeViewModel(): RetentionPurgeSettingsViewModel =
+        RetentionPurgeSettingsViewModel(
+            purgePeriod = 0,
+            lastPurge = "test",
+            purgeHasErrors = false,
+            purgeInProgress = false,
         )
 
     private fun mockedParamsViewModel(): SyncParametersViewModel =
@@ -474,6 +484,7 @@ class SyncManagerPresenterTest {
                 LaunchSync.SyncStatusProgress(
                     metadataSyncProgress = LaunchSync.SyncStatus.InProgress,
                     dataSyncProgress = LaunchSync.SyncStatus.InProgress,
+                    retentionPurgeProgress = LaunchSync.SyncStatus.None,
                 )
 
             presenter.settingsState.test {
@@ -496,6 +507,7 @@ class SyncManagerPresenterTest {
             hasConnection = true,
             metadataSettingsViewModel = mockedMetaViewModel(),
             dataSettingsViewModel = mockedDataViewModel(),
+            retentionPurgeSettingsViewModel = mockedRetentionPurgeViewModel(),
             syncParametersViewModel = mockedParamsViewModel(),
             reservedValueSettingsViewModel = mockedReservecValuesViewModel(),
             smsSettingsViewModel = mockedSMSViewModel(),

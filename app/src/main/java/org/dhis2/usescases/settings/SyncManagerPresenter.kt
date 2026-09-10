@@ -78,6 +78,7 @@ class SyncManagerPresenter(
                 LaunchSync.SyncStatusProgress(
                     metadataSyncProgress = LaunchSync.SyncStatus.None,
                     dataSyncProgress = LaunchSync.SyncStatus.None,
+                    retentionPurgeProgress = LaunchSync.SyncStatus.None,
                 ),
         )
 
@@ -94,6 +95,7 @@ class SyncManagerPresenter(
                     syncStatusProgress.hasSyncFinished(
                         _settingsState.value?.metadataSettingsViewModel?.syncInProgress == true,
                         _settingsState.value?.dataSettingsViewModel?.syncInProgress == true,
+                        _settingsState.value?.retentionPurgeSettingsViewModel?.purgeInProgress == true,
                     )
 
                 _settingsState.update {
@@ -105,6 +107,10 @@ class SyncManagerPresenter(
                         dataSettingsViewModel =
                             it.dataSettingsViewModel.copy(
                                 syncInProgress = syncStatusProgress.dataSyncProgress is LaunchSync.SyncStatus.InProgress,
+                            ),
+                        retentionPurgeSettingsViewModel =
+                            it.retentionPurgeSettingsViewModel.copy(
+                                purgeInProgress = syncStatusProgress.retentionPurgeProgress is LaunchSync.SyncStatus.InProgress,
                             ),
                     )
                 }
@@ -122,6 +128,7 @@ class SyncManagerPresenter(
                 hasConnection = _settingsState.value?.hasConnection == true,
                 metadataSyncInProgress = syncWorkInfo.value.metadataSyncProgress == LaunchSync.SyncStatus.InProgress,
                 dataSyncInProgress = syncWorkInfo.value.dataSyncProgress == LaunchSync.SyncStatus.InProgress,
+                retentionPurgeInProgress = syncWorkInfo.value.retentionPurgeProgress == LaunchSync.SyncStatus.InProgress,
             ),
         ).fold(
             onSuccess = { settingsState ->
@@ -377,6 +384,19 @@ class SyncManagerPresenter(
     fun onSyncMetaPeriodChanged(period: Int) {
         viewModelScope.launch(dispatcherProvider.io()) {
             launchSync(LaunchSync.SyncAction.UpdateSyncMetadataPeriod(period))
+            loadData()
+        }
+    }
+
+    fun purgeRetentionNow() {
+        viewModelScope.launch(dispatcherProvider.io()) {
+            launchSync(LaunchSync.SyncAction.PurgeRetentionNow)
+        }
+    }
+
+    fun onRetentionPurgePeriodChanged(period: Int) {
+        viewModelScope.launch(dispatcherProvider.io()) {
+            launchSync(LaunchSync.SyncAction.UpdateRetentionPurgePeriod(period))
             loadData()
         }
     }

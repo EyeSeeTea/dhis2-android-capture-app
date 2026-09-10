@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.dhis2.commons.Constants
 import org.dhis2.commons.prefs.PreferenceProvider
+import org.dhis2.mobile.commons.providers.TIME_RETENTION_PURGE
 import org.dhis2.mobile.sync.data.SyncBackgroundJobAction
 import org.dhis2.mobile.sync.model.SyncJobStatus
 import org.dhis2.mobile.sync.model.SyncStatus
@@ -41,6 +42,7 @@ class LaunchSyncTest {
 
     private val mockedMetadataWorkInfo = MutableStateFlow<List<SyncJobStatus>>(emptyList())
     private val mockedDataWorkInfo = MutableStateFlow<List<SyncJobStatus>>(emptyList())
+    private val mockedRetentionPurgeWorkInfo = MutableStateFlow<List<SyncJobStatus>>(emptyList())
     private val syncBackgroundJobAction: SyncBackgroundJobAction = mock()
 
     @Before
@@ -48,6 +50,7 @@ class LaunchSyncTest {
         Dispatchers.setMain(testingDispatcher)
         whenever(syncBackgroundJobAction.observeMetadataJob()) doReturn mockedMetadataWorkInfo
         whenever(syncBackgroundJobAction.observeDataJob()) doReturn mockedDataWorkInfo
+        whenever(syncBackgroundJobAction.observeRetentionPurgeJob()) doReturn mockedRetentionPurgeWorkInfo
         launchSync =
             LaunchSync(
                 syncBackgroundJobAction = syncBackgroundJobAction,
@@ -110,6 +113,30 @@ class LaunchSyncTest {
         }
 
     @Test
+    fun shouldPurgeRetentionNow() =
+        runTest {
+            launchSync(LaunchSync.SyncAction.PurgeRetentionNow)
+            verify(syncBackgroundJobAction, times(1)).launchRetentionPurge(0)
+        }
+
+    @Test
+    fun shouldUpdateRetentionPurgePeriod() =
+        runTest {
+            val newPeriod = 13
+            launchSync(LaunchSync.SyncAction.UpdateRetentionPurgePeriod(newPeriod))
+            verify(preferenceProvider, times(1)).setValue(TIME_RETENTION_PURGE, newPeriod)
+            verify(syncBackgroundJobAction, times(1)).launchRetentionPurge(newPeriod.toLong())
+        }
+
+    @Test
+    fun shouldCancelRetentionPurgeIfSwitchToManual() =
+        runTest {
+            launchSync(LaunchSync.SyncAction.UpdateRetentionPurgePeriod(0))
+            verify(preferenceProvider, times(1)).setValue(TIME_RETENTION_PURGE, 0)
+            verify(syncBackgroundJobAction, times(1)).cancelRetentionPurge()
+        }
+
+    @Test
     fun shouldUpdateProgressStatus() =
         runTest {
             val startedMetadataWorkInfo =
@@ -131,11 +158,12 @@ class LaunchSyncTest {
             launchSync.syncWorkInfo.test {
                 awaitItem()
                 awaitItem()
+                awaitItem()
                 mockedMetadataWorkInfo.emit(listOf(startedMetadataWorkInfo))
                 assertState(
                     awaitItem(),
                     LaunchSync.SyncStatus.InProgress,
-                    LaunchSync.SyncStatus.None
+                    LaunchSync.SyncStatus.None,
                 )
                 mockedDataWorkInfo.emit(listOf(startedDataWorkInfo))
                 with(awaitItem()) {
@@ -147,8 +175,9 @@ class LaunchSyncTest {
                     assertFalse(
                         this.hasSyncFinished(
                             metadataWasRunning = true,
-                            dataWasRunning = false
-                        )
+                            dataWasRunning = false,
+                            retentionPurgeWasRunning = false,
+                        ),
                     )
                 }
 
@@ -162,15 +191,16 @@ class LaunchSyncTest {
                     assertTrue(
                         this.hasSyncFinished(
                             metadataWasRunning = true,
-                            dataWasRunning = true
-                        )
+                            dataWasRunning = true,
+                            retentionPurgeWasRunning = false,
+                        ),
                     )
                 }
                 mockedDataWorkInfo.emit(listOf(finishedDataWorkInfo))
                 assertState(
                     awaitItem(),
                     LaunchSync.SyncStatus.Finished,
-                    LaunchSync.SyncStatus.Finished
+                    LaunchSync.SyncStatus.Finished,
                 )
                 cancelAndIgnoreRemainingEvents()
             }
@@ -182,46 +212,49 @@ class LaunchSyncTest {
             launchSync.syncWorkInfo.test {
                 awaitItem()
                 awaitItem()
+                awaitItem()
                 syncStatuses.forEach { metadataSyncStatus ->
                     syncStatuses.forEach { metadataNowSyncStatus ->
                         mockedMetadataWorkInfo.emit(
                             listOf(
                                 metadataSyncStatus,
-                                metadataNowSyncStatus
-                            )
+                                metadataNowSyncStatus,
+                            ),
                         )
-                        val expectedValue = when {
-                            (metadataSyncStatus.status is SyncStatus.Running) or (metadataNowSyncStatus.status is SyncStatus.Running) -> LaunchSync.SyncStatus.InProgress
-                            (metadataSyncStatus.status is SyncStatus.Blocked) or (metadataNowSyncStatus.status is SyncStatus.Blocked) -> LaunchSync.SyncStatus.InProgress
-                            (metadataSyncStatus.status is SyncStatus.Enqueue) and (metadataNowSyncStatus.status is SyncStatus.Enqueue) -> LaunchSync.SyncStatus.None
-                            (metadataSyncStatus.status is SyncStatus.Cancelled) and (metadataNowSyncStatus.status is SyncStatus.Cancelled) -> LaunchSync.SyncStatus.Cancelled
-                            else -> LaunchSync.SyncStatus.Finished
-
-
-                        }
+                        val expectedValue =
+                            when {
+                                (metadataSyncStatus.status is SyncStatus.Running) or (metadataNowSyncStatus.status is SyncStatus.Running) -> LaunchSync.SyncStatus.InProgress
+                                (metadataSyncStatus.status is SyncStatus.Blocked) or (metadataNowSyncStatus.status is SyncStatus.Blocked) -> LaunchSync.SyncStatus.InProgress
+                                (metadataSyncStatus.status is SyncStatus.Enqueue) and (metadataNowSyncStatus.status is SyncStatus.Enqueue) -> LaunchSync.SyncStatus.None
+                                (metadataSyncStatus.status is SyncStatus.Cancelled) and
+                                    (metadataNowSyncStatus.status is SyncStatus.Cancelled) -> LaunchSync.SyncStatus.Cancelled
+                                else -> LaunchSync.SyncStatus.Finished
+                            }
 
                         assertState(
                             awaitItem(),
                             expectedValue,
-                            LaunchSync.SyncStatus.None
+                            LaunchSync.SyncStatus.None,
                         )
                     }
                 }
             }
         }
 
-    private val syncStatuses = listOf(
-        mockedMetadataSyncJobStatus(SyncStatus.Enqueue),
-        mockedMetadataSyncJobStatus(SyncStatus.Running),
-        mockedMetadataSyncJobStatus(SyncStatus.Succeed),
-        mockedMetadataSyncJobStatus(SyncStatus.Failed),
-        mockedMetadataSyncJobStatus(SyncStatus.Blocked),
-        mockedMetadataSyncJobStatus(SyncStatus.Cancelled),
-    )
+    private val syncStatuses =
+        listOf(
+            mockedMetadataSyncJobStatus(SyncStatus.Enqueue),
+            mockedMetadataSyncJobStatus(SyncStatus.Running),
+            mockedMetadataSyncJobStatus(SyncStatus.Succeed),
+            mockedMetadataSyncJobStatus(SyncStatus.Failed),
+            mockedMetadataSyncJobStatus(SyncStatus.Blocked),
+            mockedMetadataSyncJobStatus(SyncStatus.Cancelled),
+        )
 
-    private fun mockedMetadataSyncJobStatus(mockedStatus: SyncStatus) = mock<SyncJobStatus> {
-        on { status } doReturn mockedStatus
-    }
+    private fun mockedMetadataSyncJobStatus(mockedStatus: SyncStatus) =
+        mock<SyncJobStatus> {
+            on { status } doReturn mockedStatus
+        }
 
     private fun assertState(
         syncStatusProgress: LaunchSync.SyncStatusProgress,
