@@ -51,11 +51,18 @@ of the file it extends.
   **Commit:** 3.1 + 3.2 are one commit (red -> green). Verified locally
   against the real SDK (`dhis2.useLocalSdk=true`) since
   `D2.retentionModule()` is not yet published to JitPack.
-- [ ] 3.3 Add a test asserting that a successful run persists a "last purge"
-  timestamp, and verify it fails before that persistence exists.
-- [ ] 3.4 Implement persistence of the last-purge timestamp, and make the
-  test from 3.3 pass.
-  **Commit:** 3.3 + 3.4 are one commit (red -> green).
+- [x] 3.3 Add tests asserting that a purge attempt persists a "last purge"
+  timestamp and a success/failure status both when the SDK call succeeds
+  and when it fails (`spec.md`: "completes, successfully or not" / "Last
+  purge outcome" — mirrors the existing
+  `LAST_DATA_SYNC`/`LAST_DATA_SYNC_STATUS` pattern used by data sync), and
+  verify they fail before that persistence exists.
+- [x] 3.4 Implement persistence of the last-purge timestamp and outcome in
+  `AndroidSyncRepository.purgeRetention()` (both written unconditionally
+  after the SDK call resolves, regardless of outcome), and make the tests
+  from 3.3 pass.
+  **Commit:** 3.3 + 3.4 are one commit (red -> green). Verified locally
+  against the real SDK, same as 3.1/3.2.
 
 ## 4. Settings UI: schedule, manual trigger, status
 

@@ -54,6 +54,11 @@ sync settings screen.
 - **THEN** the sync settings screen shows the timestamp of that last purge
   attempt
 
+#### Scenario: Last purge outcome
+- **WHEN** a retention purge completes
+- **THEN** the sync settings screen indicates whether that last attempt
+  succeeded or failed
+
 ### Requirement: Retention rules are server-driven
 The system SHALL NOT expose any device-side configuration of what data is
 retained or purged (limits, scope, or per-data-type rules); it SHALL rely

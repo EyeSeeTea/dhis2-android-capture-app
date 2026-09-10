@@ -9,12 +9,17 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.dhis2.mobile.commons.coroutine.Dispatcher
+import org.dhis2.mobile.commons.error.DomainError
 import org.dhis2.mobile.commons.error.DomainErrorMapper
+import org.dhis2.mobile.commons.providers.LAST_RETENTION_PURGE
+import org.dhis2.mobile.commons.providers.LAST_RETENTION_PURGE_STATUS
 import org.dhis2.mobile.commons.providers.PreferenceProvider
 import org.dhis2.mobile.commons.reporting.AnalyticActions
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.arch.call.BaseD2Progress
 import org.hisp.dhis.android.core.fileresource.FileResourceDomainType
+import org.hisp.dhis.android.core.maintenance.D2Error
+import org.hisp.dhis.android.core.maintenance.D2ErrorCode
 import org.hisp.dhis.android.core.settings.GeneralSettings
 import org.junit.After
 import org.junit.Before
@@ -22,15 +27,19 @@ import org.junit.Test
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class AndroidSyncRepositoryTest {
     private val d2: D2 = Mockito.mock(D2::class.java, Mockito.RETURNS_DEEP_STUBS)
-    private val preferences: PreferenceProvider = mock()
+    private val preferences = FakePreferenceProvider()
     private val analyticsHelper: AnalyticActions = mock()
     private val domainErrorMapper: DomainErrorMapper = mock()
 
@@ -166,4 +175,75 @@ class AndroidSyncRepositoryTest {
             verify(analyticsHelper, times(0)).updateMatomoSecondaryTracker(any(), any())
             verify(analyticsHelper).clearMatomoSecondaryTracker()
         }
+
+    @Test
+    fun `Should persist last purge timestamp when purge succeeds`() =
+        runTest {
+            repository.purgeRetention()
+
+            assertNotNull(preferences.getString(LAST_RETENTION_PURGE))
+        }
+
+    @Test
+    fun `Should persist last purge timestamp when purge fails`() =
+        runTest {
+            givenRetentionPurgeFails(errorDescription = "purge failed")
+
+            repository.purgeRetention()
+
+            assertNotNull(preferences.getString(LAST_RETENTION_PURGE))
+        }
+
+    @Test
+    fun `Should persist a successful status when purge succeeds`() =
+        runTest {
+            repository.purgeRetention()
+
+            assertTrue(preferences.getBoolean(LAST_RETENTION_PURGE_STATUS, false))
+        }
+
+    @Test
+    fun `Should persist a failed status when purge fails`() =
+        runTest {
+            givenRetentionPurgeFails(errorDescription = "purge failed")
+
+            repository.purgeRetention()
+
+            assertFalse(preferences.getBoolean(LAST_RETENTION_PURGE_STATUS, true))
+        }
+
+    private suspend fun givenRetentionPurgeFails(errorDescription: String) {
+        val d2Error =
+            D2Error
+                .builder()
+                .errorCode(D2ErrorCode.UNEXPECTED)
+                .errorDescription(errorDescription)
+                .build()
+        whenever(d2.retentionModule().purge()).doAnswer { throw d2Error }
+        whenever(domainErrorMapper.mapToDomainError(any())) doReturn
+            DomainError.UnexpectedError(errorDescription)
+    }
+}
+
+private class FakePreferenceProvider(
+    delegate: PreferenceProvider = mock(),
+) : PreferenceProvider by delegate {
+    private val values = mutableMapOf<String, Any?>()
+
+    override fun setValue(
+        key: String,
+        value: Any?,
+    ) {
+        values[key] = value
+    }
+
+    override fun getString(
+        key: String,
+        default: String?,
+    ): String? = values[key] as? String ?: default
+
+    override fun getBoolean(
+        key: String,
+        default: Boolean,
+    ): Boolean = values[key] as? Boolean ?: default
 }

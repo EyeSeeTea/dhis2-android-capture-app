@@ -97,3 +97,13 @@ below follows that document's categories.
   timestamps, not progress-dependent) are unaffected. Revisit only if time
   remains at the end of implementation — not a blocking gap for the
   requirements in spec.md.
+- [Data sync also persists the failure stack trace of the last error
+  (`SyncRepository.saveDataSyncError` → SDK local data store), used for
+  diagnostics; retention purge does not — only the success/failure
+  timestamp and outcome (see "Purge status visibility" in spec.md)] →
+  Accepted for this scope: no requirement in spec.md asks for a diagnostic
+  log, and `RetentionPurge`'s use case already surfaces the mapped
+  `DomainError` through `Result.failure` to any caller that wants to log
+  it (e.g. Sentry via the worker's own crash reporting, same as other
+  workers). Revisit only if time remains at the end of implementation —
+  not a blocking gap for the requirements in spec.md.
