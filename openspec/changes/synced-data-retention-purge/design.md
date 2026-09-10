@@ -107,3 +107,16 @@ below follows that document's categories.
   it (e.g. Sentry via the worker's own crash reporting, same as other
   workers). Revisit only if time remains at the end of implementation —
   not a blocking gap for the requirements in spec.md.
+- [The instrumented UI test for the new Settings row
+  (`SettingsTest.shouldShowRetentionPurgeOptionWithEditablePeriod`,
+  `androidTest`) could not be run in this environment: `app`'s
+  `dhis2DebugAndroidTestCompileClasspath` fails to resolve
+  (`androidx.concurrent:concurrent-futures{,-ktx}` version conflict between
+  a "lock file"-constrained 1.1.0 and `androidx.test:core:1.7.0`'s 1.2.0,
+  via consistent resolution) — pre-existing, unrelated to this change,
+  reproduces even with `--refresh-dependencies`] → Test is written and
+  committed; unit tests (`SettingsRepositoryTest`, `LaunchSyncTest`,
+  `SyncManagerPresenterTest`) and manual `ktlintCheck`/unit-test runs cover
+  the logic. Revisit running/verifying the instrumented test at the end of
+  implementation — not a blocking gap for this task, but this dependency
+  conflict itself may be worth a separate fix outside this change.

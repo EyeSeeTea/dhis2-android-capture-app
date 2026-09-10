@@ -56,6 +56,15 @@ class SettingsTest : BaseTest() {
     }
 
     @Test
+    fun shouldShowRetentionPurgeOptionWithEditablePeriod() {
+        startActivity()
+        settingsRobot(composeTestRule) {
+            clickOnRetentionPurge()
+            checkEditPeriodIsEnabledForRetentionPurge()
+        }
+    }
+
+    @Test
     fun shouldRefillValuesWhenClickOnReservedValues() {
         startActivity()
         settingsRobot(composeTestRule) {

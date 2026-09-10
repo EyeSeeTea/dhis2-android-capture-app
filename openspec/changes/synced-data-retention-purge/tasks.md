@@ -86,11 +86,15 @@ commit.
   **Commit:** its own commit. Verified locally against the real SDK (same
   AGP/local-SDK setup as 3.x) since `sync`/`app` depend on
   `dhis2-android-sdk`.
-- [ ] 4.1c Add the `RetentionPurgeSettingItem` composable (frequency
+- [x] 4.1c Add the `RetentionPurgeSettingItem` composable (frequency
   dropdown, "run now" button, last-run/status info items) and wire it into
-  `SettingsScreen`/`SettingItem` enum/`SettingsUiAction`, and verify it
-  renders via an instrumented test (`SettingsTest.kt`/`SettingsRobot.kt`
-  pattern).
+  `SettingsScreen`/`SettingItem` enum/`SettingsUiAction`. Added an
+  instrumented test (`SettingsTest.shouldShowRetentionPurgeOptionWithEditablePeriod`,
+  `SettingsRobot.kt` pattern) but could not run/verify it in this
+  environment — see `design.md` risk note (pre-existing
+  `androidx.concurrent` dependency conflict in `app`'s
+  `androidTestCompileClasspath`, unrelated to this change). Verified via
+  `ktlintCheck` and the full `app` unit test suite instead.
   **Commit:** its own commit (UI wiring, no pre-existing behavior to test
   first against).
 - [ ] 4.2 Add a test asserting the purge row is hidden/absent when the

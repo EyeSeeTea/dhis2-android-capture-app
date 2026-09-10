@@ -19,6 +19,7 @@ import org.dhis2.mobile.login.authentication.TwoFASettingsActivity
 import org.dhis2.usescases.reservedValue.ReservedValueActivity
 import org.dhis2.usescases.settings.ui.TEST_TAG_DATA_PERIOD
 import org.dhis2.usescases.settings.ui.TEST_TAG_META_PERIOD
+import org.dhis2.usescases.settings.ui.TEST_TAG_RETENTION_PURGE_PERIOD
 import org.dhis2.usescases.settings.ui.TEST_TAG_SYNC_PARAMETERS_EVENT_MAX_COUNT
 import org.dhis2.usescases.settings.ui.TEST_TAG_SYNC_PARAMETERS_LIMIT_SCOPE
 import org.dhis2.usescases.settings.ui.TEST_TAG_SYNC_PARAMETERS_TEI_MAX_COUNT
@@ -73,6 +74,21 @@ class SettingsRobot(val composeTestRule: ComposeTestRule) : BaseRobot() {
         composeTestRule.onNodeWithTag(TEST_TAG_SYNC_PARAMETERS_LIMIT_SCOPE).assertIsNotDisplayed()
         composeTestRule.onNodeWithTag(TEST_TAG_SYNC_PARAMETERS_EVENT_MAX_COUNT).assertIsNotDisplayed()
         composeTestRule.onNodeWithTag(TEST_TAG_SYNC_PARAMETERS_TEI_MAX_COUNT).assertIsNotDisplayed()
+    }
+
+    fun clickOnRetentionPurge() {
+        composeTestRule.onNodeWithTag(SettingItem.RETENTION_PURGE.name).performClick()
+    }
+
+    fun checkRetentionPurgeIsDisplayed() {
+        composeTestRule.onNodeWithTag(SettingItem.RETENTION_PURGE.name)
+            .assertIsDisplayed()
+    }
+
+    fun checkEditPeriodIsEnabledForRetentionPurge() {
+        composeTestRule.onNodeWithTag(SettingItem.RETENTION_PURGE.name)
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithTag(TEST_TAG_RETENTION_PURGE_PERIOD).assertIsDisplayed()
     }
 
     fun clickOnReservedValues() {

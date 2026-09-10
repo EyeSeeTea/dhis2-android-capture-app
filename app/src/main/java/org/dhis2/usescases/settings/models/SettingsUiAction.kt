@@ -20,6 +20,12 @@ internal sealed class SettingsUiAction {
         val periodInSeconds: Int,
     ) : SettingsUiAction()
 
+    object PurgeRetentionNow : SettingsUiAction()
+
+    data class OnRetentionPurgePeriodChanged(
+        val periodInSeconds: Int,
+    ) : SettingsUiAction()
+
     data class OnSaveLimitScope(
         val limitScope: LimitScope,
     ) : SettingsUiAction()

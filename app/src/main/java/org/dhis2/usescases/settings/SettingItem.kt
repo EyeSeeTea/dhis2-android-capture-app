@@ -3,6 +3,7 @@ package org.dhis2.usescases.settings
 enum class SettingItem {
     DATA_SYNC,
     META_SYNC,
+    RETENTION_PURGE,
     SYNC_PARAMETERS,
     RESERVED_VALUES,
     ERROR_LOG,

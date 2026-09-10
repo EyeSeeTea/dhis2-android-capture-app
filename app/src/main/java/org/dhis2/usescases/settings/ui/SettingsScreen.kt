@@ -36,6 +36,7 @@ import java.io.File
 
 const val TEST_TAG_DATA_PERIOD = "TestTag_DataPeriod"
 const val TEST_TAG_META_PERIOD = "TestTag_MetaPeriod"
+const val TEST_TAG_RETENTION_PURGE_PERIOD = "TestTag_RetentionPurgePeriod"
 const val TEST_TAG_SYNC_PARAMETERS_LIMIT_SCOPE = "TestTag_SyncParameters_LimitScope"
 const val TEST_TAG_SYNC_PARAMETERS_EVENT_MAX_COUNT = "TestTag_SyncParameters_EventMaxCount"
 const val TEST_TAG_SYNC_PARAMETERS_TEI_MAX_COUNT = "TestTag_SyncParameters_TeiMaxCount"
@@ -122,6 +123,10 @@ fun SettingsScreen(
                         is SettingsUiAction.OnSyncMetaPeriodChanged ->
                             viewmodel.onSyncMetaPeriodChanged(uiAction.periodInSeconds)
 
+                        SettingsUiAction.PurgeRetentionNow -> viewmodel.purgeRetentionNow()
+                        is SettingsUiAction.OnRetentionPurgePeriodChanged ->
+                            viewmodel.onRetentionPurgePeriodChanged(uiAction.periodInSeconds)
+
                         SettingsUiAction.DisableSMS ->
                             viewmodel.enableSmsModule(false, "", 0)
 
@@ -207,6 +212,19 @@ private fun SettingItemList(
                 onSyncMetadataClick = { onSettingsUiAction(SettingsUiAction.SyncMetadata) },
                 onSyncMetaPeriodChanged = {
                     onSettingsUiAction(SettingsUiAction.OnSyncMetaPeriodChanged(it))
+                },
+            )
+        }
+
+        item {
+            RetentionPurgeSettingItem(
+                retentionPurgeSettings = settingsUIModel.retentionPurgeSettingsViewModel,
+                isOpened = settingsUIModel.openedItem == SettingItem.RETENTION_PURGE,
+                canInitPurge = settingsUIModel.canInitRetentionPurge(),
+                onClick = { onSettingsUiAction(SettingsUiAction.OnItemClick(SettingItem.RETENTION_PURGE)) },
+                onPurgeNowClick = { onSettingsUiAction(SettingsUiAction.PurgeRetentionNow) },
+                onRetentionPurgePeriodChanged = {
+                    onSettingsUiAction(SettingsUiAction.OnRetentionPurgePeriodChanged(it))
                 },
             )
         }

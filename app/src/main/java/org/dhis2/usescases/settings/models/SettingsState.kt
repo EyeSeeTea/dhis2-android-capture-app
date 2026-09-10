@@ -18,4 +18,6 @@ data class SettingsState(
     fun canInitDataSync() = hasConnection && !dataSettingsViewModel.syncInProgress
 
     fun canInitMetadataSync() = hasConnection && !metadataSettingsViewModel.syncInProgress
+
+    fun canInitRetentionPurge() = !retentionPurgeSettingsViewModel.purgeInProgress
 }
