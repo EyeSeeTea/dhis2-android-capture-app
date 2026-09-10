@@ -9,25 +9,34 @@
 
 ## 2. Background job: schedule and manual trigger
 
-- [ ] 2.1 Add a test asserting that scheduling the retention purge job with
-  a given frequency enqueues a periodic background job with that interval,
-  and verify it fails before the scheduling function exists.
-- [ ] 2.2 Implement the scheduling function (periodic job, configurable
-  frequency) reusing the existing background-job infrastructure, and make
-  the test from 2.1 pass.
-  **Commit:** 2.1 + 2.2 are one commit (red -> green).
-- [ ] 2.3 Add a test asserting that a manual "run now" trigger enqueues an
-  immediate one-off run of the same job, and verify it fails before the
-  trigger function exists.
-- [ ] 2.4 Implement the manual trigger function, and make the test from 2.3
-  pass.
-  **Commit:** 2.3 + 2.4 are one commit (red -> green).
-- [ ] 2.5 Add a test asserting that a manual trigger while a purge is
-  already running does not enqueue a second concurrent run, and verify it
-  fails before the guard exists.
-- [ ] 2.6 Implement the double-run guard (unique-work policy), and make the
-  test from 2.5 pass.
-  **Commit:** 2.5 + 2.6 are one commit (red -> green).
+No unit test for the scheduling/trigger wiring itself: the equivalent
+existing code (`launchDataSync`, `launchMetadataSync`, `observeDataJob` in
+`AndroidSyncBackgroundJobAction`) has no unit test coverage either — it
+depends on a real `WorkManager`, and this project has no established pattern
+for testing it (`androidx.work:work-testing` was evaluated and reverted:
+running `sync`'s instrumented tests standalone for the first time surfaced
+several unrelated pre-existing infra gaps in that module — resource merge
+conflicts, core library desugaring, a Sentry auto-init crash — out of scope
+for this change). This group follows the same as-is convention as the rest
+of the file it extends.
+
+- [x] 2.1 Add `launchRetentionPurge(purgingPeriod: Long)` to
+  `SyncBackgroundJobAction`, implemented in
+  `AndroidSyncBackgroundJobAction` following the exact pattern of
+  `launchDataSync` (periodic `WorkManager` request with the given interval,
+  unique work name), and verify it compiles and the module's existing test
+  suite still passes.
+  **Commit:** its own commit (no preceding test, matching the existing
+  convention for this class).
+- [ ] 2.2 Add a manual "run now" trigger following the same
+  `launchDataSync`/period-`0` pattern, and verify it compiles and the
+  module's existing test suite still passes.
+  **Commit:** its own commit.
+- [ ] 2.3 Add the double-run guard (unique-work policy) so a manual trigger
+  while a purge is already running does not enqueue a second concurrent
+  run, and verify it compiles and the module's existing test suite still
+  passes.
+  **Commit:** its own commit.
 
 ## 3. Background job: invoke the SDK purge
 

@@ -10,6 +10,8 @@ interface SyncBackgroundJobAction {
 
     fun launchSyncSettings()
 
+    fun launchRetentionPurge(purgingPeriod: Long)
+
     fun observeMetadataJob(): Flow<List<SyncJobStatus>>
 
     fun observeDataJob(): Flow<List<SyncJobStatus>>
