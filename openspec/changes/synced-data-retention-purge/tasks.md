@@ -66,10 +66,27 @@ of the file it extends.
 
 ## 4. Settings UI: schedule, manual trigger, status
 
-- [ ] 4.1 Add the purge schedule/status row to the Sync Manager settings
-  screen (frequency control, "run now" action, last-run timestamp,
-  in-progress indicator), wired to the functions from groups 2-3, and
-  verify it renders and reflects state changes via a UI/state test.
+Built bottom-up: state/data wiring first, UI last, each sub-step its own
+commit.
+
+- [x] 4.1a Add `RetentionPurgeSettingsViewModel` (period, last purge
+  timestamp, has-errors, in-progress) and `SettingsRepository.retentionPurge()`
+  reading the `LAST_RETENTION_PURGE`/`LAST_RETENTION_PURGE_STATUS`/
+  `TIME_RETENTION_PURGE` preferences (mirrors `dataSync()`), with tests
+  asserting the returned view model for both a successful and a failed
+  last attempt, and verify they compile/pass.
+  **Commit:** its own commit (mirrors an existing pattern, no red->green
+  needed for a pure data-mapping addition — tests written alongside).
+- [ ] 4.1b Wire retention purge into `SettingsState`, `GetSettingsState`,
+  `LaunchSync` (schedule/manual-trigger actions, observed job status) and
+  `SyncManagerPresenter`, following the exact shape already used for data
+  sync, with tests for the new `LaunchSync.SyncAction` branches.
+  **Commit:** its own commit.
+- [ ] 4.1c Add the `RetentionPurgeSettingItem` composable (frequency
+  dropdown, "run now" button, last-run/status info items) and wire it into
+  `SettingsScreen`/`SettingItem` enum/`SettingsUiAction`, and verify it
+  renders via an instrumented test (`SettingsTest.kt`/`SettingsRobot.kt`
+  pattern).
   **Commit:** its own commit (UI wiring, no pre-existing behavior to test
   first against).
 - [ ] 4.2 Add a test asserting the purge row is hidden/absent when the
