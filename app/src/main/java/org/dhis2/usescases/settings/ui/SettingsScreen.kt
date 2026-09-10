@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import org.dhis2.commons.resources.ColorUtils
+import org.dhis2.mobile.sync.RetentionPurgeCapability
 import org.dhis2.usescases.settings.SettingItem
 import org.dhis2.usescases.settings.SyncManagerPresenter
 import org.dhis2.usescases.settings.models.DeleteDataState
@@ -216,17 +217,19 @@ private fun SettingItemList(
             )
         }
 
-        item {
-            RetentionPurgeSettingItem(
-                retentionPurgeSettings = settingsUIModel.retentionPurgeSettingsViewModel,
-                isOpened = settingsUIModel.openedItem == SettingItem.RETENTION_PURGE,
-                canInitPurge = settingsUIModel.canInitRetentionPurge(),
-                onClick = { onSettingsUiAction(SettingsUiAction.OnItemClick(SettingItem.RETENTION_PURGE)) },
-                onPurgeNowClick = { onSettingsUiAction(SettingsUiAction.PurgeRetentionNow) },
-                onRetentionPurgePeriodChanged = {
-                    onSettingsUiAction(SettingsUiAction.OnRetentionPurgePeriodChanged(it))
-                },
-            )
+        if (RetentionPurgeCapability.IS_ENABLED) {
+            item {
+                RetentionPurgeSettingItem(
+                    retentionPurgeSettings = settingsUIModel.retentionPurgeSettingsViewModel,
+                    isOpened = settingsUIModel.openedItem == SettingItem.RETENTION_PURGE,
+                    canInitPurge = settingsUIModel.canInitRetentionPurge(),
+                    onClick = { onSettingsUiAction(SettingsUiAction.OnItemClick(SettingItem.RETENTION_PURGE)) },
+                    onPurgeNowClick = { onSettingsUiAction(SettingsUiAction.PurgeRetentionNow) },
+                    onRetentionPurgePeriodChanged = {
+                        onSettingsUiAction(SettingsUiAction.OnRetentionPurgePeriodChanged(it))
+                    },
+                )
+            }
         }
 
         item {

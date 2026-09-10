@@ -55,12 +55,12 @@ class SettingsTest : BaseTest() {
         }
     }
 
+    // This test covers the retention purge capability flag, disabled by default
     @Test
-    fun shouldShowRetentionPurgeOptionWithEditablePeriod() {
+    fun shouldNotShowRetentionPurgeOptionWhenCapabilityIsDisabled() {
         startActivity()
         settingsRobot(composeTestRule) {
-            clickOnRetentionPurge()
-            checkEditPeriodIsEnabledForRetentionPurge()
+            checkRetentionPurgeOptionIsNotDisplayed()
         }
     }
 
