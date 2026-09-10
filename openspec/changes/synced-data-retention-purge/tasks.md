@@ -32,11 +32,11 @@ of the file it extends.
   `launchDataSync`/period-`0` pattern, and verify it compiles and the
   module's existing test suite still passes.
   **Commit:** its own commit.
-- [ ] 2.3 Add the double-run guard (unique-work policy) so a manual trigger
-  while a purge is already running does not enqueue a second concurrent
-  run, and verify it compiles and the module's existing test suite still
-  passes.
-  **Commit:** its own commit.
+- [x] 2.3 Double-run guard already in place: `launchRetentionPurge`'s
+  manual-trigger branch (task 2.2) uses `ExistingWorkPolicy.KEEP`, the same
+  mechanism `launchMetadataSync`/`launchDataSync` already rely on — no
+  additional code needed.
+  **Commit:** none (covered by 2.2's commit).
 
 ## 3. Background job: invoke the SDK purge
 
