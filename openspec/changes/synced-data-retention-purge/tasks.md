@@ -1,9 +1,9 @@
 ## 1. Capability flag
 
-- [ ] 1.1 Add a behavior-level test asserting the retention purge capability
+- [x] 1.1 Add a behavior-level test asserting the retention purge capability
   is disabled when the shared build-time flag is off, and verify it fails
   (red) before any flag exists.
-- [ ] 1.2 Add the shared, build-time capability flag (off by default, no
+- [x] 1.2 Add the shared, build-time capability flag (off by default, no
   flavor-specific file) and make the test from 1.1 pass.
   **Commit:** 1.1 + 1.2 are one commit (red -> green).
 
