@@ -151,7 +151,8 @@ class AndroidSyncBackgroundJobAction(
                     ).setInitialDelay(
                         purgingPeriod,
                         TimeUnit.SECONDS,
-                    ).build()
+                    ).setInputData(workDataOf(IS_PERIODIC to true))
+                    .build()
 
             workManager.enqueueUniquePeriodicWork(
                 uniqueWorkName = RETENTION_PURGE,
