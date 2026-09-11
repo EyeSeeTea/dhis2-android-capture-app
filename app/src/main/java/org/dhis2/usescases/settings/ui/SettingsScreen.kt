@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import org.dhis2.commons.resources.ColorUtils
+import org.dhis2.mobile.sync.RetentionPurgeCapability
 import org.dhis2.usescases.settings.SettingItem
 import org.dhis2.usescases.settings.SyncManagerPresenter
 import org.dhis2.usescases.settings.models.DeleteDataState
@@ -36,6 +37,9 @@ import java.io.File
 
 const val TEST_TAG_DATA_PERIOD = "TestTag_DataPeriod"
 const val TEST_TAG_META_PERIOD = "TestTag_MetaPeriod"
+
+// EyeSeeTea customization - Synced Data Retention Purge
+const val TEST_TAG_RETENTION_PURGE_PERIOD = "TestTag_RetentionPurgePeriod"
 const val TEST_TAG_SYNC_PARAMETERS_LIMIT_SCOPE = "TestTag_SyncParameters_LimitScope"
 const val TEST_TAG_SYNC_PARAMETERS_EVENT_MAX_COUNT = "TestTag_SyncParameters_EventMaxCount"
 const val TEST_TAG_SYNC_PARAMETERS_TEI_MAX_COUNT = "TestTag_SyncParameters_TeiMaxCount"
@@ -121,6 +125,11 @@ fun SettingsScreen(
 
                         is SettingsUiAction.OnSyncMetaPeriodChanged ->
                             viewmodel.onSyncMetaPeriodChanged(uiAction.periodInSeconds)
+
+                        // EyeSeeTea customization - Synced Data Retention Purge
+                        SettingsUiAction.PurgeRetentionNow -> viewmodel.purgeRetentionNow()
+                        is SettingsUiAction.OnRetentionPurgePeriodChanged ->
+                            viewmodel.onRetentionPurgePeriodChanged(uiAction.periodInSeconds)
 
                         SettingsUiAction.DisableSMS ->
                             viewmodel.enableSmsModule(false, "", 0)
@@ -210,6 +219,23 @@ private fun SettingItemList(
                 },
             )
         }
+
+        // EyeSeeTea customization - Synced Data Retention Purge — begin
+        if (RetentionPurgeCapability.IS_ENABLED) {
+            item {
+                RetentionPurgeSettingItem(
+                    retentionPurgeSettings = settingsUIModel.retentionPurgeSettingsViewModel,
+                    isOpened = settingsUIModel.openedItem == SettingItem.RETENTION_PURGE,
+                    canInitPurge = settingsUIModel.canInitRetentionPurge(),
+                    onClick = { onSettingsUiAction(SettingsUiAction.OnItemClick(SettingItem.RETENTION_PURGE)) },
+                    onPurgeNowClick = { onSettingsUiAction(SettingsUiAction.PurgeRetentionNow) },
+                    onRetentionPurgePeriodChanged = {
+                        onSettingsUiAction(SettingsUiAction.OnRetentionPurgePeriodChanged(it))
+                    },
+                )
+            }
+        }
+        // EyeSeeTea customization - Synced Data Retention Purge — end
 
         item {
             SyncParametersSettingItem(

@@ -19,6 +19,8 @@ import org.dhis2.commons.prefs.Preference.Companion.TIME_META
 import org.dhis2.commons.prefs.Preference.Companion.TIME_WEEKLY
 import org.dhis2.commons.prefs.PreferenceProvider
 import org.dhis2.data.server.UserManager
+import org.dhis2.mobile.commons.providers.LAST_RETENTION_PURGE
+import org.dhis2.mobile.commons.providers.LAST_RETENTION_PURGE_STATUS
 import org.dhis2.mobile.sync.data.SyncBackgroundJobAction
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.common.State
@@ -124,6 +126,35 @@ class SettingsRepositoryTest {
             }
     }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
+    @Test
+    fun `Should return last purge timestamp and successful status from preferences`() {
+        givenARetentionPurgeAttempt(wasSuccessful = true)
+
+        val testObserver = settingsRepository.retentionPurge().test()
+
+        testObserver
+            .assertNoErrors()
+            .assertValue { retentionPurgeSettings ->
+                retentionPurgeSettings.lastPurge == "2019-02-02" &&
+                    !retentionPurgeSettings.purgeHasErrors
+            }
+    }
+
+    @Test
+    fun `Should return last purge timestamp and failed status when the last attempt failed`() {
+        givenARetentionPurgeAttempt(wasSuccessful = false)
+
+        val testObserver = settingsRepository.retentionPurge().test()
+
+        testObserver
+            .assertNoErrors()
+            .assertValue { retentionPurgeSettings ->
+                retentionPurgeSettings.lastPurge == "2019-02-02" &&
+                    retentionPurgeSettings.purgeHasErrors
+            }
+    }
+
     @Test
     fun `Should return parameters from general settings if exist`() {
         configureSyncSettings(true)
@@ -209,6 +240,16 @@ class SettingsRepositoryTest {
             whenever(d2.settingModule().generalSetting().blockingGet()) doReturn
                 mockedGeneralSettings()
         }
+    }
+
+    // EyeSeeTea customization - Synced Data Retention Purge
+    private fun givenARetentionPurgeAttempt(wasSuccessful: Boolean) {
+        whenever(
+            preferencesProvider.getString(LAST_RETENTION_PURGE, "-"),
+        ) doReturn "2019-02-02"
+        whenever(
+            preferencesProvider.getBoolean(LAST_RETENTION_PURGE_STATUS, true),
+        ) doReturn wasSuccessful
     }
 
     private fun configurePreferences() {

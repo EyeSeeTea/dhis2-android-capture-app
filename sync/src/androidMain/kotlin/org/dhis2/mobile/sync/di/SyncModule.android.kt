@@ -3,12 +3,14 @@ package org.dhis2.mobile.sync.di
 import androidx.work.WorkManager
 import org.dhis2.mobile.sync.data.AndroidSyncBackgroundJobAction
 import org.dhis2.mobile.sync.data.AndroidSyncRepository
+import org.dhis2.mobile.sync.data.RetentionPurgeWorker
 import org.dhis2.mobile.sync.data.SyncBackgroundJobAction
 import org.dhis2.mobile.sync.data.SyncDataWorker
 import org.dhis2.mobile.sync.data.SyncMetadataWorker
 import org.dhis2.mobile.sync.data.SyncRepository
 import org.dhis2.mobile.sync.data.SyncSettingsWorker
 import org.dhis2.mobile.sync.domain.CheckPeriodicJobs
+import org.dhis2.mobile.sync.domain.RetentionPurge
 import org.dhis2.mobile.sync.domain.SyncData
 import org.dhis2.mobile.sync.domain.SyncMetadata
 import org.dhis2.mobile.sync.domain.SyncSettings
@@ -55,7 +57,12 @@ actual val syncModule =
 
         factoryOf(::CheckPeriodicJobs)
 
+        // EyeSeeTea customization - Synced Data Retention Purge
+        factoryOf(::RetentionPurge)
+
         workerOf(::SyncDataWorker)
         workerOf(::SyncMetadataWorker)
         workerOf(::SyncSettingsWorker)
+        // EyeSeeTea customization - Synced Data Retention Purge
+        workerOf(::RetentionPurgeWorker)
     }

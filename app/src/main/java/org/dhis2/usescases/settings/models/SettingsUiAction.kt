@@ -20,6 +20,14 @@ internal sealed class SettingsUiAction {
         val periodInSeconds: Int,
     ) : SettingsUiAction()
 
+    // EyeSeeTea customization - Synced Data Retention Purge
+    object PurgeRetentionNow : SettingsUiAction()
+
+    // EyeSeeTea customization - Synced Data Retention Purge
+    data class OnRetentionPurgePeriodChanged(
+        val periodInSeconds: Int,
+    ) : SettingsUiAction()
+
     data class OnSaveLimitScope(
         val limitScope: LimitScope,
     ) : SettingsUiAction()

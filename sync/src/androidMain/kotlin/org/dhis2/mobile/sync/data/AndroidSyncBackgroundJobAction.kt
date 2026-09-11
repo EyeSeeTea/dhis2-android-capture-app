@@ -22,6 +22,10 @@ const val DATA_SYNC = "DATA_SYNC"
 const val DATA_SYNC_NOW = "DATA_SYNC_NOW"
 const val SYNC_SETTINGS = "SYNC_SETTINGS"
 
+// EyeSeeTea customization - Synced Data Retention Purge
+const val RETENTION_PURGE = "RETENTION_PURGE"
+const val RETENTION_PURGE_NOW = "RETENTION_PURGE_NOW"
+
 class AndroidSyncBackgroundJobAction(
     private val workManager: WorkManager,
 ) : SyncBackgroundJobAction {
@@ -120,6 +124,44 @@ class AndroidSyncBackgroundJobAction(
         )
     }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
+    override fun launchRetentionPurge(purgingPeriod: Long) {
+        if (purgingPeriod == 0L) {
+            val request =
+                OneTimeWorkRequest
+                    .Builder(
+                        workerClass = RetentionPurgeWorker::class.java,
+                    ).addTag(
+                        RETENTION_PURGE_NOW,
+                    ).build()
+            workManager.enqueueUniqueWork(
+                uniqueWorkName = RETENTION_PURGE_NOW,
+                existingWorkPolicy = ExistingWorkPolicy.KEEP,
+                request = request,
+            )
+        } else {
+            val request =
+                PeriodicWorkRequest
+                    .Builder(
+                        workerClass = RetentionPurgeWorker::class.java,
+                        repeatInterval = purgingPeriod,
+                        repeatIntervalTimeUnit = TimeUnit.SECONDS,
+                    ).addTag(
+                        RETENTION_PURGE,
+                    ).setInitialDelay(
+                        purgingPeriod,
+                        TimeUnit.SECONDS,
+                    ).setInputData(workDataOf(IS_PERIODIC to true))
+                    .build()
+
+            workManager.enqueueUniquePeriodicWork(
+                uniqueWorkName = RETENTION_PURGE,
+                existingPeriodicWorkPolicy = ExistingPeriodicWorkPolicy.UPDATE,
+                request = request,
+            )
+        }
+    }
+
     override fun observeMetadataJob() =
         workManager
             .getWorkInfosFlow(
@@ -194,6 +236,32 @@ class AndroidSyncBackgroundJobAction(
                 }
             }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
+    override fun observeRetentionPurgeJob() =
+        workManager
+            .getWorkInfosFlow(
+                WorkQuery.fromUniqueWorkNames(
+                    RETENTION_PURGE,
+                    RETENTION_PURGE_NOW,
+                ),
+            ).map { workInfos ->
+                workInfos.map { workInfo ->
+                    SyncJobStatus(
+                        tags = workInfo.tags.toList(),
+                        status =
+                            when (workInfo.state) {
+                                WorkInfo.State.ENQUEUED -> SyncStatus.Enqueue
+                                WorkInfo.State.RUNNING -> SyncStatus.Running
+                                WorkInfo.State.SUCCEEDED -> SyncStatus.Succeed
+                                WorkInfo.State.FAILED -> SyncStatus.Failed
+                                WorkInfo.State.BLOCKED -> SyncStatus.Blocked
+                                WorkInfo.State.CANCELLED -> SyncStatus.Cancelled
+                            },
+                        message = null,
+                    )
+                }
+            }
+
     override suspend fun cancelSyncSettings() {
         workManager.cancelUniqueWork(SYNC_SETTINGS).await()
     }
@@ -204,6 +272,11 @@ class AndroidSyncBackgroundJobAction(
 
     override suspend fun cancelDataSync() {
         workManager.cancelUniqueWork(DATA_SYNC).await()
+    }
+
+    // EyeSeeTea customization - Synced Data Retention Purge
+    override suspend fun cancelRetentionPurge() {
+        workManager.cancelUniqueWork(RETENTION_PURGE).await()
     }
 
     override suspend fun cancelAll() {

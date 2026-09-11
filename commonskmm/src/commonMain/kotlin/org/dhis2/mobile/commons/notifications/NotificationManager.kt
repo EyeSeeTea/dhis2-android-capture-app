@@ -41,9 +41,26 @@ interface NotificationManager {
         contentText: String,
     )
 
+    // EyeSeeTea customization - Synced Data Retention Purge
+    fun getRetentionPurgeNotification(
+        smallIcon: Int,
+        contentTitle: String,
+        contentText: String,
+    ): NotificationModel
+
+    // EyeSeeTea customization - Synced Data Retention Purge
+    fun displayRetentionPurgeNotification(
+        smallIcon: Int,
+        contentTitle: String,
+        contentText: String,
+    )
+
     fun cancelMetadataSyncNotification()
 
     fun cancelSyncSettingsNotification()
 
     fun cancelDataSyncNotification()
+
+    // EyeSeeTea customization - Synced Data Retention Purge
+    fun cancelRetentionPurgeNotification()
 }

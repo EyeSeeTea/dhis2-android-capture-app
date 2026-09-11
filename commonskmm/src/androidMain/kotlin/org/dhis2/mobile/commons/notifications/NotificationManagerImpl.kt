@@ -23,6 +23,11 @@ private const val SYNC_SETTINGS_NOTIFICATION_ID = 28042023
 private const val SYNC_SETTINGS_CHANNEL_ID = "sync_settings_notification"
 private const val SYNC_SETTINGS_CHANNEL_NAME = "sync_settings"
 
+// EyeSeeTea customization - Synced Data Retention Purge
+private const val RETENTION_PURGE_NOTIFICATION_ID = 11092026
+private const val RETENTION_PURGE_CHANNEL_ID = "retention_purge_notification"
+private const val RETENTION_PURGE_CHANNEL_NAME = "retention_purge"
+
 class NotificationManagerImpl(
     private val context: Context,
 ) : NotificationManager {
@@ -137,6 +142,42 @@ class NotificationManagerImpl(
         notify(foregroundInfo)
     }
 
+    // EyeSeeTea customization - Synced Data Retention Purge
+    override fun getRetentionPurgeNotification(
+        smallIcon: Int,
+        contentTitle: String,
+        contentText: String,
+    ) = WorkerNotificationInfo(
+        createForegroundInfo(
+            notificationId = RETENTION_PURGE_NOTIFICATION_ID,
+            channelId = RETENTION_PURGE_CHANNEL_ID,
+            channelName = RETENTION_PURGE_CHANNEL_NAME,
+            smallIcon = smallIcon,
+            contentTitle = contentTitle,
+            contentText = contentText,
+            progress = -1,
+        ),
+    )
+
+    // EyeSeeTea customization - Synced Data Retention Purge
+    override fun displayRetentionPurgeNotification(
+        smallIcon: Int,
+        contentTitle: String,
+        contentText: String,
+    ) {
+        val foregroundInfo =
+            createForegroundInfo(
+                notificationId = RETENTION_PURGE_NOTIFICATION_ID,
+                channelId = RETENTION_PURGE_CHANNEL_ID,
+                channelName = RETENTION_PURGE_CHANNEL_NAME,
+                smallIcon = smallIcon,
+                contentTitle = contentTitle,
+                contentText = contentText,
+                progress = -1,
+            )
+        notify(foregroundInfo)
+    }
+
     override fun cancelMetadataSyncNotification() {
         notificationManager.cancel(SYNC_METADATA_NOTIFICATION_ID)
     }
@@ -147,6 +188,11 @@ class NotificationManagerImpl(
 
     override fun cancelDataSyncNotification() {
         notificationManager.cancel(SYNC_DATA_NOTIFICATION_ID)
+    }
+
+    // EyeSeeTea customization - Synced Data Retention Purge
+    override fun cancelRetentionPurgeNotification() {
+        notificationManager.cancel(RETENTION_PURGE_NOTIFICATION_ID)
     }
 
     private fun createForegroundInfo(

@@ -16,10 +16,14 @@ import org.dhis2.commons.prefs.Preference.Companion.TIME_DAILY
 import org.dhis2.commons.prefs.Preference.Companion.TIME_WEEKLY
 import org.dhis2.commons.prefs.PreferenceProvider
 import org.dhis2.data.service.SyncResult
+import org.dhis2.mobile.commons.providers.LAST_RETENTION_PURGE
+import org.dhis2.mobile.commons.providers.LAST_RETENTION_PURGE_STATUS
+import org.dhis2.mobile.commons.providers.TIME_RETENTION_PURGE
 import org.dhis2.mobile.sync.data.SyncBackgroundJobAction
 import org.dhis2.usescases.settings.models.DataSettingsViewModel
 import org.dhis2.usescases.settings.models.MetadataSettingsViewModel
 import org.dhis2.usescases.settings.models.ReservedValueSettingsViewModel
+import org.dhis2.usescases.settings.models.RetentionPurgeSettingsViewModel
 import org.dhis2.usescases.settings.models.SMSSettingsViewModel
 import org.dhis2.usescases.settings.models.SyncParametersViewModel
 import org.hisp.dhis.android.core.D2
@@ -97,6 +101,17 @@ class SettingsRepository(
                 hasErrors = !prefs.getBoolean(Constants.LAST_META_SYNC_STATUS, true),
                 canEdit = syncSettings?.metadataSync() == null,
                 syncInProgress = false,
+            ),
+        )
+
+    // EyeSeeTea customization - Synced Data Retention Purge
+    fun retentionPurge(): Single<RetentionPurgeSettingsViewModel> =
+        Single.just(
+            RetentionPurgeSettingsViewModel(
+                purgePeriod = prefs.getInt(TIME_RETENTION_PURGE, Constants.TIME_MANUAL),
+                lastPurge = prefs.getString(LAST_RETENTION_PURGE, "-")!!,
+                purgeHasErrors = !prefs.getBoolean(LAST_RETENTION_PURGE_STATUS, true),
+                purgeInProgress = false,
             ),
         )
 

@@ -12,6 +12,11 @@ const val LAST_DATA_SYNC = "last_data_sync"
 const val TIME_DATA = "timeData"
 const val LAST_DATA_SYNC_STATUS = "last_data_sync_status"
 const val SYNC_RESULT = "sync_result"
+
+// EyeSeeTea customization - Synced Data Retention Purge
+const val LAST_RETENTION_PURGE = "last_retention_purge"
+const val TIME_RETENTION_PURGE = "timeRetentionPurge"
+const val LAST_RETENTION_PURGE_STATUS = "last_retention_purge_status"
 const val BIOMETRIC_CREDENTIALS = "biometric_credentials"
 const val EVENT_MAX = "EVENT_MAX"
 const val EVENT_MAX_DEFAULT = 1000
