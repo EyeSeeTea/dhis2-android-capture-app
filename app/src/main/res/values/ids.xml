@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- EyeSeeTea customization - Change Server URL -->
+    <!-- MainActivity is shared across every flavor and handles R.id.change_url, but only
+         the widp menu declares the item. Declaring the id here keeps the other flavors
+         compiling without touching an Oslo file. -->
+    <item name="change_url" type="id" />
+</resources>
