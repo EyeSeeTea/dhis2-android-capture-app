@@ -138,7 +138,28 @@ SDK, removes a capability, or departs from the baseline. None of these blocked t
    anything and it is not in the way; it is documented in the inventory rather than
    silently deleted.
 
-4. **2FA with mandatory enrolment not activated shows an error pointing at the
+4. **ktlint silently stopped checking every Android module.** This is the most consequential
+   thing found in this upgrade that nobody was looking for.
+
+   After the toolchain bump the baseline brought (AGP 9.0.1, Gradle 9.3.1), the ktlint Gradle
+   plugin no longer discovers Android source sets. `./gradlew :app:ktlintCheck --dry-run` now
+   lists only `ktlintKotlinScriptCheck`; on `develop-widp` the same command listed dozens of
+   per-source-set tasks. Measured across the tree:
+
+   | Still checked (KMP modules) | No longer checked (Android modules) |
+   |---|---|
+   | `:tracker`, `:aggregates`, `:commonskmm`, `:login`, `:sync` | `:app`, `:commons`, `:form`, `:ui-components`, `:compose-table`, `:dhis_android_analytics`, `:dhis2_android_maps`, `:stock-usecase` |
+
+   It fails open: the task reports success, so CI stays green while eight modules — including
+   `:app` — are not linted at all. That is why the violation count fell from 460 to 53; the
+   code did not improve, the checker stopped looking.
+
+   **This is not a WIDP problem and must not be fixed here.** It affects every fork equally,
+   which by `conflict-rules.md` makes it an `EyeSeeTea fix` that has to land in
+   `develop-eyeseetea` and reach the clients through a merge. Recorded here so the next person
+   to touch the baseline has the diagnosis rather than the symptom.
+
+5. **2FA with mandatory enrolment not activated shows an error pointing at the
    administrator.** Reproduced on the previous build (`3.4.1-widp-fork-1`), so it is
    pre-existing and not a regression of this upgrade. Changing it would be a functional
    decision WIDP has not been asked to make. Out of scope, recorded so it is not
@@ -153,6 +174,38 @@ SDK, removes a capability, or departs from the baseline. None of these blocked t
 | before the merge | `./gradlew :app:assembleWidpDebug` | BUILD SUCCESSFUL in 29m 39s |
 | merge, first attempt | `./gradlew :app:assembleWidpDebug :app:compileEyeseeteaDebugKotlin` | FAILED in 14m 35s — `ChangeServerUrlDialog.kt:117 Unresolved reference 'releaseSessionComponent'` |
 | merge, after removing that call | `./gradlew :app:assembleWidpDebug :app:compileEyeseeteaDebugKotlin` | BUILD SUCCESSFUL in 5m 58s |
+| notifications on Koin | `./gradlew :app:assembleWidpDebug :app:compileEyeseeteaDebugKotlin` | BUILD SUCCESSFUL in 6m 4s |
+| post-sync download | `./gradlew :app:assembleWidpDebug :app:compileEyeseeteaDebugKotlin` | BUILD SUCCESSFUL in 51s |
+| final | `./gradlew :app:testWidpDebugUnitTest` | 921 tests, **920 passed, 1 failed** |
+| final | `./gradlew :login:allTests` | 97 tests, 97 passed |
+| final | `./gradlew ktlintCheck --continue` | FAILED — 53 violations, all pre-existing. See below |
+
+The single unit-test failure is `MainViewModelIntegrationTest > should hide filter and sync
+buttons while sync is running`. It is an Oslo test about the home screen's filter and sync
+buttons, it touches nothing this upgrade changed, and it is the known flaky failure recorded
+for this suite. Not investigated further, and not claimed as passing.
+
+### ktlint: red before and after, and checking far less than it used to
+
+`ktlintCheck` fails. It also failed on `develop-widp` before any of this. Measured, not
+assumed — `develop-widp` was checked out into a separate worktree and the same task run
+there:
+
+| | violations | files |
+|---|---|---|
+| `develop-widp` (pre-merge) | 460 | 41 |
+| this branch | 53 | 7 |
+
+Every one of the 53 is in a file that was already violating before the merge: the 2FA
+customization (`TwoFactorState.kt`, `TwoFactorRequiredException.kt`, `CredentialsScreen.kt`,
+`CredentialsViewModel.kt`, `LoginRepositoryImpl.kt`, `D2ErrorMessageProviderImpl.kt`) plus
+one baseline-owned file, `DomainErrorMapper.kt`, which is byte-identical to
+`develop-eyeseetea` and therefore fails there too. **No file added or edited during this
+upgrade violates ktlint.**
+
+The drop from 460 to 53 is **not** an improvement, and reading it as one would be the wrong
+conclusion. See the Open Questions entry below: ktlint has stopped checking eight of the
+fourteen modules.
 
 Both flavors are built every time, on purpose: CI on this branch runs `widp` only, which
 is how `eyeseetea` came to be broken before this upgrade without anyone noticing.
@@ -258,14 +311,58 @@ Moved into `upgrade-validation-checklist.md` rather than left here:
 
 ## Shared drift still differing
 
-Files that differ from `develop-eyeseetea` without a confirmed customization title. The
-upgrade does not close while this section has unexplained entries.
+**Empty.** Every file that differs from `develop-eyeseetea` is accounted for, either as a
+customization in `customization-files.md` §1–2 or as fork identity in §5 of the same file.
+Checked with `git diff develop-eyeseetea..HEAD --stat` over the whole tree.
 
-- not yet analysed
+Three things moved out of the drift during this upgrade, and none of them was a deliberate
+deletion of client behavior:
+
+- `app/src/main/java/org/dhis2/usescases/searchTrackEntity/SearchTEIViewModel.kt` and
+  `listView/SearchTEList.kt` — both `EyeSeeTea fix` patches are in the baseline now, so the
+  fork carries no delta. The baseline's version of the second one is the better of the two.
+- `commons/src/main/java/org/dhis2/commons/prefs/PreferenceModule.kt` — back to its baseline
+  content, because the notifications Koin module provides `BasicPreferenceProvider` now.
+- `login/build.gradle.kts` — back to its baseline content, because upstream moved the module
+  to the KMP `androidLibrary` DSL and dropped product flavors from it. The previous notes
+  claimed this had already happened in 3.3.1; it had not. It has now, and the build is the
+  evidence rather than the claim.
+
+Two files differ without being a customization and are deliberately kept as fork identity:
+`.github/workflows/eyeseetea-main.yml` (runs the WIDP tests) and `.gitignore` (ignores the
+local `.journal/` directory). Both are listed in §5 of the inventory.
+
+Expected and correct: `eyeseetea-docs/SDK_Setup.md` and
+`eyeseetea-docs/templates/openspec-config.yaml.template` come straight from the two
+documentation-only commits the baseline added after `f87bec8c3` (`3cd19be2e`, `8e0200bcc`).
+They match the baseline exactly.
 
 ## Finalization
 
-- surviving customizations moved to `customization-files.md`: `no`
-- stable rules moved to `conflict-rules.md`: `no`
-- temporary notes ready to archive/remove: `no`
-- unexplained shared drift remaining: `unknown`
+- surviving customizations moved to `customization-files.md`: `yes` — rewritten against the
+  post-merge tree on 2026-09-11
+- stable rules moved to `conflict-rules.md`: `n/a` — this upgrade produced no new reusable
+  rule. The two habits worth keeping are already written there: verify every inventory file
+  with a two-dot diff, not only the conflicted ones, and keep the inventory complete enough
+  for that rule to fire
+- temporary notes ready to archive/remove: `no` — keep until the pending device validation
+  in `upgrade-validation-checklist.md` is done
+- unexplained shared drift remaining: `no`
+
+### Worth promoting to the shared docs, but not done here
+
+Two findings from this upgrade generalise beyond WIDP, and both belong in
+`eyeseetea-docs/upgrade/conflict-rules.md`, which is baseline-owned. Writing them from a
+client branch would break the same rule this upgrade is enforcing, so they are recorded here
+for whoever next touches the baseline:
+
+1. **`git checkout --theirs` silently does nothing on a file git did not mark as
+   conflicted.** It fails quietly and leaves the automerged mixture in place. The reliable
+   form is `git checkout <base-branch> -- <path>`. This cost one broken test file that
+   compiled fine as a merge result and only failed once the tests were run.
+2. **The automerge rule cannot see a customization whose host file was deleted upstream.**
+   `App.java` hosted two pieces of WIDP wiring; when upstream deleted it, the callers —
+   WIDP-only files git never touched — were left referencing methods that no longer existed.
+   No conflict, no inventory entry, no diff to inspect. Only the compiler found them. The
+   rule should say: after a merge, also check the **callers** of anything the baseline
+   deleted, not just the files the inventory lists.

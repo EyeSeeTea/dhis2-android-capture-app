@@ -3,30 +3,44 @@
 EyeSeeTea fork of the DHIS2 Android Capture app for the WIDP client.
 
 - **Flavor:** `widp` (app ID: `com.eyeseetea.widp`)
-- **Current version:** `3.3.0.1-widp-fork-1`
+- **Current version:** `3.4.2-widp-fork-1`
 - **Upstream:** dhis2/dhis2-android-capture-app
 - **Baseline branch:** `develop-eyeseetea` (shared EyeSeeTea baseline, never client-specific)
-- **SDK fork:** EyeSeeTea/dhis2-android-sdk `1.13.0.1-eyeseetea-fork-1` (2FA + auth patches)
+- **SDK fork:** EyeSeeTea/dhis2-android-sdk `1.14.2-eyeseetea-fork-1` (2FA + auth patches)
 
 ## Project structure
 
-13 modules: `:app`, `:commons`, `:login`, `:form`, `:tracker`, `:aggregates`, `:ui-components`, `:compose-table`, `:dhis_android_analytics`, `:dhis2_android_maps`, `:dhis2-mobile-program-rules`, `:commonskmm`, `:stock-usecase`.
+14 modules: `:app`, `:commons`, `:login`, `:form`, `:tracker`, `:aggregates`, `:sync`,
+`:ui-components`, `:compose-table`, `:dhis_android_analytics`, `:dhis2_android_maps`,
+`:dhis2-mobile-program-rules`, `:commonskmm`, `:stock-usecase`.
+
+`:core` is **not** one of them: it belongs to the DHIS2 SDK and is only on the classpath when
+`settings.gradle.kts` resolves a local SDK checkout as a composite build. See
+`eyeseetea-docs/SDK_Setup.md`.
 
 Key source sets:
 - `app/src/main/` — shared code (all flavors)
 - `app/src/widp/` — WIDP flavor-specific code and resources
 - `app/src/widpDebug/`, `app/src/widpRelease/` — build-type overrides
 
+The branch also carries `app/src/eyeseetea/`, the baseline's own flavor, inherited through the
+merge, plus Oslo's `dhis2`, `dhis2PlayServices` and `dhis2Training`. No other client's flavor
+belongs here.
+
 ## Build and test
 
 ```bash
-./gradlew assembleWidpDebug          # build WIDP debug APK
-./gradlew testDebugUnitTest          # run unit tests
-./gradlew testWidpDebugUnitTest      # run WIDP-specific unit tests
-./gradlew ktlintCheck                # code style
+./gradlew :app:assembleWidpDebug             # build the WIDP debug APK
+./gradlew :app:installWidpDebug              # put it on a device — assemble alone does not
+./gradlew :app:testWidpDebugUnitTest         # WIDP unit tests
+./gradlew :app:compileEyeseeteaDebugKotlin   # the other flavor on this branch; CI does not build it
+./gradlew :login:allTests                    # login module (KMP), includes the 2FA tests
+./gradlew ktlintCheck                        # code style
 ```
 
-Java 17 required. Gradle 8.9.3 with parallel execution.
+There is no `testDebugUnitTest` task: unit tests are per flavor.
+
+Java 17 required. Gradle 9.3.1 wrapper, AGP 9.0.1, Kotlin 2.3.20, parallel execution.
 
 ## Customizations
 
@@ -38,7 +52,7 @@ Java 17 required. Gradle 8.9.3 with parallel execution.
 | 2 | `image-upload-no-resize` | active | low |
 | 3 | `notifications` | active | high |
 | 4 | `two-factor-auth` | active (SDK dependency) | medium |
-| 5 | `url-data-element` | broken (rendering lost in Compose migration) | medium |
+| 5 | `url-data-element` | active | medium |
 
 ### Customization code rules
 
@@ -59,13 +73,22 @@ Java 17 required. Gradle 8.9.3 with parallel execution.
 - `openspec/specs/` — functional specs (source of truth for what each customization does)
 - `openspec/config.yaml` — project context and OpenSpec rules
 - `eyeseetea-docs/customizations/widp/customization-files.md` — technical file inventory
-- `eyeseetea-docs/upgrade/widp/upgrade-3.3.1-strategy.md` — upgrade phases and status
+- `eyeseetea-docs/upgrade/widp/upgrade-3.4.2-notes.md` — working notes for the current upgrade
+- `eyeseetea-docs/customization-techniques.md` — reusable mechanisms for customizing Oslo code
 - `eyeseetea-docs/upgrade/widp/upgrade-validation-checklist.md` — manual validation flows
 - `eyeseetea-docs/upgrade/conflict-rules.md` — merge conflict resolution rules
 
 ## Upgrade context
 
-Upgrading from `3.3.0.1` to `3.3.1`. Strategy has 6 phases (A-F). Current status tracked in `upgrade-3.3.1-strategy.md`. Always use **two-dot diff** (`git diff develop-eyeseetea..HEAD`) to compare against baseline — three-dot misses deletions from the baseline side.
+Upgrades arrive by **merging `develop-eyeseetea`** — never by merging Oslo into this branch, and
+never by cherry-picking from another client's fork. Each one is modelled as an OpenSpec change
+under `openspec/changes/upgrade-widp-to-<version>/`, with per-upgrade working notes in
+`eyeseetea-docs/upgrade/widp/upgrade-<version>-notes.md`.
+
+The last one moved the fork from `3.3.1` to `3.4.2`.
+
+Always use a **two-dot diff** (`git diff develop-eyeseetea..HEAD`) to compare against the
+baseline — three-dot misses deletions coming from the baseline side.
 
 ## Automation extraction rule
 
