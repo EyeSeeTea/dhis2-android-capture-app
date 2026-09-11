@@ -190,7 +190,71 @@ the new API. Worth remembering that `git checkout --theirs` silently does nothin
 file git did not mark as conflicted — the fix has to be
 `git checkout <baseline> -- <path>`.
 
-- manual flows checked: see the device validation section below.
+### Device validation — 2026-09-11
+
+Measured on a **Samsung SM-S928B**, package `com.eyeseetea.widp.debug`, version
+`3.4.2-widp-fork-1`, installed at 11:54.
+
+Before writing any of this down, both the version **and the package name** were checked:
+
+```
+adb shell dumpsys package com.eyeseetea.widp.debug | grep versionName
+```
+
+That is not a formality. Two results recorded earlier in this upgrade had to be thrown
+away for exactly this reason — see "Results discarded as invalid" below.
+
+#### Confirmed
+
+**The notifications download after a metadata sync works.** This is the highest-risk change
+in the upgrade, because the hook it used to run from no longer exists.
+Evidence: `last_meta_sync = 11/09/2026 12:00` with `last_meta_sync_status = true`, and
+`shared_prefs/BASIC_SHARE_PREFS.xml` written at 12:00 — six minutes after install — holding
+the datastore notifications and their `readBy` lists. Nothing else in the app writes that
+file, so the `PostMetadataSyncAction` fired.
+
+**Metadata sync brings new metadata down from the server.** A program added to a new user
+group on the server appeared in the app after syncing.
+
+#### Not confirmed, and why
+
+**The on-screen dialog.** Both notifications in the datastore were already marked as read by
+that user the same morning (09:27 and 09:44), so *not* showing them is the correct
+behavior — the spec requires exactly that. Exercising the dialog needs an unread
+notification, which this account did not have. The download half is confirmed; the display
+half is not, and it is the half the two fixes in the download commit are about.
+
+**2FA with mandatory enrolment not activated** shows an error pointing the user at the
+administrator. Reproduced on the previous build (`3.4.1-widp-fork-1`), so it is
+**pre-existing, not a regression**. Changing it would be a functional decision WIDP has not
+been asked to make. Out of scope — see Open Questions.
+
+#### Results discarded as invalid
+
+Two earlier manual results were thrown out rather than reported:
+
+- a 2FA login that looked successful had actually been run against `3.4.1-widp-fork-1`,
+  installed on 21/08 — the wrong build
+- a notifications check had been run on the **`dhis2` flavor** (`com.dhis2.debug`), which
+  carries no WIDP customization at all. That is why no notification appeared: the feature is
+  not in that build
+
+The second one is the dangerous one. The wrong flavor looks exactly like the right app on
+the device. Always record the package name next to the version.
+
+#### Still to test on this build
+
+Moved into `upgrade-validation-checklist.md` rather than left here:
+
+- 2FA over TOTP, Email and SMS against this build
+- the notification dialog with an unread notification
+- background sync with the app closed
+- Change Server URL
+- image upload without resizing
+- the URL data element field
+- login against a DHIS2 2.41 server
+
+- manual flows checked: the two confirmed items above; everything else is listed as pending.
 
 ## Shared drift still differing
 

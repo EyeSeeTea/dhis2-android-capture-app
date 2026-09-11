@@ -130,6 +130,50 @@ Expected result:
 - if the field has no description and has a URL, the supporting text shows only the URL
 - the URL is visible inline under the field without opening a separate dialog
 
+## Before recording any result
+
+Check **both** the version and the package name on the device first:
+
+```
+adb shell dumpsys package com.eyeseetea.widp.debug | grep versionName
+```
+
+A result recorded against the wrong build is worse than no result. During the 3.4.2 upgrade
+one notifications check was run against the `dhis2` flavor (`com.dhis2.debug`), which carries
+no WIDP customization at all — so nothing appeared, and for a while that looked like a
+regression. The wrong flavor is indistinguishable from the right app on the device.
+
+Use `./gradlew :app:installWidpDebug`, not `assembleWidpDebug`: a green assemble does not put
+the code on the device, and testing against a stale APK looks exactly like a hook that never
+fires.
+
+## Pending for 3.4.2 (as of 2026-09-11)
+
+Confirmed on `3.4.2-widp-fork-1`, Samsung SM-S928B:
+
+- [x] notifications are downloaded after a metadata sync (evidence: `BASIC_SHARE_PREFS.xml`
+      written at the sync timestamp, holding the datastore notifications)
+- [x] metadata sync brings new server metadata down
+
+Still to exercise on this build:
+
+- [ ] **3. Notifications** — the dialog itself, with a notification the test user has **not**
+      read. The 3.4.2 run could not exercise it: both datastore notifications were already in
+      the user's `readBy`, so not showing them was correct
+- [ ] **3. Notifications** — background sync with the app closed, then open it and check the
+      notification is shown on resume
+- [ ] **4a/4b/4c. 2FA** — TOTP, Email and SMS on this build. The 2FA login recorded earlier in
+      this upgrade was run against `3.4.1-widp-fork-1` and was discarded
+- [ ] **1. Change Server URL** — the full flow. Its DI was re-anchored in 3.4.2 because
+      upstream deleted `App.java`, so this is not a formality
+- [ ] **2. Image upload without resizing**
+- [ ] **5. URL data element field**
+- [ ] login against a DHIS2 2.41 server
+
+Known and **out of scope**: 2FA with mandatory enrolment not activated shows an error
+pointing at the administrator. Reproduced on `3.4.1-widp-fork-1`, so it is pre-existing, not
+a regression of this upgrade.
+
 ## Maintenance rule
 
 When a customization survives an upgrade:
