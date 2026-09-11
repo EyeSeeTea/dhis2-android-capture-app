@@ -30,6 +30,7 @@ import org.dhis2.mobile.commons.reporting.CrashReportController;
 import org.dhis2.usescases.notifications.domain.Notification;
 import org.dhis2.usescases.notifications.presentation.NotificationsPresenter;
 import org.dhis2.usescases.notifications.presentation.NotificationsView;
+import org.dhis2.usescases.notifications.presentation.ShowNotifications;
 import org.dhis2.utils.HelpManager;
 import org.dhis2.utils.OnDialogClickListener;
 import org.dhis2.utils.analytics.AnalyticsHelper;
@@ -88,8 +89,19 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         super.onResume();
         NotificationsPresenter presenter = notificationsPresenter();
         if (presenter != null) {
+            // Registered only while this screen is the one on top, so a notification arriving
+            // from a background metadata sync is shown straight away instead of waiting for the
+            // next resume. Cleared in onPause so the singleton never holds a paused Activity.
+            ShowNotifications.INSTANCE.setOnPending(() -> presenter.refresh(this));
             presenter.refresh(this);
         }
+    }
+
+    // EyeSeeTea customization - Notifications system
+    @Override
+    protected void onPause() {
+        ShowNotifications.INSTANCE.setOnPending(null);
+        super.onPause();
     }
 
     // EyeSeeTea customization - Notifications system
