@@ -125,19 +125,26 @@ Otherwise it is its own commit.**
 
 ## 8. Adopt the `AGENTS-<client>.md` convention
 
-- [ ] 8.1 Create `AGENTS-widp.md` from
+- [x] 8.1 Create `AGENTS-widp.md` from
   `eyeseetea-docs/templates/AGENTS-CLIENT.md.template`, filling the placeholders with the
   real post-merge values and adapting the parts of the template that do not apply (it
   references an `upgrade-<version>-strategy.md` that does not exist for 3.4.2, and Gradle
   task names that need checking).
-- [ ] 8.2 Reduce `CLAUDE.md` to Oslo's four-line bridge importing `@AGENTS.md` and
+- [x] 8.2 Reduce `CLAUDE.md` to Oslo's four-line bridge importing `@AGENTS.md` and
   `@AGENTS-widp.md`. Never edit `AGENTS.md` itself.
   **Commit 8:** 8.1–8.2 are one commit (`docs:`), last in the series and removable on its
   own — it adopts a convention rather than doing upgrade work.
 
 ## Final verification
 
-- [ ] 9.1 `./gradlew :app:assembleWidpDebug :app:compileEyeseeteaDebugKotlin :app:testWidpDebugUnitTest :login:allTests ktlintCheck`
-- [ ] 9.2 Confirm each of the five capabilities survives **in code**, not on paper.
-- [ ] 9.3 Confirm the branch declares only the three Oslo flavors plus `eyeseetea` and
-  `widp`, and no other client's flavor.
+- [x] 9.1 `./gradlew :app:assembleWidpDebug :app:compileEyeseeteaDebugKotlin :app:testWidpDebugUnitTest :login:allTests ktlintCheck`.
+  Both flavors build. `:login:allTests` 97/97. `:app:testWidpDebugUnitTest` 920/921 — the one
+  failure is the known flaky `MainViewModelIntegrationTest`, in Oslo code this upgrade does
+  not touch. `ktlintCheck` fails, with 53 violations that all predate the merge (460 before
+  it) — see the notes, and the Open Question about ktlint having stopped checking the Android
+  modules entirely.
+- [x] 9.2 Confirm each of the five capabilities survives **in code**, not on paper. Done with
+  the grep/ls checks recorded in the notes; the 2FA message count is 6, as required.
+- [x] 9.3 Confirm the branch declares only the three Oslo flavors plus `eyeseetea` and
+  `widp`, and no other client's flavor. Confirmed: `app/build.gradle.kts` declares exactly
+  `dhis2`, `dhis2PlayServices`, `dhis2Training`, `eyeseetea`, `widp`.

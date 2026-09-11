@@ -315,7 +315,10 @@ two-dot diff against `develop-eyeseetea` has no unexplained entries.
 - `app/build.gradle.kts` — the `widp` product flavor (the Markwon dependency in the same file belongs to 2.3)
 - `.github/workflows/eyeseetea-main.yml` — runs the WIDP unit tests where the baseline runs the `eyeseetea` ones
 - `.gitignore` — ignores `.journal/`, a local tooling directory
-- `CLAUDE.md` and `AGENTS-widp.md` — fork identity for coding agents
+- `AGENTS-widp.md` — fork identity for coding agents. Since Oslo 3.4, `CLAUDE.md` is an Oslo
+  file (a four-line bridge to `AGENTS.md`), so the identity lives in its own file and
+  `CLAUDE.md` differs from the baseline by exactly one line: the `@AGENTS-widp.md` import.
+  `AGENTS.md` is Oslo's generic guide and is never edited
 - `eyeseetea-docs/customizations/widp/`, `eyeseetea-docs/upgrade/widp/` — this client's documentation
 - `openspec/` — this client's specs, config, change proposals and archive
 
