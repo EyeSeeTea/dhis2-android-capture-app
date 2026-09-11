@@ -27,7 +27,6 @@ import org.dhis2.commons.Constants;
 import org.dhis2.commons.dialogs.CustomDialog;
 import org.dhis2.commons.popupmenu.AppMenuHelper;
 import org.dhis2.mobile.commons.reporting.CrashReportController;
-import org.dhis2.data.server.ServerComponent;
 import org.dhis2.usescases.notifications.domain.Notification;
 import org.dhis2.usescases.notifications.presentation.NotificationsPresenter;
 import org.dhis2.usescases.notifications.presentation.NotificationsView;
@@ -43,6 +42,7 @@ import javax.inject.Inject;
 
 import io.noties.markwon.Markwon;
 import kotlin.Unit;
+import org.koin.java.KoinJavaComponent;
 
 
 public abstract class ActivityGlobalAbstract extends SessionManagerActivity
@@ -55,8 +55,8 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     @Inject
     public CrashReportController crashReportController;
 
-    @Inject
-    public NotificationsPresenter notificationsPresenter;
+    // EyeSeeTea customization - Notifications system
+    private NotificationsPresenter notificationsPresenter;
 
     private CustomDialog descriptionDialog;
 
@@ -72,15 +72,13 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         );
     }
 
+    // EyeSeeTea customization - Notifications system
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        ServerComponent serverComponent = ((App) getApplicationContext()).getServerComponent();
-
-        // EyeSeeTea customization - Notifications system
-        if (notificationsPresenter != null){
-            notificationsPresenter.refresh(this);
+        NotificationsPresenter presenter = notificationsPresenter();
+        if (presenter != null) {
+            presenter.refresh(this);
         }
-
         super.onCreate(savedInstanceState);
     }
 
@@ -88,9 +86,28 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     @Override
     protected void onResume() {
         super.onResume();
-        if (notificationsPresenter != null) {
-            notificationsPresenter.refresh(this);
+        NotificationsPresenter presenter = notificationsPresenter();
+        if (presenter != null) {
+            presenter.refresh(this);
         }
+    }
+
+    // EyeSeeTea customization - Notifications system
+    // Base behavior: this field does not exist upstream.
+    // Resolved from Koin rather than field-injected by Dagger. Upstream migrated MainActivity to
+    // Koin in 3.4.x and stopped running the inject() that used to populate this inherited field,
+    // which left it null on every screen. Resolution is deferred and guarded on the server
+    // component because this base class also backs the screens shown before there is a session,
+    // and the notification graph needs an initialised D2.
+    @Nullable
+    protected NotificationsPresenter notificationsPresenter() {
+        if (((App) getApplicationContext()).getServerComponent() == null) {
+            return null;
+        }
+        if (notificationsPresenter == null) {
+            notificationsPresenter = KoinJavaComponent.get(NotificationsPresenter.class);
+        }
+        return notificationsPresenter;
     }
 
     @Override
@@ -243,6 +260,7 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     }
 
     private void showNotification(Notification notification) {
+        NotificationsPresenter presenter = notificationsPresenter();
         String content = getNotificationContent(notification);
         Markwon markwon = Markwon.create(getContext());
 
@@ -250,7 +268,9 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
                 .setTitle("Notification")
                 .setMessage(content)
                 .setPositiveButton(getContext().getString(R.string.wipe_data_ok), (d, which) -> {
-                    notificationsPresenter.markNotificationAsRead(notification);
+                    if (presenter != null) {
+                        presenter.markNotificationAsRead(notification);
+                    }
                 })
                 .setCancelable(true)
                 .show();
