@@ -51,7 +51,7 @@ zxing = "3.5.4"
 zxingandroid = "4.3.0"
 root = "0.1.2"
 
-#Eyeseetea
+# EyeSeeTea customization - Notifications system (Markdown rendering in notification dialogs)
 markwon = "4.6.0"
 openid = "0.11.1"
 conscrypt = "2.5.3"
@@ -231,7 +231,7 @@ compose-components-resources = { group = "org.jetbrains.compose.components", nam
 compose-desktop-common = { group = "org.jetbrains.compose.desktop", name = "desktop", version.ref = "composePluginVersion" }
 compose-material3-iconsExtendend = { group = "org.jetbrains.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
 
-#Eyeseetea
+# EyeSeeTea customization - Notifications system
 eyeseetea-markwon = { group = "io.noties.markwon", name = "core", version.ref = "markwon" }
 
 [plugins]

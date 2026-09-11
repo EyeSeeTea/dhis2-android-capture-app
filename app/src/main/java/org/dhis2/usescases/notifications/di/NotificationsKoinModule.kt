@@ -16,20 +16,21 @@ import org.dhis2.usescases.notifications.domain.MarkNotificationAsRead
 import org.dhis2.usescases.notifications.domain.NotificationRepository
 import org.dhis2.usescases.notifications.domain.UserRepository
 import org.dhis2.usescases.notifications.presentation.NotificationsPresenter
-import org.hisp.dhis.android.core.D2Manager
+import org.hisp.dhis.android.core.D2
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 /**
- * Every definition here resolves D2 lazily, at first injection rather than at startup: the
- * repository needs an initialised D2, and Koin is started before login.
+ * D2 comes from the Koin graph (published by `serverModule`) rather than from the `D2Manager`
+ * static: that definition instantiates D2 if it is not up yet, so resolving this graph before
+ * login cannot throw. Everything here is resolved lazily, at first injection.
  */
 val notificationsModule =
     module {
         single<BasicPreferenceProvider> { BasicPreferenceProviderImpl(androidContext()) }
 
         single<NotificationRepository> {
-            val d2 = D2Manager.getD2()
+            val d2 = get<D2>()
             NotificationD2Repository(
                 d2,
                 get(),
@@ -38,11 +39,11 @@ val notificationsModule =
             )
         }
 
-        single<UserRepository> { UserD2Repository(D2Manager.getD2()) }
+        single<UserRepository> { UserD2Repository(get<D2>()) }
 
-        single { GetNotifications(get()) }
+        factory { GetNotifications(get()) }
 
-        single { MarkNotificationAsRead(get(), get()) }
+        factory { MarkNotificationAsRead(get(), get()) }
 
         single { NotificationsPresenter(get(), get()) }
     }

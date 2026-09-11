@@ -224,6 +224,8 @@ fun CredentialsScreen(
                 },
             )
             // EyeSeeTea customization - 2FA support
+            // Inside the !oAuthEnable branch on purpose: the second factor belongs to the
+            // username/password flow, not to the OAuth one upstream added in 3.4.
             if (screenState.twoFactorState != null) {
                 TwoFactorContainer(
                     twoFactorState = screenState.twoFactorState!!,

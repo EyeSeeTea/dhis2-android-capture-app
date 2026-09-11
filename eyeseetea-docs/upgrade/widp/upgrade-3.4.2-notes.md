@@ -179,6 +179,8 @@ SDK, removes a capability, or departs from the baseline. None of these blocked t
 | final | `./gradlew :app:testWidpDebugUnitTest` | 921 tests, **920 passed, 1 failed** |
 | final | `./gradlew :login:allTests` | 97 tests, 97 passed |
 | final | `./gradlew ktlintCheck --continue` | FAILED — 53 violations, all pre-existing. See below |
+| after the comparison changes | `./gradlew :app:assembleWidpDebug :app:compileEyeseeteaDebugKotlin` | BUILD SUCCESSFUL in 1m 53s — `dhis2-v3.4.2-widp-fork-1-…apk` |
+| after the comparison changes | `./gradlew :app:testWidpDebugUnitTest :login:allTests` | 1115 tests, 1114 passed, the same one failure |
 
 The single unit-test failure is `MainViewModelIntegrationTest > should hide filter and sync
 buttons while sync is running`. It is an Oslo test about the home screen's filter and sync
@@ -336,6 +338,69 @@ Expected and correct: `eyeseetea-docs/SDK_Setup.md` and
 `eyeseetea-docs/templates/openspec-config.yaml.template` come straight from the two
 documentation-only commits the baseline added after `f87bec8c3` (`3cd19be2e`, `8e0200bcc`).
 They match the baseline exactly.
+
+## Comparison with the independent resolution
+
+This upgrade was resolved twice, independently. The other resolution is
+`feature-widp/bring_last_changes_3_4_2_attempt`; it was not consulted while these conflicts
+were being resolved. The two branches agree on every conflict classification and on every
+customization that had to survive. Where they differ, each difference is a decision, and the
+decisions went both ways.
+
+### Where the other resolution was right, and this branch adopted it
+
+| Difference | Why theirs wins |
+|---|---|
+| `get<D2>()` instead of `D2Manager.getD2()` in the notifications Koin module | The Koin definition in `serverModule` *instantiates* D2 when it is not up yet, so resolving the graph before login cannot throw. The static can. Also the house DI style. |
+| `factory` rather than `single` for `GetNotifications` and `MarkNotificationAsRead` | Stateless use cases; matches how the baseline registers its own. |
+| `ids_eyeseetea.xml` rather than `ids.xml` | The whole point of that file is that it can never conflict with Oslo. `ids.xml` is a name Oslo could plausibly add one day; the fork-prefixed one cannot collide. |
+| A comment on the Markwon entries in `libs.versions.toml` | The comment convention asks for the customization title. `#Eyeseetea` is not one. |
+| Saying in `CredentialsScreen.kt` why `TwoFactorContainer` sits inside the `!oAuthEnable` branch | It records a real decision — the second factor belongs to the username/password flow, not to the OAuth one — that this branch had made silently. |
+
+### Where this branch is right, and kept its own
+
+| Difference | Why |
+|---|---|
+| `App.kt` untouched | The other resolution re-added `createChangeServerULComponent()` and a `releaseChangeServerURLComponent()` to `App.kt` — about 20 lines in an Oslo file. Building the subcomponent straight from `UserComponent.plus()` needs none of it, and there is no stored reference to release, so the lifetime problem their version manages does not exist here. Level 2 of the placement hierarchy instead of level 4. |
+| `AppComponent.java` byte-identical to the baseline | Theirs drops the trailing comma after the last `@Component(modules)` entry, which the baseline has. One line of drift in a shared file, for nothing. |
+| `PreferenceModule.kt` back to baseline content | Theirs keeps the Dagger `BasicPreferenceProvider` provider *and* builds another one inline in Koin — two providers for one type, and a shared Oslo file left customized. Publishing it once in the Koin module removes the file from the conflict surface entirely. |
+| `commonskmm/.../composeResources/values/strings.xml` drops `openid_login_cancelled` | The baseline deleted that string when the login screen moved to the `:login` module, which now owns it. Theirs keeps it: an unused string, and drift with no customization behind it. |
+| `DomainErrorMapper.kt` untouched | Theirs adds a trailing comma there to satisfy ktlint. That file is baseline-owned and carries no WIDP delta; editing it creates exactly the unexplained shared drift the rules forbid, and the fix belongs in `develop-eyeseetea` as an `EyeSeeTea fix`. |
+| `app/src/widp/java/org.dhis2.utils/CustomizableConstants.kt` deleted | Unreferenced on both sides, and the baseline deleted its identical copy from `app/src/eyeseetea/` in this same upgrade. Keeping it would leave one dead file alone in a directory named `org.dhis2.utils`. |
+| `ActivityGlobalAbstract` guards presenter resolution on the server component | Theirs resolves unconditionally in `onCreate`, on every screen including the ones before login. It does not crash, because `get<D2>()` instantiates D2 — but it means a blocking D2 instantiation can be triggered from a screen that has no use for notifications. The guard costs three lines. |
+| The comment on `DownloadNewVersion.kt` | Theirs carries `// EyeSeeTea customization - Change Server URL` on a file that has nothing to do with Change Server URL. A wrong title is worse than none: the convention exists so a reader can map a comment to a spec. This branch labels it as flavor scaffolding, which is what it is. |
+
+### Cosmetic differences, left alone
+
+Where `onChangeServerURL()` sits in `MainActivity`, whether the pending-flag rule lives in
+`ShowNotifications.markPending()` or in the presenter, blank lines in the two menus and in
+`strings.xml`, and comment wording throughout. None of it changes behavior.
+
+### The one real disagreement left open: ktlint formatting
+
+The other resolution reformatted the 2FA customization — `TwoFactorState.kt`,
+`TwoFactorRequiredException.kt`, `CredentialsScreen.kt`, `CredentialsViewModel.kt`,
+`LoginRepositoryImpl.kt`, `D2ErrorMessageProviderImpl.kt` — to satisfy ktlint. This branch
+reapplied it verbatim, on the rule in `conflict-rules.md`: do not clean up or reformat during
+a merge.
+
+Their formatting is better code, and if the choice were only about our own files it would be
+worth taking. It is not, and that is what settles it: even after reformatting all six, the
+gate stays red on `DomainErrorMapper.kt`, which is baseline-owned. The other branch only gets
+to green by editing that baseline file — the drift ruled out above. So neither branch can pass
+`ktlintCheck` without breaking a rule, and this one prefers a red gate with a written reason
+over green with unexplained drift.
+
+The real fix is upstream anyway, and bigger than formatting: see the Open Question about
+ktlint no longer checking eight of the fourteen modules at all.
+
+### Expected differences, not defects
+
+The two documentation-only commits the baseline added after the other branch merged
+(`3cd19be2e`, `8e0200bcc`) mean `eyeseetea-docs/SDK_Setup.md` and
+`eyeseetea-docs/templates/openspec-config.yaml.template` differ between the branches. This
+branch merged the current tip, as intended. The inventory, the corrected fork identity and
+`AGENTS-widp.md` also differ, because the other branch left that work pending.
 
 ## Finalization
 

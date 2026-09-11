@@ -1,4 +1,8 @@
 package org.dhis2.usescases.main.domain
+// Flavor scaffolding, not a customization: upstream made this a per-flavor file in 3.4.x, so
+// every flavor source set needs its own copy. This is the in-app APK download, matching what
+// develop-widp did through versionRepository.download(). The eyeseetea flavor opens a URL
+// instead; WIDP is not distributed through the Play Store.
 
 import android.content.Context
 import kotlinx.coroutines.suspendCancellableCoroutine

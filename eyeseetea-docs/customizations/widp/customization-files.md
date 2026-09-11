@@ -70,7 +70,7 @@ New files, none of which exist in `develop-eyeseetea`:
 - `app/src/main/java/org/dhis2/utils/session/ChangeServerURLComponent.kt` — Dagger subcomponent
 - `app/src/main/res/layout/dialog_change_server_url.xml` — layout
 - `app/src/main/res/drawable/ic_edit.xml` — icon
-- `app/src/main/res/values/ids.xml` — declares `change_url`. Added in 3.4.2 so flavors other than `widp` compile: `MainActivity` is shared and handles that id while only the WIDP menu declares it
+- `app/src/main/res/values/ids_eyeseetea.xml` — declares `change_url`. Added in 3.4.2 so flavors other than `widp` compile: `MainActivity` is shared and handles that id while only the WIDP menu declares it. Deliberately not named `ids.xml`, so it cannot collide with a file Oslo might add later
 
 Shared files carrying a WIDP delta:
 
