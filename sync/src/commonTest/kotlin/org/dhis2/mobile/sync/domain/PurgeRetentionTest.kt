@@ -9,17 +9,17 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 // EyeSeeTea customization - Synced Data Retention Purge
-class RetentionPurgeTest {
+class PurgeRetentionTest {
     private val syncRepository: SyncRepository = mock()
 
-    private val retentionPurge = RetentionPurge(syncRepository)
+    private val purgeRetention = PurgeRetention(syncRepository)
 
     @Test
     fun `Should return success when repository purge succeeds`() =
         runBlocking {
             whenever(syncRepository.purgeRetention()).thenReturn(Result.success(Unit))
 
-            val result = retentionPurge.invoke()
+            val result = purgeRetention.invoke()
 
             verify(syncRepository).purgeRetention()
             assert(result.isSuccess)
@@ -31,7 +31,7 @@ class RetentionPurgeTest {
             val error = Exception("purge failed")
             whenever(syncRepository.purgeRetention()).thenReturn(Result.failure(error))
 
-            val result = retentionPurge.invoke()
+            val result = purgeRetention.invoke()
 
             verify(syncRepository).purgeRetention()
             assert(result.isFailure)

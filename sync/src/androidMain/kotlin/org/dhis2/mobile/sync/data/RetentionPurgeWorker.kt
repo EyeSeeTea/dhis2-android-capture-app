@@ -8,7 +8,7 @@ import org.dhis2.mobile.commons.domain.invoke
 import org.dhis2.mobile.commons.notifications.NotificationManager
 import org.dhis2.mobile.commons.notifications.WorkerNotificationInfo
 import org.dhis2.mobile.sync.R
-import org.dhis2.mobile.sync.domain.RetentionPurge
+import org.dhis2.mobile.sync.domain.PurgeRetention
 import org.dhis2.mobile.sync.resources.Res
 import org.dhis2.mobile.sync.resources.app_name
 import org.dhis2.mobile.sync.resources.purging_retention
@@ -18,7 +18,7 @@ import org.jetbrains.compose.resources.getString
 class RetentionPurgeWorker(
     context: Context,
     workerParams: WorkerParameters,
-    private val retentionPurge: RetentionPurge,
+    private val purgeRetention: PurgeRetention,
     private val notificationManager: NotificationManager,
 ) : CoroutineWorker(context, workerParams) {
     override suspend fun doWork(): Result {
@@ -34,7 +34,7 @@ class RetentionPurgeWorker(
             contentText = getString(Res.string.purging_retention),
         )
 
-        val result = retentionPurge()
+        val result = purgeRetention()
 
         if (!isPeriodic) {
             notificationManager.cancelRetentionPurgeNotification()

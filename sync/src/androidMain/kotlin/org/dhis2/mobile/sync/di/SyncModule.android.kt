@@ -10,7 +10,7 @@ import org.dhis2.mobile.sync.data.SyncMetadataWorker
 import org.dhis2.mobile.sync.data.SyncRepository
 import org.dhis2.mobile.sync.data.SyncSettingsWorker
 import org.dhis2.mobile.sync.domain.CheckPeriodicJobs
-import org.dhis2.mobile.sync.domain.RetentionPurge
+import org.dhis2.mobile.sync.domain.PurgeRetention
 import org.dhis2.mobile.sync.domain.SyncData
 import org.dhis2.mobile.sync.domain.SyncMetadata
 import org.dhis2.mobile.sync.domain.SyncSettings
@@ -58,7 +58,7 @@ actual val syncModule =
         factoryOf(::CheckPeriodicJobs)
 
         // EyeSeeTea customization - Synced Data Retention Purge
-        factoryOf(::RetentionPurge)
+        factoryOf(::PurgeRetention)
 
         workerOf(::SyncDataWorker)
         workerOf(::SyncMetadataWorker)
