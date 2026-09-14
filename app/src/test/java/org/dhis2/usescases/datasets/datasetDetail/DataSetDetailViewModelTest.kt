@@ -23,7 +23,13 @@ class DataSetDetailViewModelTest {
 
     private val dispatcher: DispatcherProvider =
         mock {
-            on { io() } doReturn Dispatchers.IO
+            // EyeSeeTea fix - DataSetDetailViewModelTest leaks a coroutine into the next test (no Oslo ticket, introduced 3.0)
+            // Remove when Oslo ships the upstream fix.
+            // With the real Dispatchers.IO, the ViewModel's withContext(io) could still be running
+            // when @After resets Dispatchers.Main; resuming on Main then threw, and
+            // kotlinx-coroutines-test reported it as UncaughtExceptionsBeforeTest in whichever
+            // test ran next (usually MainViewModelIntegrationTest or MainViewModelTest).
+            on { io() } doReturn UnconfinedTestDispatcher()
         }
     private val dataSetPageConfigurator: DataSetPageConfigurator = mock()
     private val initializedConfigurator: DataSetPageConfigurator = mock()
