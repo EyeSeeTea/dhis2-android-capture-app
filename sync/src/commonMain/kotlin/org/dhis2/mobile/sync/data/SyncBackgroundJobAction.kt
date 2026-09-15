@@ -36,4 +36,7 @@ interface SyncBackgroundJobAction {
     fun getNextDataSync(): Long?
 
     fun getNextSettingsSync(): Long?
+
+    // EyeSeeTea customization - Synced Data Retention Purge
+    fun getNextRetentionPurge(): Long?
 }

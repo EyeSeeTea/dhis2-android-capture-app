@@ -156,6 +156,7 @@ class SyncManagerPresenterTest {
         RetentionPurgeSettingsViewModel(
             purgePeriod = 0,
             lastPurge = "test",
+            nextPurge = null,
             purgeHasErrors = false,
             purgeInProgress = false,
         )

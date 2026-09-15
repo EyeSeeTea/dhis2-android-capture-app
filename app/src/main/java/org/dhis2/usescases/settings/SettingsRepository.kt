@@ -110,6 +110,9 @@ class SettingsRepository(
             RetentionPurgeSettingsViewModel(
                 purgePeriod = prefs.getInt(TIME_RETENTION_PURGE, Constants.TIME_MANUAL),
                 lastPurge = prefs.getString(LAST_RETENTION_PURGE, "-")!!,
+                nextPurge = syncBackgroundJobAction.getNextRetentionPurge()?.let {
+                    DateFormat.format(dateTimeFormat, it).toString()
+                },
                 purgeHasErrors = !prefs.getBoolean(LAST_RETENTION_PURGE_STATUS, true),
                 purgeInProgress = false,
             ),

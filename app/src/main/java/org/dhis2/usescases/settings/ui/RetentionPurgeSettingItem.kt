@@ -159,6 +159,15 @@ private fun provideRetentionPurgeDefaultInfo(
                 color = TextColor.OnSurface,
             ),
         )
+        retentionPurgeSettings.nextPurge?.let {
+            add(
+                AdditionalInfoItem(
+                    key = "Next Purge On",
+                    value = it,
+                    color = TextColor.OnSurface,
+                ),
+            )
+        }
     }
 
 @Composable

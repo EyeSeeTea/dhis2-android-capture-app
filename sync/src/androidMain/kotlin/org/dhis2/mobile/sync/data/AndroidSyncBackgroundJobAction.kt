@@ -211,6 +211,15 @@ class AndroidSyncBackgroundJobAction(
             ?.takeIf { it.state == WorkInfo.State.ENQUEUED }
             ?.nextScheduleTimeMillis
 
+    // EyeSeeTea customization - Synced Data Retention Purge
+    override fun getNextRetentionPurge(): Long? =
+        workManager
+            .getWorkInfosForUniqueWork(RETENTION_PURGE)
+            .get()
+            .firstOrNull()
+            ?.takeIf { it.state == WorkInfo.State.ENQUEUED }
+            ?.nextScheduleTimeMillis
+
     override fun observeDataJob() =
         workManager
             .getWorkInfosFlow(
