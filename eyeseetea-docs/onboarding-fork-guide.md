@@ -70,7 +70,7 @@ Bring the shared `eyeseetea-docs/` structure from `develop-eyeseetea` into the c
 - `eyeseetea-docs/upgrade/template/`
 - `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md`
 - `eyeseetea-docs/customizations/template/`
-- `eyeseetea-docs/templates/` — AGENTS-<client>.md and openspec/config.yaml templates used in Phase 4 / Phase 5
+- `eyeseetea-docs/templates/` — AGENTS-CLIENT.md and openspec/config.yaml templates used in Phase 4 / Phase 5
 - `eyeseetea-docs/scripts/`
 - `.claude/` — generic Claude Code scaffolding (`commands/opsx/*`, `skills/openspec-*/`, `settings.json`). Do **not** bring `.claude/settings.local.json` (per-developer overrides, gitignored).
 
@@ -236,18 +236,11 @@ These are generic and ready to use. **No action needed unless you want to extend
 
 ### AGENTS-<client>.md (required)
 
-`CLAUDE.md` at the repository root is an **upstream Oslo file** since 3.4 (it just does `@AGENTS.md`) — never overwrite it; doing so drops Oslo's own import and guarantees a whole-file conflict on every future upgrade.
-
-Copy `eyeseetea-docs/templates/AGENTS-FLAVOR.md.template` to `AGENTS-<client>.md` at the repository root and fill in the placeholders (`{{CLIENT_NAME}}`, `{{FLAVOR}}`, `{{APPLICATION_ID}}`, `{{CURRENT_VERSION}}`, etc.). The template already includes the EyeSeeTea-wide rules (placement hierarchy, comment convention, automerge verification, post-merge check hierarchy, automation extraction rule); your customizations table and identity are the only fork-specific parts to fill.
-
-Then add one import line to `CLAUDE.md`, right after `@AGENTS.md`, with a customization comment:
-
-```md
-<!-- EyeSeeTea customization - <Client> fork identity -->
+Copy `eyeseetea-docs/templates/AGENTS-CLIENT.md.template` to `AGENTS-<client>.md` at the repository root (`<client>` is the client slug, e.g. `AGENTS-simprints.md`, `AGENTS-oca.md`) and fill in the placeholders (`{{CLIENT_NAME}}`, `{{FLAVOR}}`, `{{APPLICATION_ID}}`, `{{CURRENT_VERSION}}`, etc.). The template already includes the EyeSeeTea-wide rules (placement hierarchy, comment convention, automerge verification, post-merge check hierarchy, automation extraction rule); your customizations table and identity are the only fork-specific parts to fill. Never edit `AGENTS.md` itself — it is Oslo's generic, fork-agnostic agent guide, already inherited from baseline in Phase 1. Update `CLAUDE.md` at the repo root to import both, in this order:
+```
+@AGENTS.md
 @AGENTS-<client>.md
 ```
-
-Claude Code's memory system supports multiple `@file` imports, arbitrary filenames, relative paths, and up to four hops of nesting, so this is a supported pattern, not a workaround.
 
 ### Agents (optional, on demand)
 
@@ -264,8 +257,8 @@ Beyond the 4 OpenSpec skills already in the baseline, you may add fork-specific 
 ### Done when
 
 - `AGENTS-<client>.md` exists and references the right docs
-- `CLAUDE.md` is untouched from Oslo except the one added `@AGENTS-<client>.md` import line
-- a fresh Claude session can orient itself by reading `CLAUDE.md` → `AGENTS.md` + `AGENTS-<client>.md`
+- `CLAUDE.md` imports both `@AGENTS.md` and `@AGENTS-<client>.md`
+- a fresh Claude session can orient itself by reading `CLAUDE.md`
 
 ## Phase 6. Execute the upgrade
 

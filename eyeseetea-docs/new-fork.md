@@ -17,12 +17,11 @@ Use `eyeseetea-docs/README.md` to understand the model first. Use this file as t
 1. Use `eyeseetea-docs/upgrade/conflict-rules.md` as the shared merge guide for future upgrades.
 2. Install OpenSpec CLI: `npm install -g @fission-ai/openspec@latest`. The Claude Code scaffolding (`.claude/commands/opsx/*`, `.claude/skills/openspec-*`, `.claude/settings.json`) is already inherited from `develop-eyeseetea` — no `openspec init` needed.
 3. Create `openspec/config.yaml` by copying `eyeseetea-docs/templates/openspec-config.yaml.template` to `openspec/config.yaml` and filling in the placeholders (`{{CLIENT_NAME}}`, `{{FLAVOR}}`, `{{APPLICATION_ID}}`, `{{CURRENT_VERSION}}`, etc.). The template already includes the EyeSeeTea-wide `rules:` section. Create empty `openspec/specs/` and `openspec/changes/` directories — functional specs for client customizations will live under `openspec/specs/<capability>/spec.md` (one spec per customization).
-4. `CLAUDE.md` at the repository root is an **upstream Oslo file** since 3.4 — never overwrite it. Create `AGENTS-<client>.md` by copying `eyeseetea-docs/templates/AGENTS-FLAVOR.md.template` and filling in the placeholders. The template already includes the EyeSeeTea-wide rules (placement hierarchy, comment convention, automerge verification, post-merge check hierarchy, automation extraction). Then add a single import line to `CLAUDE.md`, right after the existing `@AGENTS.md` line, with a customization comment:
-   ```md
-   <!-- EyeSeeTea customization - <Client> fork identity -->
+4. Create `AGENTS-<client>.md` at the repository root by copying `eyeseetea-docs/templates/AGENTS-CLIENT.md.template` and filling in the placeholders — `<client>` is the client slug (e.g. `AGENTS-simprints.md`, `AGENTS-oca.md`). The template already includes the EyeSeeTea-wide rules (placement hierarchy, comment convention, automerge verification, post-merge check hierarchy, automation extraction). Never edit `AGENTS.md` with fork identity — it is Oslo's generic, fork-agnostic agent guide, inherited as-is from baseline. Update `CLAUDE.md` at the repo root to import both, in this order:
+   ```
+   @AGENTS.md
    @AGENTS-<client>.md
    ```
-   This keeps the whole-file conflict Oslo's `CLAUDE.md` would otherwise cause on every future upgrade down to these two added lines.
 5. Copy `eyeseetea-docs/upgrade/template/upgrade-validation-checklist-template.md` to `eyeseetea-docs/upgrade/<client>/upgrade-validation-checklist.md`.
 6. Copy `eyeseetea-docs/customizations/template/customization-files-template.md` to `eyeseetea-docs/customizations/<client>/customization-files.md`.
 
@@ -71,6 +70,6 @@ Use `eyeseetea-docs/README.md` to understand the model first. Use this file as t
 1. `customization-files.md` is the technical inventory for this fork.
 2. `openspec/specs/` contains one validated spec per customization and is the functional reference for this fork (`openspec validate --specs` passes).
 3. `openspec/config.yaml` exists at the repo root with placeholders filled in.
-4. `AGENTS-<client>.md` exists at the repo root with placeholders filled in and the active customizations table populated; `CLAUDE.md` is untouched from Oslo except the one added `@AGENTS-<client>.md` import line.
+4. `AGENTS-<client>.md` exists at the repo root with placeholders filled in and the active customizations table populated; `CLAUDE.md` imports both `@AGENTS.md` and `@AGENTS-<client>.md`; `AGENTS.md` itself is untouched.
 5. `upgrade-validation-checklist.md` is the manual validation reference for this fork.
 6. `conflict-rules.md` remains the shared upgrade guide used later when this fork is upgraded.

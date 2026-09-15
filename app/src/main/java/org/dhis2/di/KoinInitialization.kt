@@ -65,9 +65,9 @@ object KoinInitialization {
                 matomoModule,
                 syncModule,
                 chartsModule,
+                postMetadataSyncModule,
                 // EyeSeeTea customization - Notifications system
                 notificationsModule,
-                postMetadataSyncModule,
             )
         }
     }
