@@ -72,15 +72,11 @@ context: |
   Human-facing upgrade docs live in `eyeseetea-docs/upgrade/oca/`. OpenSpec is
   the machine-checkable mirror, not a replacement.
 
-  ## Active OCA capabilities (as of 2026-08-28)
+  ## Active OCA capabilities (as of 2026-09-10)
 
     | Capability | Spec folder | Risk | Status |
     |------------|-------------|------|--------|
-    <!-- none confirmed yet: the oca flavor exists (product flavor, applicationId,
-         branding, required boilerplate DI files) but nothing in it diverges
-         functionally from develop-eyeseetea. Add a row here, with a matching
-         openspec/specs/<capability>/spec.md, when a real business customization
-         is confirmed for OCA. -->
+    | Synced Data Retention Purge | synced-data-retention-purge | low | active |
 
   For the technical file-level inventory see
   `eyeseetea-docs/customizations/oca/customization-files.md`. For manual

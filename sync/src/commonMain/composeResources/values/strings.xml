@@ -5,5 +5,7 @@
     <string name="syncing_settings">Checking web settings</string>
     <string name="syncing_configuration">Syncing your configuration</string>
     <string name="syncing_data">Syncing your data</string>
+    <!-- EyeSeeTea customization - Synced Data Retention Purge -->
+    <string name="purging_retention">Purging synced data</string>
 </resources>
 
