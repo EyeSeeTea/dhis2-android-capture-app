@@ -50,6 +50,8 @@ class SettingsRepositoryTest {
         on { getNextSettingsSync() } doReturn null
         on { getNextMetadataSync() } doReturn null
         on { getNextDataSync() } doReturn null
+        // EyeSeeTea customization - Synced Data Retention Purge
+        on { getNextRetentionPurge() } doReturn null
     }
     private val smsConfig: ConfigCase.SmsConfig =
         mock {
