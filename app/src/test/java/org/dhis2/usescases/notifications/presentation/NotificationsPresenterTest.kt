@@ -133,6 +133,24 @@ class NotificationsPresenterTest {
     }
 
     @Test
+    fun `accepting while offline keeps the notification pending`() = runTest {
+        val notification = givenANotification("a")
+        givenStoredNotifications("a")
+        // Offline the datastore read comes back empty, so the use case finds nothing to update
+        // and the local store keeps the notification.
+        whenever(notificationRepository.getById(notification.id)) doReturn flowOf(null)
+        val presenter = givenAPresenter()
+        presenter.markShowNotificationsAsPending()
+
+        presenter.markNotificationAsRead(notification)
+
+        assertTrue(
+            "nothing was persisted, so the notification must be offered again",
+            ShowNotifications.isPending,
+        )
+    }
+
+    @Test
     fun `accepting one of several keeps the rest pending`() = runTest {
         val accepted = givenANotification("a")
         givenStoredNotifications("a", "b")

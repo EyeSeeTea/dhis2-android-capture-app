@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import org.dhis2.usescases.notifications.domain.GetNotifications
 import org.dhis2.usescases.notifications.domain.MarkNotificationAsRead
 import org.dhis2.usescases.notifications.domain.Notification
+import timber.log.Timber
 
 class NotificationsPresenter(
     private val getNotifications: GetNotifications,
@@ -43,7 +44,12 @@ class NotificationsPresenter(
 
     fun markNotificationAsRead(notification: Notification) {
         CoroutineScope(ioDispatcher).launch {
-            markNotificationAsRead.invoke(notification.id).collect {}
+            // Offline, the repository cannot reach the datastore: it logs, returns an empty list,
+            // and the use case reports success without having persisted anything. Guarded so a
+            // failure here can never take the app down, and left pending on purpose — the local
+            // store still holds the notification, so it is offered again instead of being lost.
+            runCatching { markNotificationAsRead.invoke(notification.id).collect {} }
+                .onFailure { Timber.e(it, "Could not mark the notification as read") }
 
             // Accepting one re-filters the local store, so the accepted notification drops out of
             // it. Only when nothing unread is left does the screen stop being asked to show
