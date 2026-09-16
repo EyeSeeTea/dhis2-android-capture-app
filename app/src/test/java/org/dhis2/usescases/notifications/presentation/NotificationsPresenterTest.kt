@@ -38,7 +38,7 @@ class NotificationsPresenterTest {
 
     // The dispatcher must share the scheduler of the enclosing runTest, otherwise the coroutines
     // the presenter launches on its own scopes are reported as uncaught in the *next* test.
-    private fun TestScope.presenter(): NotificationsPresenter {
+    private fun TestScope.givenAPresenter(): NotificationsPresenter {
         val dispatcher = UnconfinedTestDispatcher(testScheduler)
         return NotificationsPresenter(
             getNotifications = GetNotifications(notificationRepository),
@@ -46,6 +46,14 @@ class NotificationsPresenterTest {
             ioDispatcher = dispatcher,
             uiDispatcher = dispatcher,
         )
+    }
+
+    private fun givenStoredNotifications(vararg ids: String) {
+        whenever(notificationRepository.get()) doReturn flowOf(ids.map { givenANotification(it) })
+    }
+
+    private fun givenNoStoredNotifications() {
+        whenever(notificationRepository.get()) doReturn flowOf(emptyList())
     }
 
     @Before
@@ -62,17 +70,17 @@ class NotificationsPresenterTest {
 
     @Test
     fun `does nothing when no refresh is pending`() = runTest {
-        whenever(notificationRepository.get()) doReturn flowOf(listOf(notification("a")))
+        givenStoredNotifications("a")
 
-        presenter().refresh(view)
+        givenAPresenter().refresh(view)
 
         assertEquals(0, view.renderCalls.size)
     }
 
     @Test
     fun `renders and consumes the pending flag when there are notifications`() = runTest {
-        whenever(notificationRepository.get()) doReturn flowOf(listOf(notification("a")))
-        val presenter = presenter()
+        givenStoredNotifications("a")
+        val presenter = givenAPresenter()
         presenter.markShowNotificationsAsPending()
 
         presenter.refresh(view)
@@ -84,8 +92,8 @@ class NotificationsPresenterTest {
 
     @Test
     fun `keeps the pending flag when the download has not landed yet`() = runTest {
-        whenever(notificationRepository.get()) doReturn flowOf(emptyList())
-        val presenter = presenter()
+        givenNoStoredNotifications()
+        val presenter = givenAPresenter()
         presenter.markShowNotificationsAsPending()
 
         presenter.refresh(view)
@@ -99,16 +107,16 @@ class NotificationsPresenterTest {
 
     @Test
     fun `a resume while the download is in flight does not lose the notification`() = runTest {
-        val presenter = presenter()
+        val presenter = givenAPresenter()
         presenter.markShowNotificationsAsPending()
 
         // The program screen resumes before the download finished: nothing to show yet.
-        whenever(notificationRepository.get()) doReturn flowOf(emptyList())
+        givenNoStoredNotifications()
         presenter.refresh(view)
         assertEquals(0, view.renderCalls.size)
 
         // The download lands and the user resumes again.
-        whenever(notificationRepository.get()) doReturn flowOf(listOf(notification("late")))
+        givenStoredNotifications("late")
         presenter.refresh(view)
 
         assertEquals(1, view.renderCalls.size)
@@ -118,8 +126,8 @@ class NotificationsPresenterTest {
     @Test
     fun `marking pending notifies the visible screen so the dialog appears without navigating`() =
         runTest {
-            whenever(notificationRepository.get()) doReturn flowOf(listOf(notification("live")))
-            val presenter = presenter()
+            givenStoredNotifications("live")
+            val presenter = givenAPresenter()
             ShowNotifications.onPending = Runnable { presenter.refresh(view) }
 
             presenter.markShowNotificationsAsPending()
@@ -130,7 +138,7 @@ class NotificationsPresenterTest {
 
     @Test
     fun `marking pending with no screen registered still records the flag`() = runTest {
-        val presenter = presenter()
+        val presenter = givenAPresenter()
         ShowNotifications.onPending = null
 
         presenter.markShowNotificationsAsPending()
@@ -139,7 +147,7 @@ class NotificationsPresenterTest {
         assertEquals(0, view.renderCalls.size)
     }
 
-    private fun notification(id: String) =
+    private fun givenANotification(id: String) =
         Notification(
             content = "content",
             createdAt = Date(0),

@@ -36,7 +36,7 @@ class PostMetadataSyncModuleTest {
     private val notificationRepository: NotificationRepository = mock()
     private val notificationsPresenter: NotificationsPresenter = mock()
 
-    private fun koin(): Koin =
+    private fun givenTheWidpFlavorGraph(): Koin =
         koinApplication {
             modules(
                 module {
@@ -47,17 +47,30 @@ class PostMetadataSyncModuleTest {
             )
         }.koin
 
+    private fun givenTheRegisteredActions(): List<PostMetadataSyncAction> =
+        givenTheWidpFlavorGraph().get<List<PostMetadataSyncAction>>()
+
+    private fun givenTheRegisteredAction(): PostMetadataSyncAction = givenTheRegisteredActions().single()
+
+    private fun givenTheDownloadSucceeds() {
+        whenever(notificationRepository.sync()) doReturn flowOf(Unit)
+    }
+
+    private fun givenTheDownloadFails(reason: String) {
+        whenever(notificationRepository.sync()) doReturn flow { throw IllegalStateException(reason) }
+    }
+
     @Test
     fun `the widp flavor registers exactly one post-metadata-sync action`() {
-        val actions = koin().get<List<PostMetadataSyncAction>>()
+        val actions = givenTheRegisteredActions()
 
         assertEquals(1, actions.size)
     }
 
     @Test
     fun `the action downloads the notifications and then marks them pending`() = runTest {
-        whenever(notificationRepository.sync()) doReturn flowOf(Unit)
-        val action = koin().get<List<PostMetadataSyncAction>>().single()
+        givenTheDownloadSucceeds()
+        val action = givenTheRegisteredAction()
 
         val result = action()
 
@@ -68,9 +81,8 @@ class PostMetadataSyncModuleTest {
 
     @Test
     fun `a failing download is reported as a failure and marks nothing pending`() = runTest {
-        whenever(notificationRepository.sync()) doReturn
-            flow { throw IllegalStateException("server unreachable") }
-        val action = koin().get<List<PostMetadataSyncAction>>().single()
+        givenTheDownloadFails("server unreachable")
+        val action = givenTheRegisteredAction()
 
         val result = action()
 
