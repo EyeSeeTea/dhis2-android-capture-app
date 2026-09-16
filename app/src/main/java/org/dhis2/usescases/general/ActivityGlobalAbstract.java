@@ -264,6 +264,12 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     // resolved against the translations map, and the accept button marking the notification read.
     @Override
     public void renderNotifications(List<Notification> notifications) {
+        // The presenter dispatches this from a coroutine that is not tied to this Activity's
+        // lifecycle, so it can arrive after a fast back press or a configuration change. Showing a
+        // dialog on a dead Activity throws WindowManager.BadTokenException.
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
         for (Notification notification : notifications) {
             showNotification(notification);
         }
