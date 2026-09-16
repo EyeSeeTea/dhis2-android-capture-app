@@ -1,7 +1,6 @@
 package org.dhis2.utils.session
 // EyeSeeTea customization - Change Server URL
 
-import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,8 +24,6 @@ class ChangeServerURLPresenter(
     private var currentServerURL: String = ""
     private var newServerURL: String = ""
     private var mode = Mode.EDIT
-
-    var disposable: CompositeDisposable = CompositeDisposable()
 
     fun init() {
         val serverURL = preferenceProvider.getString(SECURE_SERVER_URL) ?: ""
