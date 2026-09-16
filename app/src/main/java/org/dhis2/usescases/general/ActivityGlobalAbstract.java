@@ -5,7 +5,6 @@ import static org.dhis2.utils.analytics.AnalyticsConstants.SHOW_HELP;
 
 import android.content.Context;
 import android.content.pm.ActivityInfo;
-import android.os.Bundle;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -74,16 +73,6 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
                         newBase
                 )
         );
-    }
-
-    // EyeSeeTea customization - Notifications system
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        NotificationsPresenter presenter = notificationsPresenter();
-        if (presenter != null) {
-            presenter.refresh(this);
-        }
-        super.onCreate(savedInstanceState);
     }
 
     // EyeSeeTea customization - Notifications system

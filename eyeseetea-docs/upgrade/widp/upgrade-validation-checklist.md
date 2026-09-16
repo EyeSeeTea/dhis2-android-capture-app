@@ -63,6 +63,8 @@ Expected result:
 - content supports Markdown rendering
 - if translations exist for the device locale, translated content is shown; otherwise default content
 - after clicking OK, the notification does not reappear (marked as read)
+- if the dialog is dismissed **without** clicking OK (back button or tapping outside), the
+  notification appears again on the next screen: it was never marked as read
 - the `readBy` list on the server includes the user's ID and timestamp
 
 Additional checks:

@@ -67,6 +67,13 @@ The app SHALL load persisted notifications and present them to the user on activ
 - **WHEN** an authenticated activity resumes and there are no pending notifications
 - **THEN** no dialog is shown
 
+#### Scenario: Dialog dismissed without accepting
+- **WHEN** the user dismisses the notification dialog without accepting it, and an authenticated activity resumes afterwards
+- **THEN** the notification is shown again, because it is still unread
+
+The app SHALL treat a notification as pending until it has been accepted. Showing it is not
+acknowledgement: only the accept action marks it read.
+
 ### Requirement: Notification content supports Markdown
 The notification dialog SHALL render `content` as Markdown using Markwon, so that authors can include formatting, lists, and links.
 

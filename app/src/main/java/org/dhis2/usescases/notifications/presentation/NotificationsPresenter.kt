@@ -20,11 +20,13 @@ class NotificationsPresenter(
 
         CoroutineScope(uiDispatcher).launch {
             getNotifications().collect { notifications ->
+                // The flag is not consumed here. Showing a notification is not the same as the
+                // user acknowledging it: a dialog dismissed with back or by tapping outside leaves
+                // it unread on the server, so it has to come back on the next resume. It is
+                // cleared in markNotificationAsRead(), once nothing unread is left.
+                // An empty list means the download has not landed yet, and the flag must survive
+                // that too.
                 if (notifications.isNotEmpty()) {
-                    // Consume the flag only once something actually reaches the screen. Consuming
-                    // it up front loses the notification whenever the list comes back empty, which
-                    // is the normal case while the download is still in flight.
-                    ShowNotifications.isPending = false
                     notificationsView.renderNotifications(notifications)
                 }
             }
@@ -42,6 +44,15 @@ class NotificationsPresenter(
     fun markNotificationAsRead(notification: Notification) {
         CoroutineScope(ioDispatcher).launch {
             markNotificationAsRead.invoke(notification.id).collect {}
+
+            // Accepting one re-filters the local store, so the accepted notification drops out of
+            // it. Only when nothing unread is left does the screen stop being asked to show
+            // anything; with several notifications pending, the rest still have to appear.
+            getNotifications().collect { remaining ->
+                if (remaining.isEmpty()) {
+                    ShowNotifications.isPending = false
+                }
+            }
         }
     }
 }
