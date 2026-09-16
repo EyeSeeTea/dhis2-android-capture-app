@@ -73,7 +73,7 @@ class ChangeServerURLPresenter(
                 d2.systemInfoModule().systemInfo().download().blockingAwait()
 
                 launch(Dispatchers.Main) {
-                    view.renderSuccess("Change realized successfully to$newServerURL")
+                    view.renderSuccess("Server changed successfully to $newServerURL")
                     view.closeDialog()
                 }
             } catch (e: Exception) {
