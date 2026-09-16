@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.setMain
 import org.dhis2.mobile.commons.network.NetworkStatusProvider
 import org.dhis2.mobile.login.main.domain.model.BiometricsInfo
 import org.dhis2.mobile.login.main.domain.model.LoginResult
+import org.dhis2.mobile.login.main.domain.model.TwoFactorType
 import org.dhis2.mobile.login.main.domain.model.LoginScreenState
 import org.dhis2.mobile.login.main.domain.model.OpenIdLoginConfiguration
 import org.dhis2.mobile.login.main.domain.usecase.BiometricLogin
@@ -261,6 +262,72 @@ class CredentialsViewModelTest {
                 updatedState = awaitItem()
                 assertEquals(errorMessage, updatedState.errorMessage)
                 assertEquals(LoginState.Enabled, updatedState.loginState)
+            }
+        }
+
+    @Test
+    fun `GIVEN a 2FA code was just sent WHEN login is clicked THEN the message is shown as info`() =
+        runTest {
+            // GIVEN
+            val message = "Email with two factor code sent"
+            givenAnInitialisedLoginScreen()
+            whenever(
+                loginUser.invoke(any(), any(), any(), any(), anyOrNull()),
+            ) doReturn LoginResult.TwoFactorError(TwoFactorType.EMAIL, message, codeSent = true)
+
+            initViewModel()
+
+            viewModel.credentialsScreenState.test(timeout = turbineTimeout) {
+                awaitItem()
+                awaitItem()
+                viewModel.updateUsername("user")
+                awaitItem()
+                viewModel.updatePassword("password")
+                awaitItem()
+
+                // WHEN
+                viewModel.onLoginClicked()
+
+                // THEN
+                awaitItem()
+                testDispatcher.scheduler.advanceTimeBy(4.seconds)
+
+                val updatedState = awaitItem()
+                assertEquals(message, updatedState.infoMessage)
+                assertEquals(null, updatedState.errorMessage)
+            }
+        }
+
+    @Test
+    fun `GIVEN a rejected 2FA code WHEN login is clicked THEN the message is shown as an error`() =
+        runTest {
+            // GIVEN the same channel as the message above, so only codeSent tells them apart
+            val message = "Incorrect authentication code"
+            givenAnInitialisedLoginScreen()
+            whenever(
+                loginUser.invoke(any(), any(), any(), any(), anyOrNull()),
+            ) doReturn LoginResult.TwoFactorError(TwoFactorType.EMAIL, message, codeSent = false)
+
+            initViewModel()
+
+            viewModel.credentialsScreenState.test(timeout = turbineTimeout) {
+                awaitItem()
+                awaitItem()
+                viewModel.updateUsername("user")
+                awaitItem()
+                viewModel.updatePassword("password")
+                awaitItem()
+
+                // WHEN
+                viewModel.onLoginClicked()
+
+                // THEN
+                awaitItem()
+                testDispatcher.scheduler.advanceTimeBy(4.seconds)
+
+                val updatedState = awaitItem()
+                assertEquals(message, updatedState.errorMessage)
+                assertEquals(null, updatedState.infoMessage)
             }
         }
 
@@ -862,6 +929,13 @@ class CredentialsViewModelTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+    private suspend fun givenAnInitialisedLoginScreen() {
+        whenever(getAvailableUsernames()) doReturn emptyList()
+        whenever(getBiometricInfo(any())) doReturn BiometricsInfo(false, false)
+        whenever(getHasOtherAccounts.invoke()) doReturn false
+        whenever(getIsSessionLockedUseCase()) doReturn false
+    }
 
     private fun initViewModel(
         serverName: String? = "Test Server",

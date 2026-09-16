@@ -429,15 +429,17 @@ class CredentialsViewModel(
                     }
 
                     // EyeSeeTea customization - 2FA support
-                    // Determine if the message is error or info based on 2FA type:
-                    // EMAIL_TWO_FACTOR_CODE_SENT and SMS_TWO_FACTOR_CODE_SENT are info messages (blue).
-                    // INCORRECT_TWO_FACTOR_CODE_* are error messages (red).
-                    // For TOTP: show error only if the field is already visible.
-                    val isInfoMessage = result.type == TwoFactorType.EMAIL || result.type == TwoFactorType.SMS
+                    // The colour follows what happened, not which channel it arrived on: an
+                    // EMAIL/SMS challenge and a rejected EMAIL/SMS code carry the same
+                    // TwoFactorType, so only codeSent tells "we sent you a code" (info, blue)
+                    // apart from "that code is wrong" (error, red).
+                    // TOTP is the exception: the first challenge reuses the incorrect-code error,
+                    // so it is shown as neither until the field has been offered once.
+                    val isInfoMessage = result.codeSent
                     val shouldShowError = when {
-                        isInfoMessage -> false // EMAIL/SMS code sent is always info
-                        it.twoFactorState == null && result.type == TwoFactorType.TOTP -> false // First time TOTP, don't show error
-                        else -> true // TOTP code incorrect or other errors
+                        isInfoMessage -> false
+                        it.twoFactorState == null && result.type == TwoFactorType.TOTP -> false
+                        else -> true
                     }
 
                     it.copy(

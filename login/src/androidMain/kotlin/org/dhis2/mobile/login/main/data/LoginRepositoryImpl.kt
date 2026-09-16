@@ -518,6 +518,7 @@ class LoginRepositoryImpl(
                     TwoFactorRequiredException(
                         TwoFactorType.EMAIL,
                         errorMessage = errorMessage,
+                        codeSent = true,
                     )
                 )
             }
@@ -536,6 +537,7 @@ class LoginRepositoryImpl(
                     TwoFactorRequiredException(
                         TwoFactorType.SMS,
                         errorMessage = errorMessage,
+                        codeSent = true,
                     )
                 )
             }

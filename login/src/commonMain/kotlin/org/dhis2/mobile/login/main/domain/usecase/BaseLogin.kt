@@ -36,6 +36,7 @@ abstract class BaseLogin(
                     LoginResult.TwoFactorError(
                         type = exception.type,
                         message = exception.errorMessage,
+                        codeSent = exception.codeSent,
                     )
                 else -> LoginResult.Error(exception?.message)
             }
