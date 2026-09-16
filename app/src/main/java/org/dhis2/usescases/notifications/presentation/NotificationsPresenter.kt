@@ -36,7 +36,7 @@ class NotificationsPresenter(
         // Push to whatever screen is up. Without this the dialog would only appear once the user
         // navigated away and back: since 3.4.x the download runs from a PostMetadataSyncAction,
         // with no screen in front of it waiting to resume.
-        ShowNotifications.onPending?.run()
+        ShowNotifications.onPending?.invoke()
     }
 
     fun markNotificationAsRead(notification: Notification) {
@@ -54,7 +54,7 @@ object ShowNotifications {
      * notification arriving from a background sync is shown immediately instead of waiting for
      * the next resume. Null when no screen is up, which is the case during a background sync.
      */
-    var onPending: Runnable? = null
+    var onPending: (() -> Unit)? = null
 }
 
 interface NotificationsView {

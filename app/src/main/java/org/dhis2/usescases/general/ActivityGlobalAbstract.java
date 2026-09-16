@@ -92,7 +92,10 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
             // Registered only while this screen is the one on top, so a notification arriving
             // from a background metadata sync is shown straight away instead of waiting for the
             // next resume. Cleared in onPause so the singleton never holds a paused Activity.
-            ShowNotifications.INSTANCE.setOnPending(() -> presenter.refresh(this));
+            ShowNotifications.INSTANCE.setOnPending(() -> {
+                presenter.refresh(this);
+                return Unit.INSTANCE;
+            });
             presenter.refresh(this);
         }
     }

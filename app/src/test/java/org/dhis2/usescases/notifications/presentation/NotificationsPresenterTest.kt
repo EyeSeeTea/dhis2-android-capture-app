@@ -128,7 +128,7 @@ class NotificationsPresenterTest {
         runTest {
             givenStoredNotifications("live")
             val presenter = givenAPresenter()
-            ShowNotifications.onPending = Runnable { presenter.refresh(view) }
+            ShowNotifications.onPending = { presenter.refresh(view) }
 
             presenter.markShowNotificationsAsPending()
 
