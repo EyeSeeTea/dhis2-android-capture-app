@@ -46,6 +46,9 @@ import kotlin.Unit;
 import org.koin.java.KoinJavaComponent;
 
 
+// EyeSeeTea customization - Notifications system
+// NotificationsView on the class signature: this shared base activity is what renders the
+// notification dialog for every screen of the authenticated area.
 public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         implements AbstractActivityContracts.View, ActivityResultObservable, NotificationsView {
 
@@ -267,6 +270,9 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         return getAnalyticsHelper();
     }
 
+    // EyeSeeTea customization - Notifications system
+    // Dialog rendering for the notifications: Markwon for the Markdown body, the device locale
+    // resolved against the translations map, and the accept button marking the notification read.
     @Override
     public void renderNotifications(List<Notification> notifications) {
         for (Notification notification : notifications) {
