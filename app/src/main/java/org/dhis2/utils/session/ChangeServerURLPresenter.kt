@@ -97,8 +97,6 @@ class ChangeServerURLPresenter(
         updatedServer.add(newServerURL)
 
         preferenceProvider.setValue(Constants.PREFS_URLS, updatedServer)
-
-        view.closeDialog()
     }
 
     private fun updateCredentialsAndDataBaseConfigurations() {
