@@ -69,9 +69,11 @@ class ChangeServerURLPresenter(
 
                 d2.databaseAdapter().execSQL("DELETE FROM SystemInfo")
 
-                CoroutineScope(Dispatchers.IO).launch {
-                    d2.systemInfoModule().systemInfo().download().blockingAwait()
-                }
+                // Awaited here, in the same coroutine, instead of in a detached scope: the local
+                // SystemInfo has just been deleted, so reporting success before the new server has
+                // answered would tell the user the change worked when it may not have. Running it
+                // here also puts any failure inside the catch below.
+                d2.systemInfoModule().systemInfo().download().blockingAwait()
 
                 launch(Dispatchers.Main) {
                     view.renderSuccess("Change realized successfully to$newServerURL")
