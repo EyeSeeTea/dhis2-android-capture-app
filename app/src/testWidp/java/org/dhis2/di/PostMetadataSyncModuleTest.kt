@@ -4,19 +4,26 @@ package org.dhis2.di
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.dhis2.mobile.commons.domain.PostMetadataSyncAction
+import org.dhis2.usescases.notifications.domain.GetNotifications
+import org.dhis2.usescases.notifications.domain.MarkNotificationAsRead
 import org.dhis2.usescases.notifications.domain.NotificationRepository
+import org.dhis2.usescases.notifications.domain.UserRepository
 import org.dhis2.usescases.notifications.presentation.NotificationsPresenter
+import org.dhis2.usescases.notifications.presentation.ShowNotifications
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.koin.core.Koin
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
@@ -26,15 +33,35 @@ import org.mockito.kotlin.whenever
  * missing binding here means notifications are never downloaded — the failure mode that reached
  * a device during the 3.4.1 attempt, where a broken graph was only found by crashing.
  *
- * The presenter is mocked on purpose. This test is about the wiring, not about what the presenter
- * does with the flag — `NotificationsPresenterTest` covers that. Building a real presenter here
- * would put its coroutine scopes and the global `ShowNotifications` object into the shared test
- * JVM, where a leaked coroutine is reported against whichever test happens to run next.
+ * The pending flag is checked as state on `ShowNotifications`, not as a call on a mocked
+ * presenter: the flag is public and reachable without mocking, which is how
+ * `NotificationsPresenterTest` verifies the same effect. The presenter is therefore real, but only
+ * `markShowNotificationsAsPending()` is exercised here, and that neither launches a coroutine nor
+ * touches a view. `ShowNotifications` is global, so it is reset around every test.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PostMetadataSyncModuleTest {
     private val notificationRepository: NotificationRepository = mock()
-    private val notificationsPresenter: NotificationsPresenter = mock()
+    private val userRepository: UserRepository = mock()
+    private val notificationsPresenter =
+        NotificationsPresenter(
+            getNotifications = GetNotifications(notificationRepository),
+            markNotificationAsRead = MarkNotificationAsRead(notificationRepository, userRepository),
+            ioDispatcher = UnconfinedTestDispatcher(),
+            uiDispatcher = UnconfinedTestDispatcher(),
+        )
+
+    @Before
+    fun setUp() {
+        ShowNotifications.isPending = false
+        ShowNotifications.onPending = null
+    }
+
+    @After
+    fun tearDown() {
+        ShowNotifications.isPending = false
+        ShowNotifications.onPending = null
+    }
 
     private fun givenTheWidpFlavorGraph(): Koin =
         koinApplication {
@@ -76,7 +103,7 @@ class PostMetadataSyncModuleTest {
 
         assertTrue(result.isSuccess)
         verify(notificationRepository).sync()
-        verify(notificationsPresenter).markShowNotificationsAsPending()
+        assertTrue(ShowNotifications.isPending)
     }
 
     @Test
@@ -89,6 +116,6 @@ class PostMetadataSyncModuleTest {
         // SyncMetadata logs and swallows a failed action on purpose, so a notifications outage
         // can never break the metadata sync itself.
         assertTrue(result.isFailure)
-        verify(notificationsPresenter, never()).markShowNotificationsAsPending()
+        assertFalse(ShowNotifications.isPending)
     }
 }
