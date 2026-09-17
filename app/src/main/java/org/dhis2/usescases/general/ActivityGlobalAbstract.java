@@ -30,6 +30,7 @@ import org.dhis2.usescases.notifications.domain.Notification;
 import org.dhis2.usescases.notifications.presentation.NotificationsPresenter;
 import org.dhis2.usescases.notifications.presentation.NotificationsView;
 import org.dhis2.usescases.notifications.presentation.ShowNotifications;
+import org.dhis2.usescases.notifications.presentation.VisibleNotificationDialogs;
 import org.dhis2.utils.HelpManager;
 import org.dhis2.utils.OnDialogClickListener;
 import org.dhis2.utils.analytics.AnalyticsHelper;
@@ -60,6 +61,12 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
 
     // EyeSeeTea customization - Notifications system
     private NotificationsPresenter notificationsPresenter;
+
+    // EyeSeeTea customization - Notifications system
+    // One tracker per screen: a pending notification is offered again on every resume, so this
+    // is what stops a second dialog being built on top of one that is already up.
+    private final VisibleNotificationDialogs visibleNotificationDialogs =
+            new VisibleNotificationDialogs();
 
     private CustomDialog descriptionDialog;
 
@@ -276,6 +283,14 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     }
 
     private void showNotification(Notification notification) {
+        // The notification stays pending until it is accepted, so this is called again on every
+        // resume. Without this guard, resuming a screen whose dialog is still up builds a second
+        // one on top: accepting the top copy leaves the others live, and each one marks the
+        // notification as read again, appending a duplicate readBy entry on the server.
+        if (visibleNotificationDialogs.isVisible(notification.getId())) {
+            return;
+        }
+
         NotificationsPresenter presenter = notificationsPresenter();
         String content = getNotificationContent(notification);
         Markwon markwon = Markwon.create(getContext());
@@ -288,8 +303,14 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
                         presenter.markNotificationAsRead(notification);
                     }
                 })
+                // Released however the dialog goes away — accepted, back, or a tap outside — so a
+                // notification dismissed without accepting is offered again on the next resume.
+                .setOnDismissListener(d ->
+                        visibleNotificationDialogs.onDismissed(notification.getId()))
                 .setCancelable(true)
                 .show();
+
+        visibleNotificationDialogs.onShown(notification.getId());
 
         TextView messageView = dialog.findViewById(android.R.id.message);
         if (messageView != null) {

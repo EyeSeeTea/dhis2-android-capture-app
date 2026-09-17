@@ -65,6 +65,8 @@ Expected result:
 - after clicking OK, the notification does not reappear (marked as read)
 - if the dialog is dismissed **without** clicking OK (back button or tapping outside), the
   notification appears again on the next screen: it was never marked as read
+- leaving the dialog **on screen**, pressing Home and returning shows the same single dialog,
+  not a second one stacked on top: accepting once must add exactly one `readBy` entry
 - the `readBy` list on the server includes the user's ID and timestamp
 
 Additional checks:
