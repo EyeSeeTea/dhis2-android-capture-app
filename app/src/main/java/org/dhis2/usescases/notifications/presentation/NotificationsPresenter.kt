@@ -64,13 +64,23 @@ class NotificationsPresenter(
 }
 
 object ShowNotifications {
+    /**
+     * Volatile because it is written from the metadata sync worker and from the IO dispatcher when
+     * a notification is accepted, and read from the main thread on every activity resume. Without
+     * it there is no happens-before edge and a cleared flag may not be visible to the screen.
+     */
+    @Volatile
     var isPending = false
 
     /**
      * Set by the screen that is currently resumed and cleared when it pauses, so that a
      * notification arriving from a background sync is shown immediately instead of waiting for
      * the next resume. Null when no screen is up, which is the case during a background sync.
+     *
+     * Volatile for the same reason as [isPending]: written from the main thread, read from the
+     * metadata sync worker.
      */
+    @Volatile
     var onPending: (() -> Unit)? = null
 }
 
