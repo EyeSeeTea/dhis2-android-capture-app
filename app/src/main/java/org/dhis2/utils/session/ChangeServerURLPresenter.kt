@@ -105,6 +105,11 @@ class ChangeServerURLPresenter(
     private fun handleError(error: Throwable) {
         Timber.e(error)
 
+        // Back to EDIT along with the view: leaving it on WARNING would make the next OK skip the
+        // confirmation dialog and re-apply straight away. Unreachable until the awaited download
+        // started reporting failures instead of swallowing them.
+        mode = Mode.EDIT
+
         view.renderError(error)
         view.hideLoginProgress()
         view.showEditMode()
