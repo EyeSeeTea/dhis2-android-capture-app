@@ -57,7 +57,7 @@ The app SHALL persist the filtered notification list to local storage under the 
 - **THEN** the `NOTIFICATIONS` entry in SharedPreferences contains the filtered list serialized as JSON
 
 ### Requirement: Notifications are displayed on activity resume
-The app SHALL load persisted notifications and present them to the user on activity resume in the base activity of the authenticated area.
+The app SHALL load persisted notifications and present them to the user on activity resume in the base activity of the authenticated area. The app SHALL treat a notification as pending until it has been accepted: showing it is not acknowledgement, only the accept action marks it read. The app SHALL show at most one dialog per notification on a given screen.
 
 #### Scenario: Showing a pending notification
 - **WHEN** an authenticated activity resumes and there is at least one pending notification
@@ -66,6 +66,14 @@ The app SHALL load persisted notifications and present them to the user on activ
 #### Scenario: No pending notifications
 - **WHEN** an authenticated activity resumes and there are no pending notifications
 - **THEN** no dialog is shown
+
+#### Scenario: Dialog dismissed without accepting
+- **WHEN** the user dismisses the notification dialog without accepting it, and an authenticated activity resumes afterwards
+- **THEN** the notification is shown again, because it is still unread
+
+#### Scenario: Dialog already on screen
+- **WHEN** an authenticated activity resumes while its dialog for a pending notification is still on screen
+- **THEN** no second dialog is built for that notification, so accepting it marks it read once
 
 ### Requirement: Notification content supports Markdown
 The notification dialog SHALL render `content` as Markdown using Markwon, so that authors can include formatting, lists, and links.

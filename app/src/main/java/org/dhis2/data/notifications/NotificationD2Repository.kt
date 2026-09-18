@@ -59,7 +59,24 @@ class NotificationD2Repository(
 
     override fun save(notification: Notification): Flow<Unit> = flow {
         try {
-            val notifications = getAllNotificationsFromRemote().map {
+            val remoteNotifications = getAllNotificationsFromRemote()
+
+            // getAllNotificationsFromRemote() returns an empty list when the read fails, so
+            // posting whatever came back would overwrite the datastore with a list that does not
+            // contain the change — in the worst case an empty one, wiping every notification for
+            // every user. If the notification being updated is not in what came back, there is
+            // nothing safe to write: nothing is emitted, so the caller leaves it pending and
+            // offers it again instead of recording a read that never reached the server.
+            if (remoteNotifications.none { it.id == notification.id }) {
+                Timber.w(
+                    "Not saving notifications: %s is missing from the %d read back",
+                    notification.id,
+                    remoteNotifications.size
+                )
+                return@flow
+            }
+
+            val notifications = remoteNotifications.map {
                 if (it.id == notification.id) {
                     notification
                 } else {

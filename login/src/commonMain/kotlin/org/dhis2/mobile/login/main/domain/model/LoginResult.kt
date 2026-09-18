@@ -18,5 +18,6 @@ sealed interface LoginResult {
     data class TwoFactorError(
         val type: TwoFactorType,
         val message: String? = null,
+        val codeSent: Boolean = false,
     ) : LoginResult
 }

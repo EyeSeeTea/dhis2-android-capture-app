@@ -4,13 +4,13 @@ import dagger.Module
 import dagger.Provides
 import org.dhis2.commons.di.dagger.PerService
 import org.dhis2.commons.prefs.PreferenceProvider
-import org.dhis2.data.service.workManager.WorkManagerController
-import org.dhis2.usescases.notifications.domain.NotificationRepository
-import org.dhis2.utils.analytics.AnalyticsHelper
+import org.dhis2.mobile.sync.domain.SyncStatusController
 import org.hisp.dhis.android.core.D2
 
 @Module
-class SyncGranularRxModule {
+class SyncGranularRxModule(
+    private val syncStatusController: SyncStatusController,
+) {
     @Provides
     @PerService
     fun syncRepository(d2: D2): SyncRepository = SyncRepositoryImpl(d2)
@@ -20,19 +20,12 @@ class SyncGranularRxModule {
     internal fun syncPresenter(
         d2: D2,
         preferences: PreferenceProvider,
-        workManagerController: WorkManagerController,
-        analyticsHelper: AnalyticsHelper,
-        syncStatusController: SyncStatusController,
         syncRepository: SyncRepository,
-        notificationsRepository: NotificationRepository
     ): SyncPresenter =
         SyncPresenterImpl(
             d2,
             preferences,
-            workManagerController,
-            analyticsHelper,
-            syncStatusController,
             syncRepository,
-            notificationsRepository
+            syncStatusController,
         )
 }
