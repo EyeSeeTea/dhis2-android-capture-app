@@ -266,6 +266,20 @@ class NotificationD2RepositoryTest {
         verify(basicPreferenceProvider, never()).saveAsJson(eq(NOTIFICATIONS), any<List<Notification>>())
     }
 
+    @Test
+    fun `Should keep the cached notifications when the user groups fetch fails`() = runBlocking {
+        val repository = givenTheUserGroupsFetchFails(
+            listOf(givenANotification(userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null)))),
+        )
+
+        val result = runCatching { repository.sync().first() }
+
+        // Without the user's groups the filter would drop every group-targeted notification, and
+        // saving that would erase the unread ones already cached for this user.
+        assertTrue(result.isFailure)
+        verify(basicPreferenceProvider, never()).saveAsJson(eq(NOTIFICATIONS), any<List<Notification>>())
+    }
+
     private fun givenTestData(
         user: User,
         notifications: List<NotificationDTO>,
@@ -297,6 +311,22 @@ class NotificationD2RepositoryTest {
         // checked exceptions on Kotlin methods, and the repository treats both the same way.
         runBlocking {
             whenever(notificationsApi.getData()) doThrow RuntimeException("datastore unreachable")
+        }
+
+        return NotificationD2Repository(
+            d2,
+            basicPreferenceProvider,
+            notificationsApi,
+            userGroupsApi
+        )
+    }
+
+    private fun givenTheUserGroupsFetchFails(
+        notifications: List<NotificationDTO>,
+    ): NotificationD2Repository {
+        runBlocking {
+            whenever(notificationsApi.getData()) doReturn notifications
+            whenever(userGroupsApi.getData(user.uid())) doThrow RuntimeException("users endpoint unreachable")
         }
 
         return NotificationD2Repository(

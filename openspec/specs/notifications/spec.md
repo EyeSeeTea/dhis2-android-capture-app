@@ -19,6 +19,10 @@ The app SHALL fetch the notification list from the DHIS2 server at `dataStore/no
 
 A failed fetch SHALL be distinguishable from a datastore that is genuinely empty: only the latter replaces the stored notifications.
 
+#### Scenario: User groups cannot be read
+- **WHEN** the notifications are fetched but the lookup of the current user's groups (`users/{id}?fields=userGroups`) returns an error or is not reachable
+- **THEN** the metadata sync SHALL complete without failing, SHALL leave the previously stored notifications untouched, and SHALL NOT mark notifications as pending, because filtering without the user's groups would drop every group-targeted notification
+
 ### Requirement: Notifications are filtered for the current user
 The app SHALL store only notifications that are relevant to the currently logged-in user, by applying the following combined filter during sync.
 

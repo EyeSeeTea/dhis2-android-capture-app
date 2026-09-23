@@ -30,7 +30,9 @@ class NotificationD2Repository(
         // device, and emitting would let the post-sync action mark a failed download pending.
         val allNotifications = fetchAllNotificationsFromRemote()
 
-        saveUserNotificationsInCache(allNotifications)
+        // Same for the user's groups: without them the filter drops every group-targeted
+        // notification, and saving that would erase the unread ones already cached.
+        saveUserNotificationsInCache(allNotifications, fetchUserGroups())
 
         emit(Unit)
     }
@@ -86,7 +88,7 @@ class NotificationD2Repository(
 
             notificationsApi.postData(notificationsDTO)
 
-            saveUserNotificationsInCache(notifications)
+            saveUserNotificationsInCache(notifications, getUserGroups())
 
             emit(Unit)
 
@@ -111,9 +113,10 @@ class NotificationD2Repository(
         }
     }
 
-    private suspend fun saveUserNotificationsInCache(allNotifications: List<Notification>) {
-        val userGroups = getUserGroups()
-
+    private suspend fun saveUserNotificationsInCache(
+        allNotifications: List<Notification>,
+        userGroups: UserGroups
+    ) {
         val userNotifications =
             getNotificationsForCurrentUser(allNotifications, userGroups.userGroups)
 
@@ -123,14 +126,16 @@ class NotificationD2Repository(
         Timber.d("Notifications: $userNotifications")
     }
 
+    /**
+     * Throws when the user's groups cannot be read, so a failed lookup can be told apart from a
+     * user who belongs to no group.
+     */
+    private suspend fun fetchUserGroups(): UserGroups =
+        mapUserGroups(userGroupsApi.getData(d2.userModule().user().blockingGet()!!.uid()))
+
     private suspend fun getUserGroups(): UserGroups {
         try {
-            val userGroupsDTO =
-                userGroupsApi.getData(d2.userModule().user().blockingGet()!!.uid())
-
-            val userGroups = mapUserGroups(userGroupsDTO)
-
-            return userGroups
+            return fetchUserGroups()
         } catch (e: Exception) {
             Timber.e("Error getting userGroups: $e")
             return UserGroups(listOf())
