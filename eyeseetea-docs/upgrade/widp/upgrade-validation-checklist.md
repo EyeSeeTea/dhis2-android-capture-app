@@ -72,6 +72,9 @@ Expected result:
   it is still unread and still cached
 - after a restart the dialog does **not** appear on the loading screen nor on the login / PIN
   screen, only once the user is inside the app
+- with a single program (the app opens the program screen by itself), the dialog appears once;
+  after accepting it and going back to the Home, no second dialog is waiting there, and the
+  datastore holds exactly one new `readBy` entry
 - the `readBy` list on the server includes the user's ID and timestamp
 
 Additional checks:

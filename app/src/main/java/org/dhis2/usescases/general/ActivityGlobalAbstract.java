@@ -65,7 +65,8 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
 
     // EyeSeeTea customization - Notifications system
     // One tracker per screen: a pending notification is offered again on every resume, so this
-    // is what stops a second dialog being built on top of one that is already up.
+    // is what stops a second dialog being built on top of one that is already up, and what
+    // closes this screen's dialogs when another screen comes to the front.
     private final VisibleNotificationDialogs visibleNotificationDialogs =
             new VisibleNotificationDialogs();
 
@@ -104,6 +105,10 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     @Override
     protected void onPause() {
         ShowNotifications.INSTANCE.setOnPending(null);
+        // Only the screen in front holds a notification dialog. Left open, a dialog stayed live
+        // under the screen opened on top, which showed its own: accepting one and going back
+        // found the other, and accepting that recorded a second read.
+        visibleNotificationDialogs.dismissAll();
         super.onPause();
     }
 
@@ -319,7 +324,10 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
                 .setCancelable(true)
                 .show();
 
-        visibleNotificationDialogs.onShown(notification.getId());
+        visibleNotificationDialogs.onShown(notification.getId(), () -> {
+            dialog.dismiss();
+            return Unit.INSTANCE;
+        });
 
         TextView messageView = dialog.findViewById(android.R.id.message);
         if (messageView != null) {

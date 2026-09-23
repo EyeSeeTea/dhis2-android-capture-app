@@ -18,16 +18,30 @@ package org.dhis2.usescases.notifications.presentation
  * built and dismissed.
  */
 class VisibleNotificationDialogs {
-    private val visible = mutableSetOf<String>()
+    private val visible = mutableMapOf<String, () -> Unit>()
 
     /**
      * True while a dialog for [notificationId] is already on screen, in which case the caller
      * must not build another one.
      */
-    fun isVisible(notificationId: String): Boolean = visible.contains(notificationId)
+    fun isVisible(notificationId: String): Boolean = visible.containsKey(notificationId)
 
-    fun onShown(notificationId: String) {
-        visible.add(notificationId)
+    /** [dismiss] closes that dialog; [dismissAll] uses it when the screen goes to the background. */
+    fun onShown(notificationId: String, dismiss: () -> Unit) {
+        visible[notificationId] = dismiss
+    }
+
+    /**
+     * Closes every dialog this screen shows. Called when the screen goes to the background, so
+     * only the screen in front ever holds a notification dialog: screens opened one after
+     * another — the Home jumping into a single program, for instance — each showed their own,
+     * and accepting the top one left the others live underneath, each recording another read.
+     * The notification is still unread, so the screen shows it again when it returns.
+     */
+    fun dismissAll() {
+        // Copied first: each dismiss calls back into onDismissed through the dialog's listener.
+        visible.values.toList().forEach { it() }
+        visible.clear()
     }
 
     /**
