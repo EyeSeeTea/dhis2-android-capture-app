@@ -41,14 +41,15 @@ guard and the tests that justify its exact scope must remain together.
 
 ## 3. Consume the finalized SDK and remove temporary mappings
 
-- [ ] 3.1 Replace `fix~account-disabled-login-SNAPSHOT` in `gradle/libs.versions.toml` with the final
-      published EyeSeeTea SDK version containing the disabled-login fix.
-- [ ] 3.2 Remove `D2ErrorCode.ACCOUNT_DISABLED` from `D2ErrorMessageProviderImpl` and
+- [x] 3.1 Replace `fix~account-disabled-login-SNAPSHOT` in `gradle/libs.versions.toml` with the final
+      published EyeSeeTea SDK coordinate
+      `febe27964b3a8a330d8e14c27b01a25cb44b6b91` containing the disabled-login fix.
+- [x] 3.2 Remove `D2ErrorCode.ACCOUNT_DISABLED` from `D2ErrorMessageProviderImpl` and
       `DomainErrorMapper`; retain the existing `USER_ACCOUNT_DISABLED` mapping and localized
       `error_account_disabled` text.
-- [ ] 3.3 Add or update focused mapping coverage proving `USER_ACCOUNT_DISABLED` produces the
+- [x] 3.3 Add or update focused mapping coverage proving `USER_ACCOUNT_DISABLED` produces the
       disabled-account message. Do not add app behavior for the raw protocol string.
-- [ ] 3.4 Verify that no production app source references `D2ErrorCode.ACCOUNT_DISABLED` and that no
+- [x] 3.4 Verify that no production app source references `D2ErrorCode.ACCOUNT_DISABLED` and that no
       branch-SNAPSHOT SDK coordinate remains.
 
 **Commit (app repository):** 3.1–3.4 are one dependency-integration commit (`fix(login):`). Keep it
