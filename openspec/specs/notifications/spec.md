@@ -63,7 +63,7 @@ The app SHALL persist the filtered notification list to local storage under the 
 - **THEN** the `NOTIFICATIONS` entry in SharedPreferences contains the filtered list serialized as JSON
 
 ### Requirement: Notifications are displayed on activity resume
-The app SHALL load persisted notifications and present them to the user on activity resume in the base activity of the authenticated area. The app SHALL treat a notification as pending until it has been accepted: showing it is not acknowledgement, only the accept action marks it read. The app SHALL show at most one dialog per notification on a given screen.
+The app SHALL load persisted notifications and present them to the user on activity resume in the base activity of the authenticated area. The app SHALL treat a notification as pending until it has been accepted: showing it is not acknowledgement, only the accept action marks it read. The app SHALL show at most one dialog per notification on a given screen. The authenticated area requires a logged-in session and excludes the splash and login screens, the latter because it also serves the PIN unlock.
 
 #### Scenario: Showing a pending notification
 - **WHEN** an authenticated activity resumes and there is at least one pending notification
@@ -80,6 +80,10 @@ The app SHALL load persisted notifications and present them to the user on activ
 #### Scenario: Dialog already on screen
 - **WHEN** an authenticated activity resumes while its dialog for a pending notification is still on screen
 - **THEN** no second dialog is built for that notification, so accepting it marks it read once
+
+#### Scenario: Entry screens do not show notifications
+- **WHEN** the splash or the login screen resumes while an unread notification is cached, or any screen resumes without a logged-in session
+- **THEN** no dialog is shown, because accepting it there could not be recorded on the server
 
 #### Scenario: App restarted with an unread notification cached
 - **WHEN** the app process is restarted after a notification was dismissed without accepting it, and an authenticated activity resumes before any new metadata sync

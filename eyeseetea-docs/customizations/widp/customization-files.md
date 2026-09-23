@@ -138,7 +138,8 @@ every screen.
 
 UI integration:
 
-- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements `NotificationsView`, resolves the presenter from Koin, refreshes on resume, registers the `onPending` listener while resumed and clears it on pause, skips rendering on a finishing or destroyed activity, renders the dialog with Markwon and resolves the locale translation
+- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements `NotificationsView`, resolves the presenter from Koin only on screens `NotificationScreens` allows, refreshes on resume, registers the `onPending` listener while resumed and clears it on pause, skips rendering on a finishing or destroyed activity, renders the dialog with Markwon and resolves the locale translation
+- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationScreens.kt` — new file: decides which screens may show a notification — a logged-in session, and neither the splash nor the login screen, which also serves the PIN unlock
 - `app/src/main/java/org/dhis2/usescases/notifications/presentation/VisibleNotificationDialogs.kt` — new file: tracks which notification dialogs are on screen for one activity instance, so a pending notification offered again on the next resume does not stack a second dialog on top of the first
 
 Sync integration — the hook moved in 3.4.2:

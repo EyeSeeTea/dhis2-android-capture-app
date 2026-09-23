@@ -70,6 +70,8 @@ Expected result:
 - dismissing the dialog without clicking OK, then **closing the app completely** (swipe it away
   from recents) and reopening it, shows the notification again **without** a new metadata sync:
   it is still unread and still cached
+- after a restart the dialog does **not** appear on the loading screen nor on the login / PIN
+  screen, only once the user is inside the app
 - the `readBy` list on the server includes the user's ID and timestamp
 
 Additional checks:

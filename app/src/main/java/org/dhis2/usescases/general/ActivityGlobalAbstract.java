@@ -27,6 +27,7 @@ import org.dhis2.commons.dialogs.CustomDialog;
 import org.dhis2.commons.popupmenu.AppMenuHelper;
 import org.dhis2.mobile.commons.reporting.CrashReportController;
 import org.dhis2.usescases.notifications.domain.Notification;
+import org.dhis2.usescases.notifications.presentation.NotificationScreens;
 import org.dhis2.usescases.notifications.presentation.NotificationsPresenter;
 import org.dhis2.usescases.notifications.presentation.NotificationsView;
 import org.dhis2.usescases.notifications.presentation.ShowNotifications;
@@ -115,7 +116,15 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     // and the notification graph needs an initialised D2.
     @Nullable
     protected NotificationsPresenter notificationsPresenter() {
-        if (((App) getApplicationContext()).getServerComponent() == null) {
+        App app = (App) getApplicationContext();
+        if (app.getServerComponent() == null) {
+            return null;
+        }
+        // Only the authenticated area shows notifications: not the splash, not the login screen
+        // (which also serves the PIN unlock), and nothing without a session. With no presenter,
+        // onResume neither refreshes nor listens for a download landing.
+        if (!NotificationScreens.INSTANCE.canShowNotifications(
+                app.userComponent() != null, getClass())) {
             return null;
         }
         if (notificationsPresenter == null) {
