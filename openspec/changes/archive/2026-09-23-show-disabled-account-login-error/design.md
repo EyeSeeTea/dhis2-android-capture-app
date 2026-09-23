@@ -126,9 +126,11 @@ This avoids broadening the change based only on the broken self-navigation path,
   no stored account.
 - App tests at the session-navigation boundary prove that `LoginActivity` does not register the
   global redirect while authenticated activities still do.
-- Login ViewModel/UI coverage proves that `LoginResult.Error(error_account_disabled)` stops the
-  running state and renders the error path. Existing generic error tests can be extended with the
-  disabled-account wording rather than duplicating the whole login suite.
+- Login ViewModel coverage proves that `LoginResult.Error(error_account_disabled)` stops the
+  running state, exposes the error and produces no after-login navigation. `LoginStatus` renders
+  every `loginErrorMessage` through the existing generic error path; a dedicated component test
+  would inject both conditions directly and require widening production visibility only for the
+  test, so it is intentionally not added.
 - Manual verification against PROD-INDIV/UAT confirms the complete cross-repository behavior and
   the actual network request sequence.
 
@@ -157,4 +159,3 @@ This avoids broadening the change based only on the broken self-navigation path,
 
 Rollback consists of reverting the app guard and restoring the previous SDK coordinate. There are
 no database schema or stored-data migrations.
-

@@ -237,9 +237,7 @@ class CredentialsViewModelTest {
             whenever(getHasOtherAccounts.invoke()) doReturn false
             whenever(getIsSessionLockedUseCase()) doReturn false
 
-            whenever(
-                loginUser.invoke(any(), any(), any(), any(), anyOrNull()),
-            ) doReturn LoginResult.Error(errorMessage)
+            givenLoginFailsWith(errorMessage)
 
             initViewModel()
 
@@ -262,6 +260,39 @@ class CredentialsViewModelTest {
                 updatedState = awaitItem()
                 assertEquals(errorMessage, updatedState.errorMessage)
                 assertEquals(LoginState.Enabled, updatedState.loginState)
+            }
+        }
+
+    // EyeSeeTea customization - Disabled account login
+    @Test
+    fun `GIVEN disabled account WHEN login is clicked THEN form is enabled with disabled error`() =
+        runTest {
+            val errorMessage =
+                "Your user account have been disabled. If this is an error, contact your administrator."
+            givenAnInitialisedLoginScreen()
+            givenLoginFailsWith(errorMessage)
+
+            initViewModel()
+
+            viewModel.credentialsScreenState.test(timeout = turbineTimeout) {
+                awaitItem()
+                awaitItem()
+                viewModel.updateUsername("user")
+                awaitItem()
+                viewModel.updatePassword("password")
+                awaitItem()
+
+                viewModel.onLoginClicked()
+
+                val runningState = awaitItem()
+                assertEquals(LoginState.Running, runningState.loginState)
+                testDispatcher.scheduler.advanceTimeBy(4.seconds)
+
+                val errorState = awaitItem()
+                assertEquals(LoginState.Enabled, errorState.loginState)
+                assertEquals(errorMessage, errorState.errorMessage)
+                assertTrue(errorState.afterLoginActions.isEmpty())
+                cancelAndIgnoreRemainingEvents()
             }
         }
 
@@ -935,6 +966,12 @@ class CredentialsViewModelTest {
         whenever(getBiometricInfo(any())) doReturn BiometricsInfo(false, false)
         whenever(getHasOtherAccounts.invoke()) doReturn false
         whenever(getIsSessionLockedUseCase()) doReturn false
+    }
+
+    private suspend fun givenLoginFailsWith(errorMessage: String) {
+        whenever(
+            loginUser.invoke(any(), any(), any(), any(), anyOrNull()),
+        ) doReturn LoginResult.Error(errorMessage)
     }
 
     private fun initViewModel(

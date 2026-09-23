@@ -9,7 +9,7 @@ Technical inventory of the WIDP customization surface on top of `develop-eyeseet
 - Base branch: `develop-eyeseetea`
 - Base commit: `8e0200bcc` (`3.4.2-eyeseetea-fork-1`)
 - Generated on: `2026-03-25`
-- Last updated: `2026-09-11`
+- Last updated: `2026-09-23`
 - Working tree status: `clean` (post-merge to 3.4.2; both flavors build; notifications re-anchored on Koin and on the post-metadata-sync extension point)
 
 This file is intentionally separate from `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md`:
@@ -39,7 +39,7 @@ looking for what must survive is not sent chasing files that can never differ.
 
 ## Validated customization count
 
-**5 confirmed, all active.** Three were retired earlier and stay retired — see section 3.
+**6 confirmed, all active.** Three were retired earlier and stay retired — see section 3.
 
 ## 1. Direct WIDP flavor surface
 
@@ -246,6 +246,29 @@ No delta today, listed for the feat-commit cross-check:
 
 - `app/src/main/java/org/dhis2/usescases/eventsWithoutRegistration/eventDetails/data/EventDetailsRepository.kt` — the pre-Compose event-details path
 
+### 2.6 Disabled account login
+
+Status: `active` (depends on the EyeSeeTea SDK fork)
+
+- `app/src/main/java/org/dhis2/usescases/general/SessionManagerActivity.kt` — two
+  `// EyeSeeTea customization - Disabled account login` markers scope session-termination callback
+  registration away from `LoginActivity`, while authenticated activities retain the existing
+  redirect to login.
+- `gradle/libs.versions.toml` — pins the SDK artifact
+  `febe27964b3a8a330d8e14c27b01a25cb44b6b91`, which maps the wire status
+  `ACCOUNT_DISABLED` to `D2ErrorCode.USER_ACCOUNT_DISABLED`, stops before `/api/me` and preserves
+  local account data for a rejected credential login.
+
+Tests:
+
+- `app/src/test/java/org/dhis2/usescases/general/SessionManagerActivityTest.kt` — login does not
+  register the global redirect; authenticated activities still forward `DISABLED_ACCOUNT`.
+- `commonskmm/src/androidHostTest/kotlin/org/dhis2/mobile/commons/error/DisabledAccountErrorMappingTest.kt`
+  — the SDK error remains a permission-denied domain error with the provided message.
+- `login/src/commonTest/kotlin/org/dhis2/mobile/login/main/ui/viewmodel/CredentialsViewModelTest.kt`
+  — loading ends, the form is enabled, the disabled-account message is exposed and no after-login
+  navigation is produced.
+
 ## 3. Retired customizations (verified 2026-04-02, unchanged 2026-09-11)
 
 ### Notification translations (originally #4)
@@ -306,6 +329,13 @@ Status: `active`
 ### 2.5 URL data element field
 Status: `active`
 - `c556b7ab7` — Implement show data element url (original, Nov 2022; rendering reimplemented 2026-04-17 in `FieldUiModelExtensions.supportingText()`)
+
+### 2.6 Disabled account login
+Status: `active`
+- `093726e75` — prevent disabled-session self-navigation from the login activity
+- `9c2202c12` — consume the finalized SDK artifact and cover its app-domain mapping
+- SDK provenance: `ca7bc606263f085884baf04bb9c2fdcf416183d7` — handle disabled login without deleting local data
+- SDK documentation: `febe27964b3a8a330d8e14c27b01a25cb44b6b91` — document the customization and published JitPack artifact
 
 ## 5. Fork identity and scaffolding (not customizations)
 

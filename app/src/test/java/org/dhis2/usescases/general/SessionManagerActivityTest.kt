@@ -10,21 +10,30 @@ import org.junit.Test
 class SessionManagerActivityTest {
     @Test
     fun `login does not register session termination navigation`() {
-        val callback = sessionTerminationNavigationCallback(LoginActivity::class.java) {}
+        var registeredCallback: ((LogOutReason) -> Unit)? = null
 
-        assertThat(callback).isNull()
+        registerSessionTerminationNavigation(
+            activityClass = LoginActivity::class.java,
+            registerCallback = { callback -> registeredCallback = callback },
+            navigateToLogin = {},
+        )
+
+        assertThat(registeredCallback).isNull()
     }
 
     @Test
     fun `authenticated activity navigates to login with disabled account reason`() {
+        var registeredCallback: ((LogOutReason) -> Unit)? = null
         var navigationReason: LogOutReason? = null
-        val callback = sessionTerminationNavigationCallback(MainActivity::class.java) { reason ->
-            navigationReason = reason
-        }
 
-        callback?.invoke(LogOutReason.DISABLED_ACCOUNT)
+        registerSessionTerminationNavigation(
+            activityClass = MainActivity::class.java,
+            registerCallback = { callback -> registeredCallback = callback },
+            navigateToLogin = { reason -> navigationReason = reason },
+        )
+        registeredCallback?.invoke(LogOutReason.DISABLED_ACCOUNT)
 
-        assertThat(callback).isNotNull()
+        assertThat(registeredCallback).isNotNull()
         assertThat(navigationReason).isEqualTo(LogOutReason.DISABLED_ACCOUNT)
     }
 }

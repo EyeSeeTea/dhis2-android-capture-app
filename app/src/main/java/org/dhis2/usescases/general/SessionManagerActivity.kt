@@ -35,15 +35,15 @@ import org.koin.android.ext.android.inject
 import javax.inject.Inject
 
 // EyeSeeTea customization - Disabled account login
-internal fun sessionTerminationNavigationCallback(
+internal fun registerSessionTerminationNavigation(
     activityClass: Class<*>,
+    registerCallback: (((LogOutReason) -> Unit) -> Unit),
     navigateToLogin: (LogOutReason) -> Unit,
-): ((LogOutReason) -> Unit)? =
-    if (LoginActivity::class.java.isAssignableFrom(activityClass)) {
-        null
-    } else {
-        navigateToLogin
+): Unit {
+    if (!LoginActivity::class.java.isAssignableFrom(activityClass)) {
+        registerCallback(navigateToLogin)
     }
+}
 
 abstract class SessionManagerActivity :
     AppCompatActivity(),
@@ -72,17 +72,21 @@ abstract class SessionManagerActivity :
         val serverComponent = (applicationContext as App).serverComponent
         if (serverComponent != null) {
             // EyeSeeTea customization - Disabled account login
-            sessionTerminationNavigationCallback(javaClass) { logOutReason ->
-                startActivity(
-                    LoginActivity::class.java,
-                    bundle(true, -1, false, logOutReason),
-                    true,
-                    true,
-                    null,
-                )
-            }?.let { sessionCallback ->
-                serverComponent.openIdSession().setSessionCallback(this, sessionCallback)
-            }
+            registerSessionTerminationNavigation(
+                activityClass = javaClass,
+                registerCallback = { sessionCallback ->
+                    serverComponent.openIdSession().setSessionCallback(this, sessionCallback)
+                },
+                navigateToLogin = { logOutReason ->
+                    startActivity(
+                        LoginActivity::class.java,
+                        bundle(true, -1, false, logOutReason),
+                        true,
+                        true,
+                        null,
+                    )
+                },
+            )
             val isTraining = BuildConfig.FLAVOR == "dhis2Training"
             val screenShareAllowed =
                 serverComponent.userManager().isUserLoggedIn().blockingFirst() &&
