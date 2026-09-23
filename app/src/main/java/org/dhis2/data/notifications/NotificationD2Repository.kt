@@ -25,16 +25,14 @@ class NotificationD2Repository(
 ) : NotificationRepository {
 
     override fun sync(): Flow<Unit> = flow {
-        try {
-            val allNotifications = getAllNotificationsFromRemote()
+        // No catch here on purpose. A failed fetch has to reach the caller as a failure: turning
+        // it into an empty list would overwrite the unread notifications already cached on the
+        // device, and emitting would let the post-sync action mark a failed download pending.
+        val allNotifications = fetchAllNotificationsFromRemote()
 
-            saveUserNotificationsInCache(allNotifications)
+        saveUserNotificationsInCache(allNotifications)
 
-            emit(Unit)
-
-        } catch (e: Exception) {
-            Timber.e(e)
-        }
+        emit(Unit)
     }
 
     override fun get(): Flow<List<Notification>> = flow {
@@ -97,13 +95,16 @@ class NotificationD2Repository(
         }
     }
 
+    /**
+     * Throws when the datastore cannot be read, so a failed fetch can be told apart from a
+     * datastore that is genuinely empty.
+     */
+    private suspend fun fetchAllNotificationsFromRemote(): List<Notification> =
+        notificationsApi.getData().map { mapNotification(it) }
+
     private suspend fun getAllNotificationsFromRemote(): List<Notification> {
         try {
-            val notificationsDTO = notificationsApi.getData()
-
-            val notifications = notificationsDTO.map { mapNotification(it) }
-
-            return notifications
+            return fetchAllNotificationsFromRemote()
         } catch (e: Exception) {
             Timber.e("Error getting notifications: $e")
             return emptyList()

@@ -83,6 +83,8 @@ class PostMetadataSyncModuleTest {
         whenever(notificationRepository.sync()) doReturn flowOf(Unit)
     }
 
+    // Mirrors what NotificationD2Repository.sync() does when the datastore cannot be read; that
+    // side is pinned by NotificationD2RepositoryTest, so this is not a contract of its own.
     private fun givenTheDownloadFails(reason: String) {
         whenever(notificationRepository.sync()) doReturn flow { throw IllegalStateException(reason) }
     }

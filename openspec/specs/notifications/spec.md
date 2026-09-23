@@ -15,7 +15,9 @@ The app SHALL fetch the notification list from the DHIS2 server at `dataStore/no
 
 #### Scenario: Datastore endpoint is unreachable
 - **WHEN** the datastore endpoint returns an error or is not reachable
-- **THEN** the metadata sync SHALL complete without failing, and SHALL leave the previously stored notifications untouched
+- **THEN** the metadata sync SHALL complete without failing, SHALL leave the previously stored notifications untouched, and SHALL NOT mark notifications as pending
+
+A failed fetch SHALL be distinguishable from a datastore that is genuinely empty: only the latter replaces the stored notifications.
 
 ### Requirement: Notifications are filtered for the current user
 The app SHALL store only notifications that are relevant to the currently logged-in user, by applying the following combined filter during sync.

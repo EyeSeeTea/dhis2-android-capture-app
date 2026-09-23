@@ -20,9 +20,12 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.eq
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
@@ -250,6 +253,19 @@ class NotificationD2RepositoryTest {
         )
     }
 
+    @Test
+    fun `Should keep the cached notifications when the remote fetch fails`() = runBlocking {
+        val repository = givenTheRemoteFetchFails()
+
+        val result = runCatching { repository.sync().first() }
+
+        // A failed fetch must not look like an empty datastore: reporting success would let the
+        // post-sync action mark notifications pending, and saving would erase the unread ones
+        // already cached on the device.
+        assertTrue(result.isFailure)
+        verify(basicPreferenceProvider, never()).saveAsJson(eq(NOTIFICATIONS), any<List<Notification>>())
+    }
+
     private fun givenTestData(
         user: User,
         notifications: List<NotificationDTO>,
@@ -266,6 +282,21 @@ class NotificationD2RepositoryTest {
 
         runBlocking {
             whenever(userGroupsApi.getData(user.uid())) doReturn userGroups
+        }
+
+        return NotificationD2Repository(
+            d2,
+            basicPreferenceProvider,
+            notificationsApi,
+            userGroupsApi
+        )
+    }
+
+    private fun givenTheRemoteFetchFails(): NotificationD2Repository {
+        // A RuntimeException rather than the IOException Retrofit throws offline: Mockito rejects
+        // checked exceptions on Kotlin methods, and the repository treats both the same way.
+        runBlocking {
+            whenever(notificationsApi.getData()) doThrow RuntimeException("datastore unreachable")
         }
 
         return NotificationD2Repository(
