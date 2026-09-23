@@ -34,6 +34,17 @@ import org.dhis2.utils.analytics.FORGOT_CODE
 import org.koin.android.ext.android.inject
 import javax.inject.Inject
 
+// EyeSeeTea customization - Disabled account login
+internal fun sessionTerminationNavigationCallback(
+    activityClass: Class<*>,
+    navigateToLogin: (LogOutReason) -> Unit,
+): ((LogOutReason) -> Unit)? =
+    if (LoginActivity::class.java.isAssignableFrom(activityClass)) {
+        null
+    } else {
+        navigateToLogin
+    }
+
 abstract class SessionManagerActivity :
     AppCompatActivity(),
     ActivityResultObservable {
@@ -60,17 +71,18 @@ abstract class SessionManagerActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         val serverComponent = (applicationContext as App).serverComponent
         if (serverComponent != null) {
-            serverComponent
-                .openIdSession()
-                .setSessionCallback(this) { logOutReason: LogOutReason? ->
-                    startActivity(
-                        LoginActivity::class.java,
-                        bundle(true, -1, false, logOutReason),
-                        true,
-                        true,
-                        null,
-                    )
-                }
+            // EyeSeeTea customization - Disabled account login
+            sessionTerminationNavigationCallback(javaClass) { logOutReason ->
+                startActivity(
+                    LoginActivity::class.java,
+                    bundle(true, -1, false, logOutReason),
+                    true,
+                    true,
+                    null,
+                )
+            }?.let { sessionCallback ->
+                serverComponent.openIdSession().setSessionCallback(this, sessionCallback)
+            }
             val isTraining = BuildConfig.FLAVOR == "dhis2Training"
             val screenShareAllowed =
                 serverComponent.userManager().isUserLoggedIn().blockingFirst() &&
