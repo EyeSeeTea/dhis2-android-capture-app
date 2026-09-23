@@ -38,32 +38,6 @@ class NotificationsPresenterTest {
     private val userRepository: UserRepository = mock()
     private val view = RecordingView()
 
-    // The dispatcher must share the scheduler of the enclosing runTest, otherwise the coroutines
-    // the presenter launches on its own scopes are reported as uncaught in the *next* test.
-    private fun TestScope.givenAPresenter(): NotificationsPresenter {
-        val dispatcher = UnconfinedTestDispatcher(testScheduler)
-        return NotificationsPresenter(
-            getNotifications = GetNotifications(notificationRepository),
-            markNotificationAsRead = MarkNotificationAsRead(notificationRepository, userRepository),
-            ioDispatcher = dispatcher,
-            uiDispatcher = dispatcher,
-        )
-    }
-
-    private fun givenStoredNotifications(vararg ids: String) {
-        whenever(notificationRepository.get()) doReturn flowOf(ids.map { givenANotification(it) })
-    }
-
-    private fun givenTheNotificationCanBeAccepted(notification: Notification) {
-        whenever(notificationRepository.getById(notification.id)) doReturn flowOf(notification)
-        whenever(userRepository.getCurrentUser()) doReturn User("user1", "User One")
-        whenever(notificationRepository.save(any())) doReturn flowOf(Unit)
-    }
-
-    private fun givenNoStoredNotifications() {
-        whenever(notificationRepository.get()) doReturn flowOf(emptyList())
-    }
-
     @Before
     fun setUp() {
         ShowNotifications.isPending = false
@@ -223,6 +197,32 @@ class NotificationsPresenterTest {
 
         assertTrue(ShowNotifications.isPending)
         assertEquals(0, view.renderCalls.size)
+    }
+
+    // The dispatcher must share the scheduler of the enclosing runTest, otherwise the coroutines
+    // the presenter launches on its own scopes are reported as uncaught in the *next* test.
+    private fun TestScope.givenAPresenter(): NotificationsPresenter {
+        val dispatcher = UnconfinedTestDispatcher(testScheduler)
+        return NotificationsPresenter(
+            getNotifications = GetNotifications(notificationRepository),
+            markNotificationAsRead = MarkNotificationAsRead(notificationRepository, userRepository),
+            ioDispatcher = dispatcher,
+            uiDispatcher = dispatcher,
+        )
+    }
+
+    private fun givenStoredNotifications(vararg ids: String) {
+        whenever(notificationRepository.get()) doReturn flowOf(ids.map { givenANotification(it) })
+    }
+
+    private fun givenTheNotificationCanBeAccepted(notification: Notification) {
+        whenever(notificationRepository.getById(notification.id)) doReturn flowOf(notification)
+        whenever(userRepository.getCurrentUser()) doReturn User("user1", "User One")
+        whenever(notificationRepository.save(any())) doReturn flowOf(Unit)
+    }
+
+    private fun givenNoStoredNotifications() {
+        whenever(notificationRepository.get()) doReturn flowOf(emptyList())
     }
 
     private fun givenANotification(id: String) =
