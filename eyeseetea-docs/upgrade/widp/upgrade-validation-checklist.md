@@ -67,6 +67,9 @@ Expected result:
   notification appears again on the next screen: it was never marked as read
 - leaving the dialog **on screen**, pressing Home and returning shows the same single dialog,
   not a second one stacked on top: accepting once must add exactly one `readBy` entry
+- dismissing the dialog without clicking OK, then **closing the app completely** (swipe it away
+  from recents) and reopening it, shows the notification again **without** a new metadata sync:
+  it is still unread and still cached
 - the `readBy` list on the server includes the user's ID and timestamp
 
 Additional checks:

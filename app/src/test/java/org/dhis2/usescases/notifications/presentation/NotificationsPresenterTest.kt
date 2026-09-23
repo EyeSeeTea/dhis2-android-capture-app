@@ -77,12 +77,16 @@ class NotificationsPresenterTest {
     }
 
     @Test
-    fun `does nothing when no refresh is pending`() = runTest {
+    fun `shows the cached unread notifications on a fresh app process`() = runTest {
+        // A fresh process: nothing has marked anything pending since the restart, but the
+        // notification dismissed before it is still cached and still unread.
+        assertFalse(ShowNotifications.isPending)
         givenStoredNotifications("a")
 
         givenAPresenter().refresh(view)
 
-        assertEquals(0, view.renderCalls.size)
+        assertEquals(1, view.renderCalls.size)
+        assertEquals("a", view.renderCalls.single().single().id)
     }
 
     @Test

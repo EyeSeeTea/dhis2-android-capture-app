@@ -17,16 +17,18 @@ class NotificationsPresenter(
     private val uiDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) {
     fun refresh(notificationsView: NotificationsView) {
-        if (!ShowNotifications.isPending) return
-
+        // The cached list is the source of truth, not ShowNotifications.isPending. The flag lives
+        // in memory and starts false in every new process, so gating on it hid a notification
+        // dismissed before an app restart until the next metadata sync, although it was still
+        // unread on the server and in the cache. WIDP 3.3.1 re-read the cache on every cold start
+        // through MainPresenter.checkSingleProgramNavigation(); the 3.4.2 Home rewrite dropped
+        // that trigger. The cache only ever holds this user's unread notifications, and accepting
+        // one removes it, so reading it on every resume shows exactly what is still pending.
         CoroutineScope(uiDispatcher).launch {
             getNotifications().collect { notifications ->
-                // The flag is not consumed here. Showing a notification is not the same as the
-                // user acknowledging it: a dialog dismissed with back or by tapping outside leaves
-                // it unread on the server, so it has to come back on the next resume. It is
-                // cleared in markNotificationAsRead(), once nothing unread is left.
-                // An empty list means the download has not landed yet, and the flag must survive
-                // that too.
+                // Showing a notification is not the user acknowledging it: a dialog dismissed with
+                // back or by tapping outside leaves it cached and unread, so the next resume shows
+                // it again.
                 if (notifications.isNotEmpty()) {
                     notificationsView.renderNotifications(notifications)
                 }
@@ -52,8 +54,8 @@ class NotificationsPresenter(
                 .onFailure { Timber.e(it, "Could not mark the notification as read") }
 
             // Accepting one re-filters the local store, so the accepted notification drops out of
-            // it. Only when nothing unread is left does the screen stop being asked to show
-            // anything; with several notifications pending, the rest still have to appear.
+            // it and the next resume no longer finds it. The flag is cleared only once nothing
+            // unread is left; with several notifications pending, the rest still have to appear.
             getNotifications().collect { remaining ->
                 if (remaining.isEmpty()) {
                     ShowNotifications.isPending = false
@@ -65,9 +67,13 @@ class NotificationsPresenter(
 
 object ShowNotifications {
     /**
+     * Records that a download has landed with notifications not yet accepted: set after a metadata
+     * sync, cleared once accepting leaves nothing unread. It no longer decides whether the screen
+     * shows anything — refresh() reads the cached list on every resume — because it lives in
+     * memory and is false again in every new process.
+     *
      * Volatile because it is written from the metadata sync worker and from the IO dispatcher when
-     * a notification is accepted, and read from the main thread on every activity resume. Without
-     * it there is no happens-before edge and a cleared flag may not be visible to the screen.
+     * a notification is accepted. Without it there is no happens-before edge between them.
      */
     @Volatile
     var isPending = false

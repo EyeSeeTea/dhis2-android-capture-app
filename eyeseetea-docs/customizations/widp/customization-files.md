@@ -164,7 +164,7 @@ Build config:
 Tests:
 
 - `app/src/test/java/org/dhis2/data/notifications/NotificationD2RepositoryTest.kt` — filtering and persistence
-- `app/src/test/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenterTest.kt` — the display rules: the pending flag survives an empty list, and marking pending reaches the screen that is up
+- `app/src/test/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenterTest.kt` — the display rules: the cached unread notifications are shown on every resume, including in a fresh process, the pending flag survives an empty list, and marking pending reaches the screen that is up
 - `app/src/testWidp/java/org/dhis2/di/PostMetadataSyncModuleTest.kt` — the flavor wiring: exactly one action, it downloads then marks pending, and a failed download marks nothing
 
 No delta today, listed for the feat-commit cross-check:

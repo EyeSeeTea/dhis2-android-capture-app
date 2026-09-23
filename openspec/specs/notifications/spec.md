@@ -77,6 +77,10 @@ The app SHALL load persisted notifications and present them to the user on activ
 - **WHEN** an authenticated activity resumes while its dialog for a pending notification is still on screen
 - **THEN** no second dialog is built for that notification, so accepting it marks it read once
 
+#### Scenario: App restarted with an unread notification cached
+- **WHEN** the app process is restarted after a notification was dismissed without accepting it, and an authenticated activity resumes before any new metadata sync
+- **THEN** the notification is shown again, because the persisted list — not an in-memory flag — decides what is pending
+
 ### Requirement: Notification content supports Markdown
 The notification dialog SHALL render `content` as Markdown using Markwon, so that authors can include formatting, lists, and links.
 
