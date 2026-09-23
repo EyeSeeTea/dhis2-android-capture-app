@@ -215,7 +215,7 @@ flavor; in 3.4.2 upstream moved the module to the KMP `androidLibrary` DSL and d
 flavors from it altogether. Earlier notes claimed this file had been "absorbed upstream" when it
 had not. It has now, and the build is the evidence.
 
-SDK patch — in the `EyeSeeTea/dhis2-android-sdk` fork at `1.14.2-eyeseetea-fork-1`, not in this
+SDK patch — in the `EyeSeeTea/dhis2-android-sdk` fork at `1.14.2-eyeseetea-fork-3`, not in this
 repository:
 
 - `core/.../user/internal/LogInCall.kt` — `generate2FAErrorIfRequired()`
@@ -255,7 +255,7 @@ Status: `active` (depends on the EyeSeeTea SDK fork)
   registration away from `LoginActivity`, while authenticated activities retain the existing
   redirect to login.
 - `gradle/libs.versions.toml` — pins the SDK artifact
-  `febe27964b3a8a330d8e14c27b01a25cb44b6b91`, which maps the wire status
+  `1.14.2-eyeseetea-fork-3` (tag on `d532cddcbc`, same code as `febe27964b`), which maps the wire status
   `ACCOUNT_DISABLED` to `D2ErrorCode.USER_ACCOUNT_DISABLED`, stops before `/api/me` and preserves
   local account data for a rejected credential login.
 
