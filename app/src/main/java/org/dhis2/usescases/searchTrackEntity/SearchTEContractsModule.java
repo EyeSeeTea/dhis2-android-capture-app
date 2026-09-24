@@ -145,8 +145,7 @@ public class SearchTEContractsModule {
 
         void setBiometricListener(SearchTEPresenter.BiometricsSearchListener biometricsSearchListener);
 
-        // EyeSeeTea customization - Biometric Duplicate Review And Confirm Identity
-        void sendBiometricsConfirmIdentity(String teiUid, String enrollmentUid, boolean isOnline, boolean isCredentialOnlyMatch);
+        void sendBiometricsConfirmIdentity(String teiUid, String enrollmentUid, boolean isOnline, boolean isMatchByCredentials);
 
         void sendAutomaticBiometricsConfirmIdentity(SearchTeiModel item);
 
