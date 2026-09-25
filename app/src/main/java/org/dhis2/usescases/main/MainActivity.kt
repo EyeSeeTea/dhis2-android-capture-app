@@ -126,6 +126,11 @@ class MainActivity : ActivityGlobalAbstract() {
     }
 
     //region LIFECYCLE
+    // EyeSeeTea customization - Notifications system
+    // Settings, about and troubleshooting are sections of this same activity; only the program
+    // list shows notifications.
+    override fun isOnProgramList(): Boolean = mainViewModel.homeScreenState.value.currentScreen.isPrograms()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -172,6 +177,12 @@ class MainActivity : ActivityGlobalAbstract() {
                     onNewScreen = { currentScreen ->
                         if (backDropActive) {
                             showHideFilter()
+                        }
+                        // EyeSeeTea customization - Notifications system
+                        // Back on the program list from settings or about: not a resume, so the
+                        // pending notifications are offered here.
+                        if (currentScreen.isPrograms()) {
+                            refreshNotifications()
                         }
                         val navigationId = when (currentScreen) {
                             MainScreenType.About -> R.id.menu_about

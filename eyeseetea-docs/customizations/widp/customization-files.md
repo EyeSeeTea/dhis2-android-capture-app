@@ -138,8 +138,9 @@ every screen.
 
 UI integration:
 
-- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements `NotificationsView`, resolves the presenter from Koin only on screens `NotificationScreens` allows, refreshes on resume, registers the `onPending` listener while resumed and clears it on pause, closes its notification dialogs on pause, skips rendering on a finishing or destroyed activity, renders the dialog with Markwon and resolves the locale translation
-- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationScreens.kt` — new file: decides which screens may show a notification — a logged-in session, and neither the splash nor the login screen, which also serves the PIN unlock
+- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements `NotificationsView`, resolves the presenter from Koin only on screens `NotificationScreens` allows (checked again at render time), refreshes on resume and exposes `refreshNotifications()` and the overridable `isOnProgramList()`, registers the `onPending` listener while resumed and clears it on pause, closes its notification dialogs on pause, skips rendering on a finishing or destroyed activity, renders the dialog with Markwon and resolves the locale translation
+- `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` — overrides `isOnProgramList()` with the current Home section, and refreshes notifications when the Home switches back to the program list
+- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationScreens.kt` — new file: decides which screens may show a notification — an explicit list: the Home while on the program list, and the event, tracked entity and data set lists; always with a logged-in session
 - `app/src/main/java/org/dhis2/usescases/notifications/presentation/VisibleNotificationDialogs.kt` — new file: tracks which notification dialogs are on screen for one activity instance, so a pending notification offered again on the next resume does not stack a second dialog on top of the first, and closes them when the activity goes to the background so only the screen in front holds one
 
 Sync integration — the hook moved in 3.4.2:

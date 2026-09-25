@@ -88,6 +88,13 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     @Override
     protected void onResume() {
         super.onResume();
+        refreshNotifications();
+    }
+
+    // EyeSeeTea customization - Notifications system
+    // Called on resume, and by the Home when it switches back to the program list: its sections
+    // share one activity, so that switch is not a resume.
+    protected void refreshNotifications() {
         NotificationsPresenter presenter = notificationsPresenter();
         if (presenter != null) {
             // Registered only while this screen is the one on top, so a notification arriving
@@ -99,6 +106,24 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
             });
             presenter.refresh(this);
         }
+    }
+
+    // EyeSeeTea customization - Notifications system
+    // Overridden by the Home, which hosts settings, about and troubleshooting in the same activity
+    // as the program list: only the program list shows notifications.
+    protected boolean isOnProgramList() {
+        return true;
+    }
+
+    // EyeSeeTea customization - Notifications system
+    // Only the Home's program list and the lists a program opens into show notifications, and
+    // only with a session. Checked again when rendering, because the dialog is built from a
+    // coroutine and the screen or the Home section may have changed by then.
+    private boolean canShowNotificationsHere() {
+        return NotificationScreens.INSTANCE.canShowNotifications(
+                ((App) getApplicationContext()).userComponent() != null,
+                getClass(),
+                isOnProgramList());
     }
 
     // EyeSeeTea customization - Notifications system
@@ -125,11 +150,8 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         if (app.getServerComponent() == null) {
             return null;
         }
-        // Only the authenticated area shows notifications: not the splash, not the login screen
-        // (which also serves the PIN unlock), and nothing without a session. With no presenter,
-        // onResume neither refreshes nor listens for a download landing.
-        if (!NotificationScreens.INSTANCE.canShowNotifications(
-                app.userComponent() != null, getClass())) {
+        // With no presenter, this screen neither refreshes nor listens for a download landing.
+        if (!canShowNotificationsHere()) {
             return null;
         }
         if (notificationsPresenter == null) {
@@ -289,6 +311,9 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         // lifecycle, so it can arrive after a fast back press or a configuration change. Showing a
         // dialog on a dead Activity throws WindowManager.BadTokenException.
         if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        if (!canShowNotificationsHere()) {
             return;
         }
         for (Notification notification : notifications) {

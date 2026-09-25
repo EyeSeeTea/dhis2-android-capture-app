@@ -70,8 +70,11 @@ Expected result:
 - dismissing the dialog without clicking OK, then **closing the app completely** (swipe it away
   from recents) and reopening it, shows the notification again **without** a new metadata sync:
   it is still unread and still cached
-- after a restart the dialog does **not** appear on the loading screen nor on the login / PIN
-  screen, only once the user is inside the app
+- the dialog appears **only** on the Home's program list and on the list a program opens into
+  (events, tracked entities, data sets): never on the loading, login / PIN or sync progress
+  screens, in settings, about or troubleshooting, or inside a form
+- syncing metadata from settings with a new notification on the server shows nothing in
+  settings; going back to the program list shows it
 - with a single program (the app opens the program screen by itself), the dialog appears once;
   after accepting it and going back to the Home, no second dialog is waiting there, and the
   datastore holds exactly one new `readBy` entry
