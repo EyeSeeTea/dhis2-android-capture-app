@@ -97,6 +97,10 @@ class NotificationD2Repository(
         }
     }
 
+    override fun clear() {
+        preferenceProvider.removeValue(Preference.NOTIFICATIONS)
+    }
+
     /**
      * Throws when the datastore cannot be read, so a failed fetch can be told apart from a
      * datastore that is genuinely empty.

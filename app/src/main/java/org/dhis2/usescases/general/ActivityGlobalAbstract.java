@@ -30,7 +30,9 @@ import org.dhis2.usescases.login.LoginActivity;
 import org.dhis2.usescases.login.LoginActivityKt;
 import org.dhis2.mobile.commons.reporting.CrashReportController;
 import org.dhis2.usescases.notifications.domain.Notification;
+import org.dhis2.usescases.notifications.domain.NotificationRepository;
 import org.dhis2.usescases.notifications.presentation.NotificationScreens;
+import org.dhis2.usescases.notifications.presentation.NotificationsOnSessionEnd;
 import org.dhis2.usescases.notifications.presentation.NotificationsPresenter;
 import org.dhis2.usescases.notifications.presentation.NotificationsView;
 import org.dhis2.usescases.notifications.presentation.ShowNotifications;
@@ -126,6 +128,10 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     // EyeSeeTea customization - 2FA support
     // Same destination and message as an expired OpenID session.
     private void returnToLoginWithSessionExpired() {
+        // EyeSeeTea customization - Notifications system
+        // The session has ended: the next user must not see this user's notifications.
+        NotificationsOnSessionEnd.INSTANCE.forget(
+                KoinJavaComponent.get(NotificationRepository.class));
         Bundle bundle = LoginActivity.Companion.bundle(true, -1, false, null, false, false);
         bundle.putBoolean(LoginActivityKt.EXTRA_SESSION_EXPIRED, true);
         startActivity(LoginActivity.class, bundle, true, true, null);

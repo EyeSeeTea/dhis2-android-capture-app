@@ -85,6 +85,8 @@ Expected result:
 - the `readBy` list on the server includes the user's ID and timestamp
 
 Additional checks:
+- two accounts on the same device: with an unread notification of account A cached, log out
+  (or delete the account) and log in with account B — B must never see A's notification
 - a notification with wildcard "Web" should NOT appear
 - a notification targeting a different user group should NOT appear
 - a notification already in readBy for this user should NOT appear

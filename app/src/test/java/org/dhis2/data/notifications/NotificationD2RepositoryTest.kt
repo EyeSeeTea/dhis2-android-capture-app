@@ -280,6 +280,13 @@ class NotificationD2RepositoryTest {
         verify(basicPreferenceProvider, never()).saveAsJson(eq(NOTIFICATIONS), any<List<Notification>>())
     }
 
+    @Test
+    fun `Should forget the cached notifications`() {
+        givenARepository().clear()
+
+        verify(basicPreferenceProvider).removeValue(NOTIFICATIONS)
+    }
+
     private fun givenTestData(
         user: User,
         notifications: List<NotificationDTO>,
@@ -336,6 +343,9 @@ class NotificationD2RepositoryTest {
             userGroupsApi
         )
     }
+
+    private fun givenARepository() =
+        NotificationD2Repository(d2, basicPreferenceProvider, notificationsApi, userGroupsApi)
 
     private fun givenAnUser(): User {
         val user = User.builder().uid("user1").build()

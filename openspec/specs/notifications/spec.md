@@ -62,6 +62,10 @@ The app SHALL persist the filtered notification list to local storage under the 
 - **WHEN** a sync finishes with filtered notifications for this user
 - **THEN** the `NOTIFICATIONS` entry in SharedPreferences contains the filtered list serialized as JSON
 
+#### Scenario: The user leaves
+- **WHEN** a logout or an account deletion completes, or the server session ends
+- **THEN** the stored notifications SHALL be cleared, so the next user on the device never sees them; that user's own notifications arrive with their sync
+
 ### Requirement: Notifications are displayed on activity resume
 The app SHALL load persisted notifications and present them to the user on activity resume in the base activity of the authenticated area. The app SHALL treat a notification as pending until it has been accepted: showing it is not acknowledgement, only the accept action marks it read. The app SHALL show at most one dialog per notification on a given screen, and only the screen in front SHALL hold notification dialogs. Only the Home while it shows the program list, and the list a program opens into (events, tracked entities or data sets), SHALL show notification dialogs, and only with a logged-in session. No other screen shows them: not the splash, the login screen (which also serves the PIN unlock) or the sync progress screen, not the Home's other sections (settings, about, troubleshooting), and not forms or dashboards.
 

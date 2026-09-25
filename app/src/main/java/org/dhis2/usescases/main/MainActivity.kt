@@ -47,10 +47,13 @@ import org.dhis2.usescases.main.ui.model.HomeEffect
 import org.dhis2.usescases.main.ui.model.HomeScreenState
 import org.dhis2.usescases.main.ui.model.VersionToUpdateState
 import org.dhis2.usescases.main.ui.screens.MainScreen
+import org.dhis2.usescases.notifications.domain.NotificationRepository
+import org.dhis2.usescases.notifications.presentation.NotificationsOnSessionEnd
 import org.dhis2.utils.granularsync.SyncStatusDialog
 import org.dhis2.utils.session.CHANGE_SERVER_URL_DIALOG_TAG
 import org.dhis2.utils.session.ChangeServerUrlDialog
 import org.hisp.dhis.mobile.ui.designsystem.theme.DHIS2Theme
+import org.koin.android.ext.android.get
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 
@@ -152,10 +155,16 @@ class MainActivity : ActivityGlobalAbstract() {
                     onEffect = { effect ->
                         when (effect) {
                             HomeEffect.BlockSession -> finish()
-                            is HomeEffect.GoToLogin -> goToLogin(
-                                accountsCount = effect.accountsCount,
-                                isDeletion = effect.isDeletion,
-                            )
+                            is HomeEffect.GoToLogin -> {
+                                // EyeSeeTea customization - Notifications system
+                                // A completed logout and a completed account deletion both end
+                                // here: the next user must not see this user's notifications.
+                                NotificationsOnSessionEnd.forget(get<NotificationRepository>())
+                                goToLogin(
+                                    accountsCount = effect.accountsCount,
+                                    isDeletion = effect.isDeletion,
+                                )
+                            }
                             HomeEffect.OrgUnitFilterRequest -> openOrgUnitTreeSelector()
                             is HomeEffect.PeriodFilterRequest -> showPeriodRequest(effect.periodRequest)
                             HomeEffect.ShowDeleteNotification -> showProgressDeleteNotification()
