@@ -121,6 +121,11 @@ When the user dismisses the notification via the accept button, the app SHALL ap
 #### Scenario: PUT fails
 - **WHEN** the network request to mark the notification as read fails
 - **THEN** the app does not lose the local state — the next sync SHALL reconcile the read status
+- **AND** the notification is not offered again in the same app session, but is offered again after the next metadata sync or when the app restarts, so the read is retried at most once per start rather than on every screen
+
+#### Scenario: Leaving the screen right after accepting
+- **WHEN** the user accepts a notification and another screen resumes before the read has been saved
+- **THEN** the notification is not shown again, so it is marked read once
 
 ### Requirement: Read notifications are not shown again
 Once a notification has been marked as read by the current user, subsequent filtering passes SHALL exclude it, so the user never sees the same notification twice.

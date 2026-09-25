@@ -123,7 +123,7 @@ Domain layer (all new files):
 
 Presentation (new file):
 
-- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenter.kt` — presenter, the `ShowNotifications` flag and its `onPending` listener, and the `NotificationsView` contract
+- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenter.kt` — presenter, the `ShowNotifications` flag, its `onPending` listener and the notifications accepted in the session, and the `NotificationsView` contract
 
 DI — moved from Dagger to Koin in 3.4.2:
 

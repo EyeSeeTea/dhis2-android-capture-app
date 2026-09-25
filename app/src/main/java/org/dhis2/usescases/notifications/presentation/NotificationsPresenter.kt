@@ -9,6 +9,7 @@ import org.dhis2.usescases.notifications.domain.GetNotifications
 import org.dhis2.usescases.notifications.domain.MarkNotificationAsRead
 import org.dhis2.usescases.notifications.domain.Notification
 import timber.log.Timber
+import java.util.concurrent.ConcurrentHashMap
 
 class NotificationsPresenter(
     private val getNotifications: GetNotifications,
@@ -29,14 +30,23 @@ class NotificationsPresenter(
                 // Showing a notification is not the user acknowledging it: a dialog dismissed with
                 // back or by tapping outside leaves it cached and unread, so the next resume shows
                 // it again.
-                if (notifications.isNotEmpty()) {
-                    notificationsView.renderNotifications(notifications)
+                // Minus what the user accepted in this session: the save re-filters the cache
+                // only once the server has answered, and a screen resumed in between — going
+                // back straight after accepting — read the stale cache and offered it again.
+                val pending = notifications.filterNot {
+                    it.id in ShowNotifications.acceptedInThisSession
+                }
+                if (pending.isNotEmpty()) {
+                    notificationsView.renderNotifications(pending)
                 }
             }
         }
     }
 
     fun markShowNotificationsAsPending() {
+        // A download has just replaced the cache with what the server holds, so an accept whose
+        // save failed is unread there again: it may be offered again, and the read retried.
+        ShowNotifications.acceptedInThisSession.clear()
         ShowNotifications.isPending = true
         // Push to whatever screen is up. Without this the dialog would only appear once the user
         // navigated away and back: since 3.4.x the download runs from a PostMetadataSyncAction,
@@ -45,11 +55,16 @@ class NotificationsPresenter(
     }
 
     fun markNotificationAsRead(notification: Notification) {
+        // Recorded before the save starts, and kept for the whole session whether the save
+        // succeeds or not. If it fails, the notification is still unread on the server and still
+        // cached, and it is offered again after the next download or in a new process — once per
+        // start, as WIDP 3.3.1 did — instead of on every screen while the server keeps failing.
+        ShowNotifications.acceptedInThisSession.add(notification.id)
         CoroutineScope(ioDispatcher).launch {
             // Offline, the repository cannot reach the datastore: it logs, returns an empty list,
             // and the use case reports success without having persisted anything. Guarded so a
-            // failure here can never take the app down, and left pending on purpose — the local
-            // store still holds the notification, so it is offered again instead of being lost.
+            // failure here can never take the app down; the local store still holds the
+            // notification, so it is not lost.
             runCatching { markNotificationAsRead.invoke(notification.id).collect {} }
                 .onFailure { Timber.e(it, "Could not mark the notification as read") }
 
@@ -88,6 +103,15 @@ object ShowNotifications {
      */
     @Volatile
     var onPending: (() -> Unit)? = null
+
+    /**
+     * Notifications the user accepted since the process started or the last download landed.
+     * They are not offered again in that time, whether their read was saved or not.
+     *
+     * Concurrent because it is written from the main thread when the user accepts and cleared
+     * from the metadata sync worker when a download lands.
+     */
+    val acceptedInThisSession: MutableSet<String> = ConcurrentHashMap.newKeySet()
 }
 
 interface NotificationsView {

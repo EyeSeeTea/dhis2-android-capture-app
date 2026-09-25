@@ -42,12 +42,14 @@ class NotificationsPresenterTest {
     fun setUp() {
         ShowNotifications.isPending = false
         ShowNotifications.onPending = null
+        ShowNotifications.acceptedInThisSession.clear()
     }
 
     @After
     fun tearDown() {
         ShowNotifications.isPending = false
         ShowNotifications.onPending = null
+        ShowNotifications.acceptedInThisSession.clear()
     }
 
     @Test
@@ -126,6 +128,81 @@ class NotificationsPresenterTest {
             "nothing was persisted, so the notification must be offered again",
             ShowNotifications.isPending,
         )
+    }
+
+    @Test
+    fun `an accepted notification is not shown again while its read is still being saved`() =
+        runTest {
+            val notification = givenANotification("a")
+            givenStoredNotifications("a")
+            givenTheNotificationCanBeAccepted(notification)
+            val presenter = givenAPresenter()
+            presenter.refresh(view)
+
+            // The cache still holds it: the save has not re-filtered the store yet, which is
+            // what the user hits by going back as soon as they accept.
+            presenter.markNotificationAsRead(notification)
+            presenter.refresh(view)
+
+            assertEquals(1, view.renderCalls.size)
+        }
+
+    @Test
+    fun `an accepted notification whose read could not be saved is not shown again in the session`() =
+        runTest {
+            val notification = givenANotification("a")
+            givenStoredNotifications("a")
+            whenever(notificationRepository.getById(notification.id)) doReturn flowOf(null)
+            val presenter = givenAPresenter()
+
+            presenter.markNotificationAsRead(notification)
+            presenter.refresh(view)
+            presenter.refresh(view)
+
+            // Not offered on every screen while the server keeps failing: it comes back after
+            // the next download or in a new process, where the read is retried.
+            assertEquals(0, view.renderCalls.size)
+        }
+
+    @Test
+    fun `accepting one notification does not hide the others`() = runTest {
+        val accepted = givenANotification("a")
+        givenStoredNotifications("a", "b")
+        givenTheNotificationCanBeAccepted(accepted)
+        val presenter = givenAPresenter()
+
+        presenter.markNotificationAsRead(accepted)
+        presenter.refresh(view)
+
+        assertEquals(listOf("b"), view.renderCalls.single().map { it.id })
+    }
+
+    @Test
+    fun `an accept that was not saved is offered again once a download lands`() = runTest {
+        val notification = givenANotification("a")
+        givenStoredNotifications("a")
+        whenever(notificationRepository.getById(notification.id)) doReturn flowOf(null)
+        val presenter = givenAPresenter()
+        presenter.markNotificationAsRead(notification)
+
+        // The download brings back what the server holds, where it is still unread.
+        presenter.markShowNotificationsAsPending()
+        presenter.refresh(view)
+
+        assertEquals(1, view.renderCalls.size)
+    }
+
+    @Test
+    fun `an accept that was not saved is offered again in a new app process`() = runTest {
+        val notification = givenANotification("a")
+        givenStoredNotifications("a")
+        whenever(notificationRepository.getById(notification.id)) doReturn flowOf(null)
+        givenAPresenter().markNotificationAsRead(notification)
+
+        givenANewAppProcess()
+        givenAPresenter().refresh(view)
+
+        assertEquals(1, view.renderCalls.size)
     }
 
     @Test
@@ -219,6 +296,13 @@ class NotificationsPresenterTest {
         whenever(notificationRepository.getById(notification.id)) doReturn flowOf(notification)
         whenever(userRepository.getCurrentUser()) doReturn User("user1", "User One")
         whenever(notificationRepository.save(any())) doReturn flowOf(Unit)
+    }
+
+    // Only process-lifetime state is lost; the cache on disk survives a restart.
+    private fun givenANewAppProcess() {
+        ShowNotifications.isPending = false
+        ShowNotifications.onPending = null
+        ShowNotifications.acceptedInThisSession.clear()
     }
 
     private fun givenNoStoredNotifications() {
