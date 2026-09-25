@@ -2,11 +2,18 @@ package org.dhis2.usescases.general
 // EyeSeeTea customization - 2FA support
 
 import io.reactivex.Observable
-import io.reactivex.Scheduler
-import io.reactivex.disposables.Disposable
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.dhis2.usescases.login.LoginActivity
 import org.dhis2.usescases.qrScanner.ScanActivity
 import org.dhis2.usescases.splash.SplashActivity
+import org.hisp.dhis.android.core.D2
 import timber.log.Timber
 
 /**
@@ -18,7 +25,7 @@ import timber.log.Timber
  * Nothing in the app listened to that event, so the user stayed on the Home with every request
  * to the server failing, and logging out crashed because the credentials were already gone.
  *
- * Two checks, because the event is a PublishSubject and is only delivered while someone listens.
+ * Two checks, because the SDK only delivers the event to whoever is listening at that moment.
  * Each resumed screen listens until it pauses, and on resume it also checks that there still is a
  * logged-in user, which catches a session that ended while no screen was listening — during a
  * background sync or a screen transition.
@@ -27,21 +34,21 @@ import timber.log.Timber
  * login screen opens.
  *
  * Kept out of the base activity so it can be unit tested; the base activity has no test harness
- * here. RxJava only because that is what the SDK exposes.
+ * here.
  */
 class SessionEndWatcher(
     private val isLoggedIn: () -> Boolean,
-    private val sessionEnded: Observable<Unit>,
-    private val observeOn: Scheduler,
+    private val sessionEnded: Flow<Unit>,
 ) {
-    private var subscription: Disposable? = null
+    private var listening: Job? = null
 
     /**
-     * Starts listening for [screen]. Returns false if the session had already ended, after
-     * calling [onEnded]; [onEnded] is called at most once.
+     * Starts listening for [screen] in [scope], the screen's own lifecycle scope. Returns false if
+     * the session had already ended, after calling [onEnded]; [onEnded] is called at most once.
      */
     fun start(
         screen: Class<*>,
+        scope: CoroutineScope,
         onEnded: () -> Unit,
     ): Boolean {
         if (!watches(screen)) return true
@@ -49,20 +56,27 @@ class SessionEndWatcher(
             onEnded()
             return false
         }
-        subscription =
-            sessionEnded.observeOn(observeOn).subscribe(
-                {
-                    stop()
-                    onEnded()
-                },
-                { Timber.e(it) },
-            )
+        listening =
+            scope.launch {
+                try {
+                    // first(): a rejected session fails every request in flight, and each one
+                    // announces it; the user is taken to login once.
+                    sessionEnded.first()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e)
+                    return@launch
+                }
+                listening = null
+                onEnded()
+            }
         return true
     }
 
     fun stop() {
-        subscription?.dispose()
-        subscription = null
+        listening?.cancel()
+        listening = null
     }
 
     companion object {
@@ -72,3 +86,15 @@ class SessionEndWatcher(
         fun watches(screen: Class<*>): Boolean = screensBeforeASession.none { it.isAssignableFrom(screen) }
     }
 }
+
+/**
+ * The SDK's end-of-session event as a Flow. The SDK exposes it as an RxJava Observable; this is the
+ * boundary where it is wrapped, so the rest of this code stays on coroutines.
+ */
+fun sdkSessionEnded(d2: D2): Flow<Unit> = d2.userModule().accountManager().logOutObservable().asFlow()
+
+internal fun <T : Any> Observable<T>.asFlow(): Flow<T> =
+    callbackFlow {
+        val subscription = subscribe({ trySend(it) }, { close(it) }, { close() })
+        awaitClose { subscription.dispose() }
+    }

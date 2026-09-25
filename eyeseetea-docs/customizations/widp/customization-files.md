@@ -189,7 +189,7 @@ New files:
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorState.kt` — the sealed state and `TwoFactorType`
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorRequiredException.kt`
 - `app/src/main/java/org/dhis2/usescases/general/SessionCheckOnStart.kt` — once per process, a minimal authenticated request (`me?fields=id`) when the user reaches a screen of the app, so an expired session is rejected at once
-- `app/src/main/java/org/dhis2/usescases/general/SessionEndWatcher.kt` — takes the user back to login when the SDK announces that the server session ended (`accountManager().logOutObservable()`), and on resume when there is no logged-in user any more
+- `app/src/main/java/org/dhis2/usescases/general/SessionEndWatcher.kt` — takes the user back to login when the SDK announces that the server session ended (`accountManager().logOutObservable()`, wrapped as a Flow in `sdkSessionEnded()`, the only RxJava touch point), and on resume when there is no logged-in user any more
 
 Shared files carrying a WIDP delta:
 

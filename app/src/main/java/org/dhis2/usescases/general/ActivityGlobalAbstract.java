@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.lifecycle.LifecycleOwnerKt;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -48,7 +49,6 @@ import java.util.Locale;
 import javax.inject.Inject;
 
 import io.noties.markwon.Markwon;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import kotlin.Unit;
 import org.hisp.dhis.android.core.D2;
 import org.hisp.dhis.android.core.D2Manager;
@@ -117,9 +117,9 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
         D2 d2 = D2Manager.getD2();
         sessionEndWatcher = new SessionEndWatcher(
                 () -> d2.userModule().blockingIsLogged(),
-                d2.userModule().accountManager().logOutObservable(),
-                AndroidSchedulers.mainThread());
-        boolean sessionAlive = sessionEndWatcher.start(getClass(), () -> {
+                SessionEndWatcherKt.sdkSessionEnded(d2));
+        boolean sessionAlive = sessionEndWatcher.start(
+                getClass(), LifecycleOwnerKt.getLifecycleScope(this), () -> {
             returnToLoginWithSessionExpired();
             return Unit.INSTANCE;
         });
