@@ -187,6 +187,7 @@ New files:
 
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorState.kt` — the sealed state and `TwoFactorType`
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorRequiredException.kt`
+- `app/src/main/java/org/dhis2/usescases/general/SessionEndWatcher.kt` — takes the user back to login when the SDK announces that the server session ended (`accountManager().logOutObservable()`), and on resume when there is no logged-in user any more
 
 Shared files carrying a WIDP delta:
 
@@ -201,6 +202,7 @@ Shared files carrying a WIDP delta:
 - `login/src/commonMain/composeResources/values/strings.xml` — the five 2FA UI strings
 - `commonskmm/src/androidMain/kotlin/org/dhis2/mobile/commons/resources/D2ErrorMessageProviderImpl.kt` — the six 2FA message branches
 - `commonskmm/src/commonMain/composeResources/values/strings.xml` — those six messages
+- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — starts `SessionEndWatcher` on resume and stops it on pause; opens the login screen with the session-expired message, reusing the OpenID extra
 
 Tests:
 

@@ -106,6 +106,13 @@ Expected result:
 - correct code: login succeeds
 - incorrect code: red error message "Incorrect two factor code"
 
+Session after a restart:
+1. Log in with the 2FA user and wait for the sync to finish.
+2. Close the app completely (swipe it away from recents) and reopen it.
+3. The session does not survive the restart. As soon as the app talks to the server, it must
+   open the login screen with the "session has expired" message — never stay on the Home with
+   requests failing or "you seem to be offline", and never crash on logout.
+
 ### 4b. Email
 
 Manual flow:

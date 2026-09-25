@@ -5,6 +5,7 @@ import static org.dhis2.utils.analytics.AnalyticsConstants.SHOW_HELP;
 
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.os.Bundle;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,6 +26,8 @@ import org.dhis2.commons.ActivityResultObservable;
 import org.dhis2.commons.Constants;
 import org.dhis2.commons.dialogs.CustomDialog;
 import org.dhis2.commons.popupmenu.AppMenuHelper;
+import org.dhis2.usescases.login.LoginActivity;
+import org.dhis2.usescases.login.LoginActivityKt;
 import org.dhis2.mobile.commons.reporting.CrashReportController;
 import org.dhis2.usescases.notifications.domain.Notification;
 import org.dhis2.usescases.notifications.presentation.NotificationScreens;
@@ -43,7 +46,10 @@ import java.util.Locale;
 import javax.inject.Inject;
 
 import io.noties.markwon.Markwon;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import kotlin.Unit;
+import org.hisp.dhis.android.core.D2;
+import org.hisp.dhis.android.core.D2Manager;
 import org.koin.java.KoinJavaComponent;
 
 
@@ -70,6 +76,9 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     private final VisibleNotificationDialogs visibleNotificationDialogs =
             new VisibleNotificationDialogs();
 
+    // EyeSeeTea customization - 2FA support
+    private SessionEndWatcher sessionEndWatcher;
+
     private CustomDialog descriptionDialog;
 
 
@@ -88,7 +97,38 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     @Override
     protected void onResume() {
         super.onResume();
+        // EyeSeeTea customization - 2FA support
+        if (!watchSessionEnd()) {
+            return;
+        }
         refreshNotifications();
+    }
+
+    // EyeSeeTea customization - 2FA support
+    // When the server rejects the session the SDK removes the stored credentials and announces it;
+    // nothing listened, so the user stayed inside with every request failing. Returns false if the
+    // session had already ended, in which case the login screen is on its way.
+    private boolean watchSessionEnd() {
+        if (((App) getApplicationContext()).getServerComponent() == null) {
+            return true;
+        }
+        D2 d2 = D2Manager.getD2();
+        sessionEndWatcher = new SessionEndWatcher(
+                () -> d2.userModule().blockingIsLogged(),
+                d2.userModule().accountManager().logOutObservable(),
+                AndroidSchedulers.mainThread());
+        return sessionEndWatcher.start(getClass(), () -> {
+            returnToLoginWithSessionExpired();
+            return Unit.INSTANCE;
+        });
+    }
+
+    // EyeSeeTea customization - 2FA support
+    // Same destination and message as an expired OpenID session.
+    private void returnToLoginWithSessionExpired() {
+        Bundle bundle = LoginActivity.Companion.bundle(true, -1, false, null, false, false);
+        bundle.putBoolean(LoginActivityKt.EXTRA_SESSION_EXPIRED, true);
+        startActivity(LoginActivity.class, bundle, true, true, null);
     }
 
     // EyeSeeTea customization - Notifications system
@@ -129,6 +169,10 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
     // EyeSeeTea customization - Notifications system
     @Override
     protected void onPause() {
+        // EyeSeeTea customization - 2FA support
+        if (sessionEndWatcher != null) {
+            sessionEndWatcher.stop();
+        }
         ShowNotifications.INSTANCE.setOnPending(null);
         // Only the screen in front holds a notification dialog. Left open, a dialog stayed live
         // under the screen opened on top, which showed its own: accepting one and going back
