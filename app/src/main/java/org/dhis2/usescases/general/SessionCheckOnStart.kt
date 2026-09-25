@@ -3,6 +3,7 @@ package org.dhis2.usescases.general
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.hisp.dhis.android.core.D2
 import timber.log.Timber
@@ -25,8 +26,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 object SessionCheckOnStart {
     private val checked = AtomicBoolean(false)
 
+    // One scope for the whole process instead of a new unscoped one per call: the check belongs to
+    // the app's start, not to the screen that triggers it, and must not be cancelled if that screen
+    // closes first. SupervisorJob keeps one failed check from cancelling the retry.
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     fun checkOnce(d2: D2) =
-        checkOnce(CoroutineScope(Dispatchers.IO)) {
+        checkOnce(scope) {
             d2.httpServiceClient().get<String> { url("me?fields=id") }
         }
 
