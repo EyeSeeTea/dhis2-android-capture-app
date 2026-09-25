@@ -67,6 +67,25 @@ When the server returns `TWO_FACTOR_MANY_SEND_ATTEMPTS`, the app SHALL display t
 - **WHEN** the SDK surfaces `TWO_FACTOR_MANY_SEND_ATTEMPTS`
 - **THEN** the app replaces the resend state with the administrator-contact message and disables further resend actions
 
+### Requirement: An ended server session returns the user to login
+When the server rejects the session, the SDK removes the stored credentials and announces it on `accountManager().logOutObservable()`. The app SHALL then take the user to the login screen with the session-expired message, instead of keeping them inside with every server request failing. This is the expected path for a 2FA account after an app restart: its session lives in a cookie held in memory and cannot be rebuilt from the stored password.
+
+#### Scenario: 2FA account after an app restart
+- **WHEN** a 2FA user restarts the app and the first request to the server is rejected
+- **THEN** the app takes them to the login screen with the session-expired message, and logging out is not reachable with the credentials already removed
+
+#### Scenario: Session checked as soon as the user reaches the app
+- **WHEN** the app process starts and the user reaches a screen of the app with a connection
+- **THEN** the app makes one minimal authenticated request (`me?fields=id`), so a session that did not survive the restart is rejected straight away instead of at the first sync; without a connection the request is tried again on the next screen
+
+#### Scenario: Session ended while no screen was listening
+- **WHEN** the session ended during a background sync or a screen transition, and a screen of the app resumes
+- **THEN** the app finds no logged-in user and takes them to the login screen with the session-expired message
+
+#### Scenario: Screens in front of a session
+- **WHEN** the splash, the login screen or the QR scanner opened from it resumes without a logged-in user
+- **THEN** the app stays on that screen
+
 ### Requirement: SDK patch dependency
 This capability SHALL only function when built against the EyeSeeTea SDK fork that provides:
 - `LoginPayload.twoFactorCode: String?`

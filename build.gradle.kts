@@ -18,6 +18,9 @@ plugins {
     alias(libs.plugins.kotlin.compose.compiler) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.cyclonedx)
+    alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.android.kotlin.multiplatform.library) apply false
+    alias(libs.plugins.android.lint) apply false
 
 }
 
@@ -92,6 +95,8 @@ allprojects {
     }
 
     tasks.withType<AbstractTestTask> {
+        // ensures test results are not cached between test runs
+        outputs.upToDateWhen { false }
         afterSuite(
             KotlinClosure2({ desc: TestDescriptor, result: TestResult ->
                 if (result.resultType == TestResult.ResultType.FAILURE) {

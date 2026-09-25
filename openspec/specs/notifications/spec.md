@@ -15,7 +15,13 @@ The app SHALL fetch the notification list from the DHIS2 server at `dataStore/no
 
 #### Scenario: Datastore endpoint is unreachable
 - **WHEN** the datastore endpoint returns an error or is not reachable
-- **THEN** the metadata sync SHALL complete without failing, and SHALL leave the previously stored notifications untouched
+- **THEN** the metadata sync SHALL complete without failing, SHALL leave the previously stored notifications untouched, and SHALL NOT mark notifications as pending
+
+A failed fetch SHALL be distinguishable from a datastore that is genuinely empty: only the latter replaces the stored notifications.
+
+#### Scenario: User groups cannot be read
+- **WHEN** the notifications are fetched but the lookup of the current user's groups (`users/{id}?fields=userGroups`) returns an error or is not reachable
+- **THEN** the metadata sync SHALL complete without failing, SHALL leave the previously stored notifications untouched, and SHALL NOT mark notifications as pending, because filtering without the user's groups would drop every group-targeted notification
 
 ### Requirement: Notifications are filtered for the current user
 The app SHALL store only notifications that are relevant to the currently logged-in user, by applying the following combined filter during sync.
@@ -56,8 +62,12 @@ The app SHALL persist the filtered notification list to local storage under the 
 - **WHEN** a sync finishes with filtered notifications for this user
 - **THEN** the `NOTIFICATIONS` entry in SharedPreferences contains the filtered list serialized as JSON
 
+#### Scenario: The user leaves
+- **WHEN** a logout or an account deletion completes, or the server session ends
+- **THEN** the stored notifications SHALL be cleared, so the next user on the device never sees them; that user's own notifications arrive with their sync
+
 ### Requirement: Notifications are displayed on activity resume
-The app SHALL load persisted notifications and present them to the user on activity resume in the base activity of the authenticated area.
+The app SHALL load persisted notifications and present them to the user on activity resume in the base activity of the authenticated area. The app SHALL treat a notification as pending until it has been accepted: showing it is not acknowledgement, only the accept action marks it read. The app SHALL show at most one dialog per notification on a given screen, and only the screen in front SHALL hold notification dialogs. Only the Home while it shows the program list, and the list a program opens into (events, tracked entities or data sets), SHALL show notification dialogs, and only with a logged-in session. No other screen shows them: not the splash, the login screen (which also serves the PIN unlock) or the sync progress screen, not the Home's other sections (settings, about, troubleshooting), and not forms or dashboards.
 
 #### Scenario: Showing a pending notification
 - **WHEN** an authenticated activity resumes and there is at least one pending notification
@@ -66,6 +76,30 @@ The app SHALL load persisted notifications and present them to the user on activ
 #### Scenario: No pending notifications
 - **WHEN** an authenticated activity resumes and there are no pending notifications
 - **THEN** no dialog is shown
+
+#### Scenario: Dialog dismissed without accepting
+- **WHEN** the user dismisses the notification dialog without accepting it, and an authenticated activity resumes afterwards
+- **THEN** the notification is shown again, because it is still unread
+
+#### Scenario: Dialog already on screen
+- **WHEN** an authenticated activity resumes while its dialog for a pending notification is still on screen
+- **THEN** no second dialog is built for that notification, so accepting it marks it read once
+
+#### Scenario: Another screen comes to the front
+- **WHEN** a screen showing a notification dialog goes to the background, because another screen opens on top or the app is sent to the background
+- **THEN** its dialog is closed without marking the notification read, and the screen in front shows the notification instead, so there is never more than one live dialog for it
+
+#### Scenario: Screens outside the program lists do not show notifications
+- **WHEN** an unread notification is cached and the splash, the login screen, the sync progress screen, a form or a dashboard resumes, or any screen resumes without a logged-in session
+- **THEN** no dialog is shown
+
+#### Scenario: A sync finishes in settings
+- **WHEN** the user runs a metadata sync from the Home's settings section and it brings an unread notification
+- **THEN** no dialog is shown in settings, and the notification is shown when the Home returns to the program list
+
+#### Scenario: App restarted with an unread notification cached
+- **WHEN** the app process is restarted after a notification was dismissed without accepting it, and an authenticated activity resumes before any new metadata sync
+- **THEN** the notification is shown again, because the persisted list — not an in-memory flag — decides what is pending
 
 ### Requirement: Notification content supports Markdown
 The notification dialog SHALL render `content` as Markdown using Markwon, so that authors can include formatting, lists, and links.
@@ -95,6 +129,11 @@ When the user dismisses the notification via the accept button, the app SHALL ap
 #### Scenario: PUT fails
 - **WHEN** the network request to mark the notification as read fails
 - **THEN** the app does not lose the local state — the next sync SHALL reconcile the read status
+- **AND** the notification is not offered again in the same app session, but is offered again after the next metadata sync or when the app restarts, so the read is retried at most once per start rather than on every screen
+
+#### Scenario: Leaving the screen right after accepting
+- **WHEN** the user accepts a notification and another screen resumes before the read has been saved
+- **THEN** the notification is not shown again, so it is marked read once
 
 ### Requirement: Read notifications are not shown again
 Once a notification has been marked as read by the current user, subsequent filtering passes SHALL exclude it, so the user never sees the same notification twice.

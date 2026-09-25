@@ -1,7 +1,6 @@
 package org.dhis2.utils.session
 // EyeSeeTea customization - Change Server URL
 
-import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,8 +24,6 @@ class ChangeServerURLPresenter(
     private var currentServerURL: String = ""
     private var newServerURL: String = ""
     private var mode = Mode.EDIT
-
-    var disposable: CompositeDisposable = CompositeDisposable()
 
     fun init() {
         val serverURL = preferenceProvider.getString(SECURE_SERVER_URL) ?: ""
@@ -69,12 +66,14 @@ class ChangeServerURLPresenter(
 
                 d2.databaseAdapter().execSQL("DELETE FROM SystemInfo")
 
-                CoroutineScope(Dispatchers.IO).launch {
-                    d2.systemInfoModule().systemInfo().download().blockingAwait()
-                }
+                // Awaited here, in the same coroutine, instead of in a detached scope: the local
+                // SystemInfo has just been deleted, so reporting success before the new server has
+                // answered would tell the user the change worked when it may not have. Running it
+                // here also puts any failure inside the catch below.
+                d2.systemInfoModule().systemInfo().download().blockingAwait()
 
                 launch(Dispatchers.Main) {
-                    view.renderSuccess("Change realized successfully to$newServerURL")
+                    view.renderSuccess("Server changed successfully to $newServerURL")
                     view.closeDialog()
                 }
             } catch (e: Exception) {
@@ -97,8 +96,6 @@ class ChangeServerURLPresenter(
         updatedServer.add(newServerURL)
 
         preferenceProvider.setValue(Constants.PREFS_URLS, updatedServer)
-
-        view.closeDialog()
     }
 
     private fun updateCredentialsAndDataBaseConfigurations() {
@@ -107,6 +104,11 @@ class ChangeServerURLPresenter(
 
     private fun handleError(error: Throwable) {
         Timber.e(error)
+
+        // Back to EDIT along with the view: leaving it on WARNING would make the next OK skip the
+        // confirmation dialog and re-apply straight away. Unreachable until the awaited download
+        // started reporting failures instead of swallowing them.
+        mode = Mode.EDIT
 
         view.renderError(error)
         view.hideLoginProgress()

@@ -33,7 +33,10 @@ class ChangeServerUrlDialog() : DialogFragment(), ChangeServerURLView {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NO_TITLE, android.R.style.Theme_DeviceDefault_Light_NoActionBar)
-        app().createChangeServerULComponent(
+        // Built straight from the user component. Upstream deleted App.java in 3.4.x, and with
+        // it the createChangeServerULComponent() holder this used to call; going through
+        // UserComponent.plus() keeps the graph without needing anything added back to App.
+        app().userComponent()!!.plus(
             ChangeServerURLModule(
                 requireActivity().applicationContext,
                 this
@@ -111,7 +114,9 @@ class ChangeServerUrlDialog() : DialogFragment(), ChangeServerURLView {
     }
 
     override fun dismiss() {
-        app().releaseSessionComponent()
+        // Upstream removed Dagger's SessionComponent in 3.4.x along with App.java, and with it
+        // releaseSessionComponent(). This dialog never owned that component — the call was
+        // copied from PinDialog — so there is nothing to release here.
         dismissAllowingStateLoss()
     }
 
