@@ -119,10 +119,17 @@ public abstract class ActivityGlobalAbstract extends SessionManagerActivity
                 () -> d2.userModule().blockingIsLogged(),
                 d2.userModule().accountManager().logOutObservable(),
                 AndroidSchedulers.mainThread());
-        return sessionEndWatcher.start(getClass(), () -> {
+        boolean sessionAlive = sessionEndWatcher.start(getClass(), () -> {
             returnToLoginWithSessionExpired();
             return Unit.INSTANCE;
         });
+        // EyeSeeTea customization - 2FA support
+        // Ask the server straight away instead of waiting for the first request: a session that
+        // did not survive a restart is rejected now, and the watcher above takes the user to login.
+        if (sessionAlive && SessionEndWatcher.Companion.watches(getClass())) {
+            SessionCheckOnStart.INSTANCE.checkOnce(d2);
+        }
+        return sessionAlive;
     }
 
     // EyeSeeTea customization - 2FA support

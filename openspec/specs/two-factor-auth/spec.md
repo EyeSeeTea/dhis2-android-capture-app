@@ -74,6 +74,10 @@ When the server rejects the session, the SDK removes the stored credentials and 
 - **WHEN** a 2FA user restarts the app and the first request to the server is rejected
 - **THEN** the app takes them to the login screen with the session-expired message, and logging out is not reachable with the credentials already removed
 
+#### Scenario: Session checked as soon as the user reaches the app
+- **WHEN** the app process starts and the user reaches a screen of the app with a connection
+- **THEN** the app makes one minimal authenticated request (`me?fields=id`), so a session that did not survive the restart is rejected straight away instead of at the first sync; without a connection the request is tried again on the next screen
+
 #### Scenario: Session ended while no screen was listening
 - **WHEN** the session ended during a background sync or a screen transition, and a screen of the app resumes
 - **THEN** the app finds no logged-in user and takes them to the login screen with the session-expired message
