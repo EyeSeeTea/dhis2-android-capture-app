@@ -23,7 +23,7 @@ context: |
     - Current version:    3.4.2-widp-fork-1 (target: next Oslo release, via develop-eyeseetea)
     - Upgrade branch:     feature-widp/redo_3_4_2
     - Base branch:        develop-eyeseetea
-    - SDK fork:           EyeSeeTea/dhis2-android-sdk 1.14.2-eyeseetea-fork-1 (2FA + auth patches)
+    - SDK fork:           EyeSeeTea/dhis2-android-sdk 1.14.2-eyeseetea-fork-3 (2FA + auth + disabled-account login patches)
 
   ## Repository layout (relevant)
 

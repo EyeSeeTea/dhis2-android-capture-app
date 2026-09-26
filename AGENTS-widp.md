@@ -6,7 +6,7 @@ EyeSeeTea fork of the DHIS2 Android Capture app for the WIDP client.
 - **Current version:** `3.4.2-widp-fork-1`
 - **Upstream:** dhis2/dhis2-android-capture-app
 - **Baseline branch:** `develop-eyeseetea` (shared EyeSeeTea baseline, never client-specific)
-- **SDK fork:** EyeSeeTea/dhis2-android-sdk `1.14.2-eyeseetea-fork-1` (2FA + auth patches)
+- **SDK fork:** EyeSeeTea/dhis2-android-sdk `1.14.2-eyeseetea-fork-3` (2FA + auth + disabled-account login patches)
 
 ## Project structure
 

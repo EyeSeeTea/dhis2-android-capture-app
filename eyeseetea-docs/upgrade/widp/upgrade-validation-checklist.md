@@ -161,6 +161,48 @@ Expected result:
 - if the field has no description and has a URL, the supporting text shows only the URL
 - the URL is visible inline under the field without opening a separate dialog
 
+## 6. Disabled account login
+
+Preconditions:
+- Use a server account disabled by an administrator or by the 2FA enforcement policy.
+- Keep a second local account available for the established-session scenario.
+
+### 6a. Disabled credential login
+
+Manual flow:
+1. Submit credentials for the disabled account.
+2. Inspect the authentication requests.
+3. Wait for the login attempt to finish and try submitting again.
+
+Expected result:
+- exactly one `/api/auth/login` request and no `/api/me` request
+- the current login screen remains visible and does not close or restart
+- `Authenticating...` ends without the previous multi-minute wait
+- the localized disabled-account message is shown and directs the user to an administrator
+- the login action becomes available for another attempt
+
+### 6b. Account disabled during an established session
+
+Manual flow:
+1. Start with an existing authenticated/local account.
+2. Trigger the server-side disabled-account response from a protected screen.
+
+Expected result:
+- the affected session is removed once
+- the app navigates to login once
+- the account-disabled explanation is shown once
+- unsynchronized local data is not deleted by a rejected credential login
+
+Validation recorded on 2026-09-23:
+- package: `com.eyeseetea.widp.debug`
+- version: `3.4.2-widp-fork-1` (`9c2202c12` shown in-app)
+- SDK: `febe27964b3a8a330d8e14c27b01a25cb44b6b91`
+- environment: PREPROD-INDIV/UAT, Android emulator
+- result: passed; Android CLI visual and layout inspection confirmed the disabled-account error,
+  completed loading state and enabled login action. Network sequence and the established-session
+  scenario were verified manually by the developer. No screenshot is stored because it contains
+  a server URL and test username.
+
 ## Before recording any result
 
 Check **both** the version and the package name on the device first:
