@@ -22,7 +22,7 @@ context: |
     - Application ID:     oca.com.dhis2
     - Current version:    3.4.2-oca-fork-1
     - Base branch:        develop-eyeseetea
-    - SDK fork:           com.github.EyeSeeTea:dhis2-android-sdk 1.14.2-eyeseetea-fork-1 (JitPack; no OCA-specific patches yet — same fork used by develop-eyeseetea)
+    - SDK fork:           com.github.EyeSeeTea:dhis2-android-sdk 1.14.2-eyeseetea-fork-4 (JitPack; adds the synced data retention purge and the disabled-account login fix on top of fork-1, which develop-eyeseetea uses)
     - Distribution:       Google Play. Release build/upload is a manual process run by the project's PM, not automated in this repo's CI.
 
   ## Repository layout (relevant)

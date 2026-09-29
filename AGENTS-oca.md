@@ -6,7 +6,7 @@ EyeSeeTea fork of the DHIS2 Android Capture app for the OCA client.
 - **Current version:** `3.4.2-oca-fork-1`
 - **Upstream:** dhis2/dhis2-android-capture-app
 - **Baseline branch:** `develop-eyeseetea` (shared EyeSeeTea baseline, never client-specific)
-- **SDK fork:** EyeSeeTea/dhis2-android-sdk `1.14.2-eyeseetea-fork-1` (JitPack; no OCA-specific patches yet — same fork used by `develop-eyeseetea`)
+- **SDK fork:** EyeSeeTea/dhis2-android-sdk `1.14.2-eyeseetea-fork-4` (JitPack; adds the synced data retention purge and the disabled-account login fix on top of `fork-1`, which `develop-eyeseetea` uses)
 - **Distribution:** published to Google Play. Release build/upload is a manual process run by the project's PM, not automated in this repo's CI.
 
 ## Project structure
