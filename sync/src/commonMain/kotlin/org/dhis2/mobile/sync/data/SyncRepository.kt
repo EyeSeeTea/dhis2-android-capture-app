@@ -62,4 +62,7 @@ interface SyncRepository {
     suspend fun isLoggedIn(): Boolean
 
     suspend fun toggleSMS(enable: Boolean): Result<Unit>
+
+    // EyeSeeTea customization - Synced Data Retention Purge
+    suspend fun purgeRetention(): Result<Unit>
 }

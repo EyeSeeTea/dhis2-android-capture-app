@@ -6,7 +6,7 @@ EyeSeeTea fork of the DHIS2 Android Capture app for the OCA client.
 - **Current version:** `3.4.2-oca-fork-1`
 - **Upstream:** dhis2/dhis2-android-capture-app
 - **Baseline branch:** `develop-eyeseetea` (shared EyeSeeTea baseline, never client-specific)
-- **SDK fork:** EyeSeeTea/dhis2-android-sdk `1.14.2-eyeseetea-fork-1` (JitPack; no OCA-specific patches yet — same fork used by `develop-eyeseetea`)
+- **SDK fork:** EyeSeeTea/dhis2-android-sdk `1.14.2-eyeseetea-fork-4` (JitPack; adds the synced data retention purge and the disabled-account login fix on top of `fork-1`, which `develop-eyeseetea` uses)
 - **Distribution:** published to Google Play. Release build/upload is a manual process run by the project's PM, not automated in this repo's CI.
 
 ## Project structure
@@ -31,12 +31,13 @@ Java 17 required. Gradle 8.9.3 with parallel execution.
 
 ## Customizations
 
-0 confirmed OCA-specific customizations as of this writing. The `oca` flavor exists (product flavor, `applicationId`, branding, and the boilerplate DI/extension-point files every flavor must carry — `PostMetadataSyncModule.kt`, `GranularSyncModule.kt`), but nothing in it diverges functionally from `develop-eyeseetea` yet. See `eyeseetea-docs/customizations/oca/customization-files.md` §1 for the flavor surface inventory.
+1 confirmed OCA-specific customization as of this writing. The `oca` flavor itself (product flavor, `applicationId`, branding, and the boilerplate DI/extension-point files every flavor must carry — `PostMetadataSyncModule.kt`, `GranularSyncModule.kt`) does not diverge functionally from `develop-eyeseetea`. See `eyeseetea-docs/customizations/oca/customization-files.md` §1 for the flavor surface inventory and §2 for the customization below.
 
 When a real business customization is confirmed for OCA, add a row here and create its spec under `openspec/specs/<capability>/spec.md`:
 
 | # | Spec slug | Status | Risk |
 |---|-----------|--------|------|
+| 1 | synced-data-retention-purge | active | low |
 <!-- add one row per active customization; status is one of: active, broken, deprecated -->
 
 ### Customization code rules

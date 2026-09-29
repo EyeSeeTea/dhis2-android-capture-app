@@ -14,6 +14,8 @@ import org.dhis2.mobile.commons.providers.LAST_DATA_SYNC
 import org.dhis2.mobile.commons.providers.LAST_DATA_SYNC_STATUS
 import org.dhis2.mobile.commons.providers.LAST_META_SYNC
 import org.dhis2.mobile.commons.providers.LAST_META_SYNC_STATUS
+import org.dhis2.mobile.commons.providers.LAST_RETENTION_PURGE
+import org.dhis2.mobile.commons.providers.LAST_RETENTION_PURGE_STATUS
 import org.dhis2.mobile.commons.providers.LIMIT_BY_ORG_UNIT
 import org.dhis2.mobile.commons.providers.LIMIT_BY_PROGRAM
 import org.dhis2.mobile.commons.providers.MAX_RESERVED_VALUES
@@ -361,6 +363,25 @@ class AndroidSyncRepository(
             }
             Result.success(result)
         }
+
+    // EyeSeeTea customization - Synced Data Retention Purge
+    @OptIn(ExperimentalTime::class)
+    override suspend fun purgeRetention(): Result<Unit> {
+        val result =
+            execute {
+                d2.retentionModule().purge()
+                Result.success(Unit)
+            }
+        preferences.setValue(
+            LAST_RETENTION_PURGE,
+            Clock.System
+                .now()
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+                .format(dateTimeFormat),
+        )
+        preferences.setValue(LAST_RETENTION_PURGE_STATUS, result.isSuccess)
+        return result
+    }
 
     override suspend fun toggleSMS(enable: Boolean): Result<Unit> =
         execute {
