@@ -18,16 +18,11 @@ class MarkNotificationAsRead(
             notification?.let { notification ->
                 val user = userRepository.getCurrentUser()
 
-                // Accepting twice must not append the user twice: a second accept finds the user
-                // already in the list the server returns, and only refreshes the cached copy.
-                val readByUsers =
-                    if (notification.readBy.any { it.id == user.uid }) {
-                        notification.readBy
-                    } else {
-                        notification.readBy + ReadBy(Date(), user.uid, user.displayName)
-                    }
+                val readByUsers = notification.readBy.toMutableList()
 
-                val notificationUpdated = notification.copy(readBy = readByUsers)
+                readByUsers.add(ReadBy(Date(), user.uid, user.displayName))
+
+                val notificationUpdated = notification.copy(readBy = readByUsers.toList())
 
                 notificationRepository.save(notificationUpdated)
             } ?: flow { emit(Unit) }

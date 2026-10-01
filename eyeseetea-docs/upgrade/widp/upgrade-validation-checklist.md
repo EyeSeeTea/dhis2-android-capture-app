@@ -77,7 +77,6 @@ Expected result:
   program screen, once
 - accepting with **no connection** leaves the notification unread: after closing and reopening
   the app it appears again, and accepting it with connection saves it
-- accepting the same notification twice (for example from two devices) adds one `readBy` entry
 - the `readBy` list on the server includes the user's ID and timestamp
 
 Additional checks:

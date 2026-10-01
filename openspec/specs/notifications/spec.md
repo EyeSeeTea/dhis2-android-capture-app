@@ -118,10 +118,6 @@ When the user dismisses the notification via the accept button, the app SHALL ap
 - **WHEN** the user clicks OK / Accept on the notification dialog
 - **THEN** the app appends a new `ReadBy` entry for the current user and sends a `PUT dataStore/notifications/notifications` with the full updated list
 
-#### Scenario: Accepting twice
-- **WHEN** a notification is accepted by a user who is already in its `readBy` list on the server
-- **THEN** the user is not added a second time
-
 #### Scenario: PUT fails
 - **WHEN** the network request to mark the notification as read fails
 - **THEN** the cached notifications are left as they were, so the notification stays unread and can be retried; it is not offered again during the same entry, and the next sync SHALL reconcile the read status
