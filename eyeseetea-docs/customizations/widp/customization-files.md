@@ -123,7 +123,7 @@ Domain layer (all new files):
 
 Presentation (new file):
 
-- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenter.kt` — presenter, the `ShowNotifications` flag, its `onPending` listener and the notifications accepted in the session, and the `NotificationsView` contract
+- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenter.kt` — presenter (the queue shown one dialog at a time), the `ShowNotifications` pending mark, and the `NotificationsView` contract
 
 DI — moved from Dagger to Koin in 3.4.2:
 
@@ -138,12 +138,11 @@ every screen.
 
 UI integration:
 
-- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements `NotificationsView`, resolves the presenter from Koin only on screens `NotificationScreens` allows (checked again at render time), refreshes on resume and exposes `refreshNotifications()` and the overridable `isOnProgramList()`, registers the `onPending` listener while resumed and clears it on pause, closes its notification dialogs on pause, skips rendering on a finishing or destroyed activity, renders the dialog with Markwon and resolves the locale translation
+- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements `NotificationsView`, resolves the presenter from Koin only on screens `NotificationScreens` allows, refreshes on resume and exposes `refreshNotifications()` and the overridable `isOnProgramList()`, skips rendering on a finishing or destroyed activity, renders one dialog at a time with Markwon and resolves the locale translation
 - `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsOnSessionEnd.kt` — new file: forgets the leaving user's cached notifications and this session's state; called on logout, account deletion and when the session ends
 - `app/src/main/java/org/dhis2/usescases/general/SessionManagerActivity.kt` — clears the notifications in the existing session callback, the one that takes the user to login when the SDK's automatic logout, OpenID or a disabled account ends the session
-- `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` — clears the notifications on `HomeEffect.GoToLogin` (completed logout or account deletion), overrides `isOnProgramList()` with the current Home section, and refreshes notifications when the Home switches back to the program list
+- `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` — clears the notifications on `HomeEffect.GoToLogin` (completed logout or account deletion), marks the notifications pending when the Home is created and when it hands over to its only program, overrides `isOnProgramList()` with the current Home section, and refreshes notifications when the Home switches back to the program list
 - `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationScreens.kt` — new file: decides which screens may show a notification — an explicit list: the Home while on the program list, and the event, tracked entity and data set lists; always with a logged-in session
-- `app/src/main/java/org/dhis2/usescases/notifications/presentation/VisibleNotificationDialogs.kt` — new file: tracks which notification dialogs are on screen for one activity instance, so a pending notification offered again on the next resume does not stack a second dialog on top of the first, and closes them when the activity goes to the background so only the screen in front holds one
 
 Sync integration — the hook moved in 3.4.2:
 

@@ -4,8 +4,8 @@ package org.dhis2.usescases.notifications.presentation
 import org.dhis2.usescases.notifications.domain.NotificationRepository
 
 /**
- * Forgets the notifications of the user whose session is ending: the cached list, and what this
- * process remembers about them.
+ * Forgets the notifications of the user whose session is ending: the cached list, and the mark
+ * that they are pending.
  *
  * The cache is a single entry for the whole app and nothing cleared it, so the next user on the
  * device was shown the previous user's notifications, or their own from another server, and
@@ -17,6 +17,5 @@ object NotificationsOnSessionEnd {
     fun forget(repository: NotificationRepository) {
         repository.clear()
         ShowNotifications.isPending = false
-        ShowNotifications.acceptedInThisSession.clear()
     }
 }

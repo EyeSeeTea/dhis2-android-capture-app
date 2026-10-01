@@ -63,25 +63,21 @@ Expected result:
 - content supports Markdown rendering
 - if translations exist for the device locale, translated content is shown; otherwise default content
 - after clicking OK, the notification does not reappear (marked as read)
-- if the dialog is dismissed **without** clicking OK (back button or tapping outside), the
-  notification appears again on the next screen: it was never marked as read
-- leaving the dialog **on screen**, pressing Home and returning shows the same single dialog,
-  not a second one stacked on top: accepting once must add exactly one `readBy` entry
-- dismissing the dialog without clicking OK, then **closing the app completely** (swipe it away
-  from recents) and reopening it, shows the notification again **without** a new metadata sync:
-  it is still unread and still cached
+- with several notifications, one dialog is shown at a time; accepting or dismissing one shows
+  the next
+- if the dialog is dismissed **without** clicking OK (back button or tapping outside), it does
+  not come back on the next screen; it reappears after **closing the app completely** (swipe it
+  away from recents) and reopening it, without a metadata sync, or after the next metadata sync
 - the dialog appears **only** on the Home's program list and on the list a program opens into
   (events, tracked entities, data sets): never on the loading, login / PIN or sync progress
   screens, in settings, about or troubleshooting, or inside a form
 - syncing metadata from settings with a new notification on the server shows nothing in
   settings; going back to the program list shows it
-- with a single program (the app opens the program screen by itself), the dialog appears once;
-  after accepting it and going back to the Home, no second dialog is waiting there, and the
-  datastore holds exactly one new `readBy` entry
-- accepting and going back **straight away** does not show the dialog again on the previous
-  screen, and the datastore holds exactly one new `readBy` entry
-- accepting with **no connection** does not show the dialog again while the app stays open; after
-  closing and reopening the app it appears again, and accepting it with connection saves it
+- with a single program (the app opens the program screen by itself), the dialog appears on that
+  program screen, once
+- accepting with **no connection** leaves the notification unread: after closing and reopening
+  the app it appears again, and accepting it with connection saves it
+- accepting the same notification twice (for example from two devices) adds one `readBy` entry
 - the `readBy` list on the server includes the user's ID and timestamp
 
 Additional checks:

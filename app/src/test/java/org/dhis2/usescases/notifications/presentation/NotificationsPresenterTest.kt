@@ -22,15 +22,17 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.util.Date
 
 /**
- * Covers the two display defects found during the 3.4.1 manual validation — the pending flag was
- * consumed even when there was nothing to show, and nothing refreshed once the asynchronous
- * download landed — plus the listener that replaced the view-passing fix now that the download
- * runs off any Activity, inside a `PostMetadataSyncAction`.
+ * Covers the notification flow: cached unread notifications are offered when the app is entered
+ * and after a sync, once, one dialog at a time. The mark is consumed before rendering, so resuming
+ * a screen again never shows the same notification twice.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class NotificationsPresenterTest {
@@ -41,239 +43,149 @@ class NotificationsPresenterTest {
     @Before
     fun setUp() {
         ShowNotifications.isPending = false
-        ShowNotifications.onPending = null
-        ShowNotifications.acceptedInThisSession.clear()
     }
 
     @After
     fun tearDown() {
         ShowNotifications.isPending = false
-        ShowNotifications.onPending = null
-        ShowNotifications.acceptedInThisSession.clear()
     }
 
     @Test
-    fun `shows the cached unread notifications on a fresh app process`() = runTest {
-        // A fresh process: nothing has marked anything pending since the restart, but the
-        // notification dismissed before it is still cached and still unread.
-        assertFalse(ShowNotifications.isPending)
+    fun `does nothing when nothing marked the notifications pending`() = runTest {
         givenStoredNotifications("a")
 
         givenAPresenter().refresh(view)
 
-        assertEquals(1, view.renderCalls.size)
-        assertEquals("a", view.renderCalls.single().single().id)
+        assertEquals(emptyList<String>(), view.shownIds())
     }
 
     @Test
-    fun `renders and keeps the pending flag until the notification is accepted`() = runTest {
-        givenStoredNotifications("a")
-        val presenter = givenAPresenter()
-        presenter.markShowNotificationsAsPending()
-
-        presenter.refresh(view)
-
-        assertEquals(1, view.renderCalls.size)
-        assertEquals("a", view.renderCalls.single().single().id)
-        assertTrue(
-            "showing is not accepting: a dialog dismissed without OK must come back",
-            ShowNotifications.isPending,
-        )
-    }
-
-    @Test
-    fun `shows the notification again on the next resume when it was not accepted`() = runTest {
-        givenStoredNotifications("a")
-        val presenter = givenAPresenter()
-        presenter.markShowNotificationsAsPending()
-
-        presenter.refresh(view)
-        presenter.refresh(view)
-
-        assertEquals(2, view.renderCalls.size)
-    }
-
-    @Test
-    fun `accepting the last notification stops it from being shown again`() = runTest {
-        val notification = givenANotification("a")
-        givenStoredNotifications("a")
-        givenTheNotificationCanBeAccepted(notification)
-        val presenter = givenAPresenter()
-        presenter.markShowNotificationsAsPending()
-        presenter.refresh(view)
-
-        // Accepting re-filters the store, so the accepted notification drops out of it.
-        givenNoStoredNotifications()
-        presenter.markNotificationAsRead(notification)
-
+    fun `entering the app shows the cached unread notification of a fresh process`() = runTest {
+        // A fresh process: the notification dismissed before the restart is still cached and unread.
         assertFalse(ShowNotifications.isPending)
-
-        presenter.refresh(view)
-        assertEquals(1, view.renderCalls.size)
-    }
-
-    @Test
-    fun `accepting while offline keeps the notification pending`() = runTest {
-        val notification = givenANotification("a")
         givenStoredNotifications("a")
-        // Offline the datastore read comes back empty, so the use case finds nothing to update
-        // and the local store keeps the notification.
-        whenever(notificationRepository.getById(notification.id)) doReturn flowOf(null)
         val presenter = givenAPresenter()
+
         presenter.markShowNotificationsAsPending()
+        presenter.refresh(view)
 
-        presenter.markNotificationAsRead(notification)
-
-        assertTrue(
-            "nothing was persisted, so the notification must be offered again",
-            ShowNotifications.isPending,
-        )
+        assertEquals(listOf("a"), view.shownIds())
     }
 
     @Test
-    fun `an accepted notification is not shown again while its read is still being saved`() =
+    fun `the pending mark is consumed before rendering, so resuming again shows nothing new`() =
         runTest {
-            val notification = givenANotification("a")
             givenStoredNotifications("a")
-            givenTheNotificationCanBeAccepted(notification)
             val presenter = givenAPresenter()
-            presenter.refresh(view)
-
-            // The cache still holds it: the save has not re-filtered the store yet, which is
-            // what the user hits by going back as soon as they accept.
-            presenter.markNotificationAsRead(notification)
-            presenter.refresh(view)
-
-            assertEquals(1, view.renderCalls.size)
-        }
-
-    @Test
-    fun `an accepted notification whose read could not be saved is not shown again in the session`() =
-        runTest {
-            val notification = givenANotification("a")
-            givenStoredNotifications("a")
-            whenever(notificationRepository.getById(notification.id)) doReturn flowOf(null)
-            val presenter = givenAPresenter()
-
-            presenter.markNotificationAsRead(notification)
-            presenter.refresh(view)
-            presenter.refresh(view)
-
-            // Not offered on every screen while the server keeps failing: it comes back after
-            // the next download or in a new process, where the read is retried.
-            assertEquals(0, view.renderCalls.size)
-        }
-
-    @Test
-    fun `accepting one notification does not hide the others`() = runTest {
-        val accepted = givenANotification("a")
-        givenStoredNotifications("a", "b")
-        givenTheNotificationCanBeAccepted(accepted)
-        val presenter = givenAPresenter()
-
-        presenter.markNotificationAsRead(accepted)
-        presenter.refresh(view)
-
-        assertEquals(listOf("b"), view.renderCalls.single().map { it.id })
-    }
-
-    @Test
-    fun `an accept that was not saved is offered again once a download lands`() = runTest {
-        val notification = givenANotification("a")
-        givenStoredNotifications("a")
-        whenever(notificationRepository.getById(notification.id)) doReturn flowOf(null)
-        val presenter = givenAPresenter()
-        presenter.markNotificationAsRead(notification)
-
-        // The download brings back what the server holds, where it is still unread.
-        presenter.markShowNotificationsAsPending()
-        presenter.refresh(view)
-
-        assertEquals(1, view.renderCalls.size)
-    }
-
-    @Test
-    fun `an accept that was not saved is offered again in a new app process`() = runTest {
-        val notification = givenANotification("a")
-        givenStoredNotifications("a")
-        whenever(notificationRepository.getById(notification.id)) doReturn flowOf(null)
-        givenAPresenter().markNotificationAsRead(notification)
-
-        givenANewAppProcess()
-        givenAPresenter().refresh(view)
-
-        assertEquals(1, view.renderCalls.size)
-    }
-
-    @Test
-    fun `accepting one of several keeps the rest pending`() = runTest {
-        val accepted = givenANotification("a")
-        givenStoredNotifications("a", "b")
-        givenTheNotificationCanBeAccepted(accepted)
-        val presenter = givenAPresenter()
-        presenter.markShowNotificationsAsPending()
-
-        givenStoredNotifications("b")
-        presenter.markNotificationAsRead(accepted)
-
-        assertTrue(ShowNotifications.isPending)
-    }
-
-    @Test
-    fun `keeps the pending flag when the download has not landed yet`() = runTest {
-        givenNoStoredNotifications()
-        val presenter = givenAPresenter()
-        presenter.markShowNotificationsAsPending()
-
-        presenter.refresh(view)
-
-        assertEquals(0, view.renderCalls.size)
-        assertTrue(
-            "the flag must survive so the notification is not lost once the download lands",
-            ShowNotifications.isPending,
-        )
-    }
-
-    @Test
-    fun `a resume while the download is in flight does not lose the notification`() = runTest {
-        val presenter = givenAPresenter()
-        presenter.markShowNotificationsAsPending()
-
-        // The program screen resumes before the download finished: nothing to show yet.
-        givenNoStoredNotifications()
-        presenter.refresh(view)
-        assertEquals(0, view.renderCalls.size)
-
-        // The download lands and the user resumes again.
-        givenStoredNotifications("late")
-        presenter.refresh(view)
-
-        assertEquals(1, view.renderCalls.size)
-        assertEquals("late", view.renderCalls.single().single().id)
-    }
-
-    @Test
-    fun `marking pending notifies the visible screen so the dialog appears without navigating`() =
-        runTest {
-            givenStoredNotifications("live")
-            val presenter = givenAPresenter()
-            ShowNotifications.onPending = { presenter.refresh(view) }
-
             presenter.markShowNotificationsAsPending()
 
-            assertEquals(1, view.renderCalls.size)
-            assertEquals("live", view.renderCalls.single().single().id)
+            presenter.refresh(view)
+            presenter.refresh(view)
+
+            assertEquals(listOf("a"), view.shownIds())
+            assertFalse(ShowNotifications.isPending)
         }
 
     @Test
-    fun `marking pending with no screen registered still records the flag`() = runTest {
+    fun `shows one notification at a time`() = runTest {
+        givenStoredNotifications("a", "b", "c")
         val presenter = givenAPresenter()
-        ShowNotifications.onPending = null
-
         presenter.markShowNotificationsAsPending()
 
-        assertTrue(ShowNotifications.isPending)
-        assertEquals(0, view.renderCalls.size)
+        presenter.refresh(view)
+
+        assertEquals(listOf("a"), view.shownIds())
+    }
+
+    @Test
+    fun `dismissing one shows the next, and it stays unread`() = runTest {
+        givenStoredNotifications("a", "b")
+        val presenter = givenAPresenter()
+        presenter.markShowNotificationsAsPending()
+        presenter.refresh(view)
+
+        presenter.onNotificationDismissed(view)
+
+        assertEquals(listOf("a", "b"), view.shownIds())
+        verify(notificationRepository, never()).save(any())
+    }
+
+    @Test
+    fun `a dismissed notification is not offered again until the next trigger`() = runTest {
+        givenStoredNotifications("a")
+        val presenter = givenAPresenter()
+        presenter.markShowNotificationsAsPending()
+        presenter.refresh(view)
+        presenter.onNotificationDismissed(view)
+
+        presenter.refresh(view)
+        assertEquals(listOf("a"), view.shownIds())
+
+        // The next sync, or the next start of the app, marks them pending again.
+        presenter.markShowNotificationsAsPending()
+        presenter.refresh(view)
+        assertEquals(listOf("a", "a"), view.shownIds())
+    }
+
+    @Test
+    fun `accepting saves the read and then shows the next one`() = runTest {
+        val first = givenANotification("a")
+        givenStoredNotifications("a", "b")
+        givenTheNotificationCanBeAccepted(first)
+        val presenter = givenAPresenter()
+        presenter.markShowNotificationsAsPending()
+        presenter.refresh(view)
+
+        presenter.markNotificationAsRead(first, view)
+
+        verify(notificationRepository).save(any())
+        assertEquals(listOf("a", "b"), view.shownIds())
+    }
+
+    @Test
+    fun `an accept that cannot reach the server leaves the cache alone and shows the next one`() =
+        runTest {
+            val first = givenANotification("a")
+            givenStoredNotifications("a", "b")
+            // Offline the datastore read comes back empty, so there is nothing to update.
+            whenever(notificationRepository.getById(first.id)) doReturn flowOf(null)
+            val presenter = givenAPresenter()
+            presenter.markShowNotificationsAsPending()
+            presenter.refresh(view)
+
+            presenter.markNotificationAsRead(first, view)
+
+            verify(notificationRepository, never()).save(any())
+            assertEquals(listOf("a", "b"), view.shownIds())
+        }
+
+    @Test
+    fun `an accept that fails never takes the app down`() = runTest {
+        val first = givenANotification("a")
+        givenStoredNotifications("a", "b")
+        whenever(notificationRepository.getById(first.id)) doReturn flowOf(first)
+        // UserD2Repository dereferences the SDK user with !!, so a session being torn down throws.
+        whenever(userRepository.getCurrentUser()) doThrow NullPointerException("no current user")
+        val presenter = givenAPresenter()
+        presenter.markShowNotificationsAsPending()
+        presenter.refresh(view)
+
+        presenter.markNotificationAsRead(first, view)
+
+        verify(notificationRepository, never()).save(any())
+        assertEquals(listOf("a", "b"), view.shownIds())
+    }
+
+    @Test
+    fun `an empty cache shows nothing and still consumes the mark`() = runTest {
+        givenNoStoredNotifications()
+        val presenter = givenAPresenter()
+        presenter.markShowNotificationsAsPending()
+
+        presenter.refresh(view)
+
+        assertEquals(emptyList<String>(), view.shownIds())
+        assertTrue(!ShowNotifications.isPending)
     }
 
     // The dispatcher must share the scheduler of the enclosing runTest, otherwise the coroutines
@@ -292,21 +204,14 @@ class NotificationsPresenterTest {
         whenever(notificationRepository.get()) doReturn flowOf(ids.map { givenANotification(it) })
     }
 
+    private fun givenNoStoredNotifications() {
+        whenever(notificationRepository.get()) doReturn flowOf(emptyList())
+    }
+
     private fun givenTheNotificationCanBeAccepted(notification: Notification) {
         whenever(notificationRepository.getById(notification.id)) doReturn flowOf(notification)
         whenever(userRepository.getCurrentUser()) doReturn User("user1", "User One")
         whenever(notificationRepository.save(any())) doReturn flowOf(Unit)
-    }
-
-    // Only process-lifetime state is lost; the cache on disk survives a restart.
-    private fun givenANewAppProcess() {
-        ShowNotifications.isPending = false
-        ShowNotifications.onPending = null
-        ShowNotifications.acceptedInThisSession.clear()
-    }
-
-    private fun givenNoStoredNotifications() {
-        whenever(notificationRepository.get()) doReturn flowOf(emptyList())
     }
 
     private fun givenANotification(id: String) =
@@ -321,10 +226,12 @@ class NotificationsPresenterTest {
         )
 
     private class RecordingView : NotificationsView {
-        val renderCalls = mutableListOf<List<Notification>>()
+        private val shown = mutableListOf<Notification>()
 
-        override fun renderNotifications(notifications: List<Notification>) {
-            renderCalls.add(notifications)
+        fun shownIds() = shown.map { it.id }
+
+        override fun renderNotification(notification: Notification) {
+            shown.add(notification)
         }
     }
 }

@@ -54,13 +54,11 @@ class PostMetadataSyncModuleTest {
     @Before
     fun setUp() {
         ShowNotifications.isPending = false
-        ShowNotifications.onPending = null
     }
 
     @After
     fun tearDown() {
         ShowNotifications.isPending = false
-        ShowNotifications.onPending = null
     }
 
     @Test

@@ -49,6 +49,7 @@ import org.dhis2.usescases.main.ui.model.VersionToUpdateState
 import org.dhis2.usescases.main.ui.screens.MainScreen
 import org.dhis2.usescases.notifications.domain.NotificationRepository
 import org.dhis2.usescases.notifications.presentation.NotificationsOnSessionEnd
+import org.dhis2.usescases.notifications.presentation.NotificationsPresenter
 import org.dhis2.utils.granularsync.SyncStatusDialog
 import org.dhis2.utils.session.CHANGE_SERVER_URL_DIALOG_TAG
 import org.dhis2.utils.session.ChangeServerUrlDialog
@@ -136,6 +137,12 @@ class MainActivity : ActivityGlobalAbstract() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // EyeSeeTea customization - Notifications system
+        // Entering the authenticated area: offer the cached unread notifications, so one that was
+        // dismissed reappears after a cold start. Not on a recreation such as a rotation.
+        if (savedInstanceState == null) {
+            get<NotificationsPresenter>().markShowNotificationsAsPending()
+        }
 
         // On recreation (e.g. rotation), the ViewModel survives but its MainNavigator holds a
         // stale FragmentManager from the destroyed Activity. Update it before rendering so any
@@ -169,10 +176,16 @@ class MainActivity : ActivityGlobalAbstract() {
                             is HomeEffect.PeriodFilterRequest -> showPeriodRequest(effect.periodRequest)
                             HomeEffect.ShowDeleteNotification -> showProgressDeleteNotification()
                             HomeEffect.ShowGranularSync -> showGranularSync()
-                            is HomeEffect.SingleProgramNavigation -> navigationLauncher.navigateTo(
-                                this@MainActivity,
-                                effect.homeItemData,
-                            )
+                            is HomeEffect.SingleProgramNavigation -> {
+                                // EyeSeeTea customization - Notifications system
+                                // The Home is about to hand over to its only program: mark them
+                                // pending again so that program screen is the one to show them.
+                                get<NotificationsPresenter>().markShowNotificationsAsPending()
+                                navigationLauncher.navigateTo(
+                                    this@MainActivity,
+                                    effect.homeItemData,
+                                )
+                            }
                             HomeEffect.ShowPinDialog -> { /*handled in composable*/ }
                             HomeEffect.ToggleSideMenu -> openDrawer()
                             HomeEffect.ToggleFilters -> showHideFilter()
