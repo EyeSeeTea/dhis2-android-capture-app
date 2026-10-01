@@ -139,7 +139,8 @@ every screen.
 UI integration:
 
 - `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements `NotificationsView`, resolves the presenter from Koin only on screens `NotificationScreens` allows (checked again at render time), refreshes on resume and exposes `refreshNotifications()` and the overridable `isOnProgramList()`, registers the `onPending` listener while resumed and clears it on pause, closes its notification dialogs on pause, skips rendering on a finishing or destroyed activity, renders the dialog with Markwon and resolves the locale translation
-- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsOnSessionEnd.kt` — new file: forgets the leaving user's cached notifications and this session's state; called on logout, account deletion and session end
+- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsOnSessionEnd.kt` — new file: forgets the leaving user's cached notifications and this session's state; called on logout, account deletion and when the session ends
+- `app/src/main/java/org/dhis2/usescases/general/SessionManagerActivity.kt` — clears the notifications in the existing session callback, the one that takes the user to login when the SDK's automatic logout, OpenID or a disabled account ends the session
 - `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` — clears the notifications on `HomeEffect.GoToLogin` (completed logout or account deletion), overrides `isOnProgramList()` with the current Home section, and refreshes notifications when the Home switches back to the program list
 - `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationScreens.kt` — new file: decides which screens may show a notification — an explicit list: the Home while on the program list, and the event, tracked entity and data set lists; always with a logged-in session
 - `app/src/main/java/org/dhis2/usescases/notifications/presentation/VisibleNotificationDialogs.kt` — new file: tracks which notification dialogs are on screen for one activity instance, so a pending notification offered again on the next resume does not stack a second dialog on top of the first, and closes them when the activity goes to the background so only the screen in front holds one
@@ -188,8 +189,6 @@ New files:
 
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorState.kt` — the sealed state and `TwoFactorType`
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorRequiredException.kt`
-- `app/src/main/java/org/dhis2/usescases/general/SessionCheckOnStart.kt` — once per process, a minimal authenticated request (`me?fields=id`) when the user reaches a screen of the app, so an expired session is rejected at once
-- `app/src/main/java/org/dhis2/usescases/general/SessionEndWatcher.kt` — takes the user back to login when the SDK announces that the server session ended (`accountManager().logOutObservable()`, wrapped as a Flow in `sdkSessionEnded()`, the only RxJava touch point), and on resume when there is no logged-in user any more
 
 Shared files carrying a WIDP delta:
 
@@ -204,7 +203,8 @@ Shared files carrying a WIDP delta:
 - `login/src/commonMain/composeResources/values/strings.xml` — the five 2FA UI strings
 - `commonskmm/src/androidMain/kotlin/org/dhis2/mobile/commons/resources/D2ErrorMessageProviderImpl.kt` — the six 2FA message branches
 - `commonskmm/src/commonMain/composeResources/values/strings.xml` — those six messages
-- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — starts `SessionEndWatcher` on resume and stops it on pause, and runs `SessionCheckOnStart`; opens the login screen with the session-expired message, reusing the OpenID extra
+- `app/src/main/java/org/dhis2/data/server/OpenIdSession.kt` — the `UNAUTHORIZED` logout reason and the merge branch that listens to `accountManager().logOutObservable()` (the SDK's automatic logout)
+- `app/src/main/java/org/dhis2/usescases/login/LoginActivity.kt` — maps `UNAUTHORIZED` to the session-expired message
 
 Tests:
 
