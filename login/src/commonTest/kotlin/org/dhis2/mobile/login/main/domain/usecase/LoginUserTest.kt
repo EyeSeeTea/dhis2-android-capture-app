@@ -3,6 +3,9 @@ package org.dhis2.mobile.login.main.domain.usecase
 import kotlinx.coroutines.test.runTest
 import org.dhis2.mobile.login.main.data.LoginRepository
 import org.dhis2.mobile.login.main.domain.model.LoginResult
+import org.dhis2.mobile.login.main.domain.model.TwoFactorOutcome
+import org.dhis2.mobile.login.main.domain.model.TwoFactorRequiredException
+import org.dhis2.mobile.login.main.domain.model.TwoFactorType
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.reset
@@ -359,6 +362,27 @@ class LoginUserTest {
                 verify(repository).loginUser(serverUrl, trimmed, password, isNetworkAvailable)
                 verify(repository).updateAvailableUsers(trimmed)
                 verify(repository).initialSyncDone(serverUrl, trimmed)
+            }
+        }
+
+    @Test
+    fun `GIVEN the server answers about 2FA WHEN user logs in THEN the outcome is passed on as it is`() =
+        runTest {
+            // EyeSeeTea customization - 2FA support
+            listOf(
+                TwoFactorOutcome.CodeRequired(TwoFactorType.TOTP, "Enter your code"),
+                TwoFactorOutcome.CodeSent(TwoFactorType.EMAIL, "Code sent"),
+                TwoFactorOutcome.CodeRejected(TwoFactorType.SMS, "Incorrect code"),
+            ).forEach { outcome ->
+                // GIVEN
+                whenever(repository.loginUser(serverUrl, username, password, isNetworkAvailable)) doReturn
+                    Result.failure(TwoFactorRequiredException(outcome))
+
+                // WHEN
+                val result = loginUser(serverUrl, username, password, isNetworkAvailable)
+
+                // THEN
+                assertEquals(LoginResult.TwoFactor(outcome), result)
             }
         }
 }

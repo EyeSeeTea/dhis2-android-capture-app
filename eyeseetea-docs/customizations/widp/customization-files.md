@@ -187,17 +187,17 @@ Status: `active` (depends on the EyeSeeTea SDK fork)
 New files:
 
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorState.kt` — the sealed state and `TwoFactorType`
-- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorRequiredException.kt`
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorRequiredException.kt` — also holds `TwoFactorOutcome`: code required, code sent, code rejected
 
 Shared files carrying a WIDP delta:
 
 - `login/src/androidMain/kotlin/org/dhis2/mobile/login/main/data/LoginRepositoryImpl.kt` — passes the code to `blockingLogIn`, plus `isTwoFactorError()` and `handleTwoFactorError()` at the end of the file
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/data/LoginRepository.kt` — `twoFactorCode` on the interface
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/usecase/LoginUser.kt` — passes it through
-- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/usecase/BaseLogin.kt` — maps the exception to `LoginResult.TwoFactorError`
-- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/LoginResult.kt` — the `TwoFactorError` variant
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/usecase/BaseLogin.kt` — passes the exception's `TwoFactorOutcome` on as `LoginResult.TwoFactor`
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/LoginResult.kt` — the `TwoFactor` variant, which carries the outcome
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/ui/state/CredentialsUiState.kt` — `twoFactorState`, `twoFactorCode`, `infoMessage`
-- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/ui/viewmodel/CredentialsViewModel.kt` — the `TwoFactorError` branch and the resend logic
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/ui/viewmodel/CredentialsViewModel.kt` — the `TwoFactor` branch, rendering each outcome directly, and the resend logic
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/ui/screen/CredentialsScreen.kt` — `TwoFactorContainer` and the info bar
 - `login/src/commonMain/composeResources/values/strings.xml` — the five 2FA UI strings
 - `commonskmm/src/androidMain/kotlin/org/dhis2/mobile/commons/resources/D2ErrorMessageProviderImpl.kt` — the six 2FA message branches

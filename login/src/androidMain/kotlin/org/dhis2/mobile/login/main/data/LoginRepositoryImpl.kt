@@ -20,6 +20,7 @@ import org.dhis2.mobile.commons.resources.D2ErrorMessageProvider
 import org.dhis2.mobile.login.authentication.OpenIdController
 import org.dhis2.mobile.login.main.domain.model.OpenIdLoginConfiguration
 import org.dhis2.mobile.login.main.domain.model.ServerValidationResult
+import org.dhis2.mobile.login.main.domain.model.TwoFactorOutcome
 import org.dhis2.mobile.login.main.domain.model.TwoFactorRequiredException
 import org.dhis2.mobile.login.main.domain.model.TwoFactorType
 import org.dhis2.mobile.login.resources.Res
@@ -111,7 +112,7 @@ class LoginRepositoryImpl(
         } catch (e: Exception) {
             if (e is D2Error && isTwoFactorError(e.errorCode())) {
                 // EyeSeeTea customization - 2FA support
-                handleTwoFactorError(e, isNetworkAvailable)
+                handleTwoFactorError(e, isNetworkAvailable, twoFactorCode)
             } else {
                 kotlin.Result.failure(
                     Exception(
@@ -498,58 +499,34 @@ class LoginRepositoryImpl(
 
     private suspend fun handleTwoFactorError(
         e: D2Error,
-        isNetworkAvailable: Boolean
+        isNetworkAvailable: Boolean,
+        twoFactorCode: String?
     ): kotlin.Result<Unit> {
         val errorMessage = d2ErrorMessageProvider.getErrorMessage(e, isNetworkAvailable)
 
-        when (e.errorCode()) {
+        // The same SDK error means two things: with no code submitted the server is asking for
+        // one, and with a code submitted it refused it. The screen sends null on the first
+        // attempt and when it asks for a resend, and what the user typed otherwise.
+        fun requiredOrRejected(type: TwoFactorType): TwoFactorOutcome =
+            if (twoFactorCode == null) {
+                TwoFactorOutcome.CodeRequired(type, errorMessage)
+            } else {
+                TwoFactorOutcome.CodeRejected(type, errorMessage)
+            }
+
+        val outcome = when (e.errorCode()) {
             D2ErrorCode.INCORRECT_TWO_FACTOR_CODE,
-            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP -> {
-                return kotlin.Result.failure(
-                    TwoFactorRequiredException(
-                        type = TwoFactorType.TOTP,
-                        errorMessage = errorMessage,
-                    )
-                )
-            }
+            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP -> requiredOrRejected(TwoFactorType.TOTP)
 
-            D2ErrorCode.EMAIL_TWO_FACTOR_CODE_SENT -> {
-                return kotlin.Result.failure(
-                    TwoFactorRequiredException(
-                        TwoFactorType.EMAIL,
-                        errorMessage = errorMessage,
-                        codeSent = true,
-                    )
-                )
-            }
+            D2ErrorCode.EMAIL_TWO_FACTOR_CODE_SENT ->
+                TwoFactorOutcome.CodeSent(TwoFactorType.EMAIL, errorMessage)
 
-            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_EMAIL -> {
-                return kotlin.Result.failure(
-                    TwoFactorRequiredException(
-                        type = TwoFactorType.EMAIL,
-                        errorMessage = errorMessage,
-                    )
-                )
-            }
+            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_EMAIL -> requiredOrRejected(TwoFactorType.EMAIL)
 
-            D2ErrorCode.SMS_TWO_FACTOR_CODE_SENT -> {
-                return kotlin.Result.failure(
-                    TwoFactorRequiredException(
-                        TwoFactorType.SMS,
-                        errorMessage = errorMessage,
-                        codeSent = true,
-                    )
-                )
-            }
+            D2ErrorCode.SMS_TWO_FACTOR_CODE_SENT ->
+                TwoFactorOutcome.CodeSent(TwoFactorType.SMS, errorMessage)
 
-            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_SMS -> {
-                return kotlin.Result.failure(
-                    TwoFactorRequiredException(
-                        type = TwoFactorType.SMS,
-                        errorMessage = errorMessage,
-                    )
-                )
-            }
+            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_SMS -> requiredOrRejected(TwoFactorType.SMS)
 
             else -> {
                 return kotlin.Result.failure(
@@ -562,5 +539,7 @@ class LoginRepositoryImpl(
                 )
             }
         }
+
+        return kotlin.Result.failure(TwoFactorRequiredException(outcome))
     }
 }

@@ -12,12 +12,10 @@ sealed interface LoginResult {
 
     /**
      * EyeSeeTea customization - 2FA support
-     * @param type The type of 2FA required (TOTP, EMAIL, SMS)
-     * @param message Message from the repository (can be error or info message)
+     * The server's answer about two factor authentication: a code is required, was sent, or the
+     * code submitted was rejected. Not always an error, so it is not named as one.
      */
-    data class TwoFactorError(
-        val type: TwoFactorType,
-        val message: String? = null,
-        val codeSent: Boolean = false,
+    data class TwoFactor(
+        val outcome: TwoFactorOutcome,
     ) : LoginResult
 }

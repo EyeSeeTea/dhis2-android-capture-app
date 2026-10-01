@@ -42,6 +42,16 @@ After the user enters a 2FA code, the app SHALL call the SDK again via `blocking
 - **WHEN** the user enters an invalid Email or SMS code
 - **THEN** the field shows "Incorrect authentication code" as a red error and remains focused
 
+#### Scenario: The server asks for a code
+- **WHEN** the server asks for a 2FA code and none has been submitted yet
+- **THEN** the code field is offered and no message is shown
+
+#### Scenario: The server sends a code
+- **WHEN** the server has just sent a code by email or SMS, on the first attempt or after a resend
+- **THEN** the field is offered and the message is shown as information, not as an error
+
+The three answers — code required, code sent, code rejected — are distinct outcomes from the SDK error to the screen, and the screen renders each directly.
+
 ### Requirement: Resend mechanism for Email and SMS codes
 The app SHALL provide a resend button for Email and SMS 2FA flows, implemented by calling `blockingLogIn` again with `twoFactorCode = null` to trigger the server to issue a new code.
 

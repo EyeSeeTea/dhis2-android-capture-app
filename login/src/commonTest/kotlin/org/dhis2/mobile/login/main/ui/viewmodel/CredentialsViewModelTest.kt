@@ -15,6 +15,8 @@ import org.dhis2.mobile.login.main.domain.model.BiometricsInfo
 import org.dhis2.mobile.login.main.domain.model.LoginResult
 import org.dhis2.mobile.login.main.domain.model.LoginScreenState
 import org.dhis2.mobile.login.main.domain.model.OpenIdLoginConfiguration
+import org.dhis2.mobile.login.main.domain.model.TwoFactorOutcome
+import org.dhis2.mobile.login.main.domain.model.TwoFactorState
 import org.dhis2.mobile.login.main.domain.model.TwoFactorType
 import org.dhis2.mobile.login.main.domain.usecase.BiometricLogin
 import org.dhis2.mobile.login.main.domain.usecase.GetAvailableUsernames
@@ -273,7 +275,7 @@ class CredentialsViewModelTest {
             givenAnInitialisedLoginScreen()
             whenever(
                 loginUser.invoke(any(), any(), any(), any(), anyOrNull()),
-            ) doReturn LoginResult.TwoFactorError(TwoFactorType.EMAIL, message, codeSent = true)
+            ) doReturn LoginResult.TwoFactor(TwoFactorOutcome.CodeSent(TwoFactorType.EMAIL, message))
 
             initViewModel()
 
@@ -301,12 +303,12 @@ class CredentialsViewModelTest {
     @Test
     fun `GIVEN a rejected 2FA code WHEN login is clicked THEN the message is shown as an error`() =
         runTest {
-            // GIVEN the same channel as the message above, so only codeSent tells them apart
+            // GIVEN the same channel as the message above: only the outcome tells them apart
             val message = "Incorrect authentication code"
             givenAnInitialisedLoginScreen()
             whenever(
                 loginUser.invoke(any(), any(), any(), any(), anyOrNull()),
-            ) doReturn LoginResult.TwoFactorError(TwoFactorType.EMAIL, message, codeSent = false)
+            ) doReturn LoginResult.TwoFactor(TwoFactorOutcome.CodeRejected(TwoFactorType.EMAIL, message))
 
             initViewModel()
 
@@ -327,6 +329,39 @@ class CredentialsViewModelTest {
 
                 val updatedState = awaitItem()
                 assertEquals(message, updatedState.errorMessage)
+                assertEquals(null, updatedState.infoMessage)
+            }
+        }
+
+    @Test
+    fun `GIVEN the server asks for a 2FA code WHEN login is clicked THEN the field is offered with no message`() =
+        runTest {
+            // GIVEN
+            givenAnInitialisedLoginScreen()
+            whenever(
+                loginUser.invoke(any(), any(), any(), any(), anyOrNull()),
+            ) doReturn LoginResult.TwoFactor(TwoFactorOutcome.CodeRequired(TwoFactorType.TOTP, "Enter your code"))
+
+            initViewModel()
+
+            viewModel.credentialsScreenState.test(timeout = turbineTimeout) {
+                awaitItem()
+                awaitItem()
+                viewModel.updateUsername("user")
+                awaitItem()
+                viewModel.updatePassword("password")
+                awaitItem()
+
+                // WHEN
+                viewModel.onLoginClicked()
+
+                // THEN
+                awaitItem()
+                testDispatcher.scheduler.advanceTimeBy(4.seconds)
+
+                val updatedState = awaitItem()
+                assertEquals(TwoFactorState.TotpVerification(""), updatedState.twoFactorState)
+                assertEquals(null, updatedState.errorMessage)
                 assertEquals(null, updatedState.infoMessage)
             }
         }
