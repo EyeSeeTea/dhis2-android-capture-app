@@ -18,7 +18,6 @@ import org.dhis2.data.server.ServerModule;
 import org.dhis2.data.service.workManager.WorkManagerController;
 import org.dhis2.data.service.workManager.WorkManagerModule;
 import org.dhis2.mobile.commons.reporting.CrashReportController;
-import org.dhis2.usescases.notifications.di.NotificationsModule;
 import org.dhis2.usescases.splash.SplashComponent;
 import org.dhis2.usescases.splash.SplashModule;
 import org.dhis2.utils.analytics.AnalyticsModule;
@@ -41,7 +40,6 @@ import dagger.Component;
         DispatcherModule.class,
         FeatureConfigModule.class,
         NetworkUtilsModule.class,
-        NotificationsModule.class
 })
 public  interface AppComponent {
 
@@ -66,8 +64,6 @@ public  interface AppComponent {
         Builder featureConfigModule(FeatureConfigModule featureConfigModule);
 
         Builder networkUtilsModule(NetworkUtilsModule networkUtilsModule);
-
-        Builder notificationsModule(NotificationsModule notificationsModule);
 
         AppComponent build();
     }

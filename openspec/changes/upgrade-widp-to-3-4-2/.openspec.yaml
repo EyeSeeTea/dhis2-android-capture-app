@@ -1,0 +1,7 @@
+schema: spec-driven
+created: 2026-09-11
+# No spec deltas: this upgrade moves the implementation baseline only. Every requirement
+# in openspec/specs/ stays exactly as written — the five WIDP capabilities must behave
+# after 3.4.2 the way they behaved before it. If a conflict resolution would change a
+# requirement, that is an Open Question in upgrade-3.4.2-notes.md, not a silent delta.
+skip_specs: true

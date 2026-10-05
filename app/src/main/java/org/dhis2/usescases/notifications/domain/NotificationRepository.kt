@@ -8,4 +8,7 @@ interface NotificationRepository {
     fun get(): Flow<List<Notification>>
     fun getById(id: String): Flow<Notification?>
     fun save(notification: Notification): Flow<Unit>
+
+    /** Forgets the cached notifications, when the user they were downloaded for leaves. */
+    fun clear()
 }

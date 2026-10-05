@@ -15,7 +15,13 @@ The app SHALL fetch the notification list from the DHIS2 server at `dataStore/no
 
 #### Scenario: Datastore endpoint is unreachable
 - **WHEN** the datastore endpoint returns an error or is not reachable
-- **THEN** the metadata sync SHALL complete without failing, and SHALL leave the previously stored notifications untouched
+- **THEN** the metadata sync SHALL complete without failing, SHALL leave the previously stored notifications untouched, and SHALL NOT mark notifications as pending
+
+A failed fetch SHALL be distinguishable from a datastore that is genuinely empty: only the latter replaces the stored notifications.
+
+#### Scenario: User groups cannot be read
+- **WHEN** the notifications are fetched but the lookup of the current user's groups (`users/{id}?fields=userGroups`) returns an error or is not reachable
+- **THEN** the metadata sync SHALL complete without failing, SHALL leave the previously stored notifications untouched, and SHALL NOT mark notifications as pending, because filtering without the user's groups would drop every group-targeted notification
 
 ### Requirement: Notifications are filtered for the current user
 The app SHALL store only notifications that are relevant to the currently logged-in user, by applying the following combined filter during sync.
@@ -56,16 +62,36 @@ The app SHALL persist the filtered notification list to local storage under the 
 - **WHEN** a sync finishes with filtered notifications for this user
 - **THEN** the `NOTIFICATIONS` entry in SharedPreferences contains the filtered list serialized as JSON
 
-### Requirement: Notifications are displayed on activity resume
-The app SHALL load persisted notifications and present them to the user on activity resume in the base activity of the authenticated area.
+#### Scenario: The user leaves
+- **WHEN** a logout or an account deletion completes, or the server session ends
+- **THEN** the stored notifications SHALL be cleared, so the next user on the device never sees them; that user's own notifications arrive with their sync
 
-#### Scenario: Showing a pending notification
-- **WHEN** an authenticated activity resumes and there is at least one pending notification
-- **THEN** the app shows a Material AlertDialog displaying the notification content
+### Requirement: Notifications are displayed when the app is entered and after a sync
+The app SHALL show the cached unread notifications to the user when the authenticated area is entered and after a metadata sync has downloaded them, one dialog at a time. Entering the app and a finished sync mark the notifications pending; the first screen that shows them consumes the mark before rendering, so resuming a screen again does not show the same notification twice. A notification is unread until the user accepts it: only the accept action marks it read. Only the Home while it shows the program list, and the list a program opens into (events, tracked entities or data sets), SHALL show notification dialogs, and only with a logged-in session. No other screen shows them: not the splash, the login screen (which also serves the PIN unlock) or the sync progress screen, not the Home's other sections (settings, about, troubleshooting), and not forms or dashboards.
 
-#### Scenario: No pending notifications
-- **WHEN** an authenticated activity resumes and there are no pending notifications
+#### Scenario: Entering the app with an unread notification cached
+- **WHEN** the app is started, or the user logs in, and there is an unread notification cached
+- **THEN** the app shows it on the Home program list, or on the program screen when the Home opens its only program by itself
+
+#### Scenario: Several notifications
+- **WHEN** there are several unread notifications to show
+- **THEN** the app shows one dialog at a time, and shows the next only once the current one has been accepted or dismissed
+
+#### Scenario: Dialog dismissed without accepting
+- **WHEN** the user dismisses the notification dialog without accepting it
+- **THEN** it stays cached and unread, and is not offered again during the same entry; it reappears the next time the app is started or after the next metadata sync
+
+#### Scenario: Resuming a screen
+- **WHEN** a screen resumes and nothing marked the notifications pending since they were last shown
 - **THEN** no dialog is shown
+
+#### Scenario: Screens outside the program lists do not show notifications
+- **WHEN** an unread notification is cached and the splash, the login screen, the sync progress screen, a form or a dashboard resumes, or any screen resumes without a logged-in session
+- **THEN** no dialog is shown
+
+#### Scenario: A sync finishes in settings
+- **WHEN** the user runs a metadata sync from the Home's settings section and it brings an unread notification
+- **THEN** no dialog is shown in settings, and the notification is shown when the Home returns to the program list
 
 ### Requirement: Notification content supports Markdown
 The notification dialog SHALL render `content` as Markdown using Markwon, so that authors can include formatting, lists, and links.
@@ -94,7 +120,7 @@ When the user dismisses the notification via the accept button, the app SHALL ap
 
 #### Scenario: PUT fails
 - **WHEN** the network request to mark the notification as read fails
-- **THEN** the app does not lose the local state — the next sync SHALL reconcile the read status
+- **THEN** the cached notifications are left as they were, so the notification stays unread and can be retried; it is not offered again during the same entry, and the next sync SHALL reconcile the read status
 
 ### Requirement: Read notifications are not shown again
 Once a notification has been marked as read by the current user, subsequent filtering passes SHALL exclude it, so the user never sees the same notification twice.

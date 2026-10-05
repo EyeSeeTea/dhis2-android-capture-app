@@ -42,6 +42,16 @@ After the user enters a 2FA code, the app SHALL call the SDK again via `blocking
 - **WHEN** the user enters an invalid Email or SMS code
 - **THEN** the field shows "Incorrect authentication code" as a red error and remains focused
 
+#### Scenario: The server asks for a code
+- **WHEN** the server asks for a 2FA code and none has been submitted yet
+- **THEN** the code field is offered and no message is shown
+
+#### Scenario: The server sends a code
+- **WHEN** the server has just sent a code by email or SMS, on the first attempt or after a resend
+- **THEN** the field is offered and the message is shown as information, not as an error
+
+The three answers — code required, code sent, code rejected — are distinct outcomes from the SDK error to the screen, and the screen renders each directly.
+
 ### Requirement: Resend mechanism for Email and SMS codes
 The app SHALL provide a resend button for Email and SMS 2FA flows, implemented by calling `blockingLogIn` again with `twoFactorCode = null` to trigger the server to issue a new code.
 
@@ -66,6 +76,17 @@ When the server returns `TWO_FACTOR_MANY_SEND_ATTEMPTS`, the app SHALL display t
 #### Scenario: Too many resend attempts
 - **WHEN** the SDK surfaces `TWO_FACTOR_MANY_SEND_ATTEMPTS`
 - **THEN** the app replaces the resend state with the administrator-contact message and disables further resend actions
+
+### Requirement: Automatic logout when the server session ends
+When the server rejects the session, the SDK removes the stored credentials and announces it on `accountManager().logOutObservable()`. The app SHALL subscribe to that event, as part of its session handling, and take the user to the login screen with the session-expired message. This is the expected path for a 2FA account after an app restart: its session lives in a cookie held in memory and cannot be rebuilt from the stored password.
+
+#### Scenario: The server rejects the session while a screen is resumed
+- **WHEN** the SDK announces the automatic logout while a screen of the app is resumed
+- **THEN** the app takes the user to the login screen with the session-expired message
+
+#### Scenario: A paused screen
+- **WHEN** the SDK announces the automatic logout while no screen is resumed
+- **THEN** the app does not react to that event; the next rejected request announces it again
 
 ### Requirement: SDK patch dependency
 This capability SHALL only function when built against the EyeSeeTea SDK fork that provides:
