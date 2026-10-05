@@ -8,7 +8,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityOptionsCompat
 import androidx.lifecycle.lifecycleScope
 import io.reactivex.subjects.BehaviorSubject
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import org.dhis2.App
 import org.dhis2.BuildConfig
@@ -36,6 +35,7 @@ import org.dhis2.utils.analytics.CLICK
 import org.dhis2.utils.analytics.FORGOT_CODE
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
+import javax.inject.Inject
 
 abstract class SessionManagerActivity :
     AppCompatActivity(),
