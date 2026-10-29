@@ -3,10 +3,10 @@ Commit rule: a test task immediately followed by its implement task is one commi
 ## 1. Receipt domain
 Commit: one commit per behavior (test + minimal implementation).
 
-- [ ] 1.1 Test: printing a receipt sends it to the printer and returns success
-- [ ] 1.2 Implement `Receipt`, `ReceiptPrinter`, `PrintReceiptUseCase` (draft)
-- [ ] 1.3 Test: printing fails with "no printer connected" when no printer is connected
-- [ ] 1.4 Implement `PrinterError` and its propagation through the use case
+- [x] 1.1 Test: printing a receipt sends it to the printer and returns success
+- [x] 1.2 Implement `Receipt`, `ReceiptPrinter`, `ReceiptRepository`, `PrintReceiptUseCase` (draft)
+- [x] 1.3 Test: printing fails with "no printer connected" when no printer is connected
+- [x] 1.4 Implement `PrinterError` and its propagation through the use case
 
 ## 2. Fake printer and formatter
 Commit: one commit per behavior (test + minimal implementation).
