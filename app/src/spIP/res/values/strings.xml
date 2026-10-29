@@ -6,6 +6,8 @@
     <string name="open_details">%s Registration Details</string>
     <string name="receipt_printing">Printing receipt…</string>
     <string name="receipt_printed">Receipt printed</string>
+    <string name="receipt_no_printer_connected">No printer is connected. Connect a printer in the device Bluetooth settings and try again.</string>
+    <string name="receipt_error_accept">Accept</string>
     <string name="send_sms">Send Welcome SMS</string>
     <string name="sent_sms_successfully">The Welcome SMS was sent successfully</string>
     <string name="sent_sms_using_en_successfully">The translated Welcome SMS for %s was unavailable, so the English version was used. The Welcome SMS was sent successfully</string>    <string name="sent_sms_error">There was an error sending the Welcome SMS</string>

@@ -7,6 +7,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,14 +27,23 @@ fun ReceiptPrintHost(viewModel: ReceiptPrintViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    if (uiState.isPrinting) {
-        PrintingDialog()
+    when (val state = uiState) {
+        ReceiptPrintUiState.Idle -> Unit
+        ReceiptPrintUiState.Printing -> PrintingDialog()
+        is ReceiptPrintUiState.Finished ->
+            if (state.message == ReceiptPrintMessage.NoPrinterConnected) {
+                ErrorDialog(
+                    text = stringResource(R.string.receipt_no_printer_connected),
+                    onAccept = viewModel::messageShown,
+                )
+            }
     }
 
-    val message = uiState.userMessage?.let { stringResource(it.textResId()) }
-    LaunchedEffect(message) {
-        if (message != null) {
-            snackbarHostState.showSnackbar(message)
+    val printedText = stringResource(R.string.receipt_printed)
+    LaunchedEffect(uiState) {
+        val state = uiState
+        if (state is ReceiptPrintUiState.Finished && state.message == ReceiptPrintMessage.Printed) {
+            snackbarHostState.showSnackbar(printedText)
             viewModel.messageShown()
         }
     }
@@ -58,7 +68,14 @@ private fun PrintingDialog() {
     )
 }
 
-private fun ReceiptPrintMessage.textResId(): Int =
-    when (this) {
-        ReceiptPrintMessage.Printed -> R.string.receipt_printed
-    }
+@Composable
+private fun ErrorDialog(text: String, onAccept: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = {},
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+        confirmButton = {
+            TextButton(onClick = onAccept) { Text(stringResource(R.string.receipt_error_accept)) }
+        },
+        text = { Text(text) },
+    )
+}
