@@ -7,14 +7,15 @@ Commit: one commit per behavior (test + minimal implementation).
 - [x] 1.2 Implement `Receipt`, `ReceiptPrinter`, `ReceiptRepository`, `PrintReceiptUseCase` (draft)
 - [x] 1.3 Test: printing fails with "no printer connected" when no printer is connected
 - [x] 1.4 Implement `PrinterError` and its propagation through the use case
+- [ ] 1.5 Test: printing returns a print-failed error when the connected printer fails to print
+- [ ] 1.6 Implement `PrinterError.PrintFailed`
 
 ## 2. Fake printer and formatter
 Commit: one commit per behavior (test + minimal implementation).
 
 - [x] 2.1 Test: the formatted receipt contains a label and value line for each data value of the event
 - [x] 2.2 Implement `ReceiptFormatter`
-- [ ] 2.3 Test: the fake printer records the printed text and can simulate "no printer" and "print failed"
-- [ ] 2.4 Implement `FakeReceiptPrinter`
+- [x] 2.3 Implement `FakeReceiptPrinter` (development printer that logs the receipt; no unit test, it has no logic of its own: the flow is covered in the use case and view model tests and validated manually in 3.5)
 
 ## 3. Menu trigger and feedback
 Commit: one commit per behavior (test + minimal implementation).
@@ -23,6 +24,7 @@ Commit: one commit per behavior (test + minimal implementation).
 - [ ] 3.2 Test: the view model exposes an error message when no printer is connected
 - [ ] 3.3 Implement `ReceiptPrintViewModel` and strings
 - [ ] 3.4 Add `PRINT_RECEIPT` to the dashboard menu and wire the click, mirroring `SEND_SMS`
+  - `FakeReceiptPrinter` must only be bound in debug builds (`spIPDebug`), or the menu option stays hidden outside debug until the real printer exists: a release build must never report a receipt as printed when nothing was printed.
 - [ ] 3.5 Manual validation on a physical device (menu shown, success and error snackbar)
 
 ## 4. Docs
