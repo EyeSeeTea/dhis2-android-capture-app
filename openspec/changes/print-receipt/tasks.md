@@ -11,8 +11,8 @@ Commit: one commit per behavior (test + minimal implementation).
 ## 2. Fake printer and formatter
 Commit: one commit per behavior (test + minimal implementation).
 
-- [ ] 2.1 Test: the formatted receipt contains a label and value line for each data value of the event
-- [ ] 2.2 Implement `ReceiptFormatter`
+- [x] 2.1 Test: the formatted receipt contains a label and value line for each data value of the event
+- [x] 2.2 Implement `ReceiptFormatter`
 - [ ] 2.3 Test: the fake printer records the printed text and can simulate "no printer" and "print failed"
 - [ ] 2.4 Implement `FakeReceiptPrinter`
 
