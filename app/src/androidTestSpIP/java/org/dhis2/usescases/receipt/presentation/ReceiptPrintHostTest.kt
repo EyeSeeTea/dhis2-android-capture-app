@@ -100,12 +100,12 @@ class ReceiptPrintHostTest {
         )
         composeRule.setContent {
             ReceiptPrintHost(receiptPrintViewModel)
-            Button(onClick = { receiptPrintViewModel.print(EVENT_UID) }) { Text(PRINT_BUTTON) }
+            Button(onClick = { receiptPrintViewModel.print(ENROLLMENT_UID) }) { Text(PRINT_BUTTON) }
         }
     }
 
     private class FakeReceiptRepository(private val receipt: Receipt) : ReceiptRepository {
-        override suspend fun getReceipt(eventUid: String): Receipt = receipt
+        override suspend fun getReceipt(enrollmentUid: String): Receipt = receipt
     }
 
     private class GatedReceiptPrinter : ReceiptPrinter {
@@ -129,7 +129,7 @@ class ReceiptPrintHostTest {
     }
 
     private companion object {
-        const val EVENT_UID = "EVENT_UID"
+        const val ENROLLMENT_UID = "ENROLLMENT_UID"
         const val PRINT_BUTTON = "Print receipt"
         const val LONGER_THAN_A_SNACKBAR_MILLIS = 10_000L
     }

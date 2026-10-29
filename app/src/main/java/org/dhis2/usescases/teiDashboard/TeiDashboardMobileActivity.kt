@@ -58,6 +58,7 @@ import org.dhis2.usescases.enrollment.buildEnrollmentForm
 import org.dhis2.usescases.general.ActivityGlobalAbstract
 import org.dhis2.usescases.notes.NotesFragment
 import org.dhis2.usescases.qrCodes.QrActivity
+import org.dhis2.usescases.receipt.presentation.mountReceiptPrintHost
 import org.dhis2.usescases.sms.DI.SPIPServiceLocator
 import org.dhis2.usescases.teiDashboard.dashboardfragments.indicators.IndicatorsFragment
 import org.dhis2.usescases.teiDashboard.dashboardfragments.indicators.VISUALIZATION_TYPE
@@ -214,6 +215,8 @@ class TeiDashboardMobileActivity :
         setUpNavigationBar()
         showLoadingProgress(false)
         setupMoreOptionsMenu()
+        // EyeSeeTea customization - Print Receipt
+        mountReceiptPrintHost(this)
     }
 
     /** EyeSeeTea customization - Send SMS **/
@@ -917,4 +920,6 @@ enum class EnrollmentMenuItem {
     DELETE,
     REMOVE,
     SEND_SMS,
+    // EyeSeeTea customization - Print Receipt
+    PRINT_RECEIPT,
 }

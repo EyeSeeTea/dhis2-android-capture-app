@@ -4,6 +4,7 @@
     <string name="logo_text">"Samaritan's Purse International Projects"</string>
     <string name="logo_number"></string>
     <string name="open_details">%s Registration Details</string>
+    <string name="receipt_menu_print">Print receipt</string>
     <string name="receipt_printing">Printing receipt…</string>
     <string name="receipt_printed">Receipt printed</string>
     <string name="receipt_no_printer_connected">No printer is connected. Connect a printer in the device Bluetooth settings and try again.</string>

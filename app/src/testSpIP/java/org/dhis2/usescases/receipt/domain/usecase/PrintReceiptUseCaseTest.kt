@@ -19,10 +19,10 @@ class PrintReceiptUseCaseTest {
 
     @Test
     fun `printing a receipt sends it to the printer and returns success`() = runTest {
-        val receipt = givenAReceiptForEvent("EVENT_UID")
+        val receipt = givenAReceiptForEnrollment("ENROLLMENT_UID")
         val useCase = givenAPrintReceiptUseCase()
 
-        val result = useCase("EVENT_UID")
+        val result = useCase("ENROLLMENT_UID")
 
         assertTrue(result.isSuccess)
         assertEquals(listOf(receipt), printer.printed)
@@ -30,34 +30,34 @@ class PrintReceiptUseCaseTest {
 
     @Test
     fun `printing returns a no-printer-connected error when no printer is connected`() = runTest {
-        givenAReceiptForEvent("EVENT_UID")
+        givenAReceiptForEnrollment("ENROLLMENT_UID")
         givenAPrinterWithoutConnection()
         val useCase = givenAPrintReceiptUseCase()
 
-        val result = useCase("EVENT_UID")
+        val result = useCase("ENROLLMENT_UID")
 
         assertEquals(PrinterError.NoPrinterConnected, result.exceptionOrNull())
     }
 
     @Test
     fun `printing returns a print-failed error when the connected printer fails to print`() = runTest {
-        givenAReceiptForEvent("EVENT_UID")
+        givenAReceiptForEnrollment("ENROLLMENT_UID")
         givenAPrinterThatFailsToPrint()
         val useCase = givenAPrintReceiptUseCase()
 
-        val result = useCase("EVENT_UID")
+        val result = useCase("ENROLLMENT_UID")
 
         assertEquals(PrinterError.PrintFailed, result.exceptionOrNull())
     }
 
-    private suspend fun givenAReceiptForEvent(eventUid: String): Receipt {
+    private suspend fun givenAReceiptForEnrollment(enrollmentUid: String): Receipt {
         val receipt = Receipt(
             lines = listOf(
                 ReceiptLine(label = "Distribution point", value = "Point A"),
                 ReceiptLine(label = "Household size", value = "5"),
             ),
         )
-        whenever(receiptRepository.getReceipt(eventUid)).thenReturn(receipt)
+        whenever(receiptRepository.getReceipt(enrollmentUid)).thenReturn(receipt)
         return receipt
     }
 

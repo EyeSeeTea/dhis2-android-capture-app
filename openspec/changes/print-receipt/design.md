@@ -16,12 +16,12 @@ Receipt = goods distributed for one household, one basket, one day, built from a
   - `Receipt`: immutable value made of ordered label/value lines taken from the data values of the completed event (generic, not fixed fields), so it does not depend on a distribution data model that is not defined yet on the test server. The business fields listed in Context are what the lines are expected to contain.
   - `ReceiptPrinter`: interface `suspend fun print(receipt: Receipt)` that throws/returns a `PrinterError`.
   - `PrinterError`: sealed, at least `NoPrinterConnected` and `PrintFailed`.
-  - `PrintReceiptUseCase`: implements `UseCase<String, Unit>` (input: event uid), loads the receipt, delegates to the printer, returns `Result`.
+  - `PrintReceiptUseCase`: implements `UseCase<String, Unit>` (input: enrollment uid), loads the receipt, delegates to the printer, returns `Result`.
 - **Connected printer:** among the printers paired at OS level, the app uses the one currently connected (paired is not connected). With the abstraction this is the responsibility of the real `ReceiptPrinter`, which reports `NoPrinterConnected`; the fake can simulate it.
 - **Dependency creation:** a hand-written `ReceiptServiceLocator` in the flavor source set, next to `SPIPServiceLocator` (SMS), instead of Oslo's Dagger components or Koin modules, to avoid conflicts in future upgrades. This deviates from the Koin guideline in `AGENTS.md` for the same reason SMS does. The locator is only called from the composition root (activity and menu wiring), never from `domain` or `presentation` logic, and tests build the view model by hand with fakes. Because the view model has state, the locator provides a `ViewModelProvider.Factory` (view model at activity scope), not the instance. The development printer is selected per build type without a DI framework: `provideReceiptPrinter()` is defined in `spIPDebug` (fake) and `spIPRelease` (no printer yet).
 - **Printer implementations:** `FakeReceiptPrinter` (records output, can simulate errors) is wired for now; the real one replaces it behind the same interface via DI.
 - **Formatter:** `ReceiptFormatter` turns a `Receipt` into plain text lines. The protocol-specific encoding (ZPL) belongs to the real printer implementation.
-- **Event selection (assumption, pending):** from the dashboard menu, print the most recent completed event of the enrollment. To confirm with the client.
+- **Event selection (assumption, pending):** from the dashboard menu, print the most recent completed event of the enrollment. To confirm with the client. The domain only knows the enrollment: `ReceiptRepository.getReceipt(enrollmentUid)` decides inside the data layer which event it reads.
 - **Feedback:** reuse the existing custom snackbar used by the SMS flow (success / error).
 - **No SDK fork dependency.**
 
