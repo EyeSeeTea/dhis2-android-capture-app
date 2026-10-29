@@ -65,6 +65,23 @@ class ReceiptPrintHostTest {
         assertTrue(receiptPrinter.printed.isEmpty())
     }
 
+    @Test
+    fun aPrintFailedErrorIsShownInsteadOfTheNoPrinterConnectedOneWhenThePrinterFails() {
+        val printFailed = context.getString(R.string.receipt_print_failed)
+        receiptPrinter.failWith(PrinterError.PrintFailed)
+        givenAReceiptPrintHost()
+
+        composeRule.onNodeWithText(PRINT_BUTTON).performClick()
+
+        composeRule.waitUntilExactlyOneExists(hasText(printFailed))
+        composeRule.onNodeWithText(context.getString(R.string.receipt_no_printer_connected)).assertDoesNotExist()
+
+        composeRule.onNodeWithText(context.getString(R.string.receipt_error_accept)).performClick()
+
+        composeRule.onNodeWithText(printFailed).assertDoesNotExist()
+        assertTrue(receiptPrinter.printed.isEmpty())
+    }
+
     private fun givenAReceiptPrintHost() {
         val receiptPrintViewModel = ReceiptPrintViewModel(
             PrintReceiptUseCase(FakeReceiptRepository(receipt), receiptPrinter),

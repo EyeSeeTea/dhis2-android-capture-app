@@ -26,7 +26,7 @@ Testing approach: the presentation pillar is tested through what the user sees, 
 - [x] 3.2 Implement `ReceiptPrintViewModel` (`uiState` with `isPrinting` and `userMessage`, `print(eventUid)`, `messageShown()`), `ReceiptPrintHost`, the stateless printing dialog (not dismissable while printing) and strings
 - [x] 3.3 Test: with no printer connected, the no-printer error stays on screen until it is accepted and nothing is printed
 - [x] 3.4 Implement the typed messages (`Printed`, `NoPrinterConnected`, `PrintFailed`) mapped from the use case `Result`, and keeping errors until accepted
-- [ ] 3.5 Test: when the printer fails to print, a different error message is shown than the no-printer one
+- [x] 3.5 Test: when the printer fails to print, a different error message is shown than the no-printer one
 - [ ] 3.6 Test: pressing "Print receipt" twice while printing prints only one receipt
 - [ ] 3.7 Implement the guard against a second print while one is in progress
 - [ ] 3.8 Add `PRINT_RECEIPT` to the dashboard menu and wire it, mirroring `SEND_SMS`: the click calls `print(eventUid)`; the activity mounts `ReceiptPrintHost`. The view model is created at activity scope, separate from `DashboardViewModel`.

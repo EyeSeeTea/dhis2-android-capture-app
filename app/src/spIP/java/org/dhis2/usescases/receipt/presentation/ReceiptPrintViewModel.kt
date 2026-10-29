@@ -32,6 +32,8 @@ class ReceiptPrintViewModel(
             isSuccess -> ReceiptPrintUiState.Finished(ReceiptPrintMessage.Printed)
             exceptionOrNull() is PrinterError.NoPrinterConnected ->
                 ReceiptPrintUiState.Finished(ReceiptPrintMessage.NoPrinterConnected)
+            exceptionOrNull() is PrinterError.PrintFailed ->
+                ReceiptPrintUiState.Finished(ReceiptPrintMessage.PrintFailed)
             else -> ReceiptPrintUiState.Idle
         }
 }

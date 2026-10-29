@@ -31,9 +31,9 @@ fun ReceiptPrintHost(viewModel: ReceiptPrintViewModel) {
         ReceiptPrintUiState.Idle -> Unit
         ReceiptPrintUiState.Printing -> PrintingDialog()
         is ReceiptPrintUiState.Finished ->
-            if (state.message == ReceiptPrintMessage.NoPrinterConnected) {
+            state.message.errorTextResId()?.let { textResId ->
                 ErrorDialog(
-                    text = stringResource(R.string.receipt_no_printer_connected),
+                    text = stringResource(textResId),
                     onAccept = viewModel::messageShown,
                 )
             }
@@ -79,3 +79,10 @@ private fun ErrorDialog(text: String, onAccept: () -> Unit) {
         text = { Text(text) },
     )
 }
+
+private fun ReceiptPrintMessage.errorTextResId(): Int? =
+    when (this) {
+        ReceiptPrintMessage.Printed -> null
+        ReceiptPrintMessage.NoPrinterConnected -> R.string.receipt_no_printer_connected
+        ReceiptPrintMessage.PrintFailed -> R.string.receipt_print_failed
+    }
