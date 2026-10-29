@@ -17,19 +17,22 @@ Commit: one commit per behavior (test + minimal implementation).
 - [x] 2.2 Implement `ReceiptFormatter`
 - [x] 2.3 Implement `FakeReceiptPrinter` (development printer that logs the receipt; no unit test, it has no logic of its own: the flow is covered in the use case and view model tests and validated manually in 3.5)
 
-## 3. Presentation: view model, printing dialog and menu trigger
-Commit: one commit per behavior (test + minimal implementation). Design per the Android architecture guidance: the view model is screen-scoped (the TEI dashboard activity), exposes a single `uiState`, and never holds a `Context`; ViewModel events become UI state (no one-shot events); the dialog is stateless (state + `onXxx` lambdas).
+## 3. Presentation: view model, printing host and menu trigger
+Commit: one commit per behavior (UI test first, then the minimal implementation). Design per the Android architecture guidance: the view model is screen-scoped (the TEI dashboard activity), exposes a single `uiState`, and never holds a `Context`; ViewModel events become UI state (no one-shot events); the printing dialog is stateless (state + `onXxx` lambdas).
 
-- [ ] 3.1 Test (JVM, real use case, fake repository and printer): printing sets `isPrinting` while the printer is working and then leaves a success message
-- [ ] 3.2 Implement `ReceiptPrintViewModel` with `uiState` (`isPrinting`, `userMessage`) and `print(eventUid)`
-- [ ] 3.3 Test: printing with no printer connected leaves a no-printer error message and `isPrinting` false
-- [ ] 3.4 Implement the typed messages (`Printed`, `NoPrinterConnected`, `PrintFailed`) mapped from the use case `Result`
-- [ ] 3.5 Test: after the message is shown, `messageShown()` clears it
-- [ ] 3.6 Implement `messageShown()`
-- [ ] 3.7 Stateless printing dialog (non-dismissable while printing; errors stay until accepted) and strings. Compose test (androidTest, one per state), following `BiometricsAttributeProviderTest`
-- [ ] 3.8 Add `PRINT_RECEIPT` to the dashboard menu and wire it, mirroring `SEND_SMS`: the click calls `print(eventUid)`; the activity shows the dialog while `isPrinting` and the snackbar from `userMessage`, then calls `messageShown()`. The view model is created at activity scope, separate from `DashboardViewModel`.
+Testing approach: the presentation pillar is tested through what the user sees, in the style of `BiometricsAttributeProviderTest` (Compose UI test, `androidTest`), not through the view model API. The test mounts `ReceiptPrintHost` with the real view model and the real `PrintReceiptUseCase`, doubling only the repository and the printer (fakes). The use case is covered implicitly: each scenario also asserts the effect on the fake printer. The explicit use case tests of section 1 stay. Strings are read from resources, not literals.
+
+- [x] 3.1 Test: pressing "Print receipt" shows the printing dialog while the printer works, then the printed confirmation, and the printer received the receipt of the event
+- [x] 3.2 Implement `ReceiptPrintViewModel` (`uiState` with `isPrinting` and `userMessage`, `print(eventUid)`, `messageShown()`), `ReceiptPrintHost`, the stateless printing dialog (not dismissable while printing) and strings
+- [ ] 3.3 Test: with no printer connected, the no-printer error stays on screen until it is accepted and nothing is printed
+- [ ] 3.4 Implement the typed messages (`Printed`, `NoPrinterConnected`, `PrintFailed`) mapped from the use case `Result`, and keeping errors until accepted
+- [ ] 3.5 Test: when the printer fails to print, a different error message is shown than the no-printer one
+- [ ] 3.6 Test: pressing "Print receipt" twice while printing prints only one receipt
+- [ ] 3.7 Implement the guard against a second print while one is in progress
+- [ ] 3.8 Add `PRINT_RECEIPT` to the dashboard menu and wire it, mirroring `SEND_SMS`: the click calls `print(eventUid)`; the activity mounts `ReceiptPrintHost`. The view model is created at activity scope, separate from `DashboardViewModel`.
+  - Dependencies come from a hand-written `ReceiptServiceLocator` (flavor source set, like `SPIPServiceLocator`) that provides a `ViewModelProvider.Factory`; it is only called from this wiring. `provideReceiptPrinter()` is defined in `spIPDebug` (`FakeReceiptPrinter`) and `spIPRelease` (create the source set).
   - `FakeReceiptPrinter` must only be bound in debug builds (`spIPDebug`), or the menu option stays hidden outside debug until the real printer exists: a release build must never report a receipt as printed when nothing was printed.
-- [ ] 3.9 Manual validation on a physical device: menu shown, dialog while printing, success snackbar, no-printer error, rotating the device mid-print neither cancels nor repeats the print, double tap on the menu prints once
+- [ ] 3.9 Manual validation on a physical device: menu shown, dialog while printing, confirmation, no-printer error, rotating the device mid-print neither cancels nor repeats the print
 
 ## 4. Docs
 Commit: single docs commit.
