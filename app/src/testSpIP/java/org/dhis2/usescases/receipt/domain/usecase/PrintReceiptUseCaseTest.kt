@@ -39,6 +39,17 @@ class PrintReceiptUseCaseTest {
         assertEquals(PrinterError.NoPrinterConnected, result.exceptionOrNull())
     }
 
+    @Test
+    fun `printing returns a print-failed error when the connected printer fails to print`() = runTest {
+        givenAReceiptForEvent("EVENT_UID")
+        givenAPrinterThatFailsToPrint()
+        val useCase = givenAPrintReceiptUseCase()
+
+        val result = useCase("EVENT_UID")
+
+        assertEquals(PrinterError.PrintFailed, result.exceptionOrNull())
+    }
+
     private suspend fun givenAReceiptForEvent(eventUid: String): Receipt {
         val receipt = Receipt(
             lines = listOf(
@@ -52,6 +63,10 @@ class PrintReceiptUseCaseTest {
 
     private fun givenAPrinterWithoutConnection() {
         printer.failWith(PrinterError.NoPrinterConnected)
+    }
+
+    private fun givenAPrinterThatFailsToPrint() {
+        printer.failWith(PrinterError.PrintFailed)
     }
 
     private fun givenAPrintReceiptUseCase() = PrintReceiptUseCase(receiptRepository, printer)
