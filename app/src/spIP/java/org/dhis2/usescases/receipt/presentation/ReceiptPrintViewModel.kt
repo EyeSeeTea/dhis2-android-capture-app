@@ -17,6 +17,7 @@ class ReceiptPrintViewModel(
     val uiState: StateFlow<ReceiptPrintUiState> = _uiState.asStateFlow()
 
     fun print(eventUid: String) {
+        if (_uiState.value == ReceiptPrintUiState.Printing) return
         _uiState.value = ReceiptPrintUiState.Printing
         launchUseCase {
             _uiState.value = printReceiptUseCase(eventUid).toUiState()

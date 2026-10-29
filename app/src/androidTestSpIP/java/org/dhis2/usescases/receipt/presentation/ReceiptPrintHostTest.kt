@@ -82,6 +82,18 @@ class ReceiptPrintHostTest {
         assertTrue(receiptPrinter.printed.isEmpty())
     }
 
+    @Test
+    fun pressingPrintTwiceWhilePrintingPrintsOnlyOneReceipt() {
+        givenAReceiptPrintHost()
+
+        composeRule.onNodeWithText(PRINT_BUTTON).performClick()
+        composeRule.onNodeWithText(PRINT_BUTTON).performClick()
+        receiptPrinter.finishPrinting()
+
+        composeRule.waitUntilExactlyOneExists(hasText(context.getString(R.string.receipt_printed)))
+        assertEquals(listOf(receipt), receiptPrinter.printed)
+    }
+
     private fun givenAReceiptPrintHost() {
         val receiptPrintViewModel = ReceiptPrintViewModel(
             PrintReceiptUseCase(FakeReceiptRepository(receipt), receiptPrinter),
