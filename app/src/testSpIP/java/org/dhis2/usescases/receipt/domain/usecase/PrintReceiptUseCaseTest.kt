@@ -1,13 +1,13 @@
 package org.dhis2.usescases.receipt.domain.usecase
 
 import kotlinx.coroutines.test.runTest
-import org.dhis2.usescases.receipt.domain.model.PrinterError
+import org.dhis2.usescases.receipt.domain.model.PrintReceiptError
 import org.dhis2.usescases.receipt.domain.model.Receipt
 import org.dhis2.usescases.receipt.domain.model.ReceiptLine
 import org.dhis2.usescases.receipt.domain.repository.ReceiptPrinter
 import org.dhis2.usescases.receipt.domain.repository.ReceiptRepository
+import org.eyeseetea.functional.Either
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
@@ -18,13 +18,13 @@ class PrintReceiptUseCaseTest {
     private val printer = FakePrinter()
 
     @Test
-    fun `printing a receipt sends it to the printer and returns success`() = runTest {
+    fun `printing a receipt sends it to the printer and succeeds`() = runTest {
         val receipt = givenAReceiptForEnrollment("ENROLLMENT_UID")
         val useCase = givenAPrintReceiptUseCase()
 
         val result = useCase("ENROLLMENT_UID")
 
-        assertTrue(result.isSuccess)
+        assertEquals(Either.Right(Unit), result)
         assertEquals(listOf(receipt), printer.printed)
     }
 
@@ -36,7 +36,7 @@ class PrintReceiptUseCaseTest {
 
         val result = useCase("ENROLLMENT_UID")
 
-        assertEquals(PrinterError.NoPrinterConnected, result.exceptionOrNull())
+        assertEquals(Either.Left(PrintReceiptError.NoPrinterConnected), result)
     }
 
     @Test
@@ -47,7 +47,7 @@ class PrintReceiptUseCaseTest {
 
         val result = useCase("ENROLLMENT_UID")
 
-        assertEquals(PrinterError.PrintFailed, result.exceptionOrNull())
+        assertEquals(Either.Left(PrintReceiptError.PrintFailed), result)
     }
 
     private suspend fun givenAReceiptForEnrollment(enrollmentUid: String): Receipt {
@@ -62,26 +62,27 @@ class PrintReceiptUseCaseTest {
     }
 
     private fun givenAPrinterWithoutConnection() {
-        printer.failWith(PrinterError.NoPrinterConnected)
+        printer.failWith(PrintReceiptError.NoPrinterConnected)
     }
 
     private fun givenAPrinterThatFailsToPrint() {
-        printer.failWith(PrinterError.PrintFailed)
+        printer.failWith(PrintReceiptError.PrintFailed)
     }
 
     private fun givenAPrintReceiptUseCase() = PrintReceiptUseCase(receiptRepository, printer)
 
     private class FakePrinter : ReceiptPrinter {
         val printed = mutableListOf<Receipt>()
-        private var error: PrinterError? = null
+        private var error: PrintReceiptError? = null
 
-        fun failWith(error: PrinterError) {
+        fun failWith(error: PrintReceiptError) {
             this.error = error
         }
 
-        override suspend fun print(receipt: Receipt) {
-            error?.let { throw it }
+        override suspend fun print(receipt: Receipt): Either<PrintReceiptError, Unit> {
+            error?.let { return Either.Left(it) }
             printed.add(receipt)
+            return Either.Right(Unit)
         }
     }
 }

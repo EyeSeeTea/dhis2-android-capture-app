@@ -11,12 +11,13 @@ import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.CompletableDeferred
 import org.dhis2.R
-import org.dhis2.usescases.receipt.domain.model.PrinterError
+import org.dhis2.usescases.receipt.domain.model.PrintReceiptError
 import org.dhis2.usescases.receipt.domain.model.Receipt
 import org.dhis2.usescases.receipt.domain.model.ReceiptLine
 import org.dhis2.usescases.receipt.domain.repository.ReceiptPrinter
 import org.dhis2.usescases.receipt.domain.repository.ReceiptRepository
 import org.dhis2.usescases.receipt.domain.usecase.PrintReceiptUseCase
+import org.eyeseetea.functional.Either
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -50,7 +51,7 @@ class ReceiptPrintHostTest {
     @Test
     fun aNoPrinterConnectedErrorStaysOnScreenUntilItIsAcceptedAndNothingIsPrinted() {
         val noPrinterConnected = context.getString(R.string.receipt_no_printer_connected)
-        receiptPrinter.failWith(PrinterError.NoPrinterConnected)
+        receiptPrinter.failWith(PrintReceiptError.NoPrinterConnected)
         givenAReceiptPrintHost()
 
         composeRule.onNodeWithText(PRINT_BUTTON).performClick()
@@ -68,7 +69,7 @@ class ReceiptPrintHostTest {
     @Test
     fun aPrintFailedErrorIsShownInsteadOfTheNoPrinterConnectedOneWhenThePrinterFails() {
         val printFailed = context.getString(R.string.receipt_print_failed)
-        receiptPrinter.failWith(PrinterError.PrintFailed)
+        receiptPrinter.failWith(PrintReceiptError.PrintFailed)
         givenAReceiptPrintHost()
 
         composeRule.onNodeWithText(PRINT_BUTTON).performClick()
@@ -110,21 +111,22 @@ class ReceiptPrintHostTest {
 
     private class GatedReceiptPrinter : ReceiptPrinter {
         private val gate = CompletableDeferred<Unit>()
-        private var error: PrinterError? = null
+        private var error: PrintReceiptError? = null
         val printed = mutableListOf<Receipt>()
 
         fun finishPrinting() {
             gate.complete(Unit)
         }
 
-        fun failWith(error: PrinterError) {
+        fun failWith(error: PrintReceiptError) {
             this.error = error
         }
 
-        override suspend fun print(receipt: Receipt) {
-            error?.let { throw it }
+        override suspend fun print(receipt: Receipt): Either<PrintReceiptError, Unit> {
+            error?.let { return Either.Left(it) }
             gate.await()
             printed.add(receipt)
+            return Either.Right(Unit)
         }
     }
 
