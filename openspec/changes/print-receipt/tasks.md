@@ -35,7 +35,7 @@ Testing approach: the presentation pillar is tested through what the user sees, 
   - Added for the wiring: `D2ReceiptRepository`, which receives the enrollment uid and resolves internally which event to print (latest completed event of the enrollment, the assumption of design.md), then reads its data values (label from the data element, user-friendly value). Validated manually in 3.9, with no automated test.
 - [x] 3.10 Test: with nothing to print for the enrollment, the no-receipt-available error stays on screen until it is accepted and nothing is printed
 - [x] 3.11 Implement `PrintReceiptError.NoReceiptAvailable`: `ReceiptRepository.getReceipt` returns `null` when the enrollment has no completed event or the event has no values; the use case returns the error; the host shows it (text pending validation with the client)
-- [ ] 3.9 Manual validation on a physical device: menu shown, dialog while printing, confirmation, no-printer error, rotating the device mid-print neither cancels nor repeats the print
+- [x] 3.9 Manual validation on a physical device: menu shown, dialog while printing, confirmation, no-printer error, rotating the device mid-print neither cancels nor repeats the print
 
 ## 4. Docs
 Commit: single docs commit.

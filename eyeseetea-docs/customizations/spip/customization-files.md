@@ -53,7 +53,7 @@ Entries are added here as they are built, using the exact `# Title` of the match
 
 ### 2.1 Print Receipt
 
-Status: `needs_validation` (manual validation on a device pending, task 3.9 of the change)
+Status: `active`
 
 Main implementation points (Oslo files touched, each marked `// EyeSeeTea customization - Print Receipt`):
 - `app/src/main/java/org/dhis2/usescases/teiDashboard/TeiDashboardMobileActivity.kt` (`PRINT_RECEIPT` value in `EnrollmentMenuItem`, and `mountReceiptPrintHost(this)` at the end of `onCreate`)
