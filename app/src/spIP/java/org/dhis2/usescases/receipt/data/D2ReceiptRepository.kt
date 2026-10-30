@@ -12,9 +12,9 @@ import org.hisp.dhis.android.core.event.EventStatus
 
 class D2ReceiptRepository(private val d2: D2) : ReceiptRepository {
 
-    override suspend fun getReceipt(enrollmentUid: String): Receipt =
+    override suspend fun getReceipt(enrollmentUid: String): Receipt? =
         withContext(Dispatchers.IO) {
-            val eventUid = lastCompletedEventUid(enrollmentUid)
+            val eventUid = lastCompletedEventUid(enrollmentUid) ?: return@withContext null
             val lines = d2.trackedEntityModule().trackedEntityDataValues()
                 .byEvent().eq(eventUid)
                 .blockingGet()
@@ -27,7 +27,7 @@ class D2ReceiptRepository(private val d2: D2) : ReceiptRepository {
                         value = dataValue.userFriendlyValue(d2) ?: return@mapNotNull null,
                     )
                 }
-            Receipt(lines)
+            if (lines.isEmpty()) null else Receipt(lines)
         }
 
     // Event selection is an assumption pending client confirmation: the latest completed event of the enrollment.

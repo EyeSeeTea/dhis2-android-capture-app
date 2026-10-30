@@ -10,6 +10,9 @@ class PrintReceiptUseCase(
     private val receiptRepository: ReceiptRepository,
     private val receiptPrinter: ReceiptPrinter,
 ) {
-    suspend operator fun invoke(enrollmentUid: String): Either<PrintReceiptError, Unit> =
-        receiptPrinter.print(receiptRepository.getReceipt(enrollmentUid))
+    suspend operator fun invoke(enrollmentUid: String): Either<PrintReceiptError, Unit> {
+        val receipt = receiptRepository.getReceipt(enrollmentUid)
+            ?: return Either.Left(PrintReceiptError.NoReceiptAvailable)
+        return receiptPrinter.print(receipt)
+    }
 }

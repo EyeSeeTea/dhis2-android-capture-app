@@ -7,7 +7,7 @@ Printer model, receipt layout and final trigger are not confirmed by the client 
 ## What Changes
 
 - Add a **Print receipt** item to the TEI dashboard menu (top-right), following the precedent of **Send Welcome SMS**. The trigger is a stopgap for testing; if the client asks for automatic printing on event completion it will be replaced without touching the domain.
-- Add a receipt domain (`Receipt`, `ReceiptPrinter`, `PrinterError`, `PrintReceiptUseCase`) marked as draft.
+- Add a receipt domain (`Receipt`, `ReceiptPrinter`, `PrintReceiptError`, `PrintReceiptUseCase`) marked as draft.
 - Add a fake printer and a text formatter so the flow works without hardware.
 - Show a success or error message after printing (including "no printer connected").
 - The task as a whole includes building the printer capability (the app cannot drive a printer today). This change delivers only the abstraction; the real Bluetooth integration is **out of scope**: it sits behind `ReceiptPrinter` and will be a follow-up change once the printer model is known.

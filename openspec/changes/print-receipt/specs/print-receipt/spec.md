@@ -17,6 +17,10 @@ The system SHALL generate the receipt from the data values of a completed event,
 ### Requirement: Receipt for beneficiary and program staff
 The system SHALL produce a receipt that is issued to both the beneficiary and the program staff.
 
+#### Scenario: Nothing to print
+- **WHEN** the user prints a receipt and the enrollment has no completed event, or the event has no values
+- **THEN** an error message states that there is nothing to print and nothing is printed
+
 #### Scenario: Receipt covers both recipients
 - **WHEN** the user prints a receipt for a completed event
 - **THEN** the output serves both the beneficiary and the program staff (number of physical copies to be confirmed)

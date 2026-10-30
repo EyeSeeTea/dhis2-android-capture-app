@@ -83,6 +83,7 @@ private fun ErrorDialog(text: String, onAccept: () -> Unit) {
 private fun ReceiptPrintMessage.errorTextResId(): Int? =
     when (this) {
         ReceiptPrintMessage.Printed -> null
+        ReceiptPrintMessage.NoReceiptAvailable -> R.string.receipt_no_receipt_available
         ReceiptPrintMessage.NoPrinterConnected -> R.string.receipt_no_printer_connected
         ReceiptPrintMessage.PrintFailed -> R.string.receipt_print_failed
     }

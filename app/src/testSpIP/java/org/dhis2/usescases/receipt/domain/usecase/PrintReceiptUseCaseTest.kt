@@ -8,6 +8,7 @@ import org.dhis2.usescases.receipt.domain.repository.ReceiptPrinter
 import org.dhis2.usescases.receipt.domain.repository.ReceiptRepository
 import org.eyeseetea.functional.Either
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
@@ -50,6 +51,17 @@ class PrintReceiptUseCaseTest {
         assertEquals(Either.Left(PrintReceiptError.PrintFailed), result)
     }
 
+    @Test
+    fun `printing returns a no-receipt-available error and prints nothing when there is nothing to print`() = runTest {
+        givenNoReceiptForEnrollment("ENROLLMENT_UID")
+        val useCase = givenAPrintReceiptUseCase()
+
+        val result = useCase("ENROLLMENT_UID")
+
+        assertEquals(Either.Left(PrintReceiptError.NoReceiptAvailable), result)
+        assertTrue(printer.printed.isEmpty())
+    }
+
     private suspend fun givenAReceiptForEnrollment(enrollmentUid: String): Receipt {
         val receipt = Receipt(
             lines = listOf(
@@ -59,6 +71,10 @@ class PrintReceiptUseCaseTest {
         )
         whenever(receiptRepository.getReceipt(enrollmentUid)).thenReturn(receipt)
         return receipt
+    }
+
+    private suspend fun givenNoReceiptForEnrollment(enrollmentUid: String) {
+        whenever(receiptRepository.getReceipt(enrollmentUid)).thenReturn(null)
     }
 
     private fun givenAPrinterWithoutConnection() {

@@ -33,6 +33,8 @@ Testing approach: the presentation pillar is tested through what the user sees, 
   - Dependencies come from a hand-written `ReceiptServiceLocator` (flavor source set, like `SPIPServiceLocator`) that provides a `ViewModelProvider.Factory`; it is only called from this wiring. `provideReceiptPrinter()` is defined in `spIPDebug` (`FakeReceiptPrinter`) and `spIPRelease` (create the source set).
   - `FakeReceiptPrinter` is only bound in debug builds (`spIPDebug`). Release (`spIPRelease`) binds a printer that always reports `NoPrinterConnected`, so a release build never reports a receipt as printed when nothing was printed (the menu option stays visible).
   - Added for the wiring: `D2ReceiptRepository`, which receives the enrollment uid and resolves internally which event to print (latest completed event of the enrollment, the assumption of design.md), then reads its data values (label from the data element, user-friendly value). Validated manually in 3.9, with no automated test.
+- [x] 3.10 Test: with nothing to print for the enrollment, the no-receipt-available error stays on screen until it is accepted and nothing is printed
+- [x] 3.11 Implement `PrintReceiptError.NoReceiptAvailable`: `ReceiptRepository.getReceipt` returns `null` when the enrollment has no completed event or the event has no values; the use case returns the error; the host shows it (text pending validation with the client)
 - [ ] 3.9 Manual validation on a physical device: menu shown, dialog while printing, confirmation, no-printer error, rotating the device mid-print neither cancels nor repeats the print
 
 ## 4. Docs
@@ -41,9 +43,8 @@ Commit: single docs commit.
 - [ ] 4.1 Register Print Receipt in `customization-files.md` and `upgrade-validation-checklist.md`
 
 ## Pending (not scheduled)
-- [ ] Define what happens when the enrollment has no completed event (or the event has no values): today the repository returns an empty receipt that is reported as printed (domain error + test first)
 - [ ] Connected-printer detection (paired is not connected) and no-printer error against the real device (estimate item 1)
 - [ ] Real Bluetooth/Zebra `ReceiptPrinter` (RFCOMM socket or Zebra SDK) once the printer model is confirmed (estimate item 4)
-  - Turn `PrinterError.PrintFailed` into a class that carries the original cause (`PrintFailed(cause)`): as a singleton object its stack trace is captured at class load and the real failure reason would be lost in the logs.
+  - Turn `PrintReceiptError.PrintFailed` into a class that carries the original cause (`PrintFailed(cause)`): as a singleton object its stack trace is captured at class load and the real failure reason would be lost in the logs.
 - [ ] Restrict the menu option to the distribution program/stage once its UIDs are known
 - [ ] Automatic trigger on event completion if the client asks for it
