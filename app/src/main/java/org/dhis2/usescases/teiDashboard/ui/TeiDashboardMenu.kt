@@ -63,7 +63,7 @@ private fun buildMenuForEnrollment(
             isMenuOptionAvailable = presenter.isCmoProgram,
             resourceManager = resourceManager
         )
-        //EyeSeeTea customization - Print Receipt
+        // EyeSeeTea customization - Print Receipt
         addPrintReceiptMenuItem(resourceManager)
         addSyncMenuItem(resourceManager)
         addIfTeiCanBeTransferred(dashboardViewModel, resourceManager)

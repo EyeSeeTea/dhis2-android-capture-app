@@ -40,7 +40,7 @@ Testing approach: the presentation pillar is tested through what the user sees, 
 ## 4. Docs
 Commit: single docs commit.
 
-- [ ] 4.1 Register Print Receipt in `customization-files.md` and `upgrade-validation-checklist.md`
+- [x] 4.1 Register Print Receipt in `customization-files.md` and `upgrade-validation-checklist.md`
 
 ## Pending (not scheduled)
 - [ ] Connected-printer detection (paired is not connected) and no-printer error against the real device (estimate item 1)
