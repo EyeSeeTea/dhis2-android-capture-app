@@ -14,3 +14,5 @@
 .kotlin/
 __pycache__/
 *.pyc
+# Personal investigation notes
+.journal/
