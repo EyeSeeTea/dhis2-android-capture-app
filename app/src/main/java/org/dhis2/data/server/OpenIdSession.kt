@@ -25,6 +25,9 @@ class OpenIdSession(
     enum class LogOutReason {
         OPEN_ID,
         DISABLED_ACCOUNT,
+
+        // EyeSeeTea customization - 2FA support
+        UNAUTHORIZED,
     }
 
     fun setSessionCallback(
@@ -51,6 +54,14 @@ class OpenIdSession(
                         .accountDeletionObservable()
                         .filter { it == AccountDeletionReason.ACCOUNT_DISABLED }
                         .map { LogOutReason.DISABLED_ACCOUNT },
+                    // EyeSeeTea customization - 2FA support
+                    // The SDK's automatic logout: when the server rejects the session it removes
+                    // the stored credentials and announces it here, so the user goes back to login.
+                    d2
+                        .userModule()
+                        .accountManager()
+                        .logOutObservable()
+                        .map { LogOutReason.UNAUTHORIZED },
                 ).defaultSubscribe(
                     schedulerProvider,
                     { sessionCallback(it) },

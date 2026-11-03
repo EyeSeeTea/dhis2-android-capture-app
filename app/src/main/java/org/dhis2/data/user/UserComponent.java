@@ -8,14 +8,8 @@ import org.dhis2.commons.dialogs.calendarpicker.di.CalendarPickerModule;
 import org.dhis2.commons.featureconfig.di.FeatureConfigActivityComponent;
 import org.dhis2.commons.featureconfig.di.FeatureConfigActivityModule;
 import org.dhis2.commons.filters.data.FilterPresenter;
-import org.dhis2.data.service.SyncDataWorkerComponent;
-import org.dhis2.data.service.SyncDataWorkerModule;
 import org.dhis2.data.service.SyncGranularRxComponent;
 import org.dhis2.data.service.SyncGranularRxModule;
-import org.dhis2.data.service.SyncInitWorkerComponent;
-import org.dhis2.data.service.SyncInitWorkerModule;
-import org.dhis2.data.service.SyncMetadataWorkerComponent;
-import org.dhis2.data.service.SyncMetadataWorkerModule;
 import org.dhis2.usescases.about.AboutComponent;
 import org.dhis2.usescases.about.AboutModule;
 import org.dhis2.usescases.datasets.datasetDetail.DataSetDetailComponent;
@@ -32,8 +26,6 @@ import org.dhis2.usescases.eventsWithoutRegistration.eventDetails.injection.Even
 import org.dhis2.usescases.eventsWithoutRegistration.eventDetails.injection.EventDetailsModule;
 import org.dhis2.usescases.eventsWithoutRegistration.eventInitial.EventInitialComponent;
 import org.dhis2.usescases.eventsWithoutRegistration.eventInitial.EventInitialModule;
-import org.dhis2.usescases.main.MainComponent;
-import org.dhis2.usescases.main.MainModule;
 import org.dhis2.usescases.main.program.ProgramComponent;
 import org.dhis2.usescases.main.program.ProgramModule;
 import org.dhis2.usescases.notes.NotesComponent;
@@ -72,8 +64,6 @@ import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListComponent;
 import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListModule;
 import org.dhis2.utils.session.ChangeServerURLComponent;
 import org.dhis2.utils.session.ChangeServerURLModule;
-import org.dhis2.utils.session.PinModule;
-import org.dhis2.utils.session.SessionComponent;
 
 import dagger.Subcomponent;
 import dhis2.org.analytics.charts.ui.di.AnalyticsFragmentComponent;
@@ -84,10 +74,6 @@ import dhis2.org.analytics.charts.ui.di.AnalyticsFragmentModule;
 public interface UserComponent {
 
     FilterPresenter filterPresenter();
-
-    @NonNull
-    MainComponent plus(@NonNull MainModule mainModule);
-
 
     @NonNull
     ProgramEventDetailComponent plus(@NonNull ProgramEventDetailModule programEventDetailModule);
@@ -136,12 +122,6 @@ public interface UserComponent {
     ReservedValueComponent plus(ReservedValueModule reservedValueModule);
 
     @NonNull
-    SyncDataWorkerComponent plus(SyncDataWorkerModule syncDataWorkerModule);
-
-    @NonNull
-    SyncMetadataWorkerComponent plus(SyncMetadataWorkerModule syncDataWorkerModule);
-
-    @NonNull
     EventCaptureComponent plus(EventCaptureModule eventCaptureModule);
 
     @NonNull
@@ -152,9 +132,6 @@ public interface UserComponent {
 
     @NonNull
     SyncComponent plus(SyncModule syncModule);
-
-    @NonNull
-    SyncInitWorkerComponent plus(SyncInitWorkerModule syncInitWorkerModule);
 
     @NonNull
     EnrollmentComponent plus(EnrollmentModule enrollmentModule);
@@ -186,9 +163,6 @@ public interface UserComponent {
 
     @NonNull
     EventDetailsComponent plus(EventDetailsModule eventDetailsModule);
-
-    @NonNull
-    SessionComponent plus(PinModule pinModule);
 
     @NonNull
     SchedulingComponent plus(SchedulingModule schedulingModule);

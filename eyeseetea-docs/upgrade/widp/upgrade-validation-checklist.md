@@ -63,9 +63,25 @@ Expected result:
 - content supports Markdown rendering
 - if translations exist for the device locale, translated content is shown; otherwise default content
 - after clicking OK, the notification does not reappear (marked as read)
+- with several notifications, one dialog is shown at a time; accepting or dismissing one shows
+  the next
+- if the dialog is dismissed **without** clicking OK (back button or tapping outside), it does
+  not come back on the next screen; it reappears after **closing the app completely** (swipe it
+  away from recents) and reopening it, without a metadata sync, or after the next metadata sync
+- the dialog appears **only** on the Home's program list and on the list a program opens into
+  (events, tracked entities, data sets): never on the loading, login / PIN or sync progress
+  screens, in settings, about or troubleshooting, or inside a form
+- syncing metadata from settings with a new notification on the server shows nothing in
+  settings; going back to the program list shows it
+- with a single program (the app opens the program screen by itself), the dialog appears on that
+  program screen, once
+- accepting with **no connection** leaves the notification unread: after closing and reopening
+  the app it appears again, and accepting it with connection saves it
 - the `readBy` list on the server includes the user's ID and timestamp
 
 Additional checks:
+- two accounts on the same device: with an unread notification of account A cached, log out
+  (or delete the account) and log in with account B — B must never see A's notification
 - a notification with wildcard "Web" should NOT appear
 - a notification targeting a different user group should NOT appear
 - a notification already in readBy for this user should NOT appear
@@ -86,6 +102,15 @@ Manual flow:
 Expected result:
 - correct code: login succeeds
 - incorrect code: red error message "Incorrect two factor code"
+
+Session after a restart:
+1. Log in with the 2FA user and wait for the sync to finish.
+2. Close the app completely (swipe it away from recents) and reopen it.
+3. The session does not survive the restart. As soon as something talks to the server — a sync,
+   accepting a notification — the app must open the login screen with the "session has expired"
+   message, never stay on the Home with requests failing. Logging out before that point is the
+   one case this does not cover.
+4. A non-2FA user on the same flow stays logged in.
 
 ### 4b. Email
 
@@ -129,6 +154,50 @@ Expected result:
 - the field supporting text shows the field description followed by the URL on a new line
 - if the field has no description and has a URL, the supporting text shows only the URL
 - the URL is visible inline under the field without opening a separate dialog
+
+## Before recording any result
+
+Check **both** the version and the package name on the device first:
+
+```
+adb shell dumpsys package com.eyeseetea.widp.debug | grep versionName
+```
+
+A result recorded against the wrong build is worse than no result. During the 3.4.2 upgrade
+one notifications check was run against the `dhis2` flavor (`com.dhis2.debug`), which carries
+no WIDP customization at all — so nothing appeared, and for a while that looked like a
+regression. The wrong flavor is indistinguishable from the right app on the device.
+
+Use `./gradlew :app:installWidpDebug`, not `assembleWidpDebug`: a green assemble does not put
+the code on the device, and testing against a stale APK looks exactly like a hook that never
+fires.
+
+## Pending for 3.4.2 (as of 2026-09-11)
+
+Confirmed on `3.4.2-widp-fork-1`, Samsung SM-S928B:
+
+- [x] notifications are downloaded after a metadata sync (evidence: `BASIC_SHARE_PREFS.xml`
+      written at the sync timestamp, holding the datastore notifications)
+- [x] metadata sync brings new server metadata down
+
+Still to exercise on this build:
+
+- [ ] **3. Notifications** — the dialog itself, with a notification the test user has **not**
+      read. The 3.4.2 run could not exercise it: both datastore notifications were already in
+      the user's `readBy`, so not showing them was correct
+- [ ] **3. Notifications** — background sync with the app closed, then open it and check the
+      notification is shown on resume
+- [ ] **4a/4b/4c. 2FA** — TOTP, Email and SMS on this build. The 2FA login recorded earlier in
+      this upgrade was run against `3.4.1-widp-fork-1` and was discarded
+- [ ] **1. Change Server URL** — the full flow. Its DI was re-anchored in 3.4.2 because
+      upstream deleted `App.java`, so this is not a formality
+- [ ] **2. Image upload without resizing**
+- [ ] **5. URL data element field**
+- [ ] login against a DHIS2 2.41 server
+
+Known and **out of scope**: 2FA with mandatory enrolment not activated shows an error
+pointing at the administrator. Reproduced on `3.4.1-widp-fork-1`, so it is pre-existing, not
+a regression of this upgrade.
 
 ## Maintenance rule
 

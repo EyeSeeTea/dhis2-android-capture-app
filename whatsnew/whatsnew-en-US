@@ -1,7 +1,9 @@
 This is a patch version that fixes:
-- ANDROAPP-7269 Crash on search
-- ANDROAPP-7293 Bottom sheet landscape behavior
-- ANDROAPP-7345 Changes to enrollment date not respected by program rules
-- ANDROAPP-7368 Crash when trying to update fields in Tracker
+
+- ANDROAPP-7682 Sync button doesn't always appear in enrollments list
+- ANDROAPP-7706 Tei list items display wrong attributes
+- ANDROAPP-7708 NullPointerException: Attempt to invoke virtual method 'java.lang.Class java.lang.Object.getClass'
+- ANDROAPP-7711 NullPointerException: Attempt to invoke virtual method 'android.content.res.Resources android.view.View.getResources' on a null object reference
+
 ....
 You can find all the details on Jira and Github.

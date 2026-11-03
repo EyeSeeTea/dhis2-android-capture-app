@@ -20,18 +20,19 @@ context: |
     - Active flavor:      widp
     - Flavor source sets: app/src/widp/, app/src/widpDebug/, app/src/widpRelease/
     - Application ID:     com.eyeseetea.widp
-    - Current version:    3.3.0.1-widp-fork-1 (target: 3.3.1-widp-fork-1)
-    - Upgrade branch:     feature-widp/bring_last_changes_3_3_1
+    - Current version:    3.4.2-widp-fork-1 (target: next Oslo release, via develop-eyeseetea)
+    - Upgrade branch:     feature-widp/redo_3_4_2
     - Base branch:        develop-eyeseetea
-    - SDK fork:           EyeSeeTea/dhis2-android-sdk (carries 2FA + auth patches)
+    - SDK fork:           EyeSeeTea/dhis2-android-sdk 1.14.2-eyeseetea-fork-1 (2FA + auth patches)
 
   ## Repository layout (relevant)
 
     - app/                             — Android app module (multi-flavor Gradle)
     - app/src/main/                    — shared code across all flavors
     - app/src/widp{,Debug,Release}/    — WIDP-only code, resources, manifests
+    - app/src/eyeseetea{,Debug}/       — the baseline's own flavor, inherited through the merge
     - commons/, commonskmm/, form/,
-      compose-table/                   — shared modules
+      sync/, compose-table/            — shared modules
     - dhis2-android-sdk/               — local checkout of the SDK fork (if present)
     - eyeseetea-docs/                  — human-facing upgrade/customization docs
     - openspec/                        — machine-checkable specs + changes (this tree)
@@ -66,13 +67,12 @@ context: |
     - Preserves all active WIDP capabilities unchanged at the requirements level —
       only the implementation baseline moves.
     - Documents conflict resolution strategy in design.md.
-    - Breaks work into ordered tasks.md mirroring the phases in
-      `eyeseetea-docs/upgrade/widp/upgrade-3.3.1-strategy.md`.
+    - Breaks work into ordered tasks.md, with commit boundaries stated explicitly.
 
   Human-facing upgrade docs live in `eyeseetea-docs/upgrade/widp/`. OpenSpec is the
   machine-checkable mirror, not a replacement.
 
-  ## Active WIDP capabilities (as of 2026-04-15)
+  ## Active WIDP capabilities (as of 2026-09-11)
 
     | Capability                     | Spec folder             | Risk   | Status |
     |--------------------------------|-------------------------|--------|--------|
@@ -80,11 +80,11 @@ context: |
     | Image upload without resizing  | image-upload-no-resize  | low    | active |
     | WIDP notifications system      | notifications           | high   | active |
     | Two-factor authentication      | two-factor-auth         | medium | active |
-    | URL data element field         | url-data-element        | medium | broken |
+    | URL data element field         | url-data-element        | medium | active |
 
-  The URL data element rendering is broken: data plumbing is intact but the
-  rendering was lost during the upstream migration of forms to Jetpack Compose.
-  Restoring it is tracked in `openspec/changes/upgrade-widp-to-3.3.1/`.
+  The URL data element rendering was restored on 2026-04-17: the URL is appended to the
+  field's supporting text, so it shows inline under every Compose input instead of in the
+  pre-Compose dialog.
 
   For the technical file-level inventory see
   `eyeseetea-docs/customizations/widp/customization-files.md`. For manual
@@ -118,7 +118,8 @@ rules:
     - "For upgrade changes, classify expected conflict areas using the four categories from conflict-rules.md: accept_ours, accept_theirs, manual_reapply_on_theirs, defer_after_build_verification."
 
   tasks:
-    - "Upgrade tasks follow the phase order from `eyeseetea-docs/upgrade/widp/upgrade-3.3.1-strategy.md`: Documentation → OpenSpec → Claude tooling → Upgrade execution → Tests and cleanup."
+    - "Upgrade tasks follow the phase order: Documentation → OpenSpec → Upgrade execution → Tests and cleanup → Inventory and fork identity."
+    - "Commit granularity MUST be explicit in tasks.md, not left implicit. State it per task group as a short 'Commit:' note, so an agent picking up tasks.md without prior conversation context can tell where commit boundaries fall without inferring them."
     - "Each task is small enough to complete in one focused session. Tasks that span multiple customizations must be split per customization."
     - "Tests for WIDP customizations are prioritized by risk: notifications > change-server-url > 2fa > image-upload > url-data-element."
     - "Every customization-preservation task has a matching manual-validation entry in `eyeseetea-docs/upgrade/widp/upgrade-validation-checklist.md`."
