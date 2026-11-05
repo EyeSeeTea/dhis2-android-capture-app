@@ -20,9 +20,12 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.eq
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
@@ -250,6 +253,40 @@ class NotificationD2RepositoryTest {
         )
     }
 
+    @Test
+    fun `Should keep the cached notifications when the remote fetch fails`() = runBlocking {
+        val repository = givenTheRemoteFetchFails()
+
+        val result = runCatching { repository.sync().first() }
+
+        // A failed fetch must not look like an empty datastore: reporting success would let the
+        // post-sync action mark notifications pending, and saving would erase the unread ones
+        // already cached on the device.
+        assertTrue(result.isFailure)
+        verify(basicPreferenceProvider, never()).saveAsJson(eq(NOTIFICATIONS), any<List<Notification>>())
+    }
+
+    @Test
+    fun `Should keep the cached notifications when the user groups fetch fails`() = runBlocking {
+        val repository = givenTheUserGroupsFetchFails(
+            listOf(givenANotification(userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null)))),
+        )
+
+        val result = runCatching { repository.sync().first() }
+
+        // Without the user's groups the filter would drop every group-targeted notification, and
+        // saving that would erase the unread ones already cached for this user.
+        assertTrue(result.isFailure)
+        verify(basicPreferenceProvider, never()).saveAsJson(eq(NOTIFICATIONS), any<List<Notification>>())
+    }
+
+    @Test
+    fun `Should forget the cached notifications`() {
+        givenARepository().clear()
+
+        verify(basicPreferenceProvider).removeValue(NOTIFICATIONS)
+    }
+
     private fun givenTestData(
         user: User,
         notifications: List<NotificationDTO>,
@@ -275,6 +312,40 @@ class NotificationD2RepositoryTest {
             userGroupsApi
         )
     }
+
+    private fun givenTheRemoteFetchFails(): NotificationD2Repository {
+        // A RuntimeException rather than the IOException Retrofit throws offline: Mockito rejects
+        // checked exceptions on Kotlin methods, and the repository treats both the same way.
+        runBlocking {
+            whenever(notificationsApi.getData()) doThrow RuntimeException("datastore unreachable")
+        }
+
+        return NotificationD2Repository(
+            d2,
+            basicPreferenceProvider,
+            notificationsApi,
+            userGroupsApi
+        )
+    }
+
+    private fun givenTheUserGroupsFetchFails(
+        notifications: List<NotificationDTO>,
+    ): NotificationD2Repository {
+        runBlocking {
+            whenever(notificationsApi.getData()) doReturn notifications
+            whenever(userGroupsApi.getData(user.uid())) doThrow RuntimeException("users endpoint unreachable")
+        }
+
+        return NotificationD2Repository(
+            d2,
+            basicPreferenceProvider,
+            notificationsApi,
+            userGroupsApi
+        )
+    }
+
+    private fun givenARepository() =
+        NotificationD2Repository(d2, basicPreferenceProvider, notificationsApi, userGroupsApi)
 
     private fun givenAnUser(): User {
         val user = User.builder().uid("user1").build()

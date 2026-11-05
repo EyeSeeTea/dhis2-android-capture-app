@@ -54,37 +54,11 @@ class PostMetadataSyncModuleTest {
     @Before
     fun setUp() {
         ShowNotifications.isPending = false
-        ShowNotifications.onPending = null
     }
 
     @After
     fun tearDown() {
         ShowNotifications.isPending = false
-        ShowNotifications.onPending = null
-    }
-
-    private fun givenTheWidpFlavorGraph(): Koin =
-        koinApplication {
-            modules(
-                module {
-                    single { notificationRepository }
-                    single { notificationsPresenter }
-                },
-                postMetadataSyncModule,
-            )
-        }.koin
-
-    private fun givenTheRegisteredActions(): List<PostMetadataSyncAction> =
-        givenTheWidpFlavorGraph().get<List<PostMetadataSyncAction>>()
-
-    private fun givenTheRegisteredAction(): PostMetadataSyncAction = givenTheRegisteredActions().single()
-
-    private fun givenTheDownloadSucceeds() {
-        whenever(notificationRepository.sync()) doReturn flowOf(Unit)
-    }
-
-    private fun givenTheDownloadFails(reason: String) {
-        whenever(notificationRepository.sync()) doReturn flow { throw IllegalStateException(reason) }
     }
 
     @Test
@@ -117,5 +91,31 @@ class PostMetadataSyncModuleTest {
         // can never break the metadata sync itself.
         assertTrue(result.isFailure)
         assertFalse(ShowNotifications.isPending)
+    }
+
+    private fun givenTheWidpFlavorGraph(): Koin =
+        koinApplication {
+            modules(
+                module {
+                    single { notificationRepository }
+                    single { notificationsPresenter }
+                },
+                postMetadataSyncModule,
+            )
+        }.koin
+
+    private fun givenTheRegisteredActions(): List<PostMetadataSyncAction> =
+        givenTheWidpFlavorGraph().get<List<PostMetadataSyncAction>>()
+
+    private fun givenTheRegisteredAction(): PostMetadataSyncAction = givenTheRegisteredActions().single()
+
+    private fun givenTheDownloadSucceeds() {
+        whenever(notificationRepository.sync()) doReturn flowOf(Unit)
+    }
+
+    // Mirrors what NotificationD2Repository.sync() does when the datastore cannot be read; that
+    // side is pinned by NotificationD2RepositoryTest, so this is not a contract of its own.
+    private fun givenTheDownloadFails(reason: String) {
+        whenever(notificationRepository.sync()) doReturn flow { throw IllegalStateException(reason) }
     }
 }

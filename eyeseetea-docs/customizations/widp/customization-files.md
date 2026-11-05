@@ -107,7 +107,7 @@ Status: `active`
 
 Data layer (all new files):
 
-- `app/src/main/java/org/dhis2/data/notifications/NotificationD2Repository.kt` — sync, filtering, read/write
+- `app/src/main/java/org/dhis2/data/notifications/NotificationD2Repository.kt` — sync, filtering, read/write, and `clear()` when the user leaves
 - `app/src/main/java/org/dhis2/data/notifications/NotificationsApi.kt` — `dataStore/notifications/notifications`, plus `UserGroupsApi`
 - `app/src/main/java/org/dhis2/data/notifications/NotificationDTO.kt` — DTOs
 - `app/src/main/java/org/dhis2/data/notifications/UserD2Repository.kt` — current user
@@ -123,7 +123,7 @@ Domain layer (all new files):
 
 Presentation (new file):
 
-- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenter.kt` — presenter, the `ShowNotifications` flag and its `onPending` listener, and the `NotificationsView` contract
+- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenter.kt` — presenter (the queue shown one dialog at a time), the `ShowNotifications` pending mark, and the `NotificationsView` contract
 
 DI — moved from Dagger to Koin in 3.4.2:
 
@@ -138,8 +138,11 @@ every screen.
 
 UI integration:
 
-- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements `NotificationsView`, resolves the presenter from Koin, refreshes on resume, registers the `onPending` listener while resumed and clears it on pause, skips rendering on a finishing or destroyed activity, renders the dialog with Markwon and resolves the locale translation
-- `app/src/main/java/org/dhis2/usescases/notifications/presentation/VisibleNotificationDialogs.kt` — new file: tracks which notification dialogs are on screen for one activity instance, so a pending notification offered again on the next resume does not stack a second dialog on top of the first
+- `app/src/main/java/org/dhis2/usescases/general/ActivityGlobalAbstract.java` — implements `NotificationsView`, resolves the presenter from Koin only on screens `NotificationScreens` allows, refreshes on resume and exposes `refreshNotifications()` and the overridable `isOnProgramList()`, skips rendering on a finishing or destroyed activity, renders one dialog at a time with Markwon and resolves the locale translation
+- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationsOnSessionEnd.kt` — new file: forgets the leaving user's cached notifications and this session's state; called on logout, account deletion and when the session ends
+- `app/src/main/java/org/dhis2/usescases/general/SessionManagerActivity.kt` — clears the notifications in the existing session callback, the one that takes the user to login when the SDK's automatic logout, OpenID or a disabled account ends the session
+- `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` — clears the notifications on `HomeEffect.GoToLogin` (completed logout or account deletion), marks the notifications pending when the Home is created and when it hands over to its only program, overrides `isOnProgramList()` with the current Home section, and refreshes notifications when the Home switches back to the program list
+- `app/src/main/java/org/dhis2/usescases/notifications/presentation/NotificationScreens.kt` — new file: decides which screens may show a notification — an explicit list: the Home while on the program list, and the event, tracked entity and data set lists; always with a logged-in session
 
 Sync integration — the hook moved in 3.4.2:
 
@@ -164,7 +167,7 @@ Build config:
 Tests:
 
 - `app/src/test/java/org/dhis2/data/notifications/NotificationD2RepositoryTest.kt` — filtering and persistence
-- `app/src/test/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenterTest.kt` — the display rules: the pending flag survives an empty list, and marking pending reaches the screen that is up
+- `app/src/test/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenterTest.kt` — the display rules: the cached unread notifications are shown on every resume, including in a fresh process, the pending flag survives an empty list, and marking pending reaches the screen that is up
 - `app/src/testWidp/java/org/dhis2/di/PostMetadataSyncModuleTest.kt` — the flavor wiring: exactly one action, it downloads then marks pending, and a failed download marks nothing
 
 No delta today, listed for the feat-commit cross-check:
@@ -184,21 +187,23 @@ Status: `active` (depends on the EyeSeeTea SDK fork)
 New files:
 
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorState.kt` — the sealed state and `TwoFactorType`
-- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorRequiredException.kt`
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/TwoFactorRequiredException.kt` — also holds `TwoFactorOutcome`: code required, code sent, code rejected
 
 Shared files carrying a WIDP delta:
 
 - `login/src/androidMain/kotlin/org/dhis2/mobile/login/main/data/LoginRepositoryImpl.kt` — passes the code to `blockingLogIn`, plus `isTwoFactorError()` and `handleTwoFactorError()` at the end of the file
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/data/LoginRepository.kt` — `twoFactorCode` on the interface
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/usecase/LoginUser.kt` — passes it through
-- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/usecase/BaseLogin.kt` — maps the exception to `LoginResult.TwoFactorError`
-- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/LoginResult.kt` — the `TwoFactorError` variant
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/usecase/BaseLogin.kt` — passes the exception's `TwoFactorOutcome` on as `LoginResult.TwoFactor`
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/domain/model/LoginResult.kt` — the `TwoFactor` variant, which carries the outcome
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/ui/state/CredentialsUiState.kt` — `twoFactorState`, `twoFactorCode`, `infoMessage`
-- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/ui/viewmodel/CredentialsViewModel.kt` — the `TwoFactorError` branch and the resend logic
+- `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/ui/viewmodel/CredentialsViewModel.kt` — the `TwoFactor` branch, rendering each outcome directly, and the resend logic
 - `login/src/commonMain/kotlin/org/dhis2/mobile/login/main/ui/screen/CredentialsScreen.kt` — `TwoFactorContainer` and the info bar
 - `login/src/commonMain/composeResources/values/strings.xml` — the five 2FA UI strings
 - `commonskmm/src/androidMain/kotlin/org/dhis2/mobile/commons/resources/D2ErrorMessageProviderImpl.kt` — the six 2FA message branches
 - `commonskmm/src/commonMain/composeResources/values/strings.xml` — those six messages
+- `app/src/main/java/org/dhis2/data/server/OpenIdSession.kt` — the `UNAUTHORIZED` logout reason and the merge branch that listens to `accountManager().logOutObservable()` (the SDK's automatic logout)
+- `app/src/main/java/org/dhis2/usescases/login/LoginActivity.kt` — maps `UNAUTHORIZED` to the session-expired message
 
 Tests:
 

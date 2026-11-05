@@ -63,13 +63,25 @@ Expected result:
 - content supports Markdown rendering
 - if translations exist for the device locale, translated content is shown; otherwise default content
 - after clicking OK, the notification does not reappear (marked as read)
-- if the dialog is dismissed **without** clicking OK (back button or tapping outside), the
-  notification appears again on the next screen: it was never marked as read
-- leaving the dialog **on screen**, pressing Home and returning shows the same single dialog,
-  not a second one stacked on top: accepting once must add exactly one `readBy` entry
+- with several notifications, one dialog is shown at a time; accepting or dismissing one shows
+  the next
+- if the dialog is dismissed **without** clicking OK (back button or tapping outside), it does
+  not come back on the next screen; it reappears after **closing the app completely** (swipe it
+  away from recents) and reopening it, without a metadata sync, or after the next metadata sync
+- the dialog appears **only** on the Home's program list and on the list a program opens into
+  (events, tracked entities, data sets): never on the loading, login / PIN or sync progress
+  screens, in settings, about or troubleshooting, or inside a form
+- syncing metadata from settings with a new notification on the server shows nothing in
+  settings; going back to the program list shows it
+- with a single program (the app opens the program screen by itself), the dialog appears on that
+  program screen, once
+- accepting with **no connection** leaves the notification unread: after closing and reopening
+  the app it appears again, and accepting it with connection saves it
 - the `readBy` list on the server includes the user's ID and timestamp
 
 Additional checks:
+- two accounts on the same device: with an unread notification of account A cached, log out
+  (or delete the account) and log in with account B — B must never see A's notification
 - a notification with wildcard "Web" should NOT appear
 - a notification targeting a different user group should NOT appear
 - a notification already in readBy for this user should NOT appear
@@ -90,6 +102,15 @@ Manual flow:
 Expected result:
 - correct code: login succeeds
 - incorrect code: red error message "Incorrect two factor code"
+
+Session after a restart:
+1. Log in with the 2FA user and wait for the sync to finish.
+2. Close the app completely (swipe it away from recents) and reopen it.
+3. The session does not survive the restart. As soon as something talks to the server — a sync,
+   accepting a notification — the app must open the login screen with the "session has expired"
+   message, never stay on the Home with requests failing. Logging out before that point is the
+   one case this does not cover.
+4. A non-2FA user on the same flow stays logged in.
 
 ### 4b. Email
 

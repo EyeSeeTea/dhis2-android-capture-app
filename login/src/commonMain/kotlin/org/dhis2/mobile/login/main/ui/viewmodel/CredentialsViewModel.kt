@@ -17,6 +17,7 @@ import org.dhis2.mobile.commons.extensions.withMinimumDuration
 import org.dhis2.mobile.commons.network.NetworkStatusProvider
 import org.dhis2.mobile.login.main.domain.model.DeviceEnrollmentInfo
 import org.dhis2.mobile.login.main.domain.model.LoginResult
+import org.dhis2.mobile.login.main.domain.model.TwoFactorOutcome
 import org.dhis2.mobile.login.main.domain.model.TwoFactorState
 import org.dhis2.mobile.login.main.domain.model.TwoFactorType
 import org.dhis2.mobile.login.main.domain.model.LoginScreenState
@@ -411,11 +412,12 @@ class CredentialsViewModel(
             }
 
             // EyeSeeTea customization - 2FA support
-            is LoginResult.TwoFactorError -> {
+            is LoginResult.TwoFactor -> {
                 _credentialsScreenState.update {
+                    val outcome = result.outcome
                     val code = it.twoFactorState?.code ?: ""
 
-                    val newTwoFactorState = when (result.type) {
+                    val newTwoFactorState = when (outcome.type) {
                         TwoFactorType.TOTP -> TwoFactorState.TotpVerification(code)
                         TwoFactorType.EMAIL -> TwoFactorState.EmailVerification(
                             code,
@@ -428,24 +430,12 @@ class CredentialsViewModel(
                         )
                     }
 
-                    // EyeSeeTea customization - 2FA support
-                    // The colour follows what happened, not which channel it arrived on: an
-                    // EMAIL/SMS challenge and a rejected EMAIL/SMS code carry the same
-                    // TwoFactorType, so only codeSent tells "we sent you a code" (info, blue)
-                    // apart from "that code is wrong" (error, red).
-                    // TOTP is the exception: the first challenge reuses the incorrect-code error,
-                    // so it is shown as neither until the field has been offered once.
-                    val isInfoMessage = result.codeSent
-                    val shouldShowError = when {
-                        isInfoMessage -> false
-                        it.twoFactorState == null && result.type == TwoFactorType.TOTP -> false
-                        else -> true
-                    }
-
+                    // Each outcome is rendered directly: a rejected code is an error, a code that
+                    // was just sent is information, and asking for a code says nothing yet.
                     it.copy(
                         twoFactorState = newTwoFactorState,
-                        errorMessage = if (shouldShowError && result.message != null) result.message else null,
-                        infoMessage = if (isInfoMessage && result.message != null) result.message else null,
+                        errorMessage = (outcome as? TwoFactorOutcome.CodeRejected)?.message,
+                        infoMessage = (outcome as? TwoFactorOutcome.CodeSent)?.message,
                     )
                 }
             }

@@ -47,10 +47,14 @@ import org.dhis2.usescases.main.ui.model.HomeEffect
 import org.dhis2.usescases.main.ui.model.HomeScreenState
 import org.dhis2.usescases.main.ui.model.VersionToUpdateState
 import org.dhis2.usescases.main.ui.screens.MainScreen
+import org.dhis2.usescases.notifications.domain.NotificationRepository
+import org.dhis2.usescases.notifications.presentation.NotificationsOnSessionEnd
+import org.dhis2.usescases.notifications.presentation.NotificationsPresenter
 import org.dhis2.utils.granularsync.SyncStatusDialog
 import org.dhis2.utils.session.CHANGE_SERVER_URL_DIALOG_TAG
 import org.dhis2.utils.session.ChangeServerUrlDialog
 import org.hisp.dhis.mobile.ui.designsystem.theme.DHIS2Theme
+import org.koin.android.ext.android.get
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 
@@ -126,8 +130,19 @@ class MainActivity : ActivityGlobalAbstract() {
     }
 
     //region LIFECYCLE
+    // EyeSeeTea customization - Notifications system
+    // Settings, about and troubleshooting are sections of this same activity; only the program
+    // list shows notifications.
+    override fun isOnProgramList(): Boolean = mainViewModel.homeScreenState.value.currentScreen.isPrograms()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // EyeSeeTea customization - Notifications system
+        // Entering the authenticated area: offer the cached unread notifications, so one that was
+        // dismissed reappears after a cold start. Not on a recreation such as a rotation.
+        if (savedInstanceState == null) {
+            get<NotificationsPresenter>().markShowNotificationsAsPending()
+        }
 
         // On recreation (e.g. rotation), the ViewModel survives but its MainNavigator holds a
         // stale FragmentManager from the destroyed Activity. Update it before rendering so any
@@ -147,18 +162,30 @@ class MainActivity : ActivityGlobalAbstract() {
                     onEffect = { effect ->
                         when (effect) {
                             HomeEffect.BlockSession -> finish()
-                            is HomeEffect.GoToLogin -> goToLogin(
-                                accountsCount = effect.accountsCount,
-                                isDeletion = effect.isDeletion,
-                            )
+                            is HomeEffect.GoToLogin -> {
+                                // EyeSeeTea customization - Notifications system
+                                // A completed logout and a completed account deletion both end
+                                // here: the next user must not see this user's notifications.
+                                NotificationsOnSessionEnd.forget(get<NotificationRepository>())
+                                goToLogin(
+                                    accountsCount = effect.accountsCount,
+                                    isDeletion = effect.isDeletion,
+                                )
+                            }
                             HomeEffect.OrgUnitFilterRequest -> openOrgUnitTreeSelector()
                             is HomeEffect.PeriodFilterRequest -> showPeriodRequest(effect.periodRequest)
                             HomeEffect.ShowDeleteNotification -> showProgressDeleteNotification()
                             HomeEffect.ShowGranularSync -> showGranularSync()
-                            is HomeEffect.SingleProgramNavigation -> navigationLauncher.navigateTo(
-                                this@MainActivity,
-                                effect.homeItemData,
-                            )
+                            is HomeEffect.SingleProgramNavigation -> {
+                                // EyeSeeTea customization - Notifications system
+                                // The Home is about to hand over to its only program: mark them
+                                // pending again so that program screen is the one to show them.
+                                get<NotificationsPresenter>().markShowNotificationsAsPending()
+                                navigationLauncher.navigateTo(
+                                    this@MainActivity,
+                                    effect.homeItemData,
+                                )
+                            }
                             HomeEffect.ShowPinDialog -> { /*handled in composable*/ }
                             HomeEffect.ToggleSideMenu -> openDrawer()
                             HomeEffect.ToggleFilters -> showHideFilter()
@@ -172,6 +199,12 @@ class MainActivity : ActivityGlobalAbstract() {
                     onNewScreen = { currentScreen ->
                         if (backDropActive) {
                             showHideFilter()
+                        }
+                        // EyeSeeTea customization - Notifications system
+                        // Back on the program list from settings or about: not a resume, so the
+                        // pending notifications are offered here.
+                        if (currentScreen.isPrograms()) {
+                            refreshNotifications()
                         }
                         val navigationId = when (currentScreen) {
                             MainScreenType.About -> R.id.menu_about

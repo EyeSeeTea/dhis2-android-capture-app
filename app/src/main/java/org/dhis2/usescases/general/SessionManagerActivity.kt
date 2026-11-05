@@ -26,11 +26,14 @@ import org.dhis2.mobile.sync.domain.SyncStatusController
 import org.dhis2.usescases.login.LoginActivity
 import org.dhis2.usescases.login.LoginActivity.Companion.bundle
 import org.dhis2.usescases.main.MainActivity
+import org.dhis2.usescases.notifications.domain.NotificationRepository
+import org.dhis2.usescases.notifications.presentation.NotificationsOnSessionEnd
 import org.dhis2.usescases.qrScanner.ScanActivity
 import org.dhis2.usescases.splash.SplashActivity
 import org.dhis2.utils.analytics.AnalyticsHelper
 import org.dhis2.utils.analytics.CLICK
 import org.dhis2.utils.analytics.FORGOT_CODE
+import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import javax.inject.Inject
 
@@ -78,6 +81,9 @@ abstract class SessionManagerActivity :
                     serverComponent.openIdSession().setSessionCallback(this, sessionCallback)
                 },
                 navigateToLogin = { logOutReason ->
+                    // EyeSeeTea customization - Notifications system
+                    // The session has ended: the next user must not see this user's notifications.
+                    NotificationsOnSessionEnd.forget(get<NotificationRepository>())
                     startActivity(
                         LoginActivity::class.java,
                         bundle(true, -1, false, logOutReason),

@@ -73,6 +73,12 @@ class LoginActivity : ActivityGlobalAbstract() {
                             true,
                         )
 
+                    // EyeSeeTea customization - 2FA support
+                    OpenIdSession.LogOutReason.UNAUTHORIZED -> putBoolean(
+                        EXTRA_SESSION_EXPIRED,
+                        true,
+                    )
+
                     null -> {
                         // Nothing to do in this case
                     }

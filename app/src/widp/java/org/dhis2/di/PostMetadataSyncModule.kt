@@ -27,9 +27,9 @@ val postMetadataSyncModule =
             listOf(
                 PostMetadataSyncAction {
                     runCatching {
-                        // collect {}, never first(): the terminal first* operators cancel the flow
-                        // with AbortFlowException, which the repository's broad catch swallows and
-                        // logs as a failure after the work has already succeeded.
+                        // A failed download throws out of sync(), so it lands in this runCatching
+                        // and never reaches markShowNotificationsAsPending(): the cached unread
+                        // notifications are kept and nothing is marked pending.
                         notificationRepository.sync().collect { }
                         notificationsPresenter.markShowNotificationsAsPending()
                     }
