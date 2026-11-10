@@ -1,36 +1,40 @@
 ## Context
 
-Receipt = goods distributed for one household, one basket, one day, built from a completed event: distribution, distribution point, receiver and relation to the beneficiary, verification performed, real household size and quantity of each commodity delivered. Printing is offline over Bluetooth to a roll-ticket printer (probably Zebra). Pairing and connection are handled by Android Settings; the app only uses the printer that is currently connected. One receipt per action, no batch.
+Receipt = proof of goods given to one beneficiary in one Distribution event. It is printed from the event the user is viewing (Beneficiary Hub, stage `Distribution`), offline, over Bluetooth, on a Brother RJ-2055WB roll printer (58 mm, 203 dpi, about 384 dots wide). It contains the SP logo, distribution name, distribution point, date and time, ration card ID, beneficiary name, the beneficiary signature (an image) and the items given with their quantities. One receipt per press, unlimited reprints, no batch.
+
+Each tablet is paired to one printer. Pairing is done in Android Settings; the app has no pairing screen.
 
 ## Goals / Non-Goals
 
-**Goals:** a testable end-to-end flow (menu -> receipt -> printer -> feedback) with the printer abstracted; domain that survives a change of trigger.
+**Goals:** an end-to-end testable flow (event menu -> receipt -> printer -> feedback -> flag) with the printer abstracted; a domain that survives a change of trigger, layout or printer.
 
-**Non-Goals:** real Bluetooth/Zebra integration, pairing UI, printer selection, fallback when no printer, batch printing, QR label printing (done by a WebApp), field-priority/truncation logic.
+**Non-Goals:** real Brother/Bluetooth integration in the first slice, pairing UI, printer selection, fallback when there is no printer, batch printing, QR label printing (done by a WebApp), non-Latin text.
 
 ## Decisions
 
-- **Placement:** all new code in the flavor source set `app/src/spIP/java/org/dhis2/usescases/receipt/` (precedent: `usescases/sms/`). Shared code is touched only for the menu enum entry (placement hierarchy level 4, justified in the proposal).
-- **Trigger:** menu item **Print receipt** in the TEI dashboard menu, like Send Welcome SMS. Chosen only to be able to test; the view model exposes a single "print" action so an automatic trigger can call it later.
-- **Domain (draft):**
-  - `Receipt`: immutable value made of ordered label/value lines taken from the data values of the completed event (generic, not fixed fields), so it does not depend on a distribution data model that is not defined yet on the test server. The business fields listed in Context are what the lines are expected to contain.
-  - `ReceiptPrinter`: interface `suspend fun print(receipt: Receipt): Either<PrintReceiptError, Unit>`.
-  - `PrintReceiptError`: sealed interface with `NoReceiptAvailable`, `NoPrinterConnected` and `PrintFailed`.
-  - `PrintReceiptUseCase`: input is the enrollment uid; loads the receipt (`null` when there is nothing to print), delegates to the printer and returns `Either<PrintReceiptError, Unit>`. It does not implement `UseCase<R, T>`: expected outcomes are typed values, not exceptions in a `Result` (see technique T6 in `eyeseetea-docs/customization-techniques.md` on the baseline).
-- **Connected printer:** among the printers paired at OS level, the app uses the one currently connected (paired is not connected). With the abstraction this is the responsibility of the real `ReceiptPrinter`, which reports `NoPrinterConnected`; the fake can simulate it.
-- **Dependency creation:** a hand-written `ReceiptServiceLocator` in the flavor source set, next to `SPIPServiceLocator` (SMS), instead of Oslo's Dagger components or Koin modules, to avoid conflicts in future upgrades. This deviates from the Koin guideline in `AGENTS.md` for the same reason SMS does. The locator is only called from the composition root (activity and menu wiring), never from `domain` or `presentation` logic, and tests build the view model by hand with fakes. Because the view model has state, the locator provides a `ViewModelProvider.Factory` (view model at activity scope), not the instance. The development printer is selected per build type without a DI framework: `provideReceiptPrinter()` is defined in `spIPDebug` (fake) and `spIPRelease` (no printer yet).
-- **Printer implementations:** `FakeReceiptPrinter` (records output, can simulate errors) is wired for now; the real one replaces it behind the same interface via DI.
-- **Formatter:** `ReceiptFormatter` turns a `Receipt` into plain text lines. The protocol-specific encoding (ZPL) belongs to the real printer implementation.
-- **Event selection (assumption, pending):** from the dashboard menu, print the most recent completed event of the enrollment. To confirm with the client. The domain only knows the enrollment: `ReceiptRepository.getReceipt(enrollmentUid)` decides inside the data layer which event it reads.
-- **Feedback:** reuse the existing custom snackbar used by the SMS flow (success / error).
+- **Placement:** all new code in the flavor source set `app/src/spIP/java/org/dhis2/usescases/receipt/` (precedent: `usescases/sms/`). Shared code is touched only at the event-screen menu and activity (placement hierarchy level 4); the touch points are identified in task 5.1 and registered in the inventory.
+- **Trigger:** menu item **Print receipt** in the top-right menu of the event screen of the Distribution stage. Always available, manual. The view model exposes a single `print(eventUid)` action. The earlier dashboard trigger (`PRINT_RECEIPT` in `EnrollmentMenuItem`, `buildMenuForEnrollment`, `mountReceiptPrintHost` in `TeiDashboardMobileActivity`) is removed.
+- **Domain:**
+  - `Receipt`: immutable value with a header (distribution name, distribution point, date and time, ration card ID, beneficiary name), the signature (optional image) and ordered item lines (label and quantity). It no longer is a generic list of label/value pairs. The repository absorbs how DHIS2 stores things (option code to option name, data element to `displayFormName`, file resource to image).
+  - `ReceiptPrinter`: `suspend fun print(receipt: Receipt): Either<PrintReceiptError, Unit>`.
+  - `PrintReceiptError`: sealed interface with `NoPrinterConnected` and `PrintFailed`. `NoReceiptAvailable` is removed: an event always yields a receipt because the TEI attributes are always there (decision to confirm in task 5.4).
+  - `PrintReceiptUseCase`: input is the **event uid**; loads the receipt, prints it, and returns `Either<PrintReceiptError, Unit>`. It does not implement `UseCase<R, T>` (expected outcomes are typed values, see technique T6 in `eyeseetea-docs/customization-techniques.md`).
+- **Receipt Printed flag:** written by a separate port (`ReceiptPrintedMarker`) after a successful print. It runs after printing and is best effort: errors are logged, never shown, and never turn a successful print into an error. It must not complete the event nor trigger program rules that change its status. Writing is skipped when the event is not editable, without error.
+- **Rendering:** `ReceiptRenderer` turns a `Receipt` into a bitmap sized for the printer (about 384 dots). It replaces the plain-text `ReceiptFormatter`. Text is Latin only. The printer adapter decides how to send the bitmap (SDK or raster commands); the domain never knows.
+- **Signature:** read via the SDK from the `IMAGE` data value (file resource). If it is missing or empty the receipt is still printed (assumption, pending confirmation).
+- **Connected printer:** with Bluetooth SPP there is no "connected" state to query. The real `ReceiptPrinter` will look among the paired printers and try to connect (one printer per tablet), reporting `NoPrinterConnected` if it cannot. The fake can simulate it.
+- **Dependency creation:** hand-written `ReceiptServiceLocator` in the flavor source set, next to `SPIPServiceLocator` (SMS), instead of Dagger/Koin, to avoid conflicts in upgrades. It is called only from the composition root (event activity and menu wiring). The locator provides a `ViewModelProvider.Factory` (view model at activity scope, so it survives rotation). `provideReceiptPrinter()` is defined per build type: `spIPDebug` (fake) and `spIPRelease` (always `NoPrinterConnected` until the real printer exists).
+- **Feedback:** success in a snackbar; errors in a non-dismissable dialog until accepted. A second press is ignored while a print is in progress and allowed again when it finishes.
 - **No SDK fork dependency.**
 
 ## Risks / Trade-offs
 
-- Domain fields may change once the client confirms the layout; mitigated by keeping the domain small and marked as draft.
-- The menu trigger lives in a dashboard-level menu while a receipt is per event; may be wrong UX, accepted for testing.
-- Real Bluetooth behaviour (encoding, roll width, connection state) can only be validated with the physical printer.
+- Bitmap rendering changes the formatter, the tests and the way the printer is fed; layout fidelity can only be checked on paper with the real printer.
+- The Oslo touch points of the event screen may differ from the dashboard ones and increase the conflict surface at upgrade time.
+- Bluetooth behaviour (connection, roll width, paper type, firmware language) can only be validated with the Brother unit. Firmware and paper must be identical across production printers.
+- The Bluetooth runtime permission flow (Android 12+) cannot be tested on the Android 8 test tablet; it needs an emulator for the flow and a physical Android 12+ tablet for the real thing.
+- Test server UIDs may differ in production.
 
 ## Open Questions
 
-Copies per recipient (beneficiary and staff), printer model/protocol, receipt layout, final trigger and reprint, event selection rule.
+Distribution point source, meaning of "Date & timestamp", empty signature behaviour, logo file, production Android version, production UIDs, Brother SDK licence and distribution.
