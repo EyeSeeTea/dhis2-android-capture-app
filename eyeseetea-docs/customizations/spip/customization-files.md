@@ -67,6 +67,7 @@ Supporting files in the same workflow (all new, flavor-only):
 - `app/src/spIP/java/org/dhis2/usescases/receipt/domain/repository/ReceiptRepository.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/domain/usecase/PrintReceiptUseCase.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/data/D2ReceiptRepository.kt`
+- `app/src/spIP/java/org/dhis2/usescases/receipt/data/ReceiptMetadata.kt` (UIDs of the metadata the receipt reads; the production UIDs are to be confirmed)
 - `app/src/spIP/java/org/dhis2/usescases/receipt/data/FakeReceiptPrinter.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/data/ReceiptFormatter.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/presentation/ReceiptEventWiring.kt`
@@ -78,6 +79,7 @@ Supporting files in the same workflow (all new, flavor-only):
 - `app/src/spIPDebug/java/org/dhis2/usescases/receipt/ReceiptPrinterProvider.kt` (binds `FakeReceiptPrinter`)
 - `app/src/spIPRelease/java/org/dhis2/usescases/receipt/ReceiptPrinterProvider.kt` (always reports no printer connected)
 - `app/src/testSpIP/java/org/dhis2/usescases/receipt/data/ReceiptFormatterTest.kt`
+- `app/src/testSpIP/java/org/dhis2/usescases/receipt/data/D2ReceiptRepositoryTest.kt`
 - `app/src/testSpIP/java/org/dhis2/usescases/receipt/domain/usecase/PrintReceiptUseCaseTest.kt`
 - `app/src/androidTestSpIP/java/org/dhis2/usescases/receipt/presentation/ReceiptPrintHostTest.kt`
 - `commonskmm/src/commonMain/kotlin/org/eyeseetea/functional/Either.kt`
