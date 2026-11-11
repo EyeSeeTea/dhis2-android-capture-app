@@ -3,6 +3,7 @@ package org.dhis2.usescases.receipt
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import org.dhis2.usescases.receipt.data.D2ReceiptRepository
+import org.dhis2.usescases.receipt.data.ReceiptMetadata
 import org.dhis2.usescases.receipt.domain.usecase.PrintReceiptUseCase
 import org.dhis2.usescases.receipt.presentation.ReceiptPrintViewModel
 import org.hisp.dhis.android.core.D2Manager
@@ -18,5 +19,8 @@ object ReceiptServiceLocator {
         }
 
     private fun providePrintReceiptUseCase(): PrintReceiptUseCase =
-        PrintReceiptUseCase(D2ReceiptRepository(D2Manager.getD2()), provideReceiptPrinter())
+        PrintReceiptUseCase(
+            D2ReceiptRepository(D2Manager.getD2(), ReceiptMetadata.SP_BENEFICIARY_HUB),
+            provideReceiptPrinter(),
+        )
 }
