@@ -10,13 +10,17 @@ class LoginUser(
         serverUrl: String,
         username: String,
         password: String,
-        isNetworkAvailable: Boolean,
+        // EyeSeeTea customization - 2FA support
         twoFactorCode: String? = null,
     ): LoginResult {
-        val trimmedUsername = username.trim()
+        val urlWithScheme =
+            if (serverUrl.startsWith("https://") || serverUrl.startsWith("http://")) {
+                serverUrl
+            } else {
+                "https://$serverUrl"
+            }
         // EyeSeeTea customization - 2FA support
-        val result =
-            repository.loginUser(serverUrl, trimmedUsername, password, isNetworkAvailable, twoFactorCode)
-        return handleResult(result, serverUrl, trimmedUsername)
+        val result = repository.loginUser(urlWithScheme, username, password, twoFactorCode)
+        return handleResult(result, urlWithScheme, username)
     }
 }

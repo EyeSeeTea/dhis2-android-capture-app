@@ -8,6 +8,11 @@ sealed interface LoginResult {
 
     data class Error(
         val message: String?,
+        val attemptsLeft: Int? = null,
+    ) : LoginResult
+
+    data class LockOut(
+        val lockoutSeconds: Int,
     ) : LoginResult
 
     /**

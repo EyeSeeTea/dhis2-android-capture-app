@@ -281,6 +281,55 @@ is the cheapest way to catch up.
 
 ---
 
+## T6. Typed domain outcomes with `Either`
+
+**Use when:** a domain operation has several *expected* outcomes the caller must
+handle differently (no printer connected, nothing to print, print failed), and
+modelling them as exceptions inside `Result<T>` would force them to extend
+`Throwable`.
+
+**Used by:** SP IP — Print Receipt. PSI keeps its own older copy in the `psi`
+flavor (`org.dhis2.core.functional.Either`, with an untyped `fold`); it can move to
+this one on its next upgrade.
+
+**How it works.** The baseline provides `org.eyeseetea.functional.Either` in
+`commonskmm/src/commonMain`:
+
+```kotlin
+sealed interface PrintReceiptError { /* NoReceiptAvailable, NoPrinterConnected, ... */ }
+
+suspend fun invoke(uid: String): Either<PrintReceiptError, Unit> {
+    val receipt = repository.getReceipt(uid) ?: return Either.Left(NoReceiptAvailable)
+    return printer.print(receipt)
+}
+
+result.fold(fnL = { error -> /* exhaustive when */ }, fnR = { /* success */ })
+```
+
+`Left` is the failure, `Right` the success. `map`, `flatMap` and `getOrElse` are
+right-biased: they act on a `Right` and leave a `Left` untouched, so several steps
+that can fail chain without nested `when`s.
+
+**`Either` or `Result`.** `Result` carries only a `Throwable`, so its failure is
+untyped, `when` over it is never exhaustive, and `mapCatching` swallows
+`CancellationException`. Use `Either` for outcomes the caller is expected to handle.
+Keep `Result` (and `runCatching`) at the boundary with the SDK, where exceptions are
+what actually arrives.
+
+**Deviation from `UseCase<R, T>`.** `UseCase` returns `Result<T>`, so a use case
+returning `Either` does not implement it. Oslo already does this for
+`UpdateSmsResponse`, which returns its own sealed result. It is only a convention,
+not something the code needs: `launchUseCase` works with any block.
+
+**Upgrade cost.** None expected. It is a new file in a new package
+(`org.eyeseetea.functional`), so it cannot conflict with Oslo. The tests live next to
+it in `commonskmm/src/commonTest`.
+
+**Baseline change:** this technique required adding `Either` to `develop-eyeseetea`.
+Forks get it by merging the baseline; they do not need to copy it.
+
+---
+
 ## How to add a technique here
 
 Add an entry when you solve a shared-code customization in a way another fork

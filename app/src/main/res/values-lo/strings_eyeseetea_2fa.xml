@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EyeSeeTea customization - 2FA support -->
+<resources>
+    <string name="openid_session_expired">ໄລຍະເວລາການສື່ສານໄດ້ສິ້ນສຸດລົງແລ້ວ</string>
+    <string name="openid_session_expired_message">ເຊດຊັນປັດຈຸບັນຂອງທ່ານໝົດອາຍຸແລ້ວ. ດ້ວຍເຫດຜົນດ້ານຄວາມປອດໄພ, ທ່ານຈະຕ້ອງໃຫ້ຂໍ້ມູນປະຈໍາຕົວຂອງທ່ານອີກເທື່ອຫນຶ່ງ</string>
+</resources>

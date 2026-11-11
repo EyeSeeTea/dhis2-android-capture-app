@@ -6,7 +6,9 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityOptionsCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import io.reactivex.subjects.BehaviorSubject
 import kotlinx.coroutines.launch
 import org.dhis2.App
@@ -20,9 +22,11 @@ import org.dhis2.commons.service.SessionManagerServiceImpl
 import org.dhis2.commons.ui.extensions.handleInsets
 import org.dhis2.data.server.OpenIdSession.LogOutReason
 import org.dhis2.data.service.workManager.WorkManagerController
+import org.dhis2.mobile.commons.session.SessionRenewalNotifier
 import org.dhis2.mobile.login.pin.addPinBottomSheet
 import org.dhis2.mobile.login.pin.domain.model.PinMode
 import org.dhis2.mobile.sync.domain.SyncStatusController
+import org.dhis2.usescases.general.ui.SessionRenewalDialog
 import org.dhis2.usescases.login.LoginActivity
 import org.dhis2.usescases.login.LoginActivity.Companion.bundle
 import org.dhis2.usescases.main.MainActivity
@@ -42,7 +46,7 @@ internal fun registerSessionTerminationNavigation(
     activityClass: Class<*>,
     registerCallback: (((LogOutReason) -> Unit) -> Unit),
     navigateToLogin: (LogOutReason) -> Unit,
-): Unit {
+) {
     if (!LoginActivity::class.java.isAssignableFrom(activityClass)) {
         registerCallback(navigateToLogin)
     }
@@ -71,6 +75,8 @@ abstract class SessionManagerActivity :
 
     val syncStatusController: SyncStatusController by inject()
 
+    private val sessionRenewalNotifier: SessionRenewalNotifier by inject()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val serverComponent = (applicationContext as App).serverComponent
         if (serverComponent != null) {
@@ -96,7 +102,7 @@ abstract class SessionManagerActivity :
             val isTraining = BuildConfig.FLAVOR == "dhis2Training"
             val screenShareAllowed =
                 serverComponent.userManager().isUserLoggedIn().blockingFirst() &&
-                        !serverComponent.userManager().allowScreenShare()
+                    !serverComponent.userManager().allowScreenShare()
             if (!isTraining && screenShareAllowed) {
                 window.setFlags(
                     WindowManager.LayoutParams.FLAG_SECURE,
@@ -129,6 +135,8 @@ abstract class SessionManagerActivity :
         if (handleEdgeToEdge) handleInsets()
 
         super.onCreate(savedInstanceState)
+
+        observeSessionRenewalRequests()
     }
 
     override fun onUserInteraction() {
@@ -158,20 +166,26 @@ abstract class SessionManagerActivity :
         this.activityResultObserver = activityResultObserver
     }
 
-    private fun showPinBottomSheet() {
+    protected fun showPinBottomSheet(
+        onSuccess: () -> Unit = {
+            startActivity(MainActivity::class.java, null, true, true, null)
+        },
+        onDismiss: () -> Unit = {
+            if (this !is LoginActivity) {
+                startActivity(LoginActivity::class.java, null, true, true, null)
+            }
+        },
+    ) {
         if (pinComposeView != null) return
-        pinComposeView = addPinBottomSheet(
-            mode = PinMode.ASK,
-            onSuccess = {
-                startActivity(MainActivity::class.java, null, true, true, null)
-            },
-            onDismiss = {
-                analyticsHelper.setEvent(FORGOT_CODE, CLICK, FORGOT_CODE)
-                if (this !is LoginActivity) {
-                    startActivity(LoginActivity::class.java, null, true, true, null)
-                }
-            },
-        )
+        pinComposeView =
+            addPinBottomSheet(
+                mode = PinMode.ASK,
+                onSuccess = onSuccess,
+                onDismiss = {
+                    analyticsHelper.setEvent(FORGOT_CODE, CLICK, FORGOT_CODE)
+                    onDismiss()
+                },
+            )
     }
 
     private fun removePinBottomSheet() {
@@ -225,6 +239,35 @@ abstract class SessionManagerActivity :
         super.onActivityResult(requestCode, resultCode, data)
     }
 
+    private fun observeSessionRenewalRequests() {
+        if (this is LoginActivity || this is SplashActivity) return
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                sessionRenewalNotifier.renewalRequired.collect {
+                    showSessionRenewalDialog()
+                }
+            }
+        }
+    }
+
+    private fun showSessionRenewalDialog() {
+        SessionRenewalDialog(
+            onNotNow = {
+                sessionRenewalNotifier.consume()
+            },
+            onLogInAgain = {
+                sessionRenewalNotifier.consume()
+                startActivity(
+                    LoginActivity::class.java,
+                    bundle(renewSession = true),
+                    true,
+                    true,
+                    null,
+                )
+            },
+        ).show(supportFragmentManager)
+    }
+
     private fun checkSessionTimeout() {
         if (::sessionManagerServiceImpl.isInitialized &&
             sessionManagerServiceImpl.checkSessionTimeout(
@@ -233,8 +276,8 @@ abstract class SessionManagerActivity :
             ) &&
             this !is LoginActivity
         ) {
-            workManagerController.cancelAllWork()
             lifecycleScope.launch {
+                workManagerController.cancelAllWorkAndWait()
                 syncStatusController.restore()
             }
         }

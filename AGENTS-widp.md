@@ -3,10 +3,10 @@
 EyeSeeTea fork of the DHIS2 Android Capture app for the WIDP client.
 
 - **Flavor:** `widp` (app ID: `com.eyeseetea.widp`)
-- **Current version:** `3.4.2-widp-fork-1`
+- **Current version:** `3.5.0-widp-fork-1`
 - **Upstream:** dhis2/dhis2-android-capture-app
 - **Baseline branch:** `develop-eyeseetea` (shared EyeSeeTea baseline, never client-specific)
-- **SDK fork:** EyeSeeTea/dhis2-android-sdk `1.14.2-eyeseetea-fork-3` (2FA + auth + disabled-account login patches)
+- **SDK fork:** EyeSeeTea/dhis2-android-sdk `1.15.0-eyeseetea-fork-1` (2FA + auth + disabled-account login patches)
 
 ## Project structure
 
@@ -39,11 +39,11 @@ flavor belongs here.
 
 There is no `testDebugUnitTest` task: unit tests are per flavor.
 
-Java 17 required. Gradle 9.0.1 (AGP), Kotlin 2.3.20.
+Java 17 required. Gradle 9.5.1, AGP 9.3.1, Kotlin 2.4.10.
 
 ## Customizations
 
-5 confirmed WIDP customizations. Each has an OpenSpec spec in `openspec/specs/`:
+6 confirmed WIDP customizations. Each has an OpenSpec spec in `openspec/specs/`:
 
 | # | Spec slug | Status | Risk |
 |---|-----------|--------|------|
@@ -52,6 +52,7 @@ Java 17 required. Gradle 9.0.1 (AGP), Kotlin 2.3.20.
 | 3 | `notifications` | active | high |
 | 4 | `two-factor-auth` | active (SDK dependency) | medium |
 | 5 | `url-data-element` | active | medium |
+| 6 | `disabled-account-login` | active (SDK dependency) | low |
 
 ### Customization code rules
 
@@ -90,7 +91,7 @@ casualties in files without `// EyeSeeTea customization` markers.
 - `openspec/specs/` — functional specs (source of truth for what each customization does)
 - `openspec/config.yaml` — project context and OpenSpec rules
 - `eyeseetea-docs/customizations/widp/customization-files.md` — technical file inventory
-- `eyeseetea-docs/upgrade/widp/upgrade-3.4.2-notes.md` — notes for the current upgrade
+- `eyeseetea-docs/upgrade/widp/upgrade-3.5.0-notes.md` — notes for the current upgrade
 - `eyeseetea-docs/upgrade/widp/upgrade-validation-checklist.md` — manual validation flows
 - `eyeseetea-docs/upgrade/conflict-rules.md` — merge conflict resolution rules
 - `eyeseetea-docs/customization-techniques.md` — reusable mechanisms for customizing Oslo code

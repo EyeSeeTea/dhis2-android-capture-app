@@ -12,15 +12,15 @@ import org.hisp.dhis.android.core.D2
 import timber.log.Timber
 
 enum class Mode {
-    EDIT, WARNING
+    EDIT,
+    WARNING,
 }
 
 class ChangeServerURLPresenter(
     private val view: ChangeServerURLView,
     private val preferenceProvider: PreferenceProvider,
-    val d2: D2
+    val d2: D2,
 ) {
-
     private var currentServerURL: String = ""
     private var newServerURL: String = ""
     private var mode = Mode.EDIT
@@ -35,7 +35,12 @@ class ChangeServerURLPresenter(
         view.disableOk()
     }
 
-    fun onServerChanged(serverUrl: CharSequence, start: Int, before: Int, count: Int) {
+    fun onServerChanged(
+        serverUrl: CharSequence,
+        start: Int,
+        before: Int,
+        count: Int,
+    ) {
         this.newServerURL = serverUrl.toString()
 
         if (serverUrl.isNotEmpty() && serverUrl.toString() != currentServerURL) {
@@ -70,7 +75,11 @@ class ChangeServerURLPresenter(
                 // SystemInfo has just been deleted, so reporting success before the new server has
                 // answered would tell the user the change worked when it may not have. Running it
                 // here also puts any failure inside the catch below.
-                d2.systemInfoModule().systemInfo().download().blockingAwait()
+                d2
+                    .systemInfoModule()
+                    .systemInfo()
+                    .download()
+                    .blockingAwait()
 
                 launch(Dispatchers.Main) {
                     view.renderSuccess("Server changed successfully to $newServerURL")
@@ -85,7 +94,7 @@ class ChangeServerURLPresenter(
     }
 
     private fun updateUrlInPreference() {
-        //preferenceProvider.setValue(SERVER, newServerURL)
+        // preferenceProvider.setValue(SERVER, newServerURL)
 
         preferenceProvider.updateServerURL(newServerURL)
 
@@ -118,14 +127,24 @@ class ChangeServerURLPresenter(
 
 interface ChangeServerURLView {
     fun showEditMode()
+
     fun requestConfirmation()
+
     fun renderServerUrl(url: String)
+
     fun enableOk()
+
     fun disableOk()
+
     fun getAbstractContext(): ActivityGlobalAbstract
+
     fun showLoginProgress()
+
     fun hideLoginProgress()
+
     fun renderError(throwable: Throwable)
+
     fun renderSuccess(message: String)
+
     fun closeDialog()
 }

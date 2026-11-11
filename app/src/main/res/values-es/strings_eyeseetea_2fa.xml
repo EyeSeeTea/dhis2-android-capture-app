@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EyeSeeTea customization - 2FA support -->
+<resources>
+    <string name="openid_session_expired">La sesión ha terminado</string>
+    <string name="openid_session_expired_message">Su sesión actual ha terminado. Por razones de seguridad, tendrá que volver a proporcionar sus credenciales</string>
+</resources>

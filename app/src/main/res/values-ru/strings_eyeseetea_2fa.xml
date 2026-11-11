@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EyeSeeTea customization - 2FA support -->
+<resources>
+    <string name="openid_session_expired">Сессия истекла</string>
+    <string name="openid_session_expired_message">Срок действия Вашей текущей сессии истек. По соображениям безопасности Вам нужно будет снова предоставить свои учетные данные</string>
+</resources>
