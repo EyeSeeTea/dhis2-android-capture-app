@@ -11,6 +11,7 @@ import org.hisp.dhis.android.core.option.Option
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttribute
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttributeValue
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValue
+import org.dhis2.usescases.receipt.domain.model.ReceiptItem
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito
@@ -39,6 +40,52 @@ class D2ReceiptRepositoryTest {
         assertEquals("TEST Distribution 1", receipt?.distributionName)
         assertEquals("RC-0042", receipt?.rationCardId)
         assertEquals("Ana Perez", receipt?.beneficiaryName)
+    }
+
+    @Test
+    fun `the receipt lists only the items given with a value, chosen by their data element code, with label and quantity`() = runTest {
+        givenAnEventWithDataValues(
+            eventUid = EVENT_UID,
+            dataValues = listOf(
+                givenADataValue(code = "sp_DIST_RICE_GIVEN", label = "Rice (kg) given", value = "5"),
+                givenADataValue(code = "sp_DIST_OIL_GIVEN", label = "Oil (l) given", value = ""),
+                givenADataValue(code = "sp_DIST_SALT_GIVEN", label = "Salt (kg) given", value = "2"),
+                givenADataValue(code = "sp_DIST_NOTES", label = "Notes", value = "7"),
+            ),
+        )
+        val repository = givenAReceiptRepository()
+
+        val receipt = repository.getReceipt(EVENT_UID)
+
+        assertEquals(
+            listOf(ReceiptItem(label = "Rice (kg) given", quantity = "5"), ReceiptItem(label = "Salt (kg) given", quantity = "2")),
+            receipt?.items,
+        )
+    }
+
+    private class DataValueFixture(val dataValue: TrackedEntityDataValue, val dataElement: DataElement)
+
+    private fun givenADataValue(code: String, label: String, value: String): DataValueFixture {
+        val dataElementUid = "DE_$code"
+        return DataValueFixture(
+            dataValue = TrackedEntityDataValue.builder().event(EVENT_UID).dataElement(dataElementUid).value(value).build(),
+            dataElement = DataElement.builder()
+                .uid(dataElementUid)
+                .code(code)
+                .displayFormName(label)
+                .valueType(ValueType.INTEGER_POSITIVE)
+                .build(),
+        )
+    }
+
+    private fun givenAnEventWithDataValues(eventUid: String, dataValues: List<DataValueFixture>) {
+        whenever(d2.trackedEntityModule().trackedEntityDataValues().byEvent()) doReturn mock()
+        whenever(d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(eventUid)) doReturn mock()
+        whenever(d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(eventUid).blockingGet()) doReturn
+            dataValues.map { it.dataValue }
+        dataValues.forEach {
+            whenever(d2.dataElementModule().dataElements().uid(it.dataElement.uid()).blockingGet()) doReturn it.dataElement
+        }
     }
 
     private fun givenAReceiptRepository() =

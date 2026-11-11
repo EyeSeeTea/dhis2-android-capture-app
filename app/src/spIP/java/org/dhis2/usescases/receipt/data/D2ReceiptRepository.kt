@@ -4,9 +4,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.dhis2.commons.bindings.userFriendlyValue
 import org.dhis2.usescases.receipt.domain.model.Receipt
+import org.dhis2.usescases.receipt.domain.model.ReceiptItem
 import org.dhis2.usescases.receipt.domain.model.ReceiptLine
 import org.dhis2.usescases.receipt.domain.repository.ReceiptRepository
 import org.hisp.dhis.android.core.D2
+import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValue
 
 class D2ReceiptRepository(
     private val d2: D2,
@@ -15,9 +17,10 @@ class D2ReceiptRepository(
 
     override suspend fun getReceipt(eventUid: String): Receipt? =
         withContext(Dispatchers.IO) {
-            val lines = d2.trackedEntityModule().trackedEntityDataValues()
+            val dataValues = d2.trackedEntityModule().trackedEntityDataValues()
                 .byEvent().eq(eventUid)
                 .blockingGet()
+            val lines = dataValues
                 .mapNotNull { dataValue ->
                     val dataElementUid = dataValue.dataElement() ?: return@mapNotNull null
                     val dataElement = d2.dataElementModule().dataElements()
@@ -27,9 +30,11 @@ class D2ReceiptRepository(
                         value = dataValue.userFriendlyValue(d2) ?: return@mapNotNull null,
                     )
                 }
+            val items = dataValues.mapNotNull { dataValue -> toItem(dataValue) }
             val teiUid = trackedEntityInstanceUid(eventUid)
             val receipt = Receipt(
                 lines = lines,
+                items = items,
                 distributionName = d2.trackedEntityModule().trackedEntityDataValues()
                     .value(eventUid, metadata.distributionDataElementUid).blockingGet()
                     .userFriendlyValue(d2),
@@ -38,6 +43,19 @@ class D2ReceiptRepository(
             )
             receipt.takeUnless { it.isEmpty() }
         }
+
+    // An item given is a data element whose code is sp_DIST_<ITEM>_GIVEN; only the ones with a value are printed.
+    private fun toItem(dataValue: TrackedEntityDataValue): ReceiptItem? {
+        if (dataValue.value().isNullOrBlank()) return null
+        val dataElement = dataValue.dataElement()
+            ?.let { d2.dataElementModule().dataElements().uid(it).blockingGet() }
+            ?: return null
+        if (dataElement.code()?.matches(ITEM_GIVEN_CODE) != true) return null
+        return ReceiptItem(
+            label = dataElement.displayFormName() ?: dataElement.displayName() ?: dataElement.uid(),
+            quantity = dataValue.userFriendlyValue(d2) ?: return null,
+        )
+    }
 
     private fun trackedEntityInstanceUid(eventUid: String): String? {
         val enrollmentUid = d2.eventModule().events().uid(eventUid).blockingGet()?.enrollment() ?: return null
@@ -51,5 +69,9 @@ class D2ReceiptRepository(
         }
 
     private fun Receipt.isEmpty() =
-        lines.isEmpty() && distributionName == null && rationCardId == null && beneficiaryName == null
+        lines.isEmpty() && items.isEmpty() && distributionName == null && rationCardId == null && beneficiaryName == null
+
+    private companion object {
+        val ITEM_GIVEN_CODE = Regex("sp_DIST_.+_GIVEN")
+    }
 }
