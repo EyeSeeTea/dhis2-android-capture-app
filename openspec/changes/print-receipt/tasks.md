@@ -52,10 +52,10 @@ Commit: one commit per behavior (test + minimal implementation). Do not start be
 
 ### Content
 - [x] 5.5 Test: the receipt shows the distribution name (option name, not code), ration card ID and beneficiary name. Written as a unit test of `D2ReceiptRepository` with `D2` doubled at the SDK boundary, link by link as in `OptionsRepositoryTest`. The metadata UIDs are injected through `ReceiptMetadata`. It does not cover the real metadata of the server: validate by hand against 8380
-- [ ] 5.6 Test: only items with a value appear, each with its label (`displayFormName`) and quantity; items are selected by data element code `sp_DIST_*_GIVEN`
+- [x] 5.6 Test: only items with a value appear, each with its label (`displayFormName`) and quantity; items are selected by data element code `sp_DIST_*_GIVEN`. Same repository unit test as 5.5. A blank value counts as no value (`userFriendlyValue` returns an empty string for it, not null)
 - [ ] 5.7 Test: an "Other item" shows its description and quantity when both are present, and is omitted otherwise
 - [ ] 5.7b Distribution point and date/time: **blocked** until the client confirms the source of the distribution point (provisional: event org unit name) and whether the time is the printing moment or the event date
-- [ ] 5.8 Implement `Receipt` (header, optional signature, item lines) and `D2ReceiptRepository` reading TEI attributes and event data values for `eventUid`. Header done with 5.5 (`Receipt.distributionName`/`rationCardId`/`beneficiaryName`, `ReceiptMetadata`, TEI attributes); item lines and signature pending
+- [ ] 5.8 Implement `Receipt` (header, optional signature, item lines) and `D2ReceiptRepository` reading TEI attributes and event data values for `eventUid`. Header done with 5.5 (`Receipt.distributionName`/`rationCardId`/`beneficiaryName`, `ReceiptMetadata`, TEI attributes); item lines done with 5.6 (`Receipt.items`; the generic `lines` stay until the renderer replaces them); signature pending
 
 ### Image
 - [ ] 5.9 Test: the receipt is rendered as a bitmap of the printable width of the roll (about 384 dots)
