@@ -62,13 +62,13 @@ Otherwise it is its own commit.**
 
 ## 3. Regression coverage for 2FA
 
-- [ ] 3.1 Port the 2FA cases onto the baseline `CredentialsViewModelTest.kt`: code required,
+- [x] 3.1 Port the 2FA cases onto the baseline `CredentialsViewModelTest.kt`: code required,
   code rejected, code sent, resend. Verify
   `./gradlew :login:testAndroidHostTest --tests "*CredentialsViewModelTest"` passes.
-- [ ] 3.2 Add a repository-level test that a 2FA `D2Error` reaches `TwoFactorOutcome` and is
+- [x] 3.2 Add a repository-level test that a 2FA `D2Error` reaches `TwoFactorOutcome` and is
   **not** mapped to `AuthenticationError`, and that any other `D2Error` still goes through
   `DomainErrorMapper`. Verify it fails when the order of the two branches is swapped.
-- [ ] 3.3 Verify `./gradlew :login:allTests`.
+- [x] 3.3 Verify `./gradlew :login:allTests`.
   **Commit 3:** 3.1–3.3 are one commit (`test(2fa):`). Coverage over an implementation that
   already passes, not the green half of a red-green pair.
 

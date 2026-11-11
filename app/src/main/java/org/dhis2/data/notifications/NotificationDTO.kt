@@ -13,7 +13,7 @@ data class NotificationDTO(
     val readBy: List<ReadByDTO>,
     val recipients: RecipientsDTO,
     val permissions: PermissionsDTO?,
-    val translations: Map<String, String>?
+    val translations: Map<String, String>?,
 )
 
 @Serializable
@@ -21,20 +21,20 @@ data class ReadByDTO(
     @Contextual
     val date: String?,
     val id: String,
-    val name: String
+    val name: String,
 )
 
 @Serializable
 data class RecipientsDTO(
     val userGroups: List<RefDTO>,
     val users: List<RefDTO>,
-    val wildcard: String
+    val wildcard: String,
 )
 
 @Serializable
 data class RefDTO(
     val id: String,
-    val name: String?
+    val name: String?,
 )
 
 @Serializable

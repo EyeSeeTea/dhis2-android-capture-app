@@ -9,10 +9,10 @@ import java.util.Date
 
 class MarkNotificationAsRead(
     private val notificationRepository: NotificationRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
 ) {
-    operator fun invoke(notificationId: String): Flow<Unit> {
-        return notificationRepository.getById(notificationId).flatMapConcat { notification ->
+    operator fun invoke(notificationId: String): Flow<Unit> =
+        notificationRepository.getById(notificationId).flatMapConcat { notification ->
             Timber.d("notification: $notification")
 
             notification?.let { notification ->
@@ -27,5 +27,4 @@ class MarkNotificationAsRead(
                 notificationRepository.save(notificationUpdated)
             } ?: flow { emit(Unit) }
         }
-    }
 }

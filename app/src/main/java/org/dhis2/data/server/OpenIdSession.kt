@@ -23,7 +23,6 @@ class OpenIdSession(
     private var sessionCallback: (LogOutReason) -> Unit = { Timber.log(1, EMPTY_CALLBACK) }
 
     enum class LogOutReason {
-        OPEN_ID,
         DISABLED_ACCOUNT,
 
         // EyeSeeTea customization - 2FA support
@@ -43,11 +42,6 @@ class OpenIdSession(
         disposable.add(
             Observable
                 .merge(
-                    d2
-                        .userModule()
-                        .openIdHandler()
-                        .logOutObservable()
-                        .map { LogOutReason.OPEN_ID },
                     d2
                         .userModule()
                         .accountManager()

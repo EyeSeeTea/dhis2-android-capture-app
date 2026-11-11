@@ -5,7 +5,7 @@ import org.dhis2.mobile.login.main.domain.model.TwoFactorState
 
 data class CredentialsUiState(
     val serverInfo: ServerInfo,
-    val credentialsInfo: CredentialsInfo,
+    val credentialsInfo: CredentialsInfo?,
     val loginState: LoginState,
     val allowRecovery: Boolean,
     val canUseBiometrics: Boolean,
@@ -15,13 +15,13 @@ data class CredentialsUiState(
     val displayBiometricsDialog: Boolean,
     val hasOtherAccounts: Boolean,
     val isSessionLocked: Boolean,
-    val oAuthEnable: Boolean,
+    val isUserLoggedIn: Boolean,
     // EyeSeeTea customization - 2FA support
     val twoFactorState: TwoFactorState? = null,
     val twoFactorCode: String = "",
     val infoMessage: String? = null,
 ) {
-    fun username() = serverInfo.username ?: credentialsInfo.username
+    fun username() = serverInfo.username ?: credentialsInfo?.username ?: ""
 }
 
 data class ServerInfo(
@@ -98,6 +98,8 @@ sealed class OidcInfo(
 }
 
 sealed interface AfterLoginAction {
+    data object CreateOfflineCredential : AfterLoginAction
+
     data object DisplayTrackingMessage : AfterLoginAction
 
     data object DisplayBiometricsMessage : AfterLoginAction

@@ -51,26 +51,28 @@ class NotificationsPresenterTest {
     }
 
     @Test
-    fun `does nothing when nothing marked the notifications pending`() = runTest {
-        givenStoredNotifications("a")
+    fun `does nothing when nothing marked the notifications pending`() =
+        runTest {
+            givenStoredNotifications("a")
 
-        givenAPresenter().refresh(view)
+            givenAPresenter().refresh(view)
 
-        assertEquals(emptyList<String>(), view.shownIds())
-    }
+            assertEquals(emptyList<String>(), view.shownIds())
+        }
 
     @Test
-    fun `entering the app shows the cached unread notification of a fresh process`() = runTest {
-        // A fresh process: the notification dismissed before the restart is still cached and unread.
-        assertFalse(ShowNotifications.isPending)
-        givenStoredNotifications("a")
-        val presenter = givenAPresenter()
+    fun `entering the app shows the cached unread notification of a fresh process`() =
+        runTest {
+            // A fresh process: the notification dismissed before the restart is still cached and unread.
+            assertFalse(ShowNotifications.isPending)
+            givenStoredNotifications("a")
+            val presenter = givenAPresenter()
 
-        presenter.markShowNotificationsAsPending()
-        presenter.refresh(view)
+            presenter.markShowNotificationsAsPending()
+            presenter.refresh(view)
 
-        assertEquals(listOf("a"), view.shownIds())
-    }
+            assertEquals(listOf("a"), view.shownIds())
+        }
 
     @Test
     fun `the pending mark is consumed before rendering, so resuming again shows nothing new`() =
@@ -87,60 +89,64 @@ class NotificationsPresenterTest {
         }
 
     @Test
-    fun `shows one notification at a time`() = runTest {
-        givenStoredNotifications("a", "b", "c")
-        val presenter = givenAPresenter()
-        presenter.markShowNotificationsAsPending()
+    fun `shows one notification at a time`() =
+        runTest {
+            givenStoredNotifications("a", "b", "c")
+            val presenter = givenAPresenter()
+            presenter.markShowNotificationsAsPending()
 
-        presenter.refresh(view)
+            presenter.refresh(view)
 
-        assertEquals(listOf("a"), view.shownIds())
-    }
-
-    @Test
-    fun `dismissing one shows the next, and it stays unread`() = runTest {
-        givenStoredNotifications("a", "b")
-        val presenter = givenAPresenter()
-        presenter.markShowNotificationsAsPending()
-        presenter.refresh(view)
-
-        presenter.onNotificationDismissed(view)
-
-        assertEquals(listOf("a", "b"), view.shownIds())
-        verify(notificationRepository, never()).save(any())
-    }
+            assertEquals(listOf("a"), view.shownIds())
+        }
 
     @Test
-    fun `a dismissed notification is not offered again until the next trigger`() = runTest {
-        givenStoredNotifications("a")
-        val presenter = givenAPresenter()
-        presenter.markShowNotificationsAsPending()
-        presenter.refresh(view)
-        presenter.onNotificationDismissed(view)
+    fun `dismissing one shows the next, and it stays unread`() =
+        runTest {
+            givenStoredNotifications("a", "b")
+            val presenter = givenAPresenter()
+            presenter.markShowNotificationsAsPending()
+            presenter.refresh(view)
 
-        presenter.refresh(view)
-        assertEquals(listOf("a"), view.shownIds())
+            presenter.onNotificationDismissed(view)
 
-        // The next sync, or the next start of the app, marks them pending again.
-        presenter.markShowNotificationsAsPending()
-        presenter.refresh(view)
-        assertEquals(listOf("a", "a"), view.shownIds())
-    }
+            assertEquals(listOf("a", "b"), view.shownIds())
+            verify(notificationRepository, never()).save(any())
+        }
 
     @Test
-    fun `accepting saves the read and then shows the next one`() = runTest {
-        val first = givenANotification("a")
-        givenStoredNotifications("a", "b")
-        givenTheNotificationCanBeAccepted(first)
-        val presenter = givenAPresenter()
-        presenter.markShowNotificationsAsPending()
-        presenter.refresh(view)
+    fun `a dismissed notification is not offered again until the next trigger`() =
+        runTest {
+            givenStoredNotifications("a")
+            val presenter = givenAPresenter()
+            presenter.markShowNotificationsAsPending()
+            presenter.refresh(view)
+            presenter.onNotificationDismissed(view)
 
-        presenter.markNotificationAsRead(first, view)
+            presenter.refresh(view)
+            assertEquals(listOf("a"), view.shownIds())
 
-        verify(notificationRepository).save(any())
-        assertEquals(listOf("a", "b"), view.shownIds())
-    }
+            // The next sync, or the next start of the app, marks them pending again.
+            presenter.markShowNotificationsAsPending()
+            presenter.refresh(view)
+            assertEquals(listOf("a", "a"), view.shownIds())
+        }
+
+    @Test
+    fun `accepting saves the read and then shows the next one`() =
+        runTest {
+            val first = givenANotification("a")
+            givenStoredNotifications("a", "b")
+            givenTheNotificationCanBeAccepted(first)
+            val presenter = givenAPresenter()
+            presenter.markShowNotificationsAsPending()
+            presenter.refresh(view)
+
+            presenter.markNotificationAsRead(first, view)
+
+            verify(notificationRepository).save(any())
+            assertEquals(listOf("a", "b"), view.shownIds())
+        }
 
     @Test
     fun `an accept that cannot reach the server leaves the cache alone and shows the next one`() =
@@ -160,33 +166,35 @@ class NotificationsPresenterTest {
         }
 
     @Test
-    fun `an accept that fails never takes the app down`() = runTest {
-        val first = givenANotification("a")
-        givenStoredNotifications("a", "b")
-        whenever(notificationRepository.getById(first.id)) doReturn flowOf(first)
-        // UserD2Repository dereferences the SDK user with !!, so a session being torn down throws.
-        whenever(userRepository.getCurrentUser()) doThrow NullPointerException("no current user")
-        val presenter = givenAPresenter()
-        presenter.markShowNotificationsAsPending()
-        presenter.refresh(view)
+    fun `an accept that fails never takes the app down`() =
+        runTest {
+            val first = givenANotification("a")
+            givenStoredNotifications("a", "b")
+            whenever(notificationRepository.getById(first.id)) doReturn flowOf(first)
+            // UserD2Repository dereferences the SDK user with !!, so a session being torn down throws.
+            whenever(userRepository.getCurrentUser()) doThrow NullPointerException("no current user")
+            val presenter = givenAPresenter()
+            presenter.markShowNotificationsAsPending()
+            presenter.refresh(view)
 
-        presenter.markNotificationAsRead(first, view)
+            presenter.markNotificationAsRead(first, view)
 
-        verify(notificationRepository, never()).save(any())
-        assertEquals(listOf("a", "b"), view.shownIds())
-    }
+            verify(notificationRepository, never()).save(any())
+            assertEquals(listOf("a", "b"), view.shownIds())
+        }
 
     @Test
-    fun `an empty cache shows nothing and still consumes the mark`() = runTest {
-        givenNoStoredNotifications()
-        val presenter = givenAPresenter()
-        presenter.markShowNotificationsAsPending()
+    fun `an empty cache shows nothing and still consumes the mark`() =
+        runTest {
+            givenNoStoredNotifications()
+            val presenter = givenAPresenter()
+            presenter.markShowNotificationsAsPending()
 
-        presenter.refresh(view)
+            presenter.refresh(view)
 
-        assertEquals(emptyList<String>(), view.shownIds())
-        assertTrue(!ShowNotifications.isPending)
-    }
+            assertEquals(emptyList<String>(), view.shownIds())
+            assertTrue(!ShowNotifications.isPending)
+        }
 
     // The dispatcher must share the scheduler of the enclosing runTest, otherwise the coroutines
     // the presenter launches on its own scopes are reported as uncaught in the *next* test.

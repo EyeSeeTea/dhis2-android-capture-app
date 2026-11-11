@@ -8,9 +8,9 @@ import org.dhis2.form.model.EnrollmentDetail
 import org.dhis2.form.model.ValueStoreResult
 import org.dhis2.form.model.ValueStoreResult.VALUE_CHANGED
 import org.dhis2.form.model.ValueStoreResult.VALUE_NOT_UNIQUE
-import org.dhis2.mobile.commons.files.FileController
 import org.dhis2.mobile.commons.reporting.CrashReportController
 import org.hisp.dhis.android.core.D2
+import org.hisp.dhis.android.core.arch.helpers.ResourceContext
 import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.ObjectWithUid
 import org.hisp.dhis.android.core.common.ValueType
@@ -33,8 +33,11 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argThat
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.doThrow
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
@@ -49,7 +52,6 @@ class FormValueStoreTest {
     private val crashReportController: CrashReportController = mock()
     private val networkUtils: NetworkUtils = mock()
     private val resourceManager: ResourceManager = mock()
-    private val fileController: FileController = mock()
     private val enrollmentRepository: EnrollmentObjectRepository = mock()
     private val eventRepository: EventObjectRepository =
         mock {
@@ -69,7 +71,6 @@ class FormValueStoreTest {
                 crashReportController,
                 networkUtils,
                 resourceManager,
-                fileController,
                 uniqueAttributeController,
             )
         deValueStore =
@@ -82,7 +83,6 @@ class FormValueStoreTest {
                 crashReportController,
                 networkUtils,
                 resourceManager,
-                fileController,
                 uniqueAttributeController,
             )
         dvValueStore =
@@ -95,7 +95,6 @@ class FormValueStoreTest {
                 crashReportController,
                 networkUtils,
                 resourceManager,
-                fileController,
                 uniqueAttributeController,
             )
     }
@@ -191,14 +190,18 @@ class FormValueStoreTest {
         whenever(
             d2.fileResourceModule().fileResources(),
         ) doReturn mock()
-        whenever(
-            d2.fileResourceModule().fileResources().blockingAdd(File("filePath")),
-        ) doThrow
+        // blockingProcessAndAdd does throw a D2Error, but it does not declare it, so the stub has to
+        // go through an answer: Mockito rejects doThrow for a checked exception the method does not
+        // list.
+        val d2Error =
             D2Error
                 .builder()
                 .errorCode(D2ErrorCode.UNEXPECTED)
                 .errorDescription("error test")
                 .build()
+        whenever(
+            d2.fileResourceModule().fileResources().blockingProcessAndAdd(eq(File("filePath")), any()),
+        ) doAnswer { throw d2Error }
         val result =
             deValueStore.storeFile(
                 uid = "uid",
@@ -226,7 +229,7 @@ class FormValueStoreTest {
             d2.fileResourceModule().fileResources(),
         ) doReturn mock()
         whenever(
-            d2.fileResourceModule().fileResources().blockingAdd(File("filePath")),
+            d2.fileResourceModule().fileResources().blockingProcessAndAdd(any(), any()),
         ) doReturn generatedUid
         val result =
             deValueStore.storeFile(
@@ -239,7 +242,90 @@ class FormValueStoreTest {
     }
 
     @Test
-    fun `Should try to resize image`() {
+    fun `Should use FileContext when storing file resource for data element entry mode`() {
+        val mockedDataElement: DataElement =
+            mock {
+                on { valueType() } doReturn ValueType.FILE_RESOURCE
+            }
+        whenever(
+            d2
+                .dataElementModule()
+                .dataElements()
+                .uid(any())
+                .blockingGet(),
+        ) doReturn mockedDataElement
+        whenever(d2.fileResourceModule().fileResources()) doReturn mock()
+        whenever(
+            d2.fileResourceModule().fileResources().blockingProcessAndAdd(any(), any()),
+        ) doReturn "fileResourceUid"
+
+        deValueStore.storeFile(uid = "uid", filePath = "filePath")
+
+        verify(d2.fileResourceModule().fileResources()).blockingProcessAndAdd(
+            any(),
+            argThat { this is ResourceContext.FileContext },
+        )
+    }
+
+    @Test
+    fun `Should use FileContext when storing file resource for attribute entry mode`() {
+        val mockedAttribute: TrackedEntityAttribute =
+            mock {
+                on { valueType() } doReturn ValueType.FILE_RESOURCE
+            }
+        whenever(
+            d2
+                .trackedEntityModule()
+                .trackedEntityAttributes()
+                .uid(any())
+                .blockingGet(),
+        ) doReturn mockedAttribute
+        whenever(d2.fileResourceModule().fileResources()) doReturn mock()
+        whenever(
+            d2.fileResourceModule().fileResources().blockingProcessAndAdd(any(), any()),
+        ) doReturn "fileResourceUid"
+
+        attrValueStore.storeFile(uid = "uid", filePath = "filePath")
+
+        verify(d2.fileResourceModule().fileResources()).blockingProcessAndAdd(
+            any(),
+            argThat { this is ResourceContext.FileContext },
+        )
+    }
+
+    // EyeSeeTea customization - Image upload without resizing
+    @Test
+    fun `Should use FileContext so the image is not resized when storing image for attribute entry mode`() {
+        val generatedUid = "fileResourceUid"
+        val mockedAttribute: TrackedEntityAttribute =
+            mock {
+                on { valueType() } doReturn ValueType.IMAGE
+            }
+        whenever(
+            d2
+                .trackedEntityModule()
+                .trackedEntityAttributes()
+                .uid(any())
+                .blockingGet(),
+        ) doReturn mockedAttribute
+        whenever(d2.fileResourceModule().fileResources()) doReturn mock()
+        whenever(
+            d2.fileResourceModule().fileResources().blockingProcessAndAdd(any(), any()),
+        ) doReturn generatedUid
+
+        val result = attrValueStore.storeFile(uid = "uid", filePath = "filePath")
+
+        verify(d2.fileResourceModule().fileResources()).blockingProcessAndAdd(
+            any(),
+            argThat { this is ResourceContext.FileContext },
+        )
+        assertTrue(result.valueStoreResult == ValueStoreResult.FILE_SAVED)
+        assertTrue(result.uid == generatedUid)
+    }
+
+    // EyeSeeTea customization - Image upload without resizing
+    @Test
+    fun `Should use FileContext so the image is not resized when storing image for data element entry mode`() {
         val generatedUid = "fileResourceUid"
         val mockedDataElement: DataElement =
             mock {
@@ -252,18 +338,19 @@ class FormValueStoreTest {
                 .uid(any())
                 .blockingGet(),
         ) doReturn mockedDataElement
+        whenever(d2.fileResourceModule().fileResources()) doReturn mock()
         whenever(
-            d2.fileResourceModule().fileResources(),
-        ) doReturn mock()
-        whenever(
-            d2.fileResourceModule().fileResources().blockingAdd(File("filePath")),
+            d2.fileResourceModule().fileResources().blockingProcessAndAdd(any(), any()),
         ) doReturn generatedUid
-        deValueStore.storeFile(
-            uid = "uid",
-            filePath = "filePath",
-        )
 
-        verify(fileController).resize("filePath")
+        val result = deValueStore.storeFile(uid = "uid", filePath = "filePath")
+
+        verify(d2.fileResourceModule().fileResources()).blockingProcessAndAdd(
+            any(),
+            argThat { this is ResourceContext.FileContext },
+        )
+        assertTrue(result.valueStoreResult == ValueStoreResult.FILE_SAVED)
+        assertTrue(result.uid == generatedUid)
     }
 
     @Test
@@ -688,6 +775,7 @@ class FormValueStoreTest {
                 .name("optionName")
                 .uid("optionUid")
                 .code("optionCode")
+                .optionSet(ObjectWithUid.create("optionSetUid"))
                 .build()
         whenever(
             d2.trackedEntityModule().trackedEntityAttributeValues().value(
@@ -755,6 +843,7 @@ class FormValueStoreTest {
                 .name("optionName")
                 .uid("optionUid")
                 .code("optionCode")
+                .optionSet(ObjectWithUid.create("optionSetUid"))
                 .build()
         whenever(
             d2.trackedEntityModule().trackedEntityDataValues().value(
@@ -791,6 +880,7 @@ class FormValueStoreTest {
                 .name("optionName")
                 .uid("optionUid")
                 .code("optionCode")
+                .optionSet(ObjectWithUid.create("optionSetUid"))
                 .build()
         whenever(
             d2.trackedEntityModule().trackedEntityAttributeValues().value(
@@ -857,6 +947,7 @@ class FormValueStoreTest {
                 .name("optionName")
                 .uid("optionUid")
                 .code("optionCode")
+                .optionSet(ObjectWithUid.create("optionSetUid"))
                 .build()
         whenever(
             d2.trackedEntityModule().trackedEntityAttributeValues().value(

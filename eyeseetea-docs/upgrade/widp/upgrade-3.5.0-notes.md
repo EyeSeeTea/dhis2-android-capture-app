@@ -21,7 +21,7 @@ belongs in `eyeseetea-docs/customizations/widp/customization-files.md`.
 ## Progress
 
 - baseline prepared: `yes` — `develop-eyeseetea` already carries 3.5.0
-- merge started: `no` — dry-run only (`git merge --no-commit`, then `--abort`); 14 conflicts
+- merge started: `yes` — real merge in progress (`git merge --no-ff --no-commit develop-eyeseetea`), 14 conflicts, none resolved yet
 - easy conflicts resolved: `no`
 - manual conflicts pending: `yes`
 - validation started: `no`
@@ -45,6 +45,32 @@ What the baseline changed that matters to the fork:
 - **File upload rewrite** (ANDROAPP-7707, 7758): `saveFileResource(path, uid, isImage)`.
 - `UserManager.java` / `UserManagerImpl.java` deleted.
 - `AGENTS.md` gains the Sentry skills section.
+
+## Merge result
+
+The real merge (2026-11-03) reports exactly the 14 conflicts the dry-run predicted, same files:
+the classification below holds as written. No conflict is baseline-owned only, so there is no
+`accept_theirs`; all are `manual_reapply_on_theirs` except `CredentialsViewModelTest.kt`.
+
+Automerge check on the inventory files that did **not** conflict (`git diff develop-eyeseetea`
+per file, 103 listed, 14 conflicted):
+
+- Fork lines survived intact in `UserComponent.java` (`plus(ChangeServerURLModule)`),
+  `SessionManagerActivity.kt` (`NotificationsOnSessionEnd.forget`), `LoginActivity.kt`
+  (`LogOutReason.UNAUTHORIZED` branch) and in `OpenIdSession.kt`'s enum
+  (`UNAUTHORIZED` kept outside the conflict hunk), plus every notifications, Change Server URL
+  and URL-data-element file.
+- Nothing was dropped silently: the nine inventory files that now equal the baseline
+  (`ServerModule.kt`, `MainModule.kt`, `ProgramModule.kt`, `ProgramFragment.kt`,
+  `AppComponent.java`, `PreferenceModule.kt`, `DomainError.kt`, `DomainErrorMapper.kt`,
+  `EventDetailsRepository.kt`, `login/build.gradle.kts`) already had zero fork lines at the
+  3.4.2 merge base, so they are inventory entries to prune, not casualties.
+- `ValueStoreImpl.kt` equals the baseline and still passes `valueType == ValueType.IMAGE` to
+  its own `saveFileResource`. It had no fork delta before, so the no-resize customization lives
+  only in `FormValueStore.kt`; the `ValueStoreImpl` path (data-set/aggregate values) is not
+  covered by the customization and is unchanged by this upgrade.
+- `UserManager.java` / `UserManagerImpl.java` are deleted by the baseline; they are not in the
+  current inventory body, only in its history.
 
 ## Decisions
 

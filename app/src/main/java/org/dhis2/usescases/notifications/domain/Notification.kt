@@ -10,24 +10,24 @@ data class Notification(
     val readBy: List<ReadBy>,
     val recipients: Recipients,
     val permissions: Permissions?,
-    val translations: Map<String, String>?
+    val translations: Map<String, String>?,
 )
 
 data class ReadBy(
     val date: Date,
     val id: String,
-    val name: String
+    val name: String,
 )
 
 data class Recipients(
     val userGroups: List<Ref>,
     val users: List<Ref>,
-    val wildcard: String
+    val wildcard: String,
 )
 
 data class Ref(
     val id: String,
-    val name: String?
+    val name: String?,
 )
 
 data class UserGroups(

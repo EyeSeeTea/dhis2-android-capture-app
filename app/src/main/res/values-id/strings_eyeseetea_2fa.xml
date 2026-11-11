@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EyeSeeTea customization - 2FA support -->
+<resources>
+    <string name="openid_session_expired">Sesi telah berakhir</string>
+    <string name="openid_session_expired_message">Sesi Anda saat ini telah kedaluwarsa. Untuk alasan keamanan, Anda harus memberikan kredensial Anda lagi</string>
+</resources>

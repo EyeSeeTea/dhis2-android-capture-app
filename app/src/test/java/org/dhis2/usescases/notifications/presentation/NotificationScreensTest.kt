@@ -77,10 +77,12 @@ class NotificationScreensTest {
         )
     }
 
-    private fun canShow(screen: Class<*>, onProgramList: Boolean = true) =
-        NotificationScreens.canShowNotifications(
-            hasUserSession = true,
-            screen = screen,
-            onProgramList = onProgramList,
-        )
+    private fun canShow(
+        screen: Class<*>,
+        onProgramList: Boolean = true,
+    ) = NotificationScreens.canShowNotifications(
+        hasUserSession = true,
+        screen = screen,
+        onProgramList = onProgramList,
+    )
 }

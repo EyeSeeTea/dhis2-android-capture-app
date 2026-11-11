@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EyeSeeTea customization - 2FA support -->
+<resources>
+    <string name="openid_session_expired">Phiên đăng nhập đã hết hạn</string>
+    <string name="openid_session_expired_message">Phiên đăng nhập của bạn đã hết hạn. Vì lý do bảo mật, bạn cần cung cấp thông tin đăng nhập lại. </string>
+</resources>

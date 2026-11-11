@@ -91,15 +91,17 @@ compiler found them.
 
 Status: `active`
 
-- `form/src/main/java/org/dhis2/form/data/FormValueStore.kt` — `saveFileResource(filePath, false)` in place of `saveFileResource(filePath, valueType == ValueType.IMAGE)`
+- `form/src/main/java/org/dhis2/form/data/FormValueStore.kt` — upload: `saveFileResource(path = filePath, uid = uid, isImage = false)` in place of `isImage = valueType == ValueType.IMAGE`. Since 3.5.0 the flag selects the SDK's `ResourceContext`: `false` is `FileContext`, which skips the SDK's image compression; `true` is `ProgramImageContext`, which compresses to about 600 KB unless the server's program settings say `ORIGINAL`.
+- `app/src/main/java/org/dhis2/data/server/ServerModule.kt` — download: `getD2Configuration` sets `.fileResizerDimension(FileResizerHelper.Dimension.ORIGINAL)`, so the SDK downloads images at their original size. It needs the SDK fork's `D2Configuration.fileResizerDimension` (customization "Original Size Image Download", `1.15.0-eyeseetea-fork-1`).
 
-One argument on one line, which makes it the easiest customization in the fork to lose to an
-automerge. The check is `grep -c 'saveFileResource(filePath, false)'`, which must be 1.
+The upload line is one argument on one line, which makes it the easiest customization in the fork
+to lose to an automerge. The checks are `grep -c 'isImage = false' FormValueStore.kt`, which must
+be 1, and `grep -c 'fileResizerDimension(FileResizerHelper.Dimension.ORIGINAL)' ServerModule.kt`,
+which must be 1.
 
 No delta today, listed for the feat-commit cross-check:
 
 - `app/src/main/java/org/dhis2/data/forms/dataentry/ValueStoreImpl.kt` — the pre-Compose value store
-- `app/src/main/java/org/dhis2/data/server/ServerModule.kt` — SDK wiring touched by the original rollout
 
 ### 2.3 Notifications system
 

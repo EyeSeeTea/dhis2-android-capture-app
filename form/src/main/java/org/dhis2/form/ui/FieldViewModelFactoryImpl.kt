@@ -58,7 +58,7 @@ class FieldViewModelFactoryImpl(
         periodSelector: PeriodSelector?,
         customIntentModel: CustomIntentModel?,
         // EyeSeeTea customization - URL data element field
-        url: String?
+        url: String?,
     ): FieldUiModel {
         isNull(valueType, "type must be supplied")
         return FieldUiModelImpl(

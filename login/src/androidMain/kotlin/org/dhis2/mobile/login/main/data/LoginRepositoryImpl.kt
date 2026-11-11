@@ -3,6 +3,7 @@ package org.dhis2.mobile.login.main.data
 import androidx.core.net.toUri
 import coil3.PlatformContext
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.dhis2.mobile.commons.biometrics.BiometricActions
@@ -30,6 +31,7 @@ import org.dhis2.mobile.login.resources.openid_process_cancelled
 import org.dhis2.mobile.login.resources.server_url_error
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.arch.helpers.Result
+import org.hisp.dhis.android.core.common.AuthorizationType
 import org.hisp.dhis.android.core.maintenance.D2Error
 import org.hisp.dhis.android.core.maintenance.D2ErrorCode
 import org.hisp.dhis.android.core.user.oauth2.OAuth2Config
@@ -59,6 +61,7 @@ class LoginRepositoryImpl(
     private val openIdController: OpenIdController,
     private val dispatcher: Dispatcher,
     private val domainErrorMapper: DomainErrorMapper,
+    private val loginErrorMessageProvider: LoginErrorMessageProvider,
 ) : LoginRepository {
     override suspend fun validateServer(
         server: String,
@@ -83,7 +86,7 @@ class LoginRepositoryImpl(
                         oidcIcon = oidcProvider?.icon,
                         oidcLoginText = oidcProvider?.loginText,
                         oidcUrl = oidcProvider?.url,
-                        oAuthEnabled = result.value.isOauthEnabled(),
+                        oAuthEnabled = result.value.isOauthEnabled,
                     )
                 }
 
@@ -102,26 +105,18 @@ class LoginRepositoryImpl(
         serverUrl: String,
         username: String,
         password: String,
-        isNetworkAvailable: Boolean,
         // EyeSeeTea customization - 2FA support
         twoFactorCode: String?,
     ) = withContext(dispatcher.io) {
         try {
             d2.userModule().blockingLogIn(username, password, serverUrl, twoFactorCode)
             kotlin.Result.success(Unit)
-        } catch (e: Exception) {
-            if (e is D2Error && isTwoFactorError(e.errorCode())) {
-                // EyeSeeTea customization - 2FA support
-                handleTwoFactorError(e, isNetworkAvailable, twoFactorCode)
+        } catch (d2Error: D2Error) {
+            // EyeSeeTea customization - 2FA support
+            if (isTwoFactorError(d2Error.errorCode())) {
+                handleTwoFactorError(d2Error, twoFactorCode)
             } else {
-                kotlin.Result.failure(
-                    Exception(
-                        d2ErrorMessageProvider.getErrorMessage(
-                            e,
-                            isNetworkAvailable,
-                        ),
-                    ),
-                )
+                kotlin.Result.failure(domainErrorMapper.mapToDomainError(d2Error))
             }
         }
     }
@@ -146,17 +141,41 @@ class LoginRepositoryImpl(
                 d2.userModule().oauth2Handler().blockingBuildEnrollmentUrl(serverUrl)
             } catch (d2Error: D2Error) {
                 throw domainErrorMapper.mapToDomainError(d2Error)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                throw DomainError.ConfigurationError(loginErrorMessageProvider.oauthUrlError())
+            }
+        }
+
+    override suspend fun isDeviceRegistered(): Boolean =
+        withContext(dispatcher.io) {
+            d2.userModule().oauth2Handler().isDeviceRegistered()
+        }
+
+    override suspend fun getAuthorizationUrl(serverUrl: String): String =
+        withContext(dispatcher.io) {
+            try {
+                d2.userModule().oauth2Handler().blockingLogIn(OAuth2Config(serverUrl = serverUrl))
+            } catch (d2Error: D2Error) {
+                throw domainErrorMapper.mapToDomainError(d2Error)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                throw DomainError.ConfigurationError(loginErrorMessageProvider.oauthUrlError())
             }
         }
 
     override suspend fun enrollDevice(
         iat: String,
         serverURL: String,
+        state: String,
     ) = withContext(dispatcher.io) {
         try {
             d2.userModule().oauth2Handler().blockingHandleEnrollmentResponse(
                 serverUrl = serverURL,
                 iat = iat,
+                state = state,
             )
 
             if (!d2.userModule().oauth2Handler().isDeviceRegistered()) {
@@ -174,16 +193,55 @@ class LoginRepositoryImpl(
     override suspend fun loginUserWithOAuth(
         serverUrl: String,
         code: String,
+        state: String,
+        expectedUsername: String?,
     ) = withContext(dispatcher.io) {
         try {
             val user =
-                d2.userModule().oauth2Handler().blockingHandleLogInResponse(serverUrl, code)
+                d2.userModule().oauth2Handler().blockingHandleLogInResponse(
+                    existingUsername = expectedUsername,
+                    serverUrl = serverUrl,
+                    authorizationCode = code,
+                    state = state,
+                )
             kotlin.Result.success(user.username())
         } catch (d2Error: D2Error) {
             val mappedError = domainErrorMapper.mapToDomainError(d2Error)
             kotlin.Result.failure(mappedError)
         }
     }
+
+    override suspend fun buildLogoutUrl(serverUrl: String): String =
+        withContext(dispatcher.io) {
+            try {
+                val config = OAuth2Config(serverUrl = serverUrl)
+                d2.userModule().oauth2Handler().blockingBuildLogoutUrl(config)
+            } catch (d2Error: D2Error) {
+                throw domainErrorMapper.mapToDomainError(d2Error)
+            }
+        }
+
+    override suspend fun setOfflineCode(code: String): kotlin.Result<Unit> =
+        withContext(dispatcher.io) {
+            val result =
+                when (
+                    d2
+                        .userModule()
+                        .accountManager()
+                        .getCurrentAccount()
+                        ?.authorizationType
+                ) {
+                    AuthorizationType.OPEN_ID_CONNECT ->
+                        d2.userModule().openIdHandler().suspendSetPin(code)
+
+                    else -> d2.userModule().oauth2Handler().suspendSetPin(code)
+                }
+            when (result) {
+                is Result.Success -> kotlin.Result.success(Unit)
+                is Result.Failure ->
+                    kotlin.Result.failure(domainErrorMapper.mapToDomainError(result.failure))
+            }
+        }
 
     override suspend fun getAvailableLoginUsernames(): List<String> =
         withContext(dispatcher.io) {
@@ -486,23 +544,76 @@ class LoginRepositoryImpl(
             }
         }
 
-    // EyeSeeTea customization - 2FA support
-    private fun isTwoFactorError(errorCode: D2ErrorCode): Boolean {
-        return errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE ||
-                errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP ||
-                errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_EMAIL ||
-                errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_SMS ||
-                errorCode == D2ErrorCode.TWO_FACTOR_MANY_SEND_ATTEMPTS ||
-                errorCode == D2ErrorCode.EMAIL_TWO_FACTOR_CODE_SENT ||
-                errorCode == D2ErrorCode.SMS_TWO_FACTOR_CODE_SENT
-    }
+    override suspend fun isUserLoggedIn() =
+        withContext(dispatcher.io) {
+            try {
+                val isLoggedIn =
+                    d2
+                        .userModule()
+                        .blockingIsLogged()
+                kotlin.Result.success(isLoggedIn)
+            } catch (e: Exception) {
+                kotlin.Result.failure(
+                    Exception(
+                        d2ErrorMessageProvider.getErrorMessage(
+                            e,
+                            isNetworkAvailable = true,
+                        ),
+                    ),
+                )
+            }
+        }
 
+    override suspend fun needsOfflineCode() =
+        withContext(dispatcher.io) {
+            try {
+                val authType =
+                    d2
+                        .userModule()
+                        .accountManager()
+                        .getCurrentAccount()
+                        ?.authorizationType
+                val isPinStored =
+                    d2
+                        .dataStoreModule()
+                        .localDataStore()
+                        .value(PIN)
+                        .blockingExists()
+
+                kotlin.Result.success(
+                    (authType == AuthorizationType.OAUTH2 || authType == AuthorizationType.OPEN_ID_CONNECT) &&
+                        isUserLoggedIn().getOrDefault(false) &&
+                        !isPinStored,
+                )
+            } catch (e: Exception) {
+                kotlin.Result.failure(
+                    Exception(
+                        d2ErrorMessageProvider.getErrorMessage(
+                            e,
+                            isNetworkAvailable = true,
+                        ),
+                    ),
+                )
+            }
+        }
+
+    // EyeSeeTea customization - 2FA support
+    private fun isTwoFactorError(errorCode: D2ErrorCode): Boolean =
+        errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE ||
+            errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP ||
+            errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_EMAIL ||
+            errorCode == D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_SMS ||
+            errorCode == D2ErrorCode.TWO_FACTOR_MANY_SEND_ATTEMPTS ||
+            errorCode == D2ErrorCode.EMAIL_TWO_FACTOR_CODE_SENT ||
+            errorCode == D2ErrorCode.SMS_TWO_FACTOR_CODE_SENT
+
+    // EyeSeeTea customization - 2FA support
     private suspend fun handleTwoFactorError(
         e: D2Error,
-        isNetworkAvailable: Boolean,
-        twoFactorCode: String?
+        twoFactorCode: String?,
     ): kotlin.Result<Unit> {
-        val errorMessage = d2ErrorMessageProvider.getErrorMessage(e, isNetworkAvailable)
+        // The provider selects the 2FA messages by error code, so connectivity does not matter.
+        val errorMessage = d2ErrorMessageProvider.getErrorMessage(e, isNetworkAvailable = true)
 
         // The same SDK error means two things: with no code submitted the server is asking for
         // one, and with a code submitted it refused it. The screen sends null on the first
@@ -514,31 +625,24 @@ class LoginRepositoryImpl(
                 TwoFactorOutcome.CodeRejected(type, errorMessage)
             }
 
-        val outcome = when (e.errorCode()) {
-            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE,
-            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP -> requiredOrRejected(TwoFactorType.TOTP)
+        val outcome =
+            when (e.errorCode()) {
+                D2ErrorCode.INCORRECT_TWO_FACTOR_CODE,
+                D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_TOTP,
+                -> requiredOrRejected(TwoFactorType.TOTP)
 
-            D2ErrorCode.EMAIL_TWO_FACTOR_CODE_SENT ->
-                TwoFactorOutcome.CodeSent(TwoFactorType.EMAIL, errorMessage)
+                D2ErrorCode.EMAIL_TWO_FACTOR_CODE_SENT ->
+                    TwoFactorOutcome.CodeSent(TwoFactorType.EMAIL, errorMessage)
 
-            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_EMAIL -> requiredOrRejected(TwoFactorType.EMAIL)
+                D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_EMAIL -> requiredOrRejected(TwoFactorType.EMAIL)
 
-            D2ErrorCode.SMS_TWO_FACTOR_CODE_SENT ->
-                TwoFactorOutcome.CodeSent(TwoFactorType.SMS, errorMessage)
+                D2ErrorCode.SMS_TWO_FACTOR_CODE_SENT ->
+                    TwoFactorOutcome.CodeSent(TwoFactorType.SMS, errorMessage)
 
-            D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_SMS -> requiredOrRejected(TwoFactorType.SMS)
+                D2ErrorCode.INCORRECT_TWO_FACTOR_CODE_SMS -> requiredOrRejected(TwoFactorType.SMS)
 
-            else -> {
-                return kotlin.Result.failure(
-                    Exception(
-                        d2ErrorMessageProvider.getErrorMessage(
-                            e,
-                            isNetworkAvailable,
-                        ),
-                    ),
-                )
+                else -> return kotlin.Result.failure(Exception(errorMessage))
             }
-        }
 
         return kotlin.Result.failure(TwoFactorRequiredException(outcome))
     }

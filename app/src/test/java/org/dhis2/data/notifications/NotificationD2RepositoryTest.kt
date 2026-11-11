@@ -1,6 +1,5 @@
 package org.dhis2.data.notifications
 
-
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.dhis2.commons.prefs.BasicPreferenceProvider
@@ -45,240 +44,270 @@ class NotificationD2RepositoryTest {
     val user = givenAnUser()
 
     @Test
-    fun `Should sync empty notifications if it's empty in remote`()  = runBlocking {
-        val repository = givenTestData(user, listOf(), UserGroupsDTO(userGroups = listOf()))
+    fun `Should sync empty notifications if it's empty in remote`() =
+        runBlocking {
+            val repository = givenTestData(user, listOf(), UserGroupsDTO(userGroups = listOf()))
 
-        repository.sync().first()
+            repository.sync().first()
 
-        verify(basicPreferenceProvider).saveAsJson(
-            NOTIFICATIONS,
-            listOf<Notification>(),
-        )
-    }
-
-    @Test
-    fun `Should sync notifications with all receivers`() = runBlocking {
-        val notifications = listOf(givenANotification(wildcard = "ALL"))
-
-        val repository = givenTestData(user, notifications, UserGroupsDTO(userGroups = listOf()))
-
-        repository.sync().first()
-
-        verify(basicPreferenceProvider).saveAsJson(
-            NOTIFICATIONS,
-            notifications.map { mapNotification(it) },
-        )
-    }
-
-    @Test
-    fun `Should sync notifications with android receivers and for specific user`()  = runBlocking{
-        val notifications = listOf(
-            givenANotification(
-                wildcard = "Android",
-                users = listOf(RefDTO(id = user.uid(), name = null))
+            verify(basicPreferenceProvider).saveAsJson(
+                NOTIFICATIONS,
+                listOf<Notification>(),
             )
-        )
-
-        val repository = givenTestData(user, notifications, UserGroupsDTO(userGroups = listOf()))
-
-        repository.sync().first()
-
-        verify(basicPreferenceProvider).saveAsJson(
-            NOTIFICATIONS,
-            notifications.map { mapNotification(it) },
-        )
-    }
+        }
 
     @Test
-    fun `Should sync notifications with android receivers and for specific userGroup`()  = runBlocking{
-        val notifications = listOf(
-            givenANotification(
-                wildcard = "Android",
-                userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null))
+    fun `Should sync notifications with all receivers`() =
+        runBlocking {
+            val notifications = listOf(givenANotification(wildcard = "ALL"))
+
+            val repository = givenTestData(user, notifications, UserGroupsDTO(userGroups = listOf()))
+
+            repository.sync().first()
+
+            verify(basicPreferenceProvider).saveAsJson(
+                NOTIFICATIONS,
+                notifications.map { mapNotification(it) },
             )
-        )
-
-        val repository = givenTestData(
-            user,
-            notifications,
-            UserGroupsDTO(userGroups = listOf(RefDTO(id = "userGroup1", name = null)))
-        )
-
-        repository.sync().first()
-
-        verify(basicPreferenceProvider).saveAsJson(
-            NOTIFICATIONS,
-            notifications.map { mapNotification(it) },
-        )
-    }
+        }
 
     @Test
-    fun `Should sync notifications with both receivers and for specific user`()  = runBlocking{
-        val notifications = listOf(
-            givenANotification(
-                wildcard = "Both",
-                users = listOf(RefDTO(id = user.uid(), name = null))
+    fun `Should sync notifications with android receivers and for specific user`() =
+        runBlocking {
+            val notifications =
+                listOf(
+                    givenANotification(
+                        wildcard = "Android",
+                        users = listOf(RefDTO(id = user.uid(), name = null)),
+                    ),
+                )
+
+            val repository = givenTestData(user, notifications, UserGroupsDTO(userGroups = listOf()))
+
+            repository.sync().first()
+
+            verify(basicPreferenceProvider).saveAsJson(
+                NOTIFICATIONS,
+                notifications.map { mapNotification(it) },
             )
-        )
-
-        val repository = givenTestData(user, notifications, UserGroupsDTO(userGroups = listOf()))
-
-        repository.sync().first()
-
-        verify(basicPreferenceProvider).saveAsJson(
-            NOTIFICATIONS,
-            notifications.map { mapNotification(it) },
-        )
-    }
+        }
 
     @Test
-    fun `Should sync notifications with both receivers and for specific userGroup`()  = runBlocking{
-        val notifications = listOf(
-            givenANotification(
-                wildcard = "both",
-                userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null))
+    fun `Should sync notifications with android receivers and for specific userGroup`() =
+        runBlocking {
+            val notifications =
+                listOf(
+                    givenANotification(
+                        wildcard = "Android",
+                        userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null)),
+                    ),
+                )
+
+            val repository =
+                givenTestData(
+                    user,
+                    notifications,
+                    UserGroupsDTO(userGroups = listOf(RefDTO(id = "userGroup1", name = null))),
+                )
+
+            repository.sync().first()
+
+            verify(basicPreferenceProvider).saveAsJson(
+                NOTIFICATIONS,
+                notifications.map { mapNotification(it) },
             )
-        )
-
-        val repository = givenTestData(
-            user,
-            notifications,
-            UserGroupsDTO(userGroups = listOf(RefDTO(id = "userGroup1", name = null)))
-        )
-
-        repository.sync().first()
-
-        verify(basicPreferenceProvider).saveAsJson(
-            NOTIFICATIONS,
-            notifications.map { mapNotification(it) },
-        )
-    }
+        }
 
     @Test
-    fun `Should not sync notifications with web receivers and for specific user`() = runBlocking {
-        val notifications = listOf(
-            givenANotification(
-                wildcard = "Web",
-                users = listOf(RefDTO(id = user.uid(), name = null))
+    fun `Should sync notifications with both receivers and for specific user`() =
+        runBlocking {
+            val notifications =
+                listOf(
+                    givenANotification(
+                        wildcard = "Both",
+                        users = listOf(RefDTO(id = user.uid(), name = null)),
+                    ),
+                )
+
+            val repository = givenTestData(user, notifications, UserGroupsDTO(userGroups = listOf()))
+
+            repository.sync().first()
+
+            verify(basicPreferenceProvider).saveAsJson(
+                NOTIFICATIONS,
+                notifications.map { mapNotification(it) },
             )
-        )
-
-        val repository = givenTestData(user, notifications, UserGroupsDTO(userGroups = listOf()))
-
-        repository.sync().first()
-
-        verify(basicPreferenceProvider).saveAsJson(
-            NOTIFICATIONS,
-            listOf<Notification>(),
-        )
-    }
+        }
 
     @Test
-    fun `Should not sync notifications with web receivers and for specific userGroup`()  = runBlocking{
-        val notifications = listOf(
-            givenANotification(
-                wildcard = "web",
-                userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null))
+    fun `Should sync notifications with both receivers and for specific userGroup`() =
+        runBlocking {
+            val notifications =
+                listOf(
+                    givenANotification(
+                        wildcard = "both",
+                        userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null)),
+                    ),
+                )
+
+            val repository =
+                givenTestData(
+                    user,
+                    notifications,
+                    UserGroupsDTO(userGroups = listOf(RefDTO(id = "userGroup1", name = null))),
+                )
+
+            repository.sync().first()
+
+            verify(basicPreferenceProvider).saveAsJson(
+                NOTIFICATIONS,
+                notifications.map { mapNotification(it) },
             )
-        )
-
-        val repository = givenTestData(
-            user,
-            notifications,
-            UserGroupsDTO(userGroups = listOf(RefDTO(id = "userGroup1", name = null)))
-        )
-
-        repository.sync().first()
-
-        verify(basicPreferenceProvider).saveAsJson(
-            NOTIFICATIONS,
-            listOf<Notification>(),
-        )
-    }
+        }
 
     @Test
-    fun `Should only sync expected notifications`() = runBlocking {
-        val forWebByUserGroup = givenANotification(
-            wildcard = "web",
-            userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null))
-        )
-        val forWebByUser = givenANotification(
-            wildcard = "WEB",
-            users = listOf(RefDTO(id = user.uid(), name = null))
-        )
-        val forBothByUserGroup = givenANotification(
-            wildcard = "Both",
-            userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null))
-        )
-        val forBothByUser = givenANotification(
-            wildcard = "both",
-            users = listOf(RefDTO(id = user.uid(), name = null))
-        )
-        val forAndroidByUserGroup = givenANotification(
-            wildcard = "Android",
-            userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null))
-        )
-        val forAndroidByUser = givenANotification(
-            wildcard = "android",
-            users = listOf(RefDTO(id = user.uid(), name = null))
-        )
-        val forAll = givenANotification(
-            wildcard = "All",
-        )
+    fun `Should not sync notifications with web receivers and for specific user`() =
+        runBlocking {
+            val notifications =
+                listOf(
+                    givenANotification(
+                        wildcard = "Web",
+                        users = listOf(RefDTO(id = user.uid(), name = null)),
+                    ),
+                )
 
-        val notifications = listOf(
-            forWebByUserGroup,
-            forWebByUser,
-            forBothByUserGroup,
-            forBothByUser,
-            forAndroidByUserGroup,
-            forAndroidByUser,
-            forAll
-        )
+            val repository = givenTestData(user, notifications, UserGroupsDTO(userGroups = listOf()))
 
-        val repository = givenTestData(
-            user,
-            notifications,
-            UserGroupsDTO(userGroups = listOf(RefDTO(id = "userGroup1", name = null)))
-        )
+            repository.sync().first()
 
-        repository.sync().first()
-
-        verifySyncedNotifications(
-            forBothByUserGroup,
-            forBothByUser,
-            forAndroidByUserGroup,
-            forAndroidByUser,
-            forAll
-        )
-    }
+            verify(basicPreferenceProvider).saveAsJson(
+                NOTIFICATIONS,
+                listOf<Notification>(),
+            )
+        }
 
     @Test
-    fun `Should keep the cached notifications when the remote fetch fails`() = runBlocking {
-        val repository = givenTheRemoteFetchFails()
+    fun `Should not sync notifications with web receivers and for specific userGroup`() =
+        runBlocking {
+            val notifications =
+                listOf(
+                    givenANotification(
+                        wildcard = "web",
+                        userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null)),
+                    ),
+                )
 
-        val result = runCatching { repository.sync().first() }
+            val repository =
+                givenTestData(
+                    user,
+                    notifications,
+                    UserGroupsDTO(userGroups = listOf(RefDTO(id = "userGroup1", name = null))),
+                )
 
-        // A failed fetch must not look like an empty datastore: reporting success would let the
-        // post-sync action mark notifications pending, and saving would erase the unread ones
-        // already cached on the device.
-        assertTrue(result.isFailure)
-        verify(basicPreferenceProvider, never()).saveAsJson(eq(NOTIFICATIONS), any<List<Notification>>())
-    }
+            repository.sync().first()
+
+            verify(basicPreferenceProvider).saveAsJson(
+                NOTIFICATIONS,
+                listOf<Notification>(),
+            )
+        }
 
     @Test
-    fun `Should keep the cached notifications when the user groups fetch fails`() = runBlocking {
-        val repository = givenTheUserGroupsFetchFails(
-            listOf(givenANotification(userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null)))),
-        )
+    fun `Should only sync expected notifications`() =
+        runBlocking {
+            val forWebByUserGroup =
+                givenANotification(
+                    wildcard = "web",
+                    userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null)),
+                )
+            val forWebByUser =
+                givenANotification(
+                    wildcard = "WEB",
+                    users = listOf(RefDTO(id = user.uid(), name = null)),
+                )
+            val forBothByUserGroup =
+                givenANotification(
+                    wildcard = "Both",
+                    userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null)),
+                )
+            val forBothByUser =
+                givenANotification(
+                    wildcard = "both",
+                    users = listOf(RefDTO(id = user.uid(), name = null)),
+                )
+            val forAndroidByUserGroup =
+                givenANotification(
+                    wildcard = "Android",
+                    userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null)),
+                )
+            val forAndroidByUser =
+                givenANotification(
+                    wildcard = "android",
+                    users = listOf(RefDTO(id = user.uid(), name = null)),
+                )
+            val forAll =
+                givenANotification(
+                    wildcard = "All",
+                )
 
-        val result = runCatching { repository.sync().first() }
+            val notifications =
+                listOf(
+                    forWebByUserGroup,
+                    forWebByUser,
+                    forBothByUserGroup,
+                    forBothByUser,
+                    forAndroidByUserGroup,
+                    forAndroidByUser,
+                    forAll,
+                )
 
-        // Without the user's groups the filter would drop every group-targeted notification, and
-        // saving that would erase the unread ones already cached for this user.
-        assertTrue(result.isFailure)
-        verify(basicPreferenceProvider, never()).saveAsJson(eq(NOTIFICATIONS), any<List<Notification>>())
-    }
+            val repository =
+                givenTestData(
+                    user,
+                    notifications,
+                    UserGroupsDTO(userGroups = listOf(RefDTO(id = "userGroup1", name = null))),
+                )
+
+            repository.sync().first()
+
+            verifySyncedNotifications(
+                forBothByUserGroup,
+                forBothByUser,
+                forAndroidByUserGroup,
+                forAndroidByUser,
+                forAll,
+            )
+        }
+
+    @Test
+    fun `Should keep the cached notifications when the remote fetch fails`() =
+        runBlocking {
+            val repository = givenTheRemoteFetchFails()
+
+            val result = runCatching { repository.sync().first() }
+
+            // A failed fetch must not look like an empty datastore: reporting success would let the
+            // post-sync action mark notifications pending, and saving would erase the unread ones
+            // already cached on the device.
+            assertTrue(result.isFailure)
+            verify(basicPreferenceProvider, never()).saveAsJson(eq(NOTIFICATIONS), any<List<Notification>>())
+        }
+
+    @Test
+    fun `Should keep the cached notifications when the user groups fetch fails`() =
+        runBlocking {
+            val repository =
+                givenTheUserGroupsFetchFails(
+                    listOf(givenANotification(userGroups = arrayListOf(RefDTO(id = "userGroup1", name = null)))),
+                )
+
+            val result = runCatching { repository.sync().first() }
+
+            // Without the user's groups the filter would drop every group-targeted notification, and
+            // saving that would erase the unread ones already cached for this user.
+            assertTrue(result.isFailure)
+            verify(basicPreferenceProvider, never()).saveAsJson(eq(NOTIFICATIONS), any<List<Notification>>())
+        }
 
     @Test
     fun `Should forget the cached notifications`() {
@@ -290,10 +319,12 @@ class NotificationD2RepositoryTest {
     private fun givenTestData(
         user: User,
         notifications: List<NotificationDTO>,
-        userGroups: UserGroupsDTO
+        userGroups: UserGroupsDTO,
     ): NotificationD2Repository {
         whenever(
-            d2.userModule().user()
+            d2
+                .userModule()
+                .user()
                 .blockingGet(),
         ) doReturn user
 
@@ -309,7 +340,7 @@ class NotificationD2RepositoryTest {
             d2,
             basicPreferenceProvider,
             notificationsApi,
-            userGroupsApi
+            userGroupsApi,
         )
     }
 
@@ -324,13 +355,11 @@ class NotificationD2RepositoryTest {
             d2,
             basicPreferenceProvider,
             notificationsApi,
-            userGroupsApi
+            userGroupsApi,
         )
     }
 
-    private fun givenTheUserGroupsFetchFails(
-        notifications: List<NotificationDTO>,
-    ): NotificationD2Repository {
+    private fun givenTheUserGroupsFetchFails(notifications: List<NotificationDTO>): NotificationD2Repository {
         runBlocking {
             whenever(notificationsApi.getData()) doReturn notifications
             whenever(userGroupsApi.getData(user.uid())) doThrow RuntimeException("users endpoint unreachable")
@@ -340,18 +369,19 @@ class NotificationD2RepositoryTest {
             d2,
             basicPreferenceProvider,
             notificationsApi,
-            userGroupsApi
+            userGroupsApi,
         )
     }
 
-    private fun givenARepository() =
-        NotificationD2Repository(d2, basicPreferenceProvider, notificationsApi, userGroupsApi)
+    private fun givenARepository() = NotificationD2Repository(d2, basicPreferenceProvider, notificationsApi, userGroupsApi)
 
     private fun givenAnUser(): User {
         val user = User.builder().uid("user1").build()
 
         whenever(
-            d2.userModule().user()
+            d2
+                .userModule()
+                .user()
                 .blockingGet(),
         ) doReturn User.builder().uid("user1").build()
 
@@ -362,81 +392,85 @@ class NotificationD2RepositoryTest {
         readBy: List<ReadByDTO> = listOf(),
         userGroups: ArrayList<RefDTO> = ArrayList(),
         users: List<RefDTO> = listOf(),
-        wildcard: String = ""
-    ): NotificationDTO {
-        return NotificationDTO(
+        wildcard: String = "",
+    ): NotificationDTO =
+        NotificationDTO(
             content = "test",
             id = "1",
             createdAt = "2025-12-26T12:00:00.000",
             readBy = readBy,
-            recipients = RecipientsDTO(
-                userGroups = userGroups,
-                users = users,
-                wildcard = wildcard
-            ),
+            recipients =
+                RecipientsDTO(
+                    userGroups = userGroups,
+                    users = users,
+                    wildcard = wildcard,
+                ),
             permissions = null,
-            translations = null
+            translations = null,
         )
-    }
 
     private fun verifySyncedNotifications(
         forBothByUserGroup: NotificationDTO,
         forBothByUser: NotificationDTO,
         forAndroidByUserGroup: NotificationDTO,
         forAndroidByUser: NotificationDTO,
-        forAll: NotificationDTO
+        forAll: NotificationDTO,
     ) {
         val captor = argumentCaptor<List<Notification>>()
         verify(basicPreferenceProvider).saveAsJson(eq(NOTIFICATIONS), captor.capture())
 
-        val expectedNotifications = listOf(
-            forBothByUserGroup,
-            forBothByUser,
-            forAndroidByUserGroup,
-            forAndroidByUser,
-            forAll
-        ).map { mapNotification(it) }
+        val expectedNotifications =
+            listOf(
+                forBothByUserGroup,
+                forBothByUser,
+                forAndroidByUserGroup,
+                forAndroidByUser,
+                forAll,
+            ).map { mapNotification(it) }
 
         assertEquals(expectedNotifications.size, captor.firstValue.size)
         assertTrue(captor.firstValue.containsAll(expectedNotifications))
     }
 
-    private fun mapNotification(notificationDTO: NotificationDTO): Notification {
-        return Notification(
+    private fun mapNotification(notificationDTO: NotificationDTO): Notification =
+        Notification(
             content = notificationDTO.content,
-            createdAt = BaseIdentifiableObject.parseDate(notificationDTO.createdAt),
+            createdAt = BaseIdentifiableObject.parseDate(requireNotNull(notificationDTO.createdAt)),
             id = notificationDTO.id,
-            readBy = notificationDTO.readBy.map {
-                ReadBy(
-                    BaseIdentifiableObject.parseDate(it.date),
-                    it.id,
-                    it.name
-                )
-            },
-            recipients = Recipients(
-                userGroups = notificationDTO.recipients.userGroups.map { Ref(it.id, it.name) },
-                users = notificationDTO.recipients.users.map { Ref(it.id, it.name) },
-                wildcard = notificationDTO.recipients.wildcard
-            ),
-            permissions = Permissions(
-                publicAccess = notificationDTO.permissions?.publicAccess ?: "",
-                userAccesses = notificationDTO.permissions?.userAccesses?.map {
-                    org.dhis2.usescases.notifications.domain.UserAccesses(
-                        it.access,
+            readBy =
+                notificationDTO.readBy.map {
+                    ReadBy(
+                        BaseIdentifiableObject.parseDate(requireNotNull(it.date)),
                         it.id,
-                        it.name
+                        it.name,
                     )
-                } ?: listOf(),
-                userGroupAccesses = notificationDTO.permissions?.userGroupAccesses?.map {
-                    org.dhis2.usescases.notifications.domain.UserGroupAccesses(
-                        it.access,
-                        it.id,
-                        it.name
-                    )
-                } ?: listOf()
-            ),
-            translations = notificationDTO.translations
+                },
+            recipients =
+                Recipients(
+                    userGroups = notificationDTO.recipients.userGroups.map { Ref(it.id, it.name) },
+                    users = notificationDTO.recipients.users.map { Ref(it.id, it.name) },
+                    wildcard = notificationDTO.recipients.wildcard,
+                ),
+            permissions =
+                Permissions(
+                    publicAccess = notificationDTO.permissions?.publicAccess ?: "",
+                    userAccesses =
+                        notificationDTO.permissions?.userAccesses?.map {
+                            org.dhis2.usescases.notifications.domain.UserAccesses(
+                                it.access,
+                                it.id,
+                                it.name,
+                            )
+                        } ?: listOf(),
+                    userGroupAccesses =
+                        notificationDTO.permissions?.userGroupAccesses?.map {
+                            org.dhis2.usescases.notifications.domain.UserGroupAccesses(
+                                it.access,
+                                it.id,
+                                it.name,
+                            )
+                        } ?: listOf(),
+                ),
+            translations = notificationDTO.translations,
         )
-    }
-
 }

@@ -69,29 +69,31 @@ class PostMetadataSyncModuleTest {
     }
 
     @Test
-    fun `the action downloads the notifications and then marks them pending`() = runTest {
-        givenTheDownloadSucceeds()
-        val action = givenTheRegisteredAction()
+    fun `the action downloads the notifications and then marks them pending`() =
+        runTest {
+            givenTheDownloadSucceeds()
+            val action = givenTheRegisteredAction()
 
-        val result = action()
+            val result = action()
 
-        assertTrue(result.isSuccess)
-        verify(notificationRepository).sync()
-        assertTrue(ShowNotifications.isPending)
-    }
+            assertTrue(result.isSuccess)
+            verify(notificationRepository).sync()
+            assertTrue(ShowNotifications.isPending)
+        }
 
     @Test
-    fun `a failing download is reported as a failure and marks nothing pending`() = runTest {
-        givenTheDownloadFails("server unreachable")
-        val action = givenTheRegisteredAction()
+    fun `a failing download is reported as a failure and marks nothing pending`() =
+        runTest {
+            givenTheDownloadFails("server unreachable")
+            val action = givenTheRegisteredAction()
 
-        val result = action()
+            val result = action()
 
-        // SyncMetadata logs and swallows a failed action on purpose, so a notifications outage
-        // can never break the metadata sync itself.
-        assertTrue(result.isFailure)
-        assertFalse(ShowNotifications.isPending)
-    }
+            // SyncMetadata logs and swallows a failed action on purpose, so a notifications outage
+            // can never break the metadata sync itself.
+            assertTrue(result.isFailure)
+            assertFalse(ShowNotifications.isPending)
+        }
 
     private fun givenTheWidpFlavorGraph(): Koin =
         koinApplication {
@@ -104,8 +106,7 @@ class PostMetadataSyncModuleTest {
             )
         }.koin
 
-    private fun givenTheRegisteredActions(): List<PostMetadataSyncAction> =
-        givenTheWidpFlavorGraph().get<List<PostMetadataSyncAction>>()
+    private fun givenTheRegisteredActions(): List<PostMetadataSyncAction> = givenTheWidpFlavorGraph().get<List<PostMetadataSyncAction>>()
 
     private fun givenTheRegisteredAction(): PostMetadataSyncAction = givenTheRegisteredActions().single()
 
