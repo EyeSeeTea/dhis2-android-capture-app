@@ -46,8 +46,8 @@ Commit: one commit per behavior (test + minimal implementation). Do not start be
 
 ### Trigger and contract
 - [x] 5.1 Identify the Oslo touch points of the event screen (menu enum/dispatch and activity) and record them in the proposal Impact section
-- [ ] 5.2 Test (UI): the "Print receipt" option is shown in the menu of a Distribution event, completed or not; implement it and remove the dashboard wiring (`PRINT_RECEIPT` in `EnrollmentMenuItem`, `buildMenuForEnrollment`, `mountReceiptPrintHost` in `TeiDashboardMobileActivity`)
-- [ ] 5.3 Test: printing takes an event uid; the use case loads the receipt of that event and prints it (replaces the enrollment contract of 1.1-1.2)
+- [x] 5.2 Move the trigger to the event screen and remove the dashboard wiring (`PRINT_RECEIPT` in `EnrollmentMenuItem`, `buildMenuForEnrollment`, `mountReceiptPrintHost` in `TeiDashboardMobileActivity`, `customClick` branch). No new automated test: it is wiring in Oslo code with no logic of its own (the stage rule is covered by `ReceiptMenuAvailabilityTest`; the printing flow by `ReceiptPrintHostTest`, a Compose test of the host without the activity). Manual validation on a device is still pending (checklist, 5.14): option shown only in a Distribution event, completed or not; printing does not complete the event
+- [x] 5.3 Test: printing takes an event uid; the use case loads the receipt of that event and prints it (replaces the enrollment contract of 1.1-1.2)
 - [ ] 5.4 Decide whether `NoReceiptAvailable` is removed: with TEI attributes the receipt is never empty. If removed, delete the error, its string and the 3.10/3.11 behaviour
 
 ### Content
@@ -67,7 +67,7 @@ Commit: one commit per behavior (test + minimal implementation). Do not start be
 - [ ] 5.13 Test: after a successful print the "Receipt Printed" flag is set; it is not set when printing fails; a failure to write it does not change the success message; the event is not completed; implement `ReceiptPrintedMarker`
 
 ### Docs
-- [ ] 5.14 Update `customization-files.md` and `upgrade-validation-checklist.md` with the event-screen touch points, the new files, and the metadata UIDs
+- [ ] 5.14 Update `customization-files.md` and `upgrade-validation-checklist.md` with the event-screen touch points, the new files, and the metadata UIDs. Done for the event-screen touch points, the wiring file and the checklist flow; the files and UIDs of 5.5-5.13 are added as those tasks land
 
 ## Pending (not scheduled)
 - [ ] Review the Brother SDK (licence, distribution, support for the RJ-2055WB) and the command reference at support.brother.com, and decide SDK vs raster commands
@@ -75,6 +75,6 @@ Commit: one commit per behavior (test + minimal implementation). Do not start be
   - Turn `PrintReceiptError.PrintFailed` into a class that carries the original cause (`PrintFailed(cause)`): as a singleton its stack trace is captured at class load.
 - [ ] Bluetooth permissions: `BLUETOOTH`/`BLUETOOTH_ADMIN` in the spIP manifest (check what `main` declares) and the runtime flow for `BLUETOOTH_CONNECT`/`BLUETOOTH_SCAN` on Android 12+ (flow testable on an API 31+ emulator; real behaviour needs a physical tablet)
 - [ ] Re-estimate once the Brother unit arrives (the September estimate assumed a Zebra and plain text)
-- [ ] Restrict the menu option to the Distribution stage of Beneficiary Hub (`csDh9fh1NvL` / `tCC0YnvF9SJ`) and confirm production UIDs
+- [x] Restrict the menu option to the Distribution stage of Beneficiary Hub (done with `isPrintReceiptAvailable`; the production UIDs are still to confirm)
 - [ ] Printer firmware/paper configuration identical across production printers (operational, with the client)
 - [ ] Validate product texts with the client (`receipt_no_printer_connected`, `receipt_print_failed`)

@@ -56,9 +56,7 @@ Entries are added here as they are built, using the exact `# Title` of the match
 Status: `active`
 
 Main implementation points (Oslo files touched, each marked `// EyeSeeTea customization - Print Receipt`):
-- `app/src/main/java/org/dhis2/usescases/teiDashboard/TeiDashboardMobileActivity.kt` (`PRINT_RECEIPT` value in `EnrollmentMenuItem`, and `mountReceiptPrintHost(this)` at the end of `onCreate`)
-- `app/src/main/java/org/dhis2/usescases/teiDashboard/ui/TeiDashboardMenu.kt` (one line in `buildMenuForEnrollment`: `addPrintReceiptMenuItem`)
-- `app/src/spIP/java/org/dhis2/usescases/teiDashboard/TeiDashboardMenu.kt` (flavor `customClick`: routes `PRINT_RECEIPT` to the receipt wiring; the click does not touch the activity `when`)
+- `app/src/main/java/org/dhis2/usescases/eventsWithoutRegistration/eventCapture/EventCaptureActivity.kt` (four inline touches: `PRINT_RECEIPT` value at the end of `EventCaptureMenuItem`; one `addPrintReceiptMenuItem(...)` call at the end of `getMenuItems()`; one `PRINT_RECEIPT` branch in the `when (itemId)` of `setupMoreOptionsMenu()` calling `printEventReceipt` with the current `eventUid`; `mountReceiptPrintHost(this)` after `setupMoreOptionsMenu()` in `onCreate`)
 
 Supporting files in the same workflow (all new, flavor-only):
 - `app/src/spIP/java/org/dhis2/usescases/receipt/ReceiptServiceLocator.kt`
@@ -71,7 +69,7 @@ Supporting files in the same workflow (all new, flavor-only):
 - `app/src/spIP/java/org/dhis2/usescases/receipt/data/D2ReceiptRepository.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/data/FakeReceiptPrinter.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/data/ReceiptFormatter.kt`
-- `app/src/spIP/java/org/dhis2/usescases/receipt/presentation/ReceiptDashboardWiring.kt`
+- `app/src/spIP/java/org/dhis2/usescases/receipt/presentation/ReceiptEventWiring.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/presentation/ReceiptPrintHost.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/presentation/ReceiptPrintMessage.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/presentation/ReceiptPrintUiState.kt`
@@ -86,9 +84,11 @@ Supporting files in the same workflow (all new, flavor-only):
 - `commonskmm/src/commonTest/kotlin/org/eyeseetea/functional/EitherTest.kt`
 
 Technical note:
-- The Oslo touches are three marked lines; everything else lives in the flavor. Dependencies come from a hand-written `ReceiptServiceLocator` (like `SPIPServiceLocator` for SMS) instead of Dagger/Koin, to avoid conflicts in upgrades.
+- The Oslo touches are four marked places in one file (`EventCaptureActivity.kt`); everything else lives in the flavor. The first scope used the TEI dashboard menu; that wiring was removed when the trigger moved to the event screen, so no dashboard file is touched any more. Dependencies come from a hand-written `ReceiptServiceLocator` (like `SPIPServiceLocator` for SMS) instead of Dagger/Koin, to avoid conflicts in upgrades.
 - `Either.kt` and its test are not spIP code: they were added to `develop-eyeseetea` (`173334dbb`, technique T6 in `eyeseetea-docs/customization-techniques.md` there) and cherry-picked here because this branch cannot merge the baseline outside an upgrade. After the upgrade merge they are the same file; drop the cherry-picked copy if git reports a conflict.
-- The printer is a development fake: debug logs the receipt, release always reports no printer connected. The real Bluetooth printer is pending the printer model.
+- The printer is a development fake: debug logs the receipt, release always reports no printer connected. The real Bluetooth printer (Brother RJ-2055WB) is pending the unit.
+- The menu option is offered only for events of the Distribution stage of SP Beneficiary Hub (`tCC0YnvF9SJ`, test server UID; production UID to confirm), see `isPrintReceiptAvailable`.
+- Files for the receipt content, the bitmap renderer and the "Receipt Printed" flag (tasks 5.5-5.13) are not listed yet: add them as they are built.
 
 ## 3. Shared drift still differing
 

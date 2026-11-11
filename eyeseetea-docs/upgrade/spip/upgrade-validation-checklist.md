@@ -21,28 +21,31 @@ Expected result:
 ### 1. Print Receipt
 
 Preconditions:
-- A `spIPDebug` build (it binds the development printer, which logs the receipt) and a user logged in on a server with a tracked entity enrolled in a program that has at least one completed event with data values.
-- A second enrollment with no completed event.
+- A `spIPDebug` build (it binds the development printer, which logs the receipt) and a user logged in on a server with a tracked entity enrolled in SP Beneficiary Hub, with a Distribution event (stage `tCC0YnvF9SJ`) that has data values, ideally both a completed one and an open one.
+- An event of another stage of any program.
 - Logcat open, filtered by `Receipt printed`.
 
 Manual flow:
-1. Open the TEI dashboard of the first enrollment and open the overflow menu.
+1. Open a Distribution event and open the top-right menu of the event screen.
 2. Tap **Print receipt**.
 3. Repeat and rotate the device while the printing dialog is visible.
 4. Repeat and tap **Print receipt** twice quickly.
-5. Tap other dashboard controls (tabs, back) after the receipt flow, to check that the overlay does not swallow touches.
-6. Open the dashboard of the enrollment with no completed event and tap **Print receipt**.
-7. On a `spIPRelease` build, open any dashboard and tap **Print receipt**.
+5. Tap other controls of the event screen (tabs, back) after the receipt flow, to check that the overlay does not swallow touches.
+6. Repeat steps 1-2 on a completed and on a not completed Distribution event, and check the event status afterwards.
+7. Open the menu of an event of another stage.
+8. On a `spIPRelease` build, open a Distribution event and tap **Print receipt**.
 
 Expected result:
-- The menu shows **Print receipt** in both build types.
-- Step 2: a "Printing receipt…" dialog, then a "Receipt printed" snackbar; Logcat shows one line per data value of the latest completed event (data element name and value).
+- The menu of a Distribution event shows **Print receipt** in both build types, completed or not.
+- Step 2: a "Printing receipt…" dialog, then a "Receipt printed" snackbar; Logcat shows one line per data value of that event (data element name and value).
 - Step 3: rotating neither cancels nor repeats the print; one receipt is logged.
 - Step 4: only one receipt is logged.
-- Step 5: the dashboard keeps responding to touches.
-- Step 6: an error dialog says there is nothing to print and stays until **Accept** is pressed; nothing is logged.
-- Step 7: an error dialog says no printer is connected and stays until **Accept** is pressed.
+- Step 5: the event screen keeps responding to touches.
+- Step 6: both print; printing does not change the event status.
+- Step 7: the menu does not show **Print receipt**.
+- Step 8: an error dialog says no printer is connected and stays until **Accept** is pressed.
 - The "print failed" error cannot be produced by hand (the development printer never fails); it is covered by `ReceiptPrintHostTest`.
+- The dashboard menu of the enrollment no longer shows **Print receipt**.
 
 ## Maintenance rule
 
