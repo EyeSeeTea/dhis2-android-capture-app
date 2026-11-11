@@ -176,6 +176,8 @@ jobs:
           ./browserstackLandscape.sh
 
   code-quality:
+    # Fork: SonarQube needs the SONAR_TOKEN secret, which only exists in the Oslo repository.
+    if: github.repository == 'dhis2/dhis2-android-capture-app'
     runs-on: ubuntu-latest
     permissions:
       contents: read
