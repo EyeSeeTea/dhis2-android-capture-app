@@ -6,6 +6,6 @@ data class Receipt(
     val lines: List<ReceiptLine>,
     val items: List<ReceiptItem> = emptyList(),
     val distributionName: String? = null,
-    val rationCardId: String? = null,
+    val spbhId: String? = null,
     val beneficiaryName: String? = null,
 )

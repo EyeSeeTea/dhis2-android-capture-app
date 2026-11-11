@@ -38,7 +38,7 @@ class D2ReceiptRepository(
                 distributionName = d2.trackedEntityModule().trackedEntityDataValues()
                     .value(eventUid, metadata.distributionDataElementUid).blockingGet()
                     .userFriendlyValue(d2),
-                rationCardId = attributeValue(teiUid, metadata.rationCardIdAttributeUid),
+                spbhId = attributeValue(teiUid, metadata.spbhIdAttributeUid),
                 beneficiaryName = attributeValue(teiUid, metadata.beneficiaryNameAttributeUid),
             )
             receipt.takeUnless { it.isEmpty() }
@@ -69,7 +69,7 @@ class D2ReceiptRepository(
         }
 
     private fun Receipt.isEmpty() =
-        lines.isEmpty() && items.isEmpty() && distributionName == null && rationCardId == null && beneficiaryName == null
+        lines.isEmpty() && items.isEmpty() && distributionName == null && spbhId == null && beneficiaryName == null
 
     private companion object {
         val ITEM_GIVEN_CODE = Regex("sp_DIST_.+_GIVEN")

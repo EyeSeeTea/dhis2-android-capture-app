@@ -25,12 +25,12 @@ class D2ReceiptRepositoryTest {
     private val d2: D2 = Mockito.mock(D2::class.java, Mockito.RETURNS_DEEP_STUBS)
 
     @Test
-    fun `the receipt shows the distribution name instead of its option code, the ration card id and the beneficiary name`() = runTest {
+    fun `the receipt shows the distribution name instead of its option code, the SPBH id and the beneficiary name`() = runTest {
         givenADistributionEvent(
             eventUid = EVENT_UID,
             distributionCode = "D0001",
             distributionName = "TEST Distribution 1",
-            rationCardId = "RC-0042",
+            spbhId = "SPBH-0042",
             beneficiaryName = "Ana Perez",
         )
         val repository = givenAReceiptRepository()
@@ -38,7 +38,7 @@ class D2ReceiptRepositoryTest {
         val receipt = repository.getReceipt(EVENT_UID)
 
         assertEquals("TEST Distribution 1", receipt?.distributionName)
-        assertEquals("RC-0042", receipt?.rationCardId)
+        assertEquals("SPBH-0042", receipt?.spbhId)
         assertEquals("Ana Perez", receipt?.beneficiaryName)
     }
 
@@ -93,7 +93,7 @@ class D2ReceiptRepositoryTest {
             d2 = d2,
             metadata = ReceiptMetadata(
                 distributionDataElementUid = DISTRIBUTION_DATA_ELEMENT_UID,
-                rationCardIdAttributeUid = RATION_CARD_ATTRIBUTE_UID,
+                spbhIdAttributeUid = SPBH_ID_ATTRIBUTE_UID,
                 beneficiaryNameAttributeUid = BENEFICIARY_NAME_ATTRIBUTE_UID,
             ),
         )
@@ -102,7 +102,7 @@ class D2ReceiptRepositoryTest {
         eventUid: String,
         distributionCode: String,
         distributionName: String,
-        rationCardId: String,
+        spbhId: String,
         beneficiaryName: String,
     ) {
         whenever(d2.eventModule().events().uid(eventUid).blockingGet()) doReturn
@@ -112,7 +112,7 @@ class D2ReceiptRepositoryTest {
 
         givenNoDataValuesToList(eventUid)
         givenADistributionDataValue(eventUid, distributionCode, distributionName)
-        givenAnAttributeValue(RATION_CARD_ATTRIBUTE_UID, rationCardId)
+        givenAnAttributeValue(SPBH_ID_ATTRIBUTE_UID, spbhId)
         givenAnAttributeValue(BENEFICIARY_NAME_ATTRIBUTE_UID, beneficiaryName)
     }
 
@@ -188,7 +188,7 @@ class D2ReceiptRepositoryTest {
         const val TEI_UID = "TEI_UID"
         const val DISTRIBUTION_DATA_ELEMENT_UID = "DISTRIBUTION_DE_UID"
         const val DISTRIBUTION_OPTION_SET_UID = "DISTRIBUTION_OPTION_SET_UID"
-        const val RATION_CARD_ATTRIBUTE_UID = "RATION_CARD_ATTRIBUTE_UID"
+        const val SPBH_ID_ATTRIBUTE_UID = "SPBH_ID_ATTRIBUTE_UID"
         const val BENEFICIARY_NAME_ATTRIBUTE_UID = "BENEFICIARY_NAME_ATTRIBUTE_UID"
     }
 }
