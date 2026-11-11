@@ -10,7 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.dhis2.R
-import org.dhis2.usescases.receipt.presentation.printEnrollmentReceipt
 import org.dhis2.usescases.sms.DI.SPIPServiceLocator
 import org.dhis2.usescases.sms.domain.model.sms.SmsResult
 
@@ -28,10 +27,6 @@ fun customClick(
                 parentView = teiDashboardMobileActivity.binding.root,
                 teiUid = teiUid
             )
-        }
-
-        EnrollmentMenuItem.PRINT_RECEIPT -> {
-            printEnrollmentReceipt(teiDashboardMobileActivity, enrollmentUid)
         }
 
         else -> {}

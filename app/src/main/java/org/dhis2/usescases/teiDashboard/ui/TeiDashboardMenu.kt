@@ -16,7 +16,6 @@ import androidx.compose.material.icons.outlined.Timeline
 import androidx.compose.material.icons.outlined.Workspaces
 import org.dhis2.R
 import org.dhis2.commons.resources.ResourceManager
-import org.dhis2.usescases.receipt.presentation.addPrintReceiptMenuItem
 import org.dhis2.usescases.sms.presentation.menu.addSendSmsMenuItem
 import org.dhis2.usescases.teiDashboard.DashboardEnrollmentModel
 import org.dhis2.usescases.teiDashboard.DashboardViewModel
@@ -63,8 +62,6 @@ private fun buildMenuForEnrollment(
             isMenuOptionAvailable = presenter.isCmoProgram,
             resourceManager = resourceManager
         )
-        // EyeSeeTea customization - Print Receipt
-        addPrintReceiptMenuItem(resourceManager)
         addSyncMenuItem(resourceManager)
         addIfTeiCanBeTransferred(dashboardViewModel, resourceManager)
         addFollowUpMenuItem(dashboardViewModel, resourceManager)

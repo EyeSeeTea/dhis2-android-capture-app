@@ -1,32 +1,31 @@
 package org.dhis2.usescases.receipt.presentation
 
 import android.view.ViewGroup
+import androidx.activity.ComponentActivity
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Print
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.ViewModelProvider
-import org.dhis2.R
-import org.dhis2.commons.resources.ResourceManager
+import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureMenuItem
+import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureMenuItem.PRINT_RECEIPT
 import org.dhis2.usescases.receipt.ReceiptServiceLocator
-import org.dhis2.usescases.teiDashboard.EnrollmentMenuItem
-import org.dhis2.usescases.teiDashboard.EnrollmentMenuItem.PRINT_RECEIPT
-import org.dhis2.usescases.teiDashboard.TeiDashboardMobileActivity
 import org.hisp.dhis.mobile.ui.designsystem.component.menu.MenuItemData
 import org.hisp.dhis.mobile.ui.designsystem.component.menu.MenuLeadingElement
 import org.hisp.dhis.mobile.ui.designsystem.theme.DHIS2Theme
 
-fun MutableList<MenuItemData<EnrollmentMenuItem>>.addPrintReceiptMenuItem(resourceManager: ResourceManager) {
+fun MutableList<MenuItemData<EventCaptureMenuItem>>.addPrintReceiptMenuItem(label: String, programStageUid: String) {
+    if (!isPrintReceiptAvailable(programStageUid)) return
     add(
         MenuItemData(
             id = PRINT_RECEIPT,
-            label = resourceManager.getString(R.string.receipt_menu_print),
+            label = label,
             leadingElement = MenuLeadingElement.Icon(icon = Icons.Outlined.Print),
         ),
     )
 }
 
 // The view model lives in the activity scope, so a rotation neither cancels nor repeats a print.
-fun mountReceiptPrintHost(activity: TeiDashboardMobileActivity) {
+fun mountReceiptPrintHost(activity: ComponentActivity) {
     activity.addContentView(
         ComposeView(activity).apply {
             setContent { DHIS2Theme { ReceiptPrintHost(receiptPrintViewModel(activity)) } }
@@ -35,9 +34,9 @@ fun mountReceiptPrintHost(activity: TeiDashboardMobileActivity) {
     )
 }
 
-fun printEnrollmentReceipt(activity: TeiDashboardMobileActivity, enrollmentUid: String) {
-    receiptPrintViewModel(activity).print(enrollmentUid)
+fun printEventReceipt(activity: ComponentActivity, eventUid: String) {
+    receiptPrintViewModel(activity).print(eventUid)
 }
 
-private fun receiptPrintViewModel(activity: TeiDashboardMobileActivity): ReceiptPrintViewModel =
+private fun receiptPrintViewModel(activity: ComponentActivity): ReceiptPrintViewModel =
     ViewModelProvider(activity, ReceiptServiceLocator.provideReceiptPrintViewModelFactory())[ReceiptPrintViewModel::class.java]

@@ -52,6 +52,9 @@ import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.eventCaptureFr
 import org.dhis2.usescases.eventsWithoutRegistration.eventDetails.injection.EventDetailsComponent
 import org.dhis2.usescases.eventsWithoutRegistration.eventDetails.injection.EventDetailsComponentProvider
 import org.dhis2.usescases.eventsWithoutRegistration.eventDetails.injection.EventDetailsModule
+import org.dhis2.usescases.receipt.presentation.addPrintReceiptMenuItem
+import org.dhis2.usescases.receipt.presentation.mountReceiptPrintHost
+import org.dhis2.usescases.receipt.presentation.printEventReceipt
 import org.dhis2.usescases.eventsWithoutRegistration.eventInitial.EventInitialActivity
 import org.dhis2.usescases.general.ActivityGlobalAbstract
 import org.dhis2.usescases.qrCodes.eventsworegistration.QrEventsWORegistrationActivity
@@ -132,6 +135,8 @@ class EventCaptureActivity :
         setUpViewPagerAdapter()
         setUpNavigationBar()
         setupMoreOptionsMenu()
+        // EyeSeeTea customization - Print Receipt
+        mountReceiptPrintHost(this)
 
         setUpEventCaptureFormLandscape(eventUid ?: "")
         if (this.isLandscape() && areTeiUidAndEnrollmentUidNotNull()) {
@@ -411,6 +416,8 @@ class EventCaptureActivity :
 
                     EventCaptureMenuItem.DELETE -> confirmDeleteEvent()
                     EventCaptureMenuItem.SHARE -> openShareEvent()
+                    // EyeSeeTea customization - Print Receipt
+                    EventCaptureMenuItem.PRINT_RECEIPT -> printEventReceipt(this@EventCaptureActivity, eventUid!!)
                 }
             }
         }
@@ -442,6 +449,8 @@ class EventCaptureActivity :
                     ),
                 )
             }
+            // EyeSeeTea customization - Print Receipt
+            addPrintReceiptMenuItem(getString(R.string.receipt_menu_print), presenter.programStage())
         }
 
     override fun showTutorial(shaked: Boolean) {
@@ -652,4 +661,6 @@ enum class EventCaptureMenuItem {
     SHOW_HELP,
     DELETE,
     SHARE,
+    // EyeSeeTea customization - Print Receipt
+    PRINT_RECEIPT,
 }

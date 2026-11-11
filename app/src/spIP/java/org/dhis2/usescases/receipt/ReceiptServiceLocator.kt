@@ -7,7 +7,7 @@ import org.dhis2.usescases.receipt.domain.usecase.PrintReceiptUseCase
 import org.dhis2.usescases.receipt.presentation.ReceiptPrintViewModel
 import org.hisp.dhis.android.core.D2Manager
 
-// Hand-written locator, only called from the dashboard wiring (see design.md, Dependency creation).
+// Hand-written locator, only called from the event wiring (see design.md, Dependency creation).
 object ReceiptServiceLocator {
 
     fun provideReceiptPrintViewModelFactory(): ViewModelProvider.Factory =
