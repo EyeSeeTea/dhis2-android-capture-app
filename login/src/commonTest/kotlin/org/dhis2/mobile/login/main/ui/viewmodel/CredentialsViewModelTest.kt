@@ -105,7 +105,8 @@ class CredentialsViewModelTest {
 
     private val turbineTimeout = 10.seconds
 
-    // EyeSeeTea customization - 2FA support: a little over the 30 s the view model waits to offer resend again
+    // EyeSeeTea customization - 2FA support
+    // A little over the 30 s the view model waits to offer resend again.
     private val resendDelay = 31.seconds
 
     @BeforeTest

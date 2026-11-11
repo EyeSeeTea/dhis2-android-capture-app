@@ -199,7 +199,7 @@ class ServerModule {
                 .interceptors(developmentInterceptors())
                 .writeTimeoutInSeconds(10 * 60)
                 .context(context)
-                // EyeSeeTea customization - Original Size Image Download
+                // EyeSeeTea customization - Image upload without resizing
                 .fileResizerDimension(FileResizerHelper.Dimension.ORIGINAL)
                 .build()
         }
