@@ -21,9 +21,10 @@ class DataSetDetailViewModelTest {
     @get:Rule
     val executorRule = InstantTaskExecutorRule()
 
+    private val testDispatcher = UnconfinedTestDispatcher()
     private val dispatcher: DispatcherProvider =
         mock {
-            on { io() } doReturn Dispatchers.IO
+            on { io() } doReturn testDispatcher
         }
     private val dataSetPageConfigurator: DataSetPageConfigurator = mock()
     private val initializedConfigurator: DataSetPageConfigurator = mock()
@@ -37,7 +38,7 @@ class DataSetDetailViewModelTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(testDispatcher)
     }
 
     @Test

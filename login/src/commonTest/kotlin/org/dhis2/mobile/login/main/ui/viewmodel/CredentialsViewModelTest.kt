@@ -298,6 +298,26 @@ class CredentialsViewModelTest {
             }
         }
 
+    // EyeSeeTea customization - Disabled account login
+    @Test
+    fun `GIVEN disabled account WHEN login is clicked THEN form is enabled with disabled error`() =
+        runTest {
+            // GIVEN
+            val errorMessage =
+                "Your user account have been disabled. If this is an error, contact your administrator."
+            givenALoadedLoginScreen()
+            givenLoginAnswers(LoginResult.Error(errorMessage))
+
+            // WHEN
+            logIn()
+
+            // THEN
+            val state = currentState()
+            assertEquals(LoginState.Enabled, state.loginState)
+            assertEquals(errorMessage, state.errorMessage)
+            assertTrue(state.afterLoginActions.isEmpty())
+        }
+
     @Test
     fun `GIVEN method call WHEN manage accounts is clicked THEN navigates to accounts`() =
         runTest {

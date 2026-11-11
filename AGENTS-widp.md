@@ -6,7 +6,7 @@ EyeSeeTea fork of the DHIS2 Android Capture app for the WIDP client.
 - **Current version:** `3.5.0-widp-fork-1`
 - **Upstream:** dhis2/dhis2-android-capture-app
 - **Baseline branch:** `develop-eyeseetea` (shared EyeSeeTea baseline, never client-specific)
-- **SDK fork:** EyeSeeTea/dhis2-android-sdk `1.15.0-eyeseetea-fork-1` (2FA + auth patches)
+- **SDK fork:** EyeSeeTea/dhis2-android-sdk `1.15.0-eyeseetea-fork-1` (2FA + auth + disabled-account login patches)
 
 ## Project structure
 
@@ -43,7 +43,7 @@ Java 17 required. Gradle 9.5.1, AGP 9.3.1, Kotlin 2.4.10.
 
 ## Customizations
 
-5 confirmed WIDP customizations. Each has an OpenSpec spec in `openspec/specs/`:
+6 confirmed WIDP customizations. Each has an OpenSpec spec in `openspec/specs/`:
 
 | # | Spec slug | Status | Risk |
 |---|-----------|--------|------|
@@ -52,6 +52,7 @@ Java 17 required. Gradle 9.5.1, AGP 9.3.1, Kotlin 2.4.10.
 | 3 | `notifications` | active | high |
 | 4 | `two-factor-auth` | active (SDK dependency) | medium |
 | 5 | `url-data-element` | active | medium |
+| 6 | `disabled-account-login` | active (SDK dependency) | low |
 
 ### Customization code rules
 

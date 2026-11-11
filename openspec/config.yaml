@@ -23,7 +23,7 @@ context: |
     - Current version:    3.5.0-widp-fork-1 (target: next Oslo release, via develop-eyeseetea)
     - Upgrade branch:     feature-widp/upgrade_3.5.0
     - Base branch:        develop-eyeseetea
-    - SDK fork:           EyeSeeTea/dhis2-android-sdk 1.15.0-eyeseetea-fork-1 (2FA + auth patches)
+    - SDK fork:           EyeSeeTea/dhis2-android-sdk 1.15.0-eyeseetea-fork-1 (2FA + auth + disabled-account login patches)
 
   ## Repository layout (relevant)
 
