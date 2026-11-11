@@ -159,6 +159,10 @@ the code reading above and the device check (rejected session opens login exactl
   `3.5.0-widp-fork-1` (5.1) and a session rejected by the server opens login exactly once
   (5.3, design D4). **All of this is the maintainer's statement only**: no command output
   or screenshot was attached, so it is not machine-verified.
+  After merging PR #340 (disabled-account login), also checked on a physical device the same
+  day: login with a disabled account stays on login and shows the error, and a session
+  terminated by the server goes to login exactly once. Maintainer's statement only, no
+  evidence attached.
   2FA coverage: **TOTP and email tested; SMS not tested** (the maintainer has no way to
   receive SMS codes). SMS stays unvalidated on 3.5.0 and goes to
   `upgrade-validation-checklist.md` as pending.
