@@ -172,6 +172,22 @@ Use `./gradlew :app:installWidpDebug`, not `assembleWidpDebug`: a green assemble
 the code on the device, and testing against a stale APK looks exactly like a hook that never
 fires.
 
+## Pending for 3.5.0 (as of 2026-11-11)
+
+Confirmed on `3.5.0-widp-fork-1` on a physical device, by the maintainer's statement (no
+per-flow evidence attached): Change Server URL, image upload without resizing, notifications,
+2FA with TOTP and email, URL data element, and a rejected session opening login exactly once.
+
+Still to exercise on this build:
+
+- [ ] **4c. 2FA by SMS** — not tested: the maintainer has no way to receive SMS codes
+- [ ] **3. Notifications** — background sync with the app closed, then open it and check the
+      notification is shown on resume (carried over from 3.4.2; not reported in this run)
+- [ ] login against a DHIS2 2.41 server (carried over from 3.4.2)
+
+Not applicable: OAuth/OpenID session expiry. WIDP does not use OAuth/OpenID login, so the
+baseline's session renewal dialog cannot coincide with the fork's SDK logout.
+
 ## Pending for 3.4.2 (as of 2026-09-11)
 
 Confirmed on `3.4.2-widp-fork-1`, Samsung SM-S928B:

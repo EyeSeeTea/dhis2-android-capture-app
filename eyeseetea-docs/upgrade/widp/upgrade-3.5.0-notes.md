@@ -21,10 +21,10 @@ belongs in `eyeseetea-docs/customizations/widp/customization-files.md`.
 ## Progress
 
 - baseline prepared: `yes` — `develop-eyeseetea` already carries 3.5.0
-- merge started: `yes` — real merge in progress (`git merge --no-ff --no-commit develop-eyeseetea`), 14 conflicts, none resolved yet
-- easy conflicts resolved: `no`
-- manual conflicts pending: `yes`
-- validation started: `no`
+- merge started: `yes` — merge commit `284914ea6`, pushed
+- easy conflicts resolved: `yes`
+- manual conflicts pending: `no`
+- validation started: `yes` — physical device, 2026-11-11; build, `:app:testWidpDebugUnitTest`, `:login:allTests` and `ktlintCheck` green
 
 ## Dry-run summary
 
@@ -130,15 +130,42 @@ Diff each against `develop-eyeseetea` after the merge and compare with `customiz
 4. **What happens to the unmerged 3.4.2?** This upgrade is stacked on `feature-widp/redo_3_4_2`.
    Decide how the two reach `develop-widp` (one PR or two) before opening any.
 
+## Session flows on the merged tree (task 4.1)
+
+Two independent paths reach login:
+
+| Path | Trigger | Where it lands |
+|------|---------|----------------|
+| Unauthorized (fork) | SDK `accountManager().logOutObservable()` mapped to `LogOutReason.UNAUTHORIZED` in `OpenIdSession` | `SessionManagerActivity` callback starts `LoginActivity` with `EXTRA_SESSION_EXPIRED` |
+| Renewal (baseline) | `DomainError.SessionRenewalRequiredError` through `SessionRenewalNotifier` | `SessionRenewalDialog`; "Log in again" starts `LoginActivity` with `renewSession = true` |
+
+Evidence from code: the two share no state, but the renewal collector returns early on
+`LoginActivity` and `SplashActivity` (`observeSessionRenewalRequests`), so once login is open
+the dialog cannot stack on it. Evidence from device (maintainer's statement): a session
+rejected by the server opens login exactly once.
+
+**Not applicable:** the renewal path is the baseline's OAuth/OpenID expiry, and WIDP does not
+use OAuth/OpenID login (maintainer's statement). The two flows therefore cannot fire together
+on WIDP. Task 4.2 is "no change needed": nothing in `OpenIdSession` is filtered. Evidence:
+the code reading above and the device check (rejected session opens login exactly once).
+
 ## Validation Notes
 
 - build:
 - targeted tests:
-- manual flows checked:
+- manual flows checked: physical device, 2026-11-11. The maintainer reported that all five
+  customizations work (Change Server URL, image upload without resizing, notifications, 2FA,
+  URL data element). Also confirmed by the maintainer: the installed version is
+  `3.5.0-widp-fork-1` (5.1) and a session rejected by the server opens login exactly once
+  (5.3, design D4). **All of this is the maintainer's statement only**: no command output
+  or screenshot was attached, so it is not machine-verified.
+  2FA coverage: **TOTP and email tested; SMS not tested** (the maintainer has no way to
+  receive SMS codes). SMS stays unvalidated on 3.5.0 and goes to
+  `upgrade-validation-checklist.md` as pending.
 
 ## Finalization
 
-- surviving customizations moved to `customization-files.md`: `no`
-- stable rules moved to `conflict-rules.md`: `no`
-- temporary notes ready to archive/remove: `no`
-- unexplained shared drift remaining: `unknown`
+- surviving customizations moved to `customization-files.md`: `yes` — rewritten against the 3.5.0 tree on 2026-11-11
+- stable rules moved to `conflict-rules.md`: `no` — candidate, not yet proposed: before reverting a fork-only drift to the baseline, run `ktlintCheck`; the baseline's own `GranularSyncModule.kt` fails this repo's lint
+- temporary notes ready to archive/remove: `no` — kept until the commits are made and the PR route (open question 4) is decided
+- unexplained shared drift remaining: `none` — 194 files differ from `develop-eyeseetea`, all documented in `customization-files.md`

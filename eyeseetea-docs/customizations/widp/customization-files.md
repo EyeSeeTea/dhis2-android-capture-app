@@ -7,10 +7,10 @@ Technical inventory of the WIDP customization surface on top of `develop-eyeseet
 - Client: `widp`
 - Flavor: `widp`
 - Base branch: `develop-eyeseetea`
-- Base commit: `8e0200bcc` (`3.4.2-eyeseetea-fork-1`)
+- Base commit: `173334dbb` (`develop-eyeseetea`, 3.5.0)
 - Generated on: `2026-03-25`
-- Last updated: `2026-09-11`
-- Working tree status: `clean` (post-merge to 3.4.2; both flavors build; notifications re-anchored on Koin and on the post-metadata-sync extension point)
+- Last updated: `2026-11-11`
+- Working tree status: `clean` (post-merge to 3.5.0; both flavors build; `:app:testWidpDebugUnitTest`, `:login:allTests` and `ktlintCheck` green)
 
 This file is intentionally separate from `eyeseetea-docs/customizations/eyeseetea/customizations-eyeseetea.md`:
 - that file documents the shared EyeSeeTea reference branch
@@ -21,9 +21,13 @@ This file is intentionally separate from `eyeseetea-docs/customizations/eyeseete
 This inventory is derived from:
 - direct flavor files under `app/src/widp/`, `app/src/widpDebug/` and `app/src/widpRelease/`
 - shared-code implementation points marked with `EyeSeeTea customization`
-- the two-dot diff `git diff develop-eyeseetea..HEAD`, checked file by file on 2026-09-11
+- the two-dot diff `git diff develop-eyeseetea..HEAD`, checked file by file on 2026-11-11
 
-Every path below was checked against the tree on that date. The 3.4.2 rewrite dropped the
+Every path below was checked against the tree on that date. The 3.5.0 upgrade dropped
+`UserManager.java`, `UserManagerImpl.java`, `SyncPresenterImpl.kt` and `SyncGranularRxModule.kt`
+from the "No delta today" lists: none of them exists in the baseline any more (the baseline
+converted the user manager to Kotlin and nothing of ours depends on it), so they can never
+differ. The 3.4.2 rewrite dropped the
 entries that no longer exist at all — `App.java`, `MainPresenter.kt`, `MainView.kt`, the
 three `Sync*WorkerModule.kt` and the Dagger notifications module and component were deleted
 upstream — and removed `app/src/widp/.../DownloadNewVersion.kt`, which the previous version
@@ -99,6 +103,10 @@ to lose to an automerge. The checks are `grep -c 'isImage = false' FormValueStor
 be 1, and `grep -c 'fileResizerDimension(FileResizerHelper.Dimension.ORIGINAL)' ServerModule.kt`,
 which must be 1.
 
+Tests:
+
+- `form/src/test/java/org/dhis2/form/data/FormValueStoreTest.kt` — the upload passes `isImage = false`
+
 No delta today, listed for the feat-commit cross-check:
 
 - `app/src/main/java/org/dhis2/data/forms/dataentry/ValueStoreImpl.kt` — the pre-Compose value store
@@ -170,13 +178,13 @@ Tests:
 
 - `app/src/test/java/org/dhis2/data/notifications/NotificationD2RepositoryTest.kt` — filtering and persistence
 - `app/src/test/java/org/dhis2/usescases/notifications/presentation/NotificationsPresenterTest.kt` — the display rules: the cached unread notifications are shown on every resume, including in a fresh process, the pending flag survives an empty list, and marking pending reaches the screen that is up
+- `app/src/test/java/org/dhis2/usescases/notifications/presentation/NotificationScreensTest.kt` — which screens may show a notification
+- `app/src/test/java/org/dhis2/usescases/notifications/presentation/NotificationsOnSessionEndTest.kt` — the leaving user's notifications are forgotten
 - `app/src/testWidp/java/org/dhis2/di/PostMetadataSyncModuleTest.kt` — the flavor wiring: exactly one action, it downloads then marks pending, and a failed download marks nothing
 
 No delta today, listed for the feat-commit cross-check:
 
 - `app/src/main/java/org/dhis2/AppComponent.java` — held the Dagger module entry until 3.4.2
-- `app/src/main/java/org/dhis2/data/service/SyncPresenterImpl.kt` — hosted the pre-3.4.0 `doOnComplete` hook
-- `app/src/main/java/org/dhis2/data/service/SyncGranularRxModule.kt` — passed the repository to it
 - `app/src/main/java/org/dhis2/usescases/main/MainActivity.kt` — carried the pending/refresh calls on the `sync_manager` and `menu_home` menu actions until 3.4.2, when `MainView` and `MainPresenter` were deleted upstream. Its remaining delta belongs to 2.1, not here
 - `app/src/main/java/org/dhis2/usescases/main/MainModule.kt`
 - `app/src/main/java/org/dhis2/usescases/main/program/ProgramFragment.kt`
@@ -205,11 +213,21 @@ Shared files carrying a WIDP delta:
 - `commonskmm/src/androidMain/kotlin/org/dhis2/mobile/commons/resources/D2ErrorMessageProviderImpl.kt` — the six 2FA message branches
 - `commonskmm/src/commonMain/composeResources/values/strings.xml` — those six messages
 - `app/src/main/java/org/dhis2/data/server/OpenIdSession.kt` — the `UNAUTHORIZED` logout reason and the merge branch that listens to `accountManager().logOutObservable()` (the SDK's automatic logout)
-- `app/src/main/java/org/dhis2/usescases/login/LoginActivity.kt` — maps `UNAUTHORIZED` to the session-expired message
+- `app/src/main/java/org/dhis2/usescases/login/LoginActivity.kt` — `EXTRA_SESSION_EXPIRED`, maps `UNAUTHORIZED` to it and shows the session-expired dialog
+
+New resource files, none of which exist in `develop-eyeseetea` — the session-expired dialog's
+`openid_session_expired` and `openid_session_expired_message`, one file per locale:
+
+- `app/src/main/res/values/strings_eyeseetea_2fa.xml` and the same file under `values-es`, `values-fr`, `values-id`, `values-lo`, `values-ru` and `values-vi`
 
 Tests:
 
 - `login/src/commonTest/kotlin/org/dhis2/mobile/login/main/ui/viewmodel/CredentialsViewModelTest.kt`
+- `login/src/commonTest/kotlin/org/dhis2/mobile/login/main/domain/usecase/LoginUserTest.kt`
+- `login/src/androidHostTest/kotlin/org/dhis2/mobile/login/main/data/LoginRepositoryImplTest.kt` — a 2FA `D2Error` becomes a `TwoFactorOutcome` and any other still goes through `DomainErrorMapper`
+- `app/src/test/java/org/dhis2/data/server/OpenIdSessionTest.kt` — the SDK logout reaches the session callback as `UNAUTHORIZED`
+
+Since 3.5.0 the 2FA path applies to the password entry modes only (`CredentialsEntryMode`); OAuth and OpenID never reach it.
 
 **Check this one first after any merge.** The baseline routes all seven
 `D2ErrorCode.*TWO_FACTOR*` codes to `defaultError()`. Taking its version of
@@ -222,7 +240,7 @@ flavor; in 3.4.2 upstream moved the module to the KMP `androidLibrary` DSL and d
 flavors from it altogether. Earlier notes claimed this file had been "absorbed upstream" when it
 had not. It has now, and the build is the evidence.
 
-SDK patch — in the `EyeSeeTea/dhis2-android-sdk` fork at `1.14.2-eyeseetea-fork-1`, not in this
+SDK patch — in the `EyeSeeTea/dhis2-android-sdk` fork at `1.15.0-eyeseetea-fork-1`, not in this
 repository:
 
 - `core/.../user/internal/LogInCall.kt` — `generate2FAErrorIfRequired()`
@@ -231,8 +249,6 @@ repository:
 
 No delta today, listed for the feat-commit cross-check:
 
-- `app/src/main/java/org/dhis2/data/server/UserManager.java`
-- `app/src/main/java/org/dhis2/data/server/UserManagerImpl.java`
 - `commonskmm/src/androidMain/kotlin/org/dhis2/mobile/commons/error/DomainErrorMapper.kt`
 - `commonskmm/src/commonMain/kotlin/org/dhis2/mobile/commons/error/DomainError.kt`
 
@@ -319,9 +335,10 @@ Status: `active`
 These differ from the baseline but implement no client behavior. They are listed so that the
 two-dot diff against `develop-eyeseetea` has no unexplained entries.
 
-- `gradle/libs.versions.toml` — `vName = 3.4.2-widp-fork-1`. `vCode` and the SDK tag come from the baseline unchanged
+- `gradle/libs.versions.toml` — `vName = 3.5.0-widp-fork-1`. `vCode` and the SDK tag come from the baseline unchanged
 - `app/build.gradle.kts` — the `widp` product flavor (the Markwon dependency in the same file belongs to 2.3)
 - `.github/workflows/eyeseetea-main.yml` — runs the WIDP unit tests where the baseline runs the `eyeseetea` ones
+- `app/src/eyeseetea/java/org/dhis2/utils/granularsync/GranularSyncModule.kt` — the baseline's own flavor file with `provideSyncUiStateMapper` joined onto one line. Not a behavior change: the baseline's two-line form fails this repo's `ktlintCheck` (`function-signature`), so the fork keeps the one-line form. Taking the baseline's version back re-breaks lint; verified 2026-11-11
 - `.gitignore` — ignores `.journal/`, a local tooling directory
 - `AGENTS-widp.md` — fork identity for coding agents. Since Oslo 3.4, `CLAUDE.md` is an Oslo
   file (a four-line bridge to `AGENTS.md`), so the identity lives in its own file and
@@ -336,9 +353,9 @@ at the end of Phase 4. Git carries the deletion through merges. Do not restore i
 
 ## 6. Notes
 
-- This inventory reflects the branch as of 2026-09-11, after the merge of `develop-eyeseetea`
-  at `8e0200bcc` (3.4.2) and after the notifications graph was re-anchored on Koin and on the
-  post-metadata-sync extension point.
+- This inventory reflects the branch as of 2026-11-11, after the merge of `develop-eyeseetea`
+  at `173334dbb` (3.5.0). The notifications graph is still anchored on Koin and on the
+  post-metadata-sync extension point, as since 3.4.2.
 - Each "No delta today" list exists for one reason: the feat-commit cross-check walks the files
   those commits touched and expects to find them here. They are separated from the live
   implementation points on purpose — a reader checking what must survive should not have to
