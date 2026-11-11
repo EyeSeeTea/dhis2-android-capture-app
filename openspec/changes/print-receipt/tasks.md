@@ -51,17 +51,21 @@ Commit: one commit per behavior (test + minimal implementation). Do not start be
 - [ ] 5.4 Decide whether `NoReceiptAvailable` is removed: with TEI attributes the receipt is never empty. If removed, delete the error, its string and the 3.10/3.11 behaviour
 
 ### Content
-- [x] 5.5 Test: the receipt shows the distribution name (option name, not code), ration card ID and beneficiary name. Written as a unit test of `D2ReceiptRepository` with `D2` doubled at the SDK boundary, link by link as in `OptionsRepositoryTest`. The metadata UIDs are injected through `ReceiptMetadata`. It does not cover the real metadata of the server: validate by hand against 8380
+- [x] 5.5 Test: the receipt shows the distribution name (option name, not code), SPBH ID (renamed from ration card ID in 5.5b) and beneficiary name. Written as a unit test of `D2ReceiptRepository` with `D2` doubled at the SDK boundary, link by link as in `OptionsRepositoryTest`. The metadata UIDs are injected through `ReceiptMetadata`. It does not cover the real metadata of the server: validate by hand against 8380
 - [x] 5.6 Test: only items with a value appear, each with its label (`displayFormName`) and quantity; items are selected by data element code `sp_DIST_*_GIVEN`. Same repository unit test as 5.5. A blank value counts as no value (`userFriendlyValue` returns an empty string for it, not null)
-- [ ] 5.7 Test: an "Other item" shows its description and quantity when both are present, and is omitted otherwise
-- [ ] 5.7b Distribution point and date/time: **blocked** until the client confirms the source of the distribution point (provisional: event org unit name) and whether the time is the printing moment or the event date
+- [ ] 5.7 Test: an "Other food" slot shows the name assigned in the event and its quantity when both are present, and is omitted otherwise (client answer 2026-11-11). To check on 8380 how the name is stored and whether its code matches `sp_DIST_*_GIVEN`
+- [ ] 5.7b Test: the receipt shows the distribution point (name of the event's org unit), the Distribution date (event date) and "Receipt printed on" (date and time of the real print, so a reprint shows its own time). Confirmed by the client 2026-11-11
+- [ ] 5.7c Test: the receipt shows Geographical Location 1, 2 and 3 (TEI attributes). **Blocked** on their UIDs
+- [x] 5.5b Replace `rationCardId` by the SPBH ID (`SPBH - Unique Identifier`, the ID printed on the ration card) in `Receipt`, `ReceiptMetadata`, `D2ReceiptRepository` and `D2ReceiptRepositoryTest`: the client dropped the separate Ration Card ID. Attribute UID `DjPrtej5I1x`, confirmed on 8380 (2026-11-11)
+- [ ] 5.8b Adapt `ReceiptFormatter` (and its test) from the generic lines to the header and the items, as the plain-text format sent to the printer; then remove the generic `lines`
 - [ ] 5.8 Implement `Receipt` (header, optional signature, item lines) and `D2ReceiptRepository` reading TEI attributes and event data values for `eventUid`. Header done with 5.5 (`Receipt.distributionName`/`rationCardId`/`beneficiaryName`, `ReceiptMetadata`, TEI attributes); item lines done with 5.6 (`Receipt.items`; the generic `lines` stay until the renderer replaces them); signature pending
 
-### Image
+### Image (deferred: first version in plain text)
+The client prefers a first version in plain text and will decide, depending on the hours available, whether to move to a bitmap with the signature and the logo. Until then 5.9-5.12 are not scheduled, and the plain-text `ReceiptFormatter` stays as the way to send the receipt (see 5.8b).
 - [ ] 5.9 Test: the receipt is rendered as a bitmap of the printable width of the roll (about 384 dots)
 - [ ] 5.10 Implement `ReceiptRenderer` (header, items, logo, signature)
-- [ ] 5.11 Test: the signature image is included when the event has one, and the receipt still prints when it has none (**blocked**: confirm empty-signature behaviour); implement signature reading through the SDK file resource
-- [ ] 5.12 Add the SP logo asset (**blocked**: logo file from the client)
+- [ ] 5.11 Test: the signature image is included when the event has one, and the receipt still prints when it has none (no signature: the receipt is printed anyway, confirmed 2026-11-11; deferred with the bitmap); implement signature reading through the SDK file resource
+- [ ] 5.12 Add the SP logo asset (deferred with the bitmap; logo file from the client)
 
 ### Flag
 - [ ] 5.13 Test: after a successful print the "Receipt Printed" flag is set; it is not set when printing fails; a failure to write it does not change the success message; the event is not completed; implement `ReceiptPrintedMarker`
@@ -75,6 +79,6 @@ Commit: one commit per behavior (test + minimal implementation). Do not start be
   - Turn `PrintReceiptError.PrintFailed` into a class that carries the original cause (`PrintFailed(cause)`): as a singleton its stack trace is captured at class load.
 - [ ] Bluetooth permissions: `BLUETOOTH`/`BLUETOOTH_ADMIN` in the spIP manifest (check what `main` declares) and the runtime flow for `BLUETOOTH_CONNECT`/`BLUETOOTH_SCAN` on Android 12+ (flow testable on an API 31+ emulator; real behaviour needs a physical tablet)
 - [ ] Re-estimate once the Brother unit arrives (the September estimate assumed a Zebra and plain text)
-- [x] Restrict the menu option to the Distribution stage of Beneficiary Hub (done with `isPrintReceiptAvailable`; the production UIDs are still to confirm)
+- [x] Restrict the menu option to the Distribution stage of Beneficiary Hub (done with `isPrintReceiptAvailable`; the client confirmed the production UIDs are the same as on 8380)
 - [ ] Printer firmware/paper configuration identical across production printers (operational, with the client)
 - [ ] Validate product texts with the client (`receipt_no_printer_connected`, `receipt_print_failed`)
