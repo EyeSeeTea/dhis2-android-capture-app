@@ -20,10 +20,10 @@ class PrintReceiptUseCaseTest {
 
     @Test
     fun `printing a receipt sends it to the printer and succeeds`() = runTest {
-        val receipt = givenAReceiptForEnrollment("ENROLLMENT_UID")
+        val receipt = givenAReceiptForEvent("EVENT_UID")
         val useCase = givenAPrintReceiptUseCase()
 
-        val result = useCase("ENROLLMENT_UID")
+        val result = useCase(eventUid = "EVENT_UID")
 
         assertEquals(Either.Right(Unit), result)
         assertEquals(listOf(receipt), printer.printed)
@@ -31,50 +31,50 @@ class PrintReceiptUseCaseTest {
 
     @Test
     fun `printing returns a no-printer-connected error when no printer is connected`() = runTest {
-        givenAReceiptForEnrollment("ENROLLMENT_UID")
+        givenAReceiptForEvent("EVENT_UID")
         givenAPrinterWithoutConnection()
         val useCase = givenAPrintReceiptUseCase()
 
-        val result = useCase("ENROLLMENT_UID")
+        val result = useCase(eventUid = "EVENT_UID")
 
         assertEquals(Either.Left(PrintReceiptError.NoPrinterConnected), result)
     }
 
     @Test
     fun `printing returns a print-failed error when the connected printer fails to print`() = runTest {
-        givenAReceiptForEnrollment("ENROLLMENT_UID")
+        givenAReceiptForEvent("EVENT_UID")
         givenAPrinterThatFailsToPrint()
         val useCase = givenAPrintReceiptUseCase()
 
-        val result = useCase("ENROLLMENT_UID")
+        val result = useCase(eventUid = "EVENT_UID")
 
         assertEquals(Either.Left(PrintReceiptError.PrintFailed), result)
     }
 
     @Test
     fun `printing returns a no-receipt-available error and prints nothing when there is nothing to print`() = runTest {
-        givenNoReceiptForEnrollment("ENROLLMENT_UID")
+        givenNoReceiptForEvent("EVENT_UID")
         val useCase = givenAPrintReceiptUseCase()
 
-        val result = useCase("ENROLLMENT_UID")
+        val result = useCase(eventUid = "EVENT_UID")
 
         assertEquals(Either.Left(PrintReceiptError.NoReceiptAvailable), result)
         assertTrue(printer.printed.isEmpty())
     }
 
-    private suspend fun givenAReceiptForEnrollment(enrollmentUid: String): Receipt {
+    private suspend fun givenAReceiptForEvent(eventUid: String): Receipt {
         val receipt = Receipt(
             lines = listOf(
                 ReceiptLine(label = "Distribution point", value = "Point A"),
                 ReceiptLine(label = "Household size", value = "5"),
             ),
         )
-        whenever(receiptRepository.getReceipt(enrollmentUid)).thenReturn(receipt)
+        whenever(receiptRepository.getReceipt(eventUid)).thenReturn(receipt)
         return receipt
     }
 
-    private suspend fun givenNoReceiptForEnrollment(enrollmentUid: String) {
-        whenever(receiptRepository.getReceipt(enrollmentUid)).thenReturn(null)
+    private suspend fun givenNoReceiptForEvent(eventUid: String) {
+        whenever(receiptRepository.getReceipt(eventUid)).thenReturn(null)
     }
 
     private fun givenAPrinterWithoutConnection() {

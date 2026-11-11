@@ -17,11 +17,11 @@ class ReceiptPrintViewModel(
     private val _uiState = MutableStateFlow<ReceiptPrintUiState>(ReceiptPrintUiState.Idle)
     val uiState: StateFlow<ReceiptPrintUiState> = _uiState.asStateFlow()
 
-    fun print(enrollmentUid: String) {
+    fun print(eventUid: String) {
         if (_uiState.value == ReceiptPrintUiState.Printing) return
         _uiState.value = ReceiptPrintUiState.Printing
         launchUseCase {
-            _uiState.value = printReceiptUseCase(enrollmentUid).toUiState()
+            _uiState.value = printReceiptUseCase(eventUid).toUiState()
         }
     }
 
