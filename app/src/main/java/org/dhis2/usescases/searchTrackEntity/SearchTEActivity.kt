@@ -44,7 +44,6 @@ import org.dhis2.commons.biometrics.BIOMETRICS_CONFIRM_IDENTITY_REQUEST
 import org.dhis2.commons.biometrics.BIOMETRICS_IDENTIFY_REQUEST
 import org.dhis2.commons.biometrics.BIOMETRICS_USER_NOT_FOUND
 import org.dhis2.commons.extensions.closeKeyboard
-import org.dhis2.commons.featureconfig.data.FeatureConfigRepository
 import org.dhis2.commons.filters.FilterItem
 import org.dhis2.commons.filters.FilterManager
 import org.dhis2.commons.filters.FilterManager.PeriodRequest
@@ -66,6 +65,7 @@ import org.dhis2.data.biometrics.biometricsClient.models.SimprintsIdentifiedItem
 
 import org.dhis2.data.forms.dataentry.ProgramAdapter
 import org.dhis2.databinding.ActivitySearchBinding
+import org.dhis2.mobile.commons.featureconfig.data.FeatureConfigRepository
 import org.dhis2.mobile.commons.orgunit.OrgUnitSelectorScope
 import org.dhis2.tracker.NavigationBarUIState
 import org.dhis2.ui.ThemeManager
@@ -680,7 +680,7 @@ class SearchTEActivity :
                 R.layout.spinner_program_layout,
                 R.id.spinner_text,
                 programs,
-                presenter.trackedEntityName.displayName(),
+                viewModel.teTypePluralLabel.value,
             )
         if (initialProgram != null && initialProgram!!.isNotEmpty()) {
             setInitialProgram(programs)

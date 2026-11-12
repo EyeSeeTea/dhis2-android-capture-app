@@ -3,7 +3,6 @@ package org.dhis2.usescases.main.program
 import dagger.Module
 import dagger.Provides
 import org.dhis2.commons.di.dagger.PerFragment
-import org.dhis2.commons.featureconfig.data.FeatureConfigRepository
 import org.dhis2.commons.filters.FilterManager
 import org.dhis2.commons.filters.data.FilterPresenter
 import org.dhis2.commons.matomo.MatomoAnalyticsController
@@ -16,6 +15,8 @@ import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.data.biometrics.BiometricsConfigApi
 import org.dhis2.data.biometrics.BiometricsConfigRepositoryImpl
 import org.dhis2.data.dhislogic.DhisProgramUtils
+import org.dhis2.mobile.commons.featureconfig.data.FeatureConfigRepository
+import org.dhis2.mobile.commons.providers.CustomLabelProvider
 import org.dhis2.mobile.sync.domain.SyncStatusController
 import org.dhis2.usescases.biometrics.repositories.BiometricsConfigRepository
 import org.dhis2.usescases.biometrics.usecases.SelectBiometricsConfig
@@ -58,6 +59,7 @@ class ProgramModule(
         schedulerProvider: SchedulerProvider,
         colorUtils: ColorUtils,
         metadataIconProvider: MetadataIconProvider,
+        customLabelProvider: CustomLabelProvider,
     ): ProgramRepository =
         ProgramRepositoryImpl(
             d2,
@@ -66,6 +68,7 @@ class ProgramModule(
             ResourceManager(view.context, colorUtils),
             metadataIconProvider,
             schedulerProvider,
+            customLabelProvider,
         )
 
     @Provides

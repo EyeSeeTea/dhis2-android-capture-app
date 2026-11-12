@@ -103,7 +103,7 @@ class EnrollmentPresenterImpl(
 
         disposable.add(
             teiRepository
-                .get()
+                .rxGet()
                 .map { tei ->
                     val attrList = mutableListOf<String>()
                     val attributesValues =
@@ -144,8 +144,8 @@ class EnrollmentPresenterImpl(
 
         disposable.add(
             programRepository
-                .get()
-                .map { it.access()?.data()?.write() }
+                .rxGet()
+                .map { it.access().data().write() }
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribe(
@@ -156,7 +156,7 @@ class EnrollmentPresenterImpl(
 
         disposable.add(
             enrollmentObjectRepository
-                .get()
+                .rxGet()
                 .map { it.status() }
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
@@ -227,7 +227,7 @@ class EnrollmentPresenterImpl(
                 view.displayMessage(null)
                 false
             }
-        } catch (error: D2Error) {
+        } catch (_: D2Error) {
             false
         }
 
@@ -313,7 +313,7 @@ class EnrollmentPresenterImpl(
             val currentDate = DateUtils.getInstance().getStartOfDay(Date())
             return minStartReportEventDate.before(currentDate) || minStartReportEventDate == currentDate
         } catch (e: Exception) {
-            Timber.d(e.message)
+            Timber.d(e)
             true
         }
     }

@@ -175,17 +175,15 @@ class TEIDataPresenter(
                                     calcResult,
                                 )
                             }.subscribeOn(schedulerProvider.io())
-                            .doOnCancel { decrement() }
+                            .doFinally { decrement() }
                     }.subscribeOn(schedulerProvider.io())
                     .observeOn(schedulerProvider.ui())
                     .subscribe(
                         { events ->
                             _events.postValue(events)
-                            decrement()
                         },
                         { t ->
                             Timber.e(t)
-                            decrement()
                         },
                     ),
             )
@@ -209,25 +207,24 @@ class TEIDataPresenter(
         updateCreateEventButtonVisibility()
     }
 
+    // EyeSeeTea customization - Biometric Verification Persistence
     private fun fetchDashboardModel() {
-        compositeDisposable.add(
-            Observable.just(dashboardRepository.getDashboardModel())
-                .subscribeOn(schedulerProvider.io())
-                .observeOn(schedulerProvider.ui())
-                .subscribe(
-                    { model ->
-                        if (model is DashboardEnrollmentModel) {
-                            dashboardModel = model
-                            programUid = model.currentProgram()?.uid()
-                            orgUnitUid = model.orgUnits[0].uid()
+        CoroutineScope(dispatcher.io()).launch {
+            try {
+                val model = dashboardRepository.getDashboardModel()
+                withContext(dispatcher.ui()) {
+                    if (model is DashboardEnrollmentModel) {
+                        dashboardModel = model
+                        programUid = model.currentProgram()?.uid()
+                        orgUnitUid = model.orgUnits[0].uid()
 
-                            refreshVerificationStatus()
-                        }
-                    },
-                    Timber.Forest::e,
-                ),
-        )
-        dashboardRepository.getDashboardModel()
+                        refreshVerificationStatus()
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e)
+            }
+        }
     }
 
 
@@ -395,14 +392,6 @@ class TEIDataPresenter(
         }
     }
 
-    fun onScheduleEventWithoutAccess(enrollmentOrgUnitName: String?) {
-        enrollmentOrgUnitName?.let {
-            view.displayNoAccessToEventSnackbar(
-                enrollmentOrgUnit = it,
-            )
-        }
-    }
-
     fun onEventSelected(
         uid: String,
         eventStatus: EventStatus,
@@ -446,7 +435,7 @@ class TEIDataPresenter(
         program: Program,
         enrollmentUid: String?,
     ) {
-        program.uid()?.let { uid ->
+        program.uid().let { uid ->
             programUid = uid
             enrollmentUid?.let { view.restoreAdapter(uid, teiUid, it) }
         }

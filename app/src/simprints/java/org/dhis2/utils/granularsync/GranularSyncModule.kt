@@ -37,7 +37,6 @@ import org.dhis2.commons.schedulers.SchedulerProvider
 import org.dhis2.commons.sync.SyncContext
 import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.data.dhislogic.DhisProgramUtils
-import org.dhis2.data.service.workManager.WorkManagerController
 import org.dhis2.utils.granularsync.data.GranularSyncRepository
 import org.dhis2.utils.granularsync.ui.SyncUiStateMapper
 import org.hisp.dhis.android.core.D2
@@ -56,7 +55,6 @@ class GranularSyncModule(
     fun providesViewModelFactory(
         d2: D2,
         schedulerProvider: SchedulerProvider,
-        workManagerController: WorkManagerController,
         smsSyncProvider: SMSSyncProvider,
         repository: GranularSyncRepository,
         mapper: SyncUiStateMapper,
@@ -68,7 +66,6 @@ class GranularSyncModule(
             schedulerProvider,
             provideDispatchers(),
             syncContext,
-            workManagerController,
             smsSyncProvider,
             mapper,
         )

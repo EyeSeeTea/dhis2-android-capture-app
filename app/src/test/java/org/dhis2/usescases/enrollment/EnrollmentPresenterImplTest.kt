@@ -108,9 +108,12 @@ class EnrollmentPresenterImplTest {
                 .access(
                     Access
                         .builder()
+                        .read(true)
+                        .write(true)
                         .data(
                             DataAccess
                                 .builder()
+                                .read(true)
                                 .write(true)
                                 .build(),
                         ).build(),
@@ -131,9 +134,12 @@ class EnrollmentPresenterImplTest {
                 .access(
                     Access
                         .builder()
+                        .read(true)
+                        .write(false)
                         .data(
                             DataAccess
                                 .builder()
+                                .read(true)
                                 .write(false)
                                 .build(),
                         ).build(),

@@ -46,6 +46,10 @@ import org.dhis2.ui.ThemeManager
 import org.dhis2.usescases.events.EventInfoProvider
 import org.dhis2.usescases.searchTrackEntity.SearchRepository
 import org.dhis2.usescases.searchTrackEntity.SearchRepositoryImpl
+import org.dhis2.mobile.commons.error.DomainErrorMapper
+import org.dhis2.mobile.commons.providers.CustomLabelProvider
+import org.dhis2.mobile.commons.resources.D2ErrorMessageProvider
+import org.dhis2.mobile.commons.resources.D2ErrorMessageProviderImpl
 import org.dhis2.usescases.searchTrackEntity.SearchRepositoryImplKt
 import org.dhis2.usescases.searchTrackEntity.SearchRepositoryKt
 import org.dhis2.usescases.searchTrackEntity.ui.mapper.TEICardMapper
@@ -169,6 +173,7 @@ class BiometricsDuplicatesDialogModule(
         dateUtils: DateUtils,
         customIntentRepository: CustomIntentRepository,
         sortingValueSetter: SearchSortingValueSetter,
+        customLabelProvider: CustomLabelProvider,
     ): SearchRepositoryKt {
         val resourceManager = ResourceManager(context, colorUtils)
         val dateLabelProvider =
@@ -194,7 +199,8 @@ class BiometricsDuplicatesDialogModule(
                 profilePictureProvider,
                 dateUtils
             ),
-            customIntentRepository
+            customIntentRepository,
+            customLabelProvider,
         )
     }
 
@@ -236,18 +242,30 @@ class BiometricsDuplicatesDialogModule(
     fun provideLoadSearchResultsRepository(
         d2: D2,
         filterPresenter: FilterPresenter,
+        domainErrorMapper: DomainErrorMapper,
     ): SearchTrackedEntityRepository = SearchTrackedEntityRepositoryImpl(
         d2,
         filterPresenter,
         ProfilePictureProvider(d2),
+        domainErrorMapper,
     )
+
+    @Provides
+    fun provideDomainErrorMapper(
+        d2ErrorMessageProvider: D2ErrorMessageProvider,
+        networkStatusProvider: NetworkStatusProvider,
+    ): DomainErrorMapper = DomainErrorMapper(d2ErrorMessageProvider, networkStatusProvider)
+
+    @Provides
+    fun provideD2ErrorMessageProvider(): D2ErrorMessageProvider = D2ErrorMessageProviderImpl()
 
     @Provides
     fun provideListCardMapper(
         context: Context,
-        resourceManager: ResourceManager
+        resourceManager: ResourceManager,
+        customLabelProvider: CustomLabelProvider,
     ): TEICardMapper {
-        return TEICardMapper(context, resourceManager)
+        return TEICardMapper(context, resourceManager, customLabelProvider)
     }
 
     @Provides

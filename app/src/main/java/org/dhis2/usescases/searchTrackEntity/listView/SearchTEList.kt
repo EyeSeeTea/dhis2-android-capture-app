@@ -267,14 +267,14 @@ class SearchTEList : FragmentGlobalAbstract() {
                 ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed,
             )
             setContent {
-                val teTypeName by viewModel.teTypeName.observeAsState()
+                val teTypeLabel by viewModel.teTypeLabel.observeAsState()
                 val sequentialSearch by viewModel.sequentialSearch.observeAsState(false)
                 val isLoaded by viewModel.isDataLoaded.observeAsState(false)
                 val screenState by viewModel.screenState.observeAsState()
 
                 val seqSearch = (sequentialSearch as SequentialSearch?)
 
-                if (seqSearch == null && !teTypeName.isNullOrBlank() && isLoaded == true) {
+                if (seqSearch == null && !teTypeLabel.isNullOrBlank() && isLoaded == true) {
 
                     val isSearchByBiometrics =
                         if (screenState is SearchList) viewModel.isSearchByBiometricsEnabled() else false
@@ -289,7 +289,7 @@ class SearchTEList : FragmentGlobalAbstract() {
                         }
 
                     FullSearchButtonAndWorkingList(
-                        teTypeName = teTypeName!!,
+                        teTypeName = teTypeLabel ?: "",
                         modifier = Modifier,
                         createButtonVisible = createButtonVisibility,
                         closeFilterVisibility = isFilterOpened,
@@ -325,7 +325,7 @@ class SearchTEList : FragmentGlobalAbstract() {
                     .createButtonScrollVisibility
                     .observeAsState(true)
                 val filtersOpened by viewModel.filtersOpened.observeAsState(false)
-                val teTypeName by viewModel.teTypeName.observeAsState()
+                val teTypeLabel by viewModel.teTypeLabel.observeAsState()
                 val hasQueryData =
                     remember(viewModel.searchParametersUiState) {
                         viewModel.queryDataList.isNotEmpty()
@@ -351,13 +351,13 @@ class SearchTEList : FragmentGlobalAbstract() {
                 if (newPatientAction != null && (hasQueryData || orientation == Configuration.ORIENTATION_LANDSCAPE) &&
                     createButtonVisibility &&
                     !filtersOpened &&
-                    !teTypeName.isNullOrBlank()
+                    !teTypeLabel.isNullOrBlank()
                 ) {
                     CreateNewButton(
                         modifier = Modifier,
                         extended = !isScrollingDown,
                         onClick = { viewModel.sequentialSearchNextAction(newPatientAction) },
-                        teTypeName = teTypeName!!,
+                        teTypeName = teTypeLabel ?: "",
                     )
                 }
             }
