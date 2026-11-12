@@ -20,6 +20,7 @@ import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.FieldUiModelImpl
 import org.dhis2.form.model.biometrics.BiometricsAttributeUiModelImpl
 import org.dhis2.mobile.commons.biometrics.biometricTemplateAttributeId
+import org.dhis2.usescases.biometrics.BIOMETRICS_ENABLED
 import org.dhis2.usescases.biometrics.entities.BiometricsConfig
 import org.dhis2.usescases.biometrics.entities.BiometricsMode
 import org.dhis2.usescases.biometrics.repositories.OrgUnitRepository
@@ -48,6 +49,7 @@ import org.hisp.dhis.android.core.organisationunit.OrganisationUnitCollectionRep
 import org.hisp.dhis.android.core.program.Program
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityInstance
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityInstanceObjectRepository
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
@@ -212,6 +214,8 @@ class EnrollmentPresenterImplTest {
 
     @Test
     fun `Should hide save button when biometrics is available`() {
+        assumeBiometricsEnabled()
+
         givenAData()
 
         setupEnrollmentAccess(EnrollmentAccess.WRITE_ACCESS)
@@ -440,8 +444,14 @@ class EnrollmentPresenterImplTest {
     }
 
     // EyeSeeTea Customizations
+    // Biometrics is only enabled in the simprints flavor (BIOMETRICS_ENABLED), while the CI also
+    // runs this class against the dhis2 flavor.
+    private fun assumeBiometricsEnabled() = assumeTrue("Biometrics is only enabled in the simprints flavor", BIOMETRICS_ENABLED)
+
     @Test
     fun `Should write the biometric template attribute when register completes with credential and templates`() {
+        assumeBiometricsEnabled()
+
         val teiUid = "teiUid"
         givenAData()
         givenATei(teiUid, State.TO_POST)
@@ -479,6 +489,8 @@ class EnrollmentPresenterImplTest {
 
     @Test
     fun `Should not write the biometric template attribute when register completes without a credential`() {
+        assumeBiometricsEnabled()
+
         val teiUid = "teiUid"
         givenAData()
         givenATei(teiUid, State.TO_POST)
@@ -516,6 +528,8 @@ class EnrollmentPresenterImplTest {
 
     @Test
     fun `Should not write the biometric template attribute when there are no biometric references`() {
+        assumeBiometricsEnabled()
+
         val teiUid = "teiUid"
         givenAData()
         givenATei(teiUid, State.TO_POST)
