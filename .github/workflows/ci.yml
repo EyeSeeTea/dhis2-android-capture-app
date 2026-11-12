@@ -218,7 +218,8 @@ jobs:
   notification:
     runs-on: ubuntu-latest
     needs: [ setup, lint-check, unit-tests, build-test-apks, run-ui-portrait, run-ui-landscape, code-quality ]
-    if: always() && github.event_name != 'pull_request'
+    # Fork: the Slack webhook secret only exists in the Oslo repository.
+    if: always() && github.event_name != 'pull_request' && github.repository == 'dhis2/dhis2-android-capture-app'
     steps:
       - name: Notify Slack on Success
         if: ${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
