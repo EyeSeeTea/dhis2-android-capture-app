@@ -1,7 +1,7 @@
 package org.dhis2.usescases.teiDashboard
 
-import org.dhis2.mobile.commons.model.MetadataIconData
 import org.dhis2.commons.biometrics.isBiometricAttribute
+import org.dhis2.mobile.commons.model.MetadataIconData
 import org.dhis2.usescases.biometrics.BIOMETRICS_ENABLED
 import org.hisp.dhis.android.core.enrollment.Enrollment
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus
@@ -65,13 +65,12 @@ data class DashboardEnrollmentModel(
     fun getBiometricValue(): String? {
         val biometricUid = getBiometricsAttributeUid()
 
-        return trackedEntityAttributeValues.firstOrNull { it.trackedEntityAttribute() == biometricUid }
+        return trackedEntityAttributeValues
+            .firstOrNull { it.trackedEntityAttribute() == biometricUid }
             ?.value()
     }
 
-    fun getBiometricsAttributeUid(): String? {
-        return trackedEntityAttributes.firstOrNull { it.first.isBiometricAttribute() }?.first?.uid()
-    }
+    fun getBiometricsAttributeUid(): String? = trackedEntityAttributes.firstOrNull { it.first.isBiometricAttribute() }?.first?.uid()
 
     fun isBiometricsEnabled(): Boolean {
         val biometricUid = getBiometricsAttributeUid()

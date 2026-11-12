@@ -8,8 +8,8 @@ import org.dhis2.commons.data.ProgramConfigurationRepository
 import org.dhis2.commons.date.DateUtils
 import org.dhis2.commons.di.dagger.PerFragment
 import org.dhis2.commons.network.NetworkUtils
-import org.dhis2.commons.prefs.PreferenceProvider
 import org.dhis2.commons.prefs.BasicPreferenceProvider
+import org.dhis2.commons.prefs.PreferenceProvider
 import org.dhis2.commons.resources.D2ErrorUtils
 import org.dhis2.commons.resources.DhisPeriodUtils
 import org.dhis2.commons.resources.MetadataIconProvider
@@ -26,8 +26,8 @@ import org.dhis2.mobile.commons.providers.CustomLabelProvider
 import org.dhis2.mobile.commons.reporting.CrashReportController
 import org.dhis2.mobileProgramRules.RuleEngineHelper
 import org.dhis2.tracker.events.CreateEventUseCase
-import org.dhis2.usescases.biometrics.repositories.OrgUnitRepository
 import org.dhis2.tracker.events.CreateEventUseCaseRepositoryImpl
+import org.dhis2.usescases.biometrics.repositories.OrgUnitRepository
 import org.dhis2.usescases.teiDashboard.DashboardRepository
 import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.teievents.ui.mapper.TEIEventCardMapper
 import org.dhis2.usescases.teiDashboard.domain.GetNewEventCreationTypeOptions
@@ -98,9 +98,7 @@ class TEIDataModule(
 
     @Provides
     @PerFragment
-    fun provideOrgUnitRepository(d2: D2): OrgUnitRepository {
-        return OrgUnitD2Repository(d2)
-    }
+    fun provideOrgUnitRepository(d2: D2): OrgUnitRepository = OrgUnitD2Repository(d2)
 
     @Provides
     @PerFragment

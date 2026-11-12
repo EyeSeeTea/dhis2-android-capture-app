@@ -3,11 +3,12 @@ package org.dhis2.usescases.searchTrackEntity.ui.mapper
 import android.content.Context
 import android.content.SharedPreferences
 import org.dhis2.R
-import org.dhis2.commons.date.DateUtils
 import org.dhis2.commons.biometrics.BiometricsPreference
+import org.dhis2.commons.date.DateUtils
 import org.dhis2.commons.date.toDateSpan
 import org.dhis2.commons.date.toOverdueOrScheduledUiText
 import org.dhis2.commons.resources.ResourceManager
+import org.dhis2.commons.ui.model.ListCardUiModel
 import org.dhis2.mobile.commons.extensions.toJavaDate
 import org.dhis2.mobile.commons.extensions.toKtxInstant
 import org.dhis2.mobile.commons.providers.CustomLabelProvider
@@ -23,7 +24,6 @@ import org.dhis2.tracker.search.model.TrackedEntitySearchItemResult
 import org.dhis2.tracker.search.model.TrackedEntityTypeAttributeDomain
 import org.dhis2.tracker.search.model.TrackedEntityTypeDomain
 import org.dhis2.usescases.searchTrackEntity.SearchTeiModel
-import org.dhis2.commons.ui.model.ListCardUiModel
 import org.dhis2.usescases.teiDashboard.ui.mapper.firstNameAttrUid
 import org.dhis2.usescases.teiDashboard.ui.mapper.lastNameAttrUid
 import org.dhis2.usescases.teiDashboard.ui.mapper.middleNameAttrUid
@@ -159,11 +159,12 @@ class TEICardMapperTest {
 
     @Test
     fun `should format confirmation dialog title correctly`() {
-        val attributeValues = createAttributeValuesMap(
-            firstName = "John",
-            middleName = "Peter",
-            lastName = "Smith",
-        )
+        val attributeValues =
+            createAttributeValuesMap(
+                firstName = "John",
+                middleName = "Peter",
+                lastName = "Smith",
+            )
 
         val result = createModelAndMapForConfirmation(attributeValues)
 
@@ -172,11 +173,12 @@ class TEICardMapperTest {
 
     @Test
     fun `should handle empty values in confirmation dialog title`() {
-        val attributeValues = createAttributeValuesMap(
-            firstName = "John",
-            middleName = "-",
-            lastName = "Smith",
-        )
+        val attributeValues =
+            createAttributeValuesMap(
+                firstName = "John",
+                middleName = "-",
+                lastName = "Smith",
+            )
 
         val result = createModelAndMapForConfirmation(attributeValues)
 
@@ -185,11 +187,12 @@ class TEICardMapperTest {
 
     @Test
     fun `should return dash when all name values are empty`() {
-        val attributeValues = createAttributeValuesMap(
-            firstName = "-",
-            middleName = "-",
-            lastName = "-",
-        )
+        val attributeValues =
+            createAttributeValuesMap(
+                firstName = "-",
+                middleName = "-",
+                lastName = "-",
+            )
 
         val result = createModelAndMapForConfirmation(attributeValues)
 
@@ -200,52 +203,59 @@ class TEICardMapperTest {
         firstName: String,
         middleName: String,
         lastName: String,
-    ): LinkedHashMap<String, TrackedEntitySearchItemAttributeDomain> = linkedMapOf(
-        "First name" to createAttributeValue(firstNameAttrUid, firstName),
-        "Middle name" to createAttributeValue(middleNameAttrUid, middleName),
-        "Last name" to createAttributeValue(lastNameAttrUid, lastName)
-    )
+    ): LinkedHashMap<String, TrackedEntitySearchItemAttributeDomain> =
+        linkedMapOf(
+            "First name" to createAttributeValue(firstNameAttrUid, firstName),
+            "Middle name" to createAttributeValue(middleNameAttrUid, middleName),
+            "Last name" to createAttributeValue(lastNameAttrUid, lastName),
+        )
 
     private fun createModelAndMapForConfirmation(
         attributeValues: LinkedHashMap<String, TrackedEntitySearchItemAttributeDomain>,
     ): ListCardUiModel {
-        val model = SearchTeiModel().apply {
-            setAttributeValues(attributeValues)
-            attributeValues.forEach { (key, value) -> addToAllAttributes(key, value) }
-            tei = TrackedEntitySearchItemResult(
-                uid = "TEIUid",
-                created = null,
-                lastUpdated = currentDate.toKtxInstant(),
-                createdAtClient = null,
-                lastUpdatedAtClient = null,
-                ownerOrgUnit = null,
-                enrollmentOrgUnit = null,
-                shouldDisplayOrgUnit = false,
-                geometry = null,
-                syncState = SyncState.SYNCED,
-                aggregatedSyncState = SyncState.SYNCED,
-                deleted = false,
-                isOnline = true,
-                teTypeName = null,
-                type = TrackedEntityTypeDomain(
-                    trackedEntityTypeAttributeDomains = emptyList(),
-                    featureType = GeometryFeatureType.NONE,
-                ),
-                header = null,
-                overDueDate = null,
-                selectedEnrollment = null,
-                profilePicture = null,
-                enrolledPrograms = null,
-                enrollments = null,
-                relationships = null,
-                defaultTypeIcon = null,
-                attributeValues = emptyList(),
-            )
-        }
+        val model =
+            SearchTeiModel().apply {
+                setAttributeValues(attributeValues)
+                attributeValues.forEach { (key, value) -> addToAllAttributes(key, value) }
+                tei =
+                    TrackedEntitySearchItemResult(
+                        uid = "TEIUid",
+                        created = null,
+                        lastUpdated = currentDate.toKtxInstant(),
+                        createdAtClient = null,
+                        lastUpdatedAtClient = null,
+                        ownerOrgUnit = null,
+                        enrollmentOrgUnit = null,
+                        shouldDisplayOrgUnit = false,
+                        geometry = null,
+                        syncState = SyncState.SYNCED,
+                        aggregatedSyncState = SyncState.SYNCED,
+                        deleted = false,
+                        isOnline = true,
+                        teTypeName = null,
+                        type =
+                            TrackedEntityTypeDomain(
+                                trackedEntityTypeAttributeDomains = emptyList(),
+                                featureType = GeometryFeatureType.NONE,
+                            ),
+                        header = null,
+                        overDueDate = null,
+                        selectedEnrollment = null,
+                        profilePicture = null,
+                        enrolledPrograms = null,
+                        enrollments = null,
+                        relationships = null,
+                        defaultTypeIcon = null,
+                        attributeValues = emptyList(),
+                    )
+            }
         return mapper.mapForConfirmationDialog(model)
     }
 
-    private fun createAttributeValue(uid: String, value: String): TrackedEntitySearchItemAttributeDomain =
+    private fun createAttributeValue(
+        uid: String,
+        value: String,
+    ): TrackedEntitySearchItemAttributeDomain =
         TrackedEntitySearchItemAttributeDomain(
             attribute = uid,
             displayName = uid,

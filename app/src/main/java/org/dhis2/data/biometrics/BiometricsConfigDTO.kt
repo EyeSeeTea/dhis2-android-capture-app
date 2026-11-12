@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 enum class BiometricsModeDTO {
     full,
     limited,
-    zero
+    zero,
 }
 
 @Serializable
@@ -22,5 +22,5 @@ data class BiometricsConfigDTO(
     val ageThresholdMonths: Int,
     val dateOfBirthAttribute: String,
     val biometricsMode: BiometricsModeDTO,
-    val enableIdentificationForTET: String?
+    val enableIdentificationForTET: String?,
 )

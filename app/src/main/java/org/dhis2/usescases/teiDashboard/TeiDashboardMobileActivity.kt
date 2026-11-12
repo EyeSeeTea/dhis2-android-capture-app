@@ -30,7 +30,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -541,8 +540,7 @@ class TeiDashboardMobileActivity :
                 .replace(
                     R.id.tei_main_view,
                     newInstance(programUid, teiUid, enrollmentUid, sessionId = lastBiometricsSearchSessionId),
-                )
-                .commitAllowingStateLoss()
+                ).commitAllowingStateLoss()
         }
         val enrollmentStatus =
             dashboardModel.currentEnrollment.status() == EnrollmentStatus.ACTIVE
@@ -608,8 +606,7 @@ class TeiDashboardMobileActivity :
                 .replace(
                     R.id.tei_main_view,
                     newInstance(programUid, teiUid, enrollmentUid, sessionId = lastBiometricsSearchSessionId),
-                )
-                .commitAllowingStateLoss()
+                ).commitAllowingStateLoss()
         } else {
             navigateToFragment(TEIDashboardItems.DETAILS)
         }
@@ -815,7 +812,7 @@ class TeiDashboardMobileActivity :
                 teiUid,
                 programUid,
                 enrollmentUid,
-                lastBiometricsSearchSessionId
+                lastBiometricsSearchSessionId,
             ),
         )
     }
@@ -839,7 +836,7 @@ class TeiDashboardMobileActivity :
             teiUid: String?,
             programUid: String?,
             enrollmentUid: String?,
-            lastBiometricsSessionId: String?
+            lastBiometricsSessionId: String?,
         ): Intent {
             val intent = Intent(context, TeiDashboardMobileActivity::class.java)
             intent.putExtra(TEI_UID, teiUid)

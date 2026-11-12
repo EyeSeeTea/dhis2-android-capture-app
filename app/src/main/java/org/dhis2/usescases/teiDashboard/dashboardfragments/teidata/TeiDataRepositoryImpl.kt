@@ -11,8 +11,8 @@ import org.dhis2.commons.date.DateUtils
 import org.dhis2.commons.prefs.BasicPreferenceProvider
 import org.dhis2.commons.resources.DhisPeriodUtils
 import org.dhis2.commons.resources.MetadataIconProvider
-import org.dhis2.mobile.commons.extensions.toColor
 import org.dhis2.data.biometrics.utils.updateBiometricsAttributeValue
+import org.dhis2.mobile.commons.extensions.toColor
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.arch.repositories.scope.RepositoryScope
 import org.hisp.dhis.android.core.category.CategoryCombo
@@ -35,7 +35,7 @@ class TeiDataRepositoryImpl(
     private val periodUtils: DhisPeriodUtils,
     private val metadataIconProvider: MetadataIconProvider,
     private val dateUtils: DateUtils,
-    private val basicPreferenceProvider: BasicPreferenceProvider
+    private val basicPreferenceProvider: BasicPreferenceProvider,
 ) : TeiDataRepository {
     override fun getTEIEnrollmentEvents(
         selectedStage: StageSection,
@@ -191,8 +191,11 @@ class TeiDataRepositoryImpl(
             .blockingGet()
             ?.header
 
-    override fun updateBiometricsAttributeValueInTei(value: String, parentTeiUid:String?) {
-        updateBiometricsAttributeValue(d2, basicPreferenceProvider , teiUid,value)
+    override fun updateBiometricsAttributeValueInTei(
+        value: String,
+        parentTeiUid: String?,
+    ) {
+        updateBiometricsAttributeValue(d2, basicPreferenceProvider, teiUid, value)
     }
 
     private fun getGroupedEvents(

@@ -19,8 +19,11 @@ fun updateBiometricTemplateAttributeValue(
 
     val value = Gson().toJson(BiometricReferencesValue(biometricReferences))
 
-    val valueRepository = d2.trackedEntityModule().trackedEntityAttributeValues()
-        .value(biometricTemplateAttributeId, teiUid)
+    val valueRepository =
+        d2
+            .trackedEntityModule()
+            .trackedEntityAttributeValues()
+            .value(biometricTemplateAttributeId, teiUid)
 
     valueRepository.blockingSetCheck(d2, biometricTemplateAttributeId, value)
 }

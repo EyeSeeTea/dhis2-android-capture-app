@@ -250,27 +250,30 @@ class EnrollmentRepository(
 
         val label = attribute.displayFormName() ?: ""
 
-        var fieldViewModel = if (label.isBiometricText())
-            fieldFactory.createBiometrics(attribute.uid(),dataValue ?: "", sectionUid) else
-            fieldFactory.create(
-                attribute.uid(),
-                attribute.displayFormName() ?: "",
-                valueType!!,
-                mandatory,
-                optionSet,
-                dataValue,
-                sectionUid,
-                programTrackedEntityAttribute.allowFutureDate() ?: false,
-                isEditable(generated),
-                renderingType,
-                attribute.displayDescription(),
-                programTrackedEntityAttribute.renderType()?.mobile(),
-                attribute.style(),
-                attribute.fieldMask(),
-                optionSetConfig,
-                if (valueType == ValueType.COORDINATE) FeatureType.POINT else null,
-                customIntentModel = attributeCustomIntent,
-            )
+        var fieldViewModel =
+            if (label.isBiometricText()) {
+                fieldFactory.createBiometrics(attribute.uid(), dataValue ?: "", sectionUid)
+            } else {
+                fieldFactory.create(
+                    attribute.uid(),
+                    attribute.displayFormName() ?: "",
+                    valueType!!,
+                    mandatory,
+                    optionSet,
+                    dataValue,
+                    sectionUid,
+                    programTrackedEntityAttribute.allowFutureDate() ?: false,
+                    isEditable(generated),
+                    renderingType,
+                    attribute.displayDescription(),
+                    programTrackedEntityAttribute.renderType()?.mobile(),
+                    attribute.style(),
+                    attribute.fieldMask(),
+                    optionSetConfig,
+                    if (valueType == ValueType.COORDINATE) FeatureType.POINT else null,
+                    customIntentModel = attributeCustomIntent,
+                )
+            }
 
         if (!error.isNullOrEmpty()) {
             fieldViewModel = fieldViewModel.setError(error)

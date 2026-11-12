@@ -109,14 +109,17 @@ class TeiDashboardCardMapper(
             item.teiHeader ?: "-"
         } else {
             val firsNameValue =
-                item.trackedEntityAttributeValues.firstOrNull { it.trackedEntityAttribute() == firstNameAttrUid }
+                item.trackedEntityAttributeValues
+                    .firstOrNull { it.trackedEntityAttribute() == firstNameAttrUid }
                     ?.value() ?: ""
 
             val middleNameValue =
-                item.trackedEntityAttributeValues.firstOrNull { it.trackedEntityAttribute() == middleNameAttrUid }
+                item.trackedEntityAttributeValues
+                    .firstOrNull { it.trackedEntityAttribute() == middleNameAttrUid }
                     ?.value() ?: ""
             val lastNameValue =
-                item.trackedEntityAttributeValues.firstOrNull { it.trackedEntityAttribute() == lastNameAttrUid }
+                item.trackedEntityAttributeValues
+                    .firstOrNull { it.trackedEntityAttribute() == lastNameAttrUid }
                     ?.value() ?: ""
 
             "$firsNameValue $middleNameValue $lastNameValue"
@@ -305,12 +308,13 @@ class TeiDashboardCardMapper(
             .filter { it.first.valueType() != ValueType.IMAGE }
             .filter { it.first.valueType() != ValueType.COORDINATE }
             .filter { it.first.valueType() != ValueType.FILE_RESOURCE }
-            //.filter { it.second.value()?.isNotEmpty() == true }
+            // .filter { it.second.value()?.isNotEmpty() == true }
             // EyeSeeTea customization - Biometrics In TEI Cards, TEI Dashboard, Enrollment, And TEI Form
             .filter {
-                it.second.value()?.isNotEmpty() == true || it.first.displayFormName()
-                    ?.isBiometricText() == true || it.first.displayFormName()
+                it.second.value()?.isNotEmpty() == true || it.first
+                    .displayFormName()
+                    ?.isBiometricText() == true || it.first
+                    .displayFormName()
                     ?.isNhisNumberText() == true
-            }
-            .filter { it.first.uid() != firstNameAttrUid && it.first.uid() != middleNameAttrUid && it.first.uid() != lastNameAttrUid }
+            }.filter { it.first.uid() != firstNameAttrUid && it.first.uid() != middleNameAttrUid && it.first.uid() != lastNameAttrUid }
 }

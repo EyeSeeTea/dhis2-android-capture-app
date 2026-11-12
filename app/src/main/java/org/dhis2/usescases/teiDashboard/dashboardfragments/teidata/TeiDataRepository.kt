@@ -39,5 +39,8 @@ interface TeiDataRepository {
     fun programOrgListInCaptureScope(programUid: String): List<OrganisationUnit>
 
     // EyeSeeTea customization - Biometric Verification Persistence
-    fun updateBiometricsAttributeValueInTei(value: String, parentTeiUid:String? = null)
+    fun updateBiometricsAttributeValueInTei(
+        value: String,
+        parentTeiUid: String? = null,
+    )
 }

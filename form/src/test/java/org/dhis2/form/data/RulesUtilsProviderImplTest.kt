@@ -130,7 +130,7 @@ class RulesUtilsProviderImplTest {
             null,
             null,
             null,
-            null
+            null,
         )
 
     @Test

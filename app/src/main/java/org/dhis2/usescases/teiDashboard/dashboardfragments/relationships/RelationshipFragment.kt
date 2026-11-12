@@ -484,7 +484,7 @@ class RelationshipFragment :
                 teiUid,
                 null,
                 null,
-                null
+                null,
             ),
         )
     }

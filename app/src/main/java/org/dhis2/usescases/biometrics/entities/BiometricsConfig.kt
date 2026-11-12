@@ -3,7 +3,7 @@ package org.dhis2.usescases.biometrics.entities
 enum class BiometricsMode {
     full,
     limited,
-    zero
+    zero,
 }
 
 data class BiometricsConfig(
@@ -18,5 +18,5 @@ data class BiometricsConfig(
     val ageThresholdMonths: Int,
     val dateOfBirthAttribute: String,
     val biometricsMode: BiometricsMode,
-    val enableIdentificationForTET: String?
+    val enableIdentificationForTET: String?,
 )

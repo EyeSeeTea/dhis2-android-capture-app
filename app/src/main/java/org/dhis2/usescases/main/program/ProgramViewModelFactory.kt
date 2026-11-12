@@ -20,7 +20,7 @@ class ProgramViewModelFactory(
     private val filterManager: FilterManager,
     private val syncStatusController: SyncStatusController,
     private val schedulerProvider: SchedulerProvider,
-    private val selectBiometricsConfig: SelectBiometricsConfig
+    private val selectBiometricsConfig: SelectBiometricsConfig,
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T =
         ProgramViewModel(
@@ -32,6 +32,6 @@ class ProgramViewModelFactory(
             filterManager,
             syncStatusController,
             schedulerProvider,
-            selectBiometricsConfig
+            selectBiometricsConfig,
         ) as T
 }

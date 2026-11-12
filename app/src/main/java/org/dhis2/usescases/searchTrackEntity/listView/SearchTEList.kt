@@ -95,7 +95,6 @@ class SearchTEList : FragmentGlobalAbstract() {
         )
     }
 
-
     private val globalAdapter by lazy {
         SearchTeiLiveAdapter(
             fromRelationship,
@@ -163,7 +162,7 @@ class SearchTEList : FragmentGlobalAbstract() {
                 configureList(
                     scrollView,
                     savedInstanceState?.getInt(KEY_SCROLL_POSITION),
-                    savedInstanceState?.getString(KEY_LAST_CLICKED_TEI_UID)
+                    savedInstanceState?.getString(KEY_LAST_CLICKED_TEI_UID),
                 )
                 configureOpenSearchButton(openSearchButton)
                 // EyeSeeTea customization - Biometric Duplicate Review And Confirm Identity
@@ -275,7 +274,6 @@ class SearchTEList : FragmentGlobalAbstract() {
                 val seqSearch = (sequentialSearch as SequentialSearch?)
 
                 if (seqSearch == null && !teTypeLabel.isNullOrBlank() && isLoaded == true) {
-
                     val isSearchByBiometrics =
                         if (screenState is SearchList) viewModel.isSearchByBiometricsEnabled() else false
 
@@ -296,9 +294,13 @@ class SearchTEList : FragmentGlobalAbstract() {
                         isLandscape = isLandscape() && !isSearchByBiometrics,
                         queryData = queryData,
                         onSearchClick = {
-                            if (isSearchByBiometrics) viewModel.sequentialSearchNextAction(
-                                SequentialSearchAction.SearchWithBiometrics
-                            ) else viewModel.setSearchScreen()
+                            if (isSearchByBiometrics) {
+                                viewModel.sequentialSearchNextAction(
+                                    SequentialSearchAction.SearchWithBiometrics,
+                                )
+                            } else {
+                                viewModel.setSearchScreen()
+                            }
                         },
                         onEnrollClick = { viewModel.onEnrollClick() },
                         onCloseFilters = { viewModel.onFiltersClick(isLandscape()) },
@@ -333,9 +335,10 @@ class SearchTEList : FragmentGlobalAbstract() {
 
                 val sequentialSearch by viewModel.sequentialSearch.observeAsState()
 
-                val newPatientAction = sequentialSearch?.nextActions?.firstOrNull {
-                    it == SequentialSearchAction.RegisterNew
-                }
+                val newPatientAction =
+                    sequentialSearch?.nextActions?.firstOrNull {
+                        it == SequentialSearchAction.RegisterNew
+                    }
 
                 updateLayoutParams<CoordinatorLayout.LayoutParams> {
                     val bottomMargin =
@@ -363,7 +366,6 @@ class SearchTEList : FragmentGlobalAbstract() {
             }
         }
     }
-
 
     private fun displayImageDetail(imagePath: String) {
         val intent =
@@ -419,7 +421,7 @@ class SearchTEList : FragmentGlobalAbstract() {
             }
 
             scrollToTopOnSequentialSearch()
-         }
+        }
     }
 
     private fun scrollToTopOnSequentialSearch() {
@@ -548,7 +550,6 @@ class SearchTEList : FragmentGlobalAbstract() {
         }
     }
 
-
     private fun initLoading(result: List<SearchResult>?) {
         recycler.post {
             initialLoadingAdapter.submitList(result)
@@ -581,22 +582,25 @@ class SearchTEList : FragmentGlobalAbstract() {
                 val sequentialSearch by viewModel.sequentialSearch.observeAsState()
 
                 updateLayoutParams<CoordinatorLayout.LayoutParams> {
-                    val bottomMargin = if (viewModel.isBottomNavigationBarVisible()) {
-                        56.dp
-                    } else {
-                        16.dp
-                    }
+                    val bottomMargin =
+                        if (viewModel.isBottomNavigationBarVisible()) {
+                            56.dp
+                        } else {
+                            16.dp
+                        }
                     setMargins(0, 0, 0, bottomMargin)
                 }
 
-                val notNewActions = sequentialSearch?.nextActions?.filterNot {
-                    it == SequentialSearchAction.RegisterNew
-                } ?: emptyList()
+                val notNewActions =
+                    sequentialSearch?.nextActions?.filterNot {
+                        it == SequentialSearchAction.RegisterNew
+                    } ?: emptyList()
 
                 if (notNewActions.isNotEmpty()) {
                     SequentialNextSearchActions(
                         sequentialSearchActions = sequentialSearch?.nextActions!!,
-                        onClick = { action -> viewModel.sequentialSearchNextAction(action) })
+                        onClick = { action -> viewModel.sequentialSearchNextAction(action) },
+                    )
                 }
             }
         }

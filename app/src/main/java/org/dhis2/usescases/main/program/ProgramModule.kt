@@ -36,7 +36,7 @@ class ProgramModule(
         matomoAnalyticsController: MatomoAnalyticsController,
         filterManager: FilterManager,
         schedulerProvider: SchedulerProvider,
-        selectBiometricsConfig: SelectBiometricsConfig
+        selectBiometricsConfig: SelectBiometricsConfig,
     ): ProgramViewModelFactory =
         ProgramViewModelFactory(
             view,
@@ -47,7 +47,7 @@ class ProgramModule(
             filterManager,
             syncStatusController,
             schedulerProvider,
-            selectBiometricsConfig
+            selectBiometricsConfig,
         )
 
     @Provides
@@ -75,7 +75,7 @@ class ProgramModule(
     @PerFragment
     fun biometricsConfigRepository(
         d2: D2,
-        basicPreferences: BasicPreferenceProvider
+        basicPreferences: BasicPreferenceProvider,
     ): BiometricsConfigRepository {
         val biometricsConfigApi = BiometricsConfigApi(d2.httpServiceClient())
 
@@ -84,9 +84,6 @@ class ProgramModule(
 
     @Provides
     @PerFragment
-    fun selectBiometricsConfig(
-        biometricsConfigRepository: BiometricsConfigRepository
-    ): SelectBiometricsConfig {
-        return SelectBiometricsConfig(biometricsConfigRepository)
-    }
+    fun selectBiometricsConfig(biometricsConfigRepository: BiometricsConfigRepository): SelectBiometricsConfig =
+        SelectBiometricsConfig(biometricsConfigRepository)
 }

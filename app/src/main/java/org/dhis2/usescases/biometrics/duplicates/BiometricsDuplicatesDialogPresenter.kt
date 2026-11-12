@@ -57,7 +57,7 @@ class BiometricsDuplicatesDialogPresenter(
         biometricsSessionId: String,
         programUid: String,
         trackedEntityTypeUid: String,
-        biometricsAttributeUid: String
+        biometricsAttributeUid: String,
     ) {
         this.view = view
         this.possibleDuplicates = possibleDuplicates
@@ -126,7 +126,11 @@ class BiometricsDuplicatesDialogPresenter(
         scope.cancel()
     }
 
-    fun onTEIClick(teiUid: String, enrollmentUid: String?, isOnline: Boolean) {
+    fun onTEIClick(
+        teiUid: String,
+        enrollmentUid: String?,
+        isOnline: Boolean,
+    ) {
         if (!identityConfirmed) {
             identityConfirmed = true
 
@@ -143,10 +147,15 @@ class BiometricsDuplicatesDialogPresenter(
     private fun sendBiometricsConfirmIdentity(
         teiUid: String,
         enrollmentUid: String?,
-        isOnline: Boolean
+        isOnline: Boolean,
     ) {
-        val tei = d2.trackedEntityModule().trackedEntityInstances()
-            .withTrackedEntityAttributeValues().uid(teiUid).blockingGet()?:return
+        val tei =
+            d2
+                .trackedEntityModule()
+                .trackedEntityInstances()
+                .withTrackedEntityAttributeValues()
+                .uid(teiUid)
+                .blockingGet() ?: return
 
         val guid: String = getBiometricsValueFromTEI(tei) ?: ""
 
@@ -172,32 +181,48 @@ class BiometricsDuplicatesDialogPresenter(
         return guid
     }
 
-    private fun openDashboard(teiUid: String, enrollmentUid: String?) {
+    private fun openDashboard(
+        teiUid: String,
+        enrollmentUid: String?,
+    ) {
         view.openDashboard(
             teiUid,
             programUid,
-            enrollmentUid
+            enrollmentUid,
         )
     }
 
-    private fun downloadTei(teiUid: String?, enrollmentUid: String?) {
+    private fun downloadTei(
+        teiUid: String?,
+        enrollmentUid: String?,
+    ) {
         disposable.add(
-            searchRepository.downloadTei(teiUid)
+            searchRepository
+                .downloadTei(teiUid)
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribe(
-                    { view.downloadProgress() }, { Timber.d(it) },
+                    { view.downloadProgress() },
+                    { Timber.d(it) },
                     {
-                        if (d2.trackedEntityModule().trackedEntityInstances().uid(teiUid)
+                        if (d2
+                                .trackedEntityModule()
+                                .trackedEntityInstances()
+                                .uid(teiUid)
                                 .blockingExists()
                         ) {
                             openDashboard(teiUid!!, enrollmentUid!!)
                         } else {
-                            val trackedEntityType = d2.trackedEntityModule().trackedEntityTypes()
-                                .uid(trackedEntityTypeUid).blockingGet()
+                            val trackedEntityType =
+                                d2
+                                    .trackedEntityModule()
+                                    .trackedEntityTypes()
+                                    .uid(trackedEntityTypeUid)
+                                    .blockingGet()
                             view.couldNotDownload(trackedEntityType?.displayName()!!)
                         }
-                    })
+                    },
+                ),
         )
     }
 

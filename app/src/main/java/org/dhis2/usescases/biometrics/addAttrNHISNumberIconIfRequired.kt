@@ -3,8 +3,8 @@ package org.dhis2.usescases.biometrics
 import org.dhis2.form.extensions.isNhisNumberText
 import org.hisp.dhis.mobile.ui.designsystem.component.AdditionalInfoItem
 
-fun addAttrNHISNumberEmojiIfRequired(additionalInfo: List<AdditionalInfoItem>): List<AdditionalInfoItem> {
-    return additionalInfo.map {
+fun addAttrNHISNumberEmojiIfRequired(additionalInfo: List<AdditionalInfoItem>): List<AdditionalInfoItem> =
+    additionalInfo.map {
         val key = it.key ?: ""
 
         if (key.isNhisNumberText()) {
@@ -16,6 +16,4 @@ fun addAttrNHISNumberEmojiIfRequired(additionalInfo: List<AdditionalInfoItem>): 
         } else {
             it
         }
-
     }
-}

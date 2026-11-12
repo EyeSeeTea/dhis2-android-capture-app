@@ -51,14 +51,15 @@ import org.dhis2.commons.network.NetworkUtils
 import org.dhis2.commons.prefs.BasicPreferenceProvider
 import org.dhis2.commons.resources.ResourceManager
 import org.dhis2.commons.viewmodel.DispatcherProvider
-import org.dhis2.form.ui.customintent.CustomIntentResult
 import org.dhis2.data.biometrics.getBiometricsConfig
+import org.dhis2.form.ui.customintent.CustomIntentResult
 import org.dhis2.form.ui.provider.DisplayNameProvider
 import org.dhis2.maps.extensions.toStringProperty
 import org.dhis2.maps.layer.MapLayer
 import org.dhis2.maps.layer.basemaps.BaseMapStyle
 import org.dhis2.maps.managers.MapManager
 import org.dhis2.maps.usecases.MapStyleConfiguration
+import org.dhis2.mobile.commons.biometrics.biometricAttributeId
 import org.dhis2.mobile.commons.coroutine.CoroutineTracker
 import org.dhis2.tracker.NavigationBarUIState
 import org.dhis2.tracker.input.model.TrackerInputType
@@ -75,7 +76,6 @@ import org.dhis2.tracker.search.model.QueryData
 import org.dhis2.tracker.search.model.SearchTrackedEntitiesInput
 import org.dhis2.tracker.search.model.TrackedEntitySearchPagingItem
 import org.dhis2.tracker.search.ui.state.SearchParametersUiState
-import org.dhis2.mobile.commons.biometrics.biometricAttributeId
 import org.dhis2.usescases.biometrics.containsAgeFilterAndIsUnderAgeThreshold
 import org.dhis2.usescases.biometrics.entities.BiometricsMode
 import org.dhis2.usescases.biometrics.ui.SequentialSearch
@@ -111,7 +111,7 @@ class SearchTEIViewModel(
     private val fetchSearchParameters: FetchSearchParameters,
     private val fetchOptionSetOptions: FetchOptionSetOptions,
     private val basicPreferenceProvider: BasicPreferenceProvider,
-    private val fromRelationships: Boolean
+    private val fromRelationships: Boolean,
 ) : ViewModel() {
     private var layersVisibility: Map<String, MapLayer> = emptyMap()
 
@@ -249,17 +249,19 @@ class SearchTEIViewModel(
         presenter.setBiometricListener { simprintsItems, biometricAttributeUid, items, sessionId, ageNotSupported, scannedCredential ->
             val filterValues = items.map { it.guid }
 
-            val previousSearch = when (sequentialSearch.value) {
-                is SequentialSearch.BiometricsSearch -> null
-                is SequentialSearch.AttributeSearch -> sequentialSearch.value
-                null -> null
-            }
+            val previousSearch =
+                when (sequentialSearch.value) {
+                    is SequentialSearch.BiometricsSearch -> null
+                    is SequentialSearch.AttributeSearch -> sequentialSearch.value
+                    null -> null
+                }
 
-            val nextActions = if (previousSearch == null) {
-                listOf(SequentialSearchAction.SearchWithAttributes)
-            } else {
-                listOf(SequentialSearchAction.RegisterNew)
-            }
+            val nextActions =
+                if (previousSearch == null) {
+                    listOf(SequentialSearchAction.SearchWithAttributes)
+                } else {
+                    listOf(SequentialSearchAction.RegisterNew)
+                }
 
             _sequentialSearch.postValue(
                 SequentialSearch.BiometricsSearch(
@@ -269,8 +271,8 @@ class SearchTEIViewModel(
                     previousSearch = previousSearch,
                     nextActions = nextActions,
                     simprintsItems = simprintsItems,
-                    scannedCredential = scannedCredential
-                )
+                    scannedCredential = scannedCredential,
+                ),
             )
 
             Timber.d("Search by biometrics %s", filterValues)
@@ -778,21 +780,23 @@ class SearchTEIViewModel(
         if (isAttributeSearch) {
             queryDataList.removeAll { it.attributeId == biometricAttributeId }
 
-            val previousSearch = when (sequentialSearch.value) {
-                is SequentialSearch.AttributeSearch -> null
-                is SequentialSearch.BiometricsSearch -> sequentialSearch.value
-                null -> null
-            }
+            val previousSearch =
+                when (sequentialSearch.value) {
+                    is SequentialSearch.AttributeSearch -> null
+                    is SequentialSearch.BiometricsSearch -> sequentialSearch.value
+                    null -> null
+                }
 
             val queryDataContainsAgeUnderThreadsHold =
                 containsAgeFilterAndIsUnderAgeThreshold(basicPreferenceProvider, queryDataAsMap())
 
             val nextActions =
                 if (previousSearch == null &&
-                    !queryDataContainsAgeUnderThreadsHold
-                    && isSearchByBiometricsEnabled()) {
+                    !queryDataContainsAgeUnderThreadsHold &&
+                    isSearchByBiometricsEnabled()
+                ) {
                     listOf(
-                        SequentialSearchAction.SearchWithBiometrics
+                        SequentialSearchAction.SearchWithBiometrics,
                     )
                 } else {
                     listOf(SequentialSearchAction.RegisterNew)
@@ -802,10 +806,11 @@ class SearchTEIViewModel(
                 SequentialSearch.AttributeSearch(
                     previousSearch = previousSearch,
                     nextActions = nextActions,
-                    queryData = queryDataAsMap().mapValues { entry ->
-                        entry.value?.joinToString(";") ?: ""
-                    }
-                )
+                    queryData =
+                        queryDataAsMap().mapValues { entry ->
+                            entry.value?.joinToString(";") ?: ""
+                        },
+                ),
             )
         }
 
@@ -1076,8 +1081,8 @@ class SearchTEIViewModel(
                     listOf(SearchResult(SearchResult.SearchResultType.NO_MORE_RESULTS))
 
                 else ->
-                    //EyeSeTea customization - never show icon folder no results
-                    //listOf(SearchResult(SearchResult.SearchResultType.NO_RESULTS))
+                    // EyeSeTea customization - never show icon folder no results
+                    // listOf(SearchResult(SearchResult.SearchResultType.NO_RESULTS))
                     listOf()
             }
 
@@ -1245,8 +1250,8 @@ class SearchTEIViewModel(
                                 searchParameters
                                     .filter { it.label.isNotBiometricText() }
                                     .map { searchParameter ->
-                                    searchParameter.toTrackerInputUiState()
-                                }
+                                        searchParameter.toTrackerInputUiState()
+                                    }
                             searchParametersUiState =
                                 searchParametersUiState.copy(
                                     items = newItems,
@@ -1388,11 +1393,11 @@ class SearchTEIViewModel(
                         }
                     }
 
-                else -> {
-                    map[item.uid] = (item.value ?: "")
+                    else -> {
+                        map[item.uid] = (item.value ?: "")
+                    }
                 }
             }
-        }
         return map
     }
 
@@ -1560,12 +1565,8 @@ class SearchTEIViewModel(
                 )
             }.toMutableList()
 
-
-
     // EyeSeeTea customization - Biometrics Mode Controls Per Program
-    fun getBiometricsSearchStatus(): Boolean {
-        return presenter.biometricsSearchStatus
-    }
+    fun getBiometricsSearchStatus(): Boolean = presenter.biometricsSearchStatus
 
     private var onSequentialSearchActionCallback: ((helperAction: SequentialSearchAction) -> Unit)? =
         null
@@ -1601,27 +1602,28 @@ class SearchTEIViewModel(
             (sequentialSearch.value as? SequentialSearch.BiometricsSearch)?.isAgeNotSupported
                 ?: false
 
-        val message = if (isFirstSearch) {
-            if (hasResults) {
-                resourceManager.getString(R.string.patient_not_shown_search_a_different_way)
-            } else {
-                if (isBiometricsSearch && isAgeNotSupported) {
-                    resourceManager.getString(R.string.biometrics_not_applicable_for_this_age_group_search_with_personal_details)
+        val message =
+            if (isFirstSearch) {
+                if (hasResults) {
+                    resourceManager.getString(R.string.patient_not_shown_search_a_different_way)
                 } else {
-                    resourceManager.getString(R.string.results_not_found_search_a_different_way)
+                    if (isBiometricsSearch && isAgeNotSupported) {
+                        resourceManager.getString(R.string.biometrics_not_applicable_for_this_age_group_search_with_personal_details)
+                    } else {
+                        resourceManager.getString(R.string.results_not_found_search_a_different_way)
+                    }
+                }
+            } else {
+                if (hasResults) {
+                    resourceManager.getString(R.string.patient_not_found_register_a_new_patient)
+                } else {
+                    if (isBiometricsSearch && isAgeNotSupported) {
+                        resourceManager.getString(R.string.biometrics_not_applicable_for_this_age_group_register_a_new_patient)
+                    } else {
+                        resourceManager.getString(R.string.results_not_found_register_a_new_patient)
+                    }
                 }
             }
-        } else {
-            if (hasResults) {
-                resourceManager.getString(R.string.patient_not_found_register_a_new_patient)
-            } else {
-                if (isBiometricsSearch && isAgeNotSupported) {
-                    resourceManager.getString(R.string.biometrics_not_applicable_for_this_age_group_register_a_new_patient)
-                } else {
-                    resourceManager.getString(R.string.results_not_found_register_a_new_patient)
-                }
-            }
-        }
 
         return listOf(
             SearchResult(
@@ -1631,31 +1633,32 @@ class SearchTEIViewModel(
         )
     }
 
-    fun isSearchByBiometricsEnabled(): Boolean {
-        return if (!fromRelationships){
+    fun isSearchByBiometricsEnabled(): Boolean =
+        if (!fromRelationships) {
             biometricsConfig.biometricsMode == BiometricsMode.full
         } else {
             teType.uid() == biometricsConfig.enableIdentificationForTET
         }
-    }
 
     fun verifyAutoNavigateToTEI(dhisSearchResults: List<SearchTeiModel>) {
         if (fromRelationships) return
 
         val sequentialSearch = _sequentialSearch.value
 
-        val simprintsItems = if (sequentialSearch is SequentialSearch.BiometricsSearch) {
-            sequentialSearch.simprintsItems
-        } else {
-            emptyList()
-        }
+        val simprintsItems =
+            if (sequentialSearch is SequentialSearch.BiometricsSearch) {
+                sequentialSearch.simprintsItems
+            } else {
+                emptyList()
+            }
 
         if (dhisSearchResults.size == 1 && simprintsItems.isNotEmpty()) {
             val dhisSearchItem = dhisSearchResults.first()
 
-            val simprintsItem = simprintsItems.firstOrNull {
-                it.guid == dhisSearchItem.biometricsGuid()
-            }
+            val simprintsItem =
+                simprintsItems.firstOrNull {
+                    it.guid == dhisSearchItem.biometricsGuid()
+                }
 
             if (simprintsItem != null && simprintsItem.isVerified == true) {
                 presenter.sendAutomaticBiometricsConfirmIdentity(dhisSearchItem)
