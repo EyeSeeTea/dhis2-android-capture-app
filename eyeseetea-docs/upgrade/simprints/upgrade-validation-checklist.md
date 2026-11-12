@@ -8,12 +8,41 @@ This file is for:
 - minimal manual validation per customization
 - expected result per flow
 - regression checking after merge resolution
+- the validation status of the upgrade in progress (the table below; reset it at the start of each upgrade)
 
 This file is not for:
 - merge progress
 - implementation details
 - raw diff tracking
 - file-level inventories
+
+## Status: 3.5.0 upgrade
+
+Build under test: `3.5.0-simprints-fork-1` debug APK (built 2026-11-05 from the uncommitted merge state), Lenovo TB-X304F tablet, `simprints-dev` server. Biometric config for `1.6 Child Health` (`o5kwD20X1zR`): `full` for 2026-11-09, changed to `limited` and then `zero` for 2026-11-10 (data store `simprints/config`, restored afterwards). The Simprints app itself was not used on 2026-11-10; the flows that need it were tested by the user on 2026-11-09.
+
+Legend: **Verified** = every manual step of the flow was run. **Partial** = only the steps listed. **Blocked** = cannot be completed because of an external dependency. **Not tested**.
+
+| # | Flow | Status | What was verified | Still pending |
+|---|------|--------|-------------------|---------------|
+| 1 | Biometric search | Partial | 2026-11-09 (user): biometric search from the search card → no match → attribute search → no match → new patient with `registerLast`; and biometric search → auto-navigation to the TEI dashboard. Both worked (steps 1-3). | Step 4 (lifecycle drop while Simprints is in the foreground) and step 5 (search by GUID as text). |
+| 2 | Config selection | Partial | 2026-11-10: the program-level entry for Child Health is applied (behavior followed its `limited` / `zero` value after a config sync). | `orgUnitGroup` match, `default` fallback and the no-`default` case. |
+| 3 | Mode controls | Partial | 2026-11-10, Child Health in `limited` and `zero`, portrait and landscape. Search: no biometric search in either mode. Enrollment: no biometric field in either mode. Dashboard: `limited` shows **Verify** for a TEI with biometrics and no registration; `zero` shows no biometrics card; a TEI without biometrics shows none in both. The "Biometrics" row on cards and dashboard header stays visible in `zero`: same as earlier versions, not an error (user, 2026-11-10). | `full` mode across enrollment and dashboard in this build, and `limited` registration from the dashboard for a TEI without biometric value on a program that has one. |
+| 4 | Age threshold | Not tested | | Below and above threshold: search, enrollment, dashboard. |
+| 5 | DOB attribute | Not tested | Incidental: a TEI without a date of birth (`nacho test`) shows `Not Applicable` (not isolated). | Two configs with different DOB attributes. |
+| 6 | Confidence filter | Not tested | | Identify below the threshold with and without credentials; verification below threshold and band `NONE`. |
+| 7 | Org unit module id | Not tested | | Single org unit and multi org unit identify. |
+| 8 | Relationship search toggle | Partial | Step 1 verified on device 2026-09-03 (3.4 build). Not repeated on 3.5.0. | Steps 1 to 3 on 3.5.0. |
+| 9 | Duplicate review and confirm identity | Partial | 2026-11-12 (user): confirm identity worked on the auto-navigation path (step 4, automatic), and also from the confirmation dialog when searching by biometrics only, from a search without a card (step 4, manual). The auto-navigation of flow 1 (`isVerified=true`) also ran. Identify with 2 candidates (two people enrolled with the same face): the confirmation dialog showed both, each with its own properties (user, 2026-11-12). | Empty biometric row (step 3) and the four manual-confirm cases of step 6. Step 5 (duplicate outcome from enrollment) is **blocked**: registering the second person with the same face did not show the duplicates dialog, so duplicate detection at registration does not seem enabled in the Simprints project. |
+| 10 | Cards, dashboard, enrollment, TEI form | Partial | 2026-11-09 (user): identify from the TEI dashboard worked; `registerLast` worked once. 2026-11-10: cards, enrollment and dashboard per mode (see flow 3). | Step 7 twice, pressing save right after the capture (the B6 hang). Step 6: embedded form in landscape (hidden by design, see `refactors-pending.md`). Landscape rotation with the dashboard open (task 8.4). |
+| 11 | Verification persistence | Partial | 2026-11-09 (user): verification from the dashboard worked. | Biometrics attribute updated (step 2) and the state active when reopening inside the window (step 3). |
+| 12 | Time windows | Not tested | | Verification expiry and decline window expiry. |
+| 13 | Data exchange and mapping | Partial | The `userNotFound` identify path from the attribute search (step 4) ran and led to `registerLast`. | Outbound metadata payload, credential propagation, and the missing-preferences fallback. |
+| 14 | Config sync on login | Verified | 2026-11-10: login triggered `SyncBiometricsConfig` and stored the 6 configs (log `BiometricsConfigRepositoryImpl$sync`, 06:08:46). A config sync from Settings also fetched a changed config (06:50:06). | |
+| 15 | Template storage | Blocked | 2026-11-10, `registerLast` with a scanned credential, two TEIs: `marga perez` (`BOaSt6XwrHi`, registered 2026-11-09) and `Vza3iz3WbGm` (registered 2026-11-10). Both have the `Biometrics` GUID and **no `Biometrics Template`**: checked on the server API for the first, and in the tablet database for both. Cause found in the logcat: the Simprints app (`2026.3.1+175.1`) answers the registration with `scannedCredential`, `hasCredential`, `biometricsComplete`, `sessionId`, `deviceId` and `enrolment.guid`, but **no `subjectActions`**, so `parseBiometricReferences()` returns an empty list and `updateBiometricTemplateAttributeValue()` returns without writing. Not a fork regression: the code matches `develop-simprints@09cad0d3e`. Server side is fine: the attribute is linked to the program and the September TEIs hold a valid value (1 `FACE_REFERENCE`, 2 templates). | Needs a Simprints app version that returns `subjectActions` on registration (precondition of this flow). Then steps 1 to 4. Plain enrollment and dashboard registration were not observed. Steps 3 and 6 (the value survives saving, `confirmIdentify` does not touch it) can be run now on a TEI that already has a template, for example the September ones. |
+
+Findings from this round:
+- Landscape TEI dashboard shows a duplicated panel when rotated with the dashboard open (inherited from Oslo, `tasks.md` 8.4).
+- The embedded form is hidden in the landscape dashboard by design (`refactors-pending.md`).
 
 ## Validation flows
 
