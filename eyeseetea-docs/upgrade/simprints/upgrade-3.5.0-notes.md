@@ -184,6 +184,13 @@ Found during this upgrade. Promote them as a single PR against
   differs in every fork and every upgrade (`testEyeseeteaDebugUnitTest` vs
   `testSimprintsDebugUnitTest` vs `testWidpDebugUnitTest`). Review at the end of the
   upgrade whether both are still needed and how the fork flavor should be chosen.
+- **B15. Duplicate `PostMetadataSyncModule` in the `dhis2Training` flavor breaks
+  `build-test-apks`.** The `dhis2Training` source set also compiles `src/dhis2/java`
+  (`app/build.gradle.kts`), so `app/src/dhis2Training/java/org/dhis2/di/PostMetadataSyncModule.kt`
+  (identical to the `dhis2` copy, added with the extension point in `4e5635da57`) is a
+  `Conflicting declarations` error (`compileDhis2TrainingDebugKotlin`). It is in
+  `develop-eyeseetea` too, so the baseline has it. WIDP removed it in `9a4f7aff83`.
+  Removed here; still to remove in the baseline.
 - **B7 (carried over).** 2 test-quality rules are still missing from the
   baseline `openspec-config.yaml.template`.
 
