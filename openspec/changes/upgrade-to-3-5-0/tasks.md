@@ -102,6 +102,7 @@ Commit: 9.1–9.5 in one commit, "docs(simprints): close out 3.5.0 upgrade". 9.6
 - [ ] 9.4 Run `python3 eyeseetea-docs/scripts/check_upgrade_docs.py --client simprints`. Verify only the expected noise remains.
 - [ ] 9.5 Run `npx openspec validate --specs --strict`. Verify 14/14 pass.
 - [ ] 9.6 Archive this change (`openspec/changes/upgrade-to-3-5-0/` → `openspec/changes/archive/<date>-upgrade-to-3-5-0/`). Verify `npx openspec list` no longer shows it as active.
+- [ ] 9.7 Review the CI setup of the forks (problems only, no design agreed; see `upgrade-3.5.0-notes.md` B10-B14): the two workflows (`ci.yml`, `eyeseetea-main.yml`) and their overlap, the Sonatype 429 fix that still has to go to `develop-eyeseetea`, B8 still missing in the baseline, the per-fork flavor line, and the rule that customization tests must not assume the Simprints flavor (candidate for `AGENTS-simprints.md`). Verify the decisions are recorded in the notes.
 
 ## 10. Pull request
 

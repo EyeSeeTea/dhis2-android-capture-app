@@ -144,20 +144,46 @@ Found during this upgrade. Promote them as a single PR against
   `app/src/eyeseetea/java/org/dhis2/utils/granularsync/GranularSyncModule.kt:51`
   breaks `standard:function-signature`: `provideSyncUiStateMapper`'s body fits on one line.
   Fix: join the expression onto the signature line, matching Oslo's `dhis2` copy.
+  Applied in the Simprints branch (`91c153f0b8`, so CI `lint-check` passes). Still not in
+  `develop-eyeseetea`.
 - **B9. Flavor-copy drift rule for `conflict-rules.md`.** After merging Oslo
   (into baseline) or baseline (into a fork), run
   `git diff --name-status <old> <new> -- app/src/dhis2 app/src/dhis2PlayServices`
   and port each change into every flavor copy. Git never raises a conflict on
   flavor-only files. This hit `GranularSyncModule.kt` in both the baseline and
   Simprints in 3.5.0.
-- **B10. Document in the upgrade runbook that Oslo's `.github/workflows/ci.yml` is
-  disabled at repo level on purpose** (`gh workflow disable ci.yml`,
-  2026-10-22). It fails on PR size and needs BrowserStack and Sonar secrets the
-  EyeSeeTea repo doesn't have.
-- **B11. Fork CI never runs ktlint.** `eyeseetea-main.yml` only runs unit tests,
-  which let ~1,775 violations accumulate in Simprints code (see
-  `refactors-pending.md`). Not decided: whether baseline CI should add
-  `ktlintCheck`.
+- **B10. (stale, corrected 2026-11-12) Oslo's `.github/workflows/ci.yml` is active in
+  the repo**, not disabled: `gh workflow list` shows `CI active`, and it ran on PR #346.
+  It needs BrowserStack, Sonar and Slack secrets the EyeSeeTea repo doesn't have, and
+  it fails PRs over 400 changed lines unless the title has `[skip size]`. WIDP guarded
+  the first two (`0aaa6feb41`, `1b1f551684`); the Slack job (`notification`) was
+  guarded here. The three guards were pushed to `develop-eyeseetea`
+  (`d0b1fc434c`, `3e30cc21d1`, `e0e9af16bf`), so the runbook should say: keep ci.yml
+  active, with the guards and `[skip size]` in the title of upgrade PRs.
+- **B11. Fork CI never ran ktlint** (resolved for Simprints, 2026-11-12). Oslo's
+  `ci.yml` runs `ktlintCheck`, which found 1,767 violations in 136 Simprints files
+  (baseline clean). `ktlintFormat` (`bcb11a1cc8`) plus 32 manual fixes (`7138cefc38`,
+  `@Suppress` where the name is an external contract: enum entries read from JSON and
+  saved preferences, constants, file names) made `ktlintCheck` pass.
+- **B12. Sonatype answers HTTP 429 to CI runners.** `settings.gradle.kts` asks
+  `central.sonatype.com/repository/maven-snapshots` before `google()` for every
+  artifact. `app-testing` and `unit-tests` failed on it in every PR #346 run, and it
+  also hit WIDP once and the baseline run after the CI-guards push. Two workflows run
+  per push, so the requests double. Mitigation applied on the Simprints branch:
+  `snapshotsOnly()` on that repository (marked `// EyeSeeTea fix`). The inventory rule
+  says that kind of fix belongs in `develop-eyeseetea` first; not done yet.
+- **B13. Customization tests must not assume the Simprints flavor.** Oslo's `ci.yml`
+  runs `testDhis2DebugUnitTest`, and `app/src/test` runs once per flavor.
+  `BIOMETRICS_ENABLED` is true only in the `simprints` flavor, so 4
+  `EnrollmentPresenterImplTest` tests failed in `dhis2` (`6ec4527ca9` made them
+  `assumeTrue`). I only ran `testSimprintsDebugUnitTest` locally, which hid it.
+- **B14. Forks run two workflows with overlapping tests.** `ci.yml` (Oslo, shared):
+  size, `ktlintCheck`, `testDebugUnitTest testDhis2DebugUnitTest testAndroidHostTest`,
+  `assembleDhis2Debug`. `eyeseetea-main.yml` (baseline, one flavor line edited per
+  fork): unit tests of the fork's own flavor only. The flavor line conflicts or
+  differs in every fork and every upgrade (`testEyeseeteaDebugUnitTest` vs
+  `testSimprintsDebugUnitTest` vs `testWidpDebugUnitTest`). Review at the end of the
+  upgrade whether both are still needed and how the fork flavor should be chosen.
 - **B7 (carried over).** 2 test-quality rules are still missing from the
   baseline `openspec-config.yaml.template`.
 
