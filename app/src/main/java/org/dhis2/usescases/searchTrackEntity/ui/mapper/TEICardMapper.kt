@@ -118,6 +118,7 @@ class TEICardMapper(
     private fun getTitleFirstLetter(item: SearchTeiModel): String {
         // EyeSeeTea customization - Biometrics In TEI Cards, TEI Dashboard, Enrollment, And TEI Form
         // Simprints behavior: show first letter of first name and last name
+
         /*val firstLetter =
             item.header?.firstOrNull()
                 ?: item.attributeValues.values
@@ -582,7 +583,9 @@ class TEICardMapper(
     }
 
     private fun getConfirmationDialogSubtitle(item: SearchTeiModel): String {
-        return ""; /*if (item.attributeValues.isEmpty()) {
+        return ""
+
+        /*if (item.attributeValues.isEmpty()) {
             "-"
         } else {
             val sexValue =

@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:filename")
+
 package org.dhis2.usescases.biometrics
 
 import org.dhis2.form.extensions.isNhisNumberText

@@ -1,5 +1,6 @@
 package org.dhis2.usescases.biometrics.entities
 
+@Suppress("ktlint:standard:enum-entry-name-case")
 enum class BiometricsMode {
     full,
     limited,

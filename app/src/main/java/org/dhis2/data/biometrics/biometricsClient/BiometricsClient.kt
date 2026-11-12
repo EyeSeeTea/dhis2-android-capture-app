@@ -755,6 +755,7 @@ class BiometricsClient(
     }
 
     companion object {
+        @Suppress("ktlint:standard:property-naming")
         const val DefaultModuleId = "NA"
 
         const val SIMPRINTS_TRACKED_ENTITY_INSTANCE_ID = "trackedEntityInstanceId"

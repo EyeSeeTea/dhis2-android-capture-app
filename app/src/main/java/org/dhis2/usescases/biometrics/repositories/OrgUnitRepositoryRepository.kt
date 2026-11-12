@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:filename")
+
 package org.dhis2.usescases.biometrics.repositories
 
 import org.hisp.dhis.android.core.organisationunit.OrganisationUnit

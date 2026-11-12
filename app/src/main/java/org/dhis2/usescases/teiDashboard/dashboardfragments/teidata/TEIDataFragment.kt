@@ -282,7 +282,7 @@ class TEIDataFragment :
                 val eventCount by presenter.events.map { it.count() }.observeAsState(0)
 
                 // EyeSeeTea customization - avoid calls to database in recompositions
-                val teiCanBeTransferred by dashboardViewModel.teiCanBeTransferredState.collectAsState(initial = false)
+                val teiCanBeTransferred by dashboardViewModel.teiCanBeTransferred.collectAsState(initial = false)
 
                 val syncInfoBar =
                     dashboardModel
@@ -773,6 +773,7 @@ class TEIDataFragment :
             bundle.putInt(Constants.EVENT_SCHEDULE_INTERVAL, programStage.standardInterval() ?: 0)
 
             // EyeSeeTea Necessary?
+
             /*
             bundle.putString(BIOMETRICS_GUID, dashboardModel.biometricValue)
             bundle.putInt(BIOMETRICS_VERIFICATION_STATUS, -1)

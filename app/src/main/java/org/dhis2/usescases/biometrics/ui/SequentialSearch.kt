@@ -5,6 +5,7 @@ import org.dhis2.data.biometrics.biometricsClient.models.ScannedCredential
 import org.dhis2.data.biometrics.biometricsClient.models.SimprintsIdentifiedItem
 import org.dhis2.mobile.commons.biometrics.biometricAttributeId
 
+@Suppress("ktlint:standard:property-naming")
 const val failedBiometricsSessionId = "NA"
 
 sealed class SequentialSearch(

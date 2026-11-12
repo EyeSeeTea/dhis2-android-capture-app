@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:filename", "ktlint:standard:property-naming")
+
 package org.dhis2.commons.biometrics
 
 import androidx.compose.ui.graphics.Brush

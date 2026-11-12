@@ -87,6 +87,7 @@ class TeiDashboardCardMapper(
 
     private fun getTitle(item: DashboardModel): String {
         // EyeSeeTea customization - Biometrics In TEI Cards, TEI Dashboard, Enrollment, And TEI Form
+
         /* when {
             item.teiHeader != null -> item.teiHeader!!
             item is DashboardEnrollmentModel ->
@@ -177,6 +178,7 @@ class TeiDashboardCardMapper(
 
         // EyeSeeTea customization - Biometrics In TEI Cards, TEI Dashboard, Enrollment, And TEI Form
         // Simprints behavior: not remove first item
+
         /*        if (item.teiHeader == null) {
                     attributesList.removeFirstOrNull()
                 }*/

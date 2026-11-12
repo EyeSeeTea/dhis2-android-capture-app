@@ -72,7 +72,10 @@ class SearchTEList : FragmentGlobalAbstract() {
 
     private val workingListViewModel by viewModels<WorkingListViewModel> { workingListViewModelFactory }
 
+    @Suppress("ktlint:standard:property-naming")
     private val KEY_SCROLL_POSITION = "scroll_position"
+
+    @Suppress("ktlint:standard:property-naming")
     private val KEY_LAST_CLICKED_TEI_UID = "last_clicked_tei_uid"
 
     private val initialLoadingAdapter by lazy {

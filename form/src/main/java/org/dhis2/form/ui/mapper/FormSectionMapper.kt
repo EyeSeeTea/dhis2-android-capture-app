@@ -14,6 +14,7 @@ class FormSectionMapper {
             items.forEach { item ->
                 if (item is SectionUiModelImpl) {
                     // EyeSeeTea customization
+
                     /*    val fields = items.filterIsInstance<FieldUiModelImpl>()
                         .filter { it.programStageSection == item.uid }*/
 

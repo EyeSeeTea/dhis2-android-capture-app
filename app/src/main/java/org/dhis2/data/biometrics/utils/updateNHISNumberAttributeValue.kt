@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:filename")
+
 package org.dhis2.data.biometrics.utils
 
 import org.dhis2.bindings.blockingSetCheck

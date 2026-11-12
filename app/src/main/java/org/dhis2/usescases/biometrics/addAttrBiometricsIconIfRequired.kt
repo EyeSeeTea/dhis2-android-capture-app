@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:filename")
+
 package org.dhis2.usescases.biometrics
 
 import androidx.compose.material3.Icon

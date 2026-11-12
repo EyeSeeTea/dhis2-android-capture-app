@@ -621,6 +621,7 @@ class SearchTEActivity :
 
                     LegacyInteractionID.ON_TEI_CLICK -> {
                         // Eyeseetea customization, we use ON_SEARCH_TEI_MODEL_CLICK
+
                         /*val interaction = legacyInteraction as OnTeiClick
                         presenter.onTEIClick(
                             interaction.teiUid,

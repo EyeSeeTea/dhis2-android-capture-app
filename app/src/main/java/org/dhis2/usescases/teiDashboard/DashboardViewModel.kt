@@ -126,7 +126,7 @@ class DashboardViewModel(
 
     // EyeSeeTea customization - avoid calls to database in recompositions
     private val _teiCanBeTransferred = MutableStateFlow(false)
-    val teiCanBeTransferredState = _teiCanBeTransferred.asStateFlow()
+    val teiCanBeTransferred = _teiCanBeTransferred.asStateFlow()
 
     /**
      * Derived from every piece of state the menu depends on, so it is rebuilt whenever the grouping
