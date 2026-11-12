@@ -199,6 +199,7 @@ Expected result:
 - Enrollment duplicates allow both opening the existing TEI dashboard and continuing with `registerLast`.
 - Manual confirm identity with confidence at or above the threshold shows `Biometrics verified` on the dashboard, whether or not the candidate is linked to a credential.
 - A credential-linked candidate below the threshold stays visible and shows `Verification Failed` after manual confirm; a candidate without a credential below the threshold is not shown.
+- Confirm identity on a TEI whose biometrics attribute holds a `BIOMETRICS_SEARCH_` / failure placeholder or no value sends `none_selected` to Simprints, never the placeholder (unit-tested in `BiometricsClientTest`; not yet reproduced on device, see `refactors-pending.md`).
 
 ### 10. Biometrics In TEI Cards, TEI Dashboard, Enrollment, And TEI Form
 

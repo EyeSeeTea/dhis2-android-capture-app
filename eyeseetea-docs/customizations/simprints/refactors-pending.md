@@ -77,6 +77,12 @@ re-assessed against what's changed since.
   - **Not decided:** whether to restore the inline form. Options haven't been evaluated or agreed. Record any proposal here first, before implementing.
   - **Touches:** §2.10 "Biometrics In TEI Cards, TEI Dashboard, Enrollment, And TEI Form", a high-risk, validated flow. Re-validate: dashboard in landscape in `full`, `limited` and `zero` modes, plus the "Edit person" path.
 
+- **The biometrics search placeholder is stored on the TEI** (`SearchRepositoryImpl.saveToEnroll`, `SequentialSearch.finalQueryData`, `BiometricsTEIRegistration`, `HomeRepositoryImpl` init cleanup)
+  - **Problem:** after a biometric search, "Enroll" copies the whole query as attribute values of the new TEI, including the biometrics attribute as `BIOMETRICS_SEARCH_<session>_<uids>`. It is replaced by a real GUID on `register`/`registerLast`, or by a failure placeholder on decline. A TEI saved without registering biometrics keeps it, and can sync to the server. At least 10 places check the placeholder prefixes by hand, and `HomeRepositoryImpl` cleans them up only when Home is created. Simprints reported the placeholder reaching `confirmIdentity` (2026-11-12); `selectedGuidOrNone` in `BiometricsClient` stops it at the exit, not at the source.
+  - **Scope of the problem:** TEIs created through the sequential search, found later as confirm-identity candidates (suspected case, not reproduced: a credential-only match). `saveToEnroll` is an Oslo file, and `BiometricsTEIRegistration` reads the placeholder to get the search session id for "link last biometrics".
+  - **Not decided:** whether and how to stop persisting the placeholder. Options haven't been evaluated or agreed. Needs a real device log (`confirmIdentify` logs `guid: ...`) to confirm how the placeholder arrives.
+  - **Touches:** §2.1 "Biometric Search Integration" and §2.9 "Biometric Duplicate Review And Confirm Identity". Re-validate: biometric search with no match → Enroll → save without registering → search again and confirm identity on that TEI.
+
 ## Explicitly not recommended
 
 Evaluated and rejected — not worth revisiting unless the underlying constraints change.
