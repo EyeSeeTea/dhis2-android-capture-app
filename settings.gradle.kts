@@ -14,7 +14,11 @@ dependencyResolutionManagement {
     @Suppress("UnstableApiUsage")
     repositories {
         mavenLocal()
-        maven("https://central.sonatype.com/repository/maven-snapshots")
+        // EyeSeeTea fix - Sonatype answers 429 to CI runners when it is asked for every release
+        // artifact; query it only for SNAPSHOT versions
+        maven("https://central.sonatype.com/repository/maven-snapshots") {
+            mavenContent { snapshotsOnly() }
+        }
         google()
         mavenCentral()
         maven("https://jitpack.io")
