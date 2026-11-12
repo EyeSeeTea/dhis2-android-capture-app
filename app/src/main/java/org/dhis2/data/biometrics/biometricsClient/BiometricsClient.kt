@@ -13,7 +13,9 @@ import org.dhis2.R
 import org.dhis2.commons.biometrics.BIOMETRICS_CONFIRM_IDENTITY_REQUEST
 import org.dhis2.commons.biometrics.BIOMETRICS_ENROLL_LAST_REQUEST
 import org.dhis2.commons.biometrics.BIOMETRICS_ENROLL_REQUEST
+import org.dhis2.commons.biometrics.BIOMETRICS_FAILURE_PATTERN
 import org.dhis2.commons.biometrics.BIOMETRICS_IDENTIFY_REQUEST
+import org.dhis2.commons.biometrics.BIOMETRICS_SEARCH_PATTERN
 import org.dhis2.commons.biometrics.BIOMETRICS_VERIFY_REQUEST
 import org.dhis2.data.biometrics.biometricsClient.models.BiometricReference
 import org.dhis2.data.biometrics.biometricsClient.models.BiometricTemplate
@@ -54,6 +56,20 @@ private const val SIMPRINTS_VERSION_CODE_KEY = "versionCode"
 private const val SIMPRINTS_VERSION_CODE_VALUE_INITIAL_REWORK = 20250102
 private const val SIMPRINTS_ENROLMENT_KEY = "enrolment"
 private const val SIMPRINTS_SUBJECT_ACTIONS = "subjectActions"
+private const val SIMPRINTS_NONE_SELECTED = "none_selected"
+
+// EyeSeeTea customization - Biometric Duplicate Review And Confirm Identity
+// A biometrics search or failure placeholder left on a TEI, or a missing value, is not a
+// Simprints GUID (it is outside the Simprints spec): none of the candidates was selected.
+internal fun selectedGuidOrNone(guid: String?): String =
+    if (guid.isNullOrBlank() ||
+        guid.startsWith(BIOMETRICS_SEARCH_PATTERN) ||
+        guid.startsWith(BIOMETRICS_FAILURE_PATTERN)
+    ) {
+        SIMPRINTS_NONE_SELECTED
+    } else {
+        guid
+    }
 
 class BiometricsClient(
     projectId: String,
@@ -430,7 +446,7 @@ class BiometricsClient(
     fun confirmIdentify(
         activity: Activity,
         sessionId: String,
-        guid: String,
+        guid: String?,
         trackedEntityInstanceUId: String,
     ) {
         Timber.d("Biometrics confirmIdentify!")
@@ -443,8 +459,9 @@ class BiometricsClient(
                 .put(SIMPRINTS_FORK_VERSION, forkVersion)
                 .put(SIMPRINTS_TRACKED_ENTITY_INSTANCE_ID, trackedEntityInstanceUId)
 
+        // EyeSeeTea customization - Biometric Duplicate Review And Confirm Identity
         val intent =
-            simHelper.confirmIdentity(sessionId, guid).putExtra(
+            simHelper.confirmIdentity(sessionId, selectedGuidOrNone(guid)).putExtra(
                 Constants.SIMPRINTS_METADATA,
                 metadata.toString(),
             )
@@ -455,7 +472,7 @@ class BiometricsClient(
     fun confirmIdentify(
         fragment: Fragment,
         sessionId: String,
-        guid: String,
+        guid: String?,
         trackedEntityInstanceUId: String,
     ) {
         Timber.d("Biometrics confirmIdentify!")
@@ -468,8 +485,9 @@ class BiometricsClient(
                 .put(SIMPRINTS_FORK_VERSION, forkVersion)
                 .put(SIMPRINTS_TRACKED_ENTITY_INSTANCE_ID, trackedEntityInstanceUId)
 
+        // EyeSeeTea customization - Biometric Duplicate Review And Confirm Identity
         val intent =
-            simHelper.confirmIdentity(sessionId, guid).putExtra(
+            simHelper.confirmIdentity(sessionId, selectedGuidOrNone(guid)).putExtra(
                 Constants.SIMPRINTS_METADATA,
                 metadata.toString(),
             )

@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Intent
 import com.google.gson.Gson
 import com.simprints.libsimprints.Constants
+import org.dhis2.commons.biometrics.BIOMETRICS_FAILURE_PATTERN
+import org.dhis2.commons.biometrics.BIOMETRICS_SEARCH_PATTERN
 import org.dhis2.data.biometrics.biometricsClient.models.ConfirmIdentityResult
 import org.dhis2.data.biometrics.biometricsClient.models.IdentifyResult
 import org.dhis2.data.biometrics.biometricsClient.models.RegisterResult
@@ -379,6 +381,28 @@ class BiometricsClientTest {
         val result = client.handleConfirmIdentityResponse(Activity.RESULT_OK, null)
 
         assertEquals(ConfirmIdentityResult.Completed, result)
+    }
+
+    @Test
+    fun `Should confirm identity with the guid when it is a real Simprints guid`() {
+        assertEquals("0d2b3f9e-1c4a-4e6b-9a7d-3f5e8b1c2d4a", selectedGuidOrNone("0d2b3f9e-1c4a-4e6b-9a7d-3f5e8b1c2d4a"))
+    }
+
+    @Test
+    fun `Should confirm identity with none selected when the guid is a biometrics search placeholder`() {
+        assertEquals("none_selected", selectedGuidOrNone("${BIOMETRICS_SEARCH_PATTERN}sessionId_guid1;guid2"))
+    }
+
+    @Test
+    fun `Should confirm identity with none selected when the guid is a biometrics failure placeholder`() {
+        assertEquals("none_selected", selectedGuidOrNone("${BIOMETRICS_FAILURE_PATTERN}_3f1c2d4a"))
+    }
+
+    @Test
+    fun `Should confirm identity with none selected when there is no guid`() {
+        assertEquals("none_selected", selectedGuidOrNone(null))
+        assertEquals("none_selected", selectedGuidOrNone(""))
+        assertEquals("none_selected", selectedGuidOrNone("  "))
     }
 
     private fun givenABiometricsClient(confidenceScoreFilter: Int = 0) =
