@@ -685,7 +685,10 @@ class TeiDataPresenterTest {
             dashboardModel.trackedEntityAttributeValues
         ).thenReturn(
             listOf(
-                TrackedEntityAttributeValue.builder().trackedEntityAttribute("S4eTdBrXPpj")
+                // SDK 1.15.0 requires trackedEntityInstance to build a value
+                TrackedEntityAttributeValue.builder()
+                    .trackedEntityInstance(teiUid)
+                    .trackedEntityAttribute("S4eTdBrXPpj")
                     .value("2023-01-01").build()
             )
         )
