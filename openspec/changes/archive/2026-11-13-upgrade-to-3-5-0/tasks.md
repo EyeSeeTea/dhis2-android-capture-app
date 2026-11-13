@@ -16,7 +16,7 @@ Commit: none. The merge stays uncommitted until section 6 closes, as in 3.4.2.
 - [x] 2.4 Classify §3 files (out-of-scope areas, including `SyncPresenterImpl.kt` and `OpenIdSession.kt`) as `accept_theirs`, after grepping each for `biometric`/`simprints`. Verify the grep results are noted. **Done**: no fork drift and no matches. `SyncPresenterImpl.kt` deleted by Oslo with no Simprints code.
 - [x] 2.5 Classify §4 shared-drift files (`app/build.gradle.kts`, `settings.gradle.kts`, `gradle/libs.versions.toml`) as `defer_after_build_verification`. Verify they are recorded in the notes. **Done**: `libs.versions.toml` conflicted, `app/build.gradle.kts` automerged, `settings.gradle.kts` untouched.
 - [x] 2.6 Classify the remaining conflicted files with the `conflict-rules.md` default rules by path. This covers `.claude/skills/openspec-*` / `.claude/commands/opsx/*` `AA` conflicts as `accept_ours` and new baseline `.claude/` skills as `accept_theirs`. Flag any inventory gap. Verify every conflicted path has a classification. **Done**: no `.claude/` `AA` conflicts. Template conflict is `accept_ours` (B7 rules). Test files are `manual_reapply_on_theirs`.
-- [ ] 2.7 Pause and review the preclassification with the user before resolving anything. Verify with explicit user OK.
+- [x] 2.7 Pause and review the preclassification with the user before resolving anything. Verify with explicit user OK.
 
 ## 3. Resolve easy conflicts
 
@@ -62,7 +62,7 @@ Commit: 6.3 is the merge commit. It contains everything from sections 2–6.
 
 - [x] 6.1 Reconcile the §4 shared-drift build files, doing only what is needed to compile. Migrate Simprints code that breaks on SDK 1.15.0 / Oslo API changes mechanically. Stop and ask the user if a biometrics-needed API disappeared. Verify `./gradlew assembleSimprintsDebug` succeeds. **Done** (2026-10-22): `assembleSimprintsDebug` OK → `dhis2-v3.5.0-simprints-fork-1-feature-simprints-upgrade_3.5.0.apk`.
 - [~] 6.2 Run `./gradlew ktlintCheck` (`ktlintFormat` first if needed). Verify it passes. **Not passing, accepted as pre-existing debt** (user decision 2026-10-22): 1,775 violations in 137 files, none introduced by this merge. Merge-touched lines were verified clean, and 2 `SearchTEIViewModel` conditions were fixed. Restored the baseline `app/src/dhis2/.../GranularSyncModule.kt`, whose only drift was old merge formatting. Debt recorded in `refactors-pending.md`; a separate `style:` commit or PR follows.
-- [ ] 6.3 Commit the merge after the personal reviews (`clean-architecture-code-smells`, `pillar-based-testing`). Verify `git log -1` shows a merge commit with two parents.
+- [x] 6.3 Commit the merge after the personal reviews (`clean-architecture-code-smells`, `pillar-based-testing`). Verify `git log -1` shows a merge commit with two parents.
 
 ## 7. Automerge verification
 
@@ -76,33 +76,33 @@ Commit: one commit, "fix(simprints): recover customizations dropped by 3.5.0 aut
 Commit: one commit for checklist/notes updates.
 
 - [x] 8.1 Clear the kapt/KSP caches, then run `./gradlew testSimprintsDebugUnitTest testAndroidHostTest` and fix regressions in Simprints-specific tests. Verify all tests pass and record the counts in the notes. **Done** (2026-11-12): 1382/1382 pass. 4 failures in `TeiDataPresenterTest` were SDK 1.15.0 requiring `trackedEntityInstance` in the test helper; fixed.
-- [ ] 8.2 Manually validate the flows in `upgrade-validation-checklist.md` on an emulator. Prioritize:
+- [x] 8.2 Manually validate the flows in `upgrade-validation-checklist.md` on an emulator. Prioritize:
   - the high-risk capabilities (#1, #2, #9, #10, #13);
   - priority checks 4.2 and 4.3;
   - login plus metadata sync, which is also the pending Phase 1 check for the eyeseetea baseline.
 
   Verify each flow has a status in the checklist.
-- [ ] 8.3 Retry `connectedSimprintsDebugAndroidTest` once. If it is still blocked by the Room identity-hash mismatch, document it as a carried-forward known issue in the checklist and the PR. Verify the status is recorded.
-- [ ] 8.4 Fix the duplicated panel in the TEI dashboard in landscape, found on the Lenovo tablet during the 8.2 smoke test (2026-11-10). Open the dashboard in portrait, rotate to landscape: the left and right columns both render the TEI data, and the navigation bar keeps the "Details" tab. Opening the dashboard directly in landscape renders correctly (left: TEI data and events; right: Analytics; bar without "Details").
+- [x] 8.3 Retry `connectedSimprintsDebugAndroidTest` once. If it is still blocked by the Room identity-hash mismatch, document it as a carried-forward known issue in the checklist and the PR. Verify the status is recorded. **Skipped by user decision (2026-11-13): not run, carried forward as a known issue in the checklist, the notes and the PR.**
+- [x] 8.4 Fix the duplicated panel in the TEI dashboard in landscape, found on the Lenovo tablet during the 8.2 smoke test (2026-11-10). Open the dashboard in portrait, rotate to landscape: the left and right columns both render the TEI data, and the navigation bar keeps the "Details" tab. Opening the dashboard directly in landscape renders correctly (left: TEI data and events; right: Analytics; bar without "Details").
   - **Cause found:** `DashboardViewModel.loadNavigationBarItems()` adds `DETAILS` only when `isPortrait()` is true at load time. The ViewModel survives the rotation (the activity declares no `configChanges`), so the items are not recomputed and `DETAILS` stays selected, and its fragment renders next to the left column (`tei_main_view`).
   - **Origin:** not a Simprints change. `DashboardViewModel.loadNavigationBarItems()` and `TeiDashboardMobileActivity` match `origin/upstream/3.5.0`, and `develop-simprints@09cad0d3e` had the same `isPortrait()` gating. No earlier fork fix exists: PR #222 (`fix_flickering_issues_on_rotate`) targeted the ViewPager code that Oslo removed in ANDROAPP-6386. The behavior is expected on `develop-eyeseetea` too, but that was not run.
-  - **To decide before coding:** where the fix lands. The code is Oslo's and untouched by the fork, so per `conflict-rules.md` a fix that affects all forks belongs in `develop-eyeseetea` first (with a `// EyeSeeTea fix` comment), then merged here. Confirm with the user.
+  - **Decision (2026-11-13, user):** the fix is applied here as an `// EyeSeeTea fix` (an Oslo regression fix, **not** a customization: not in `customization-files.md`) and is **not** taken to `develop-eyeseetea` until another user reports it. Origin corrected: the stale items come from ANDROAPP-7664 (3.4.1), which moved the load to an `onStart` with `WhileSubscribed(5000L)`; the `isPortrait()` gating dates from ANDROAPP-6386 (3.1.0). Not run on a 3.4.x build. Implemented in `DashboardViewModel.reloadNavigationBarItems()` (drops `DETAILS` in landscape right away, reloads the items, and selects `DETAILS` when coming back to portrait) and `TeiDashboardMobileActivity.removeRestoredDetailsFragmentInLandscape()` (the fragment manager restores the `DETAILS` fragment, which rendered the TEI data twice).
   - Verify on device: rotate portrait → landscape and landscape → portrait on the dashboard of a TEI with and without biometrics. No duplicated panel, and the bar shows the right tabs for each orientation. Then add a rotation step to flow #10 of `upgrade-validation-checklist.md`.
 
 ## 9. Close out
 
 Commit: 9.1–9.5 in one commit, "docs(simprints): close out 3.5.0 upgrade". 9.6 is its own commit, "chore(openspec): archive upgrade-to-3-5-0 change".
 
-- [ ] 9.1 Update `customization-files.md` with the surviving customizations, the new 3.5.0 file locations and any absorbed items. Verify that every §2 entry points at existing files.
-- [ ] 9.2 Update `AGENTS-simprints.md`. Verify:
+- [x] 9.1 Update `customization-files.md` with the surviving customizations, the new 3.5.0 file locations and any absorbed items. Verify that every §2 entry points at existing files.
+- [x] 9.2 Update `AGENTS-simprints.md`. Verify:
   - current version is `3.5.0-simprints-fork-1`;
   - the "Upgrade context" section is refreshed (it still says 3.3.1 → 3.4.1);
   - the key-docs list points at the current notes.
-- [ ] 9.3 Close out `upgrade-3.5.0-notes.md`: progress, finalization section and any new reusable rule proposed for `conflict-rules.md`, such as the flavor-diff check. Verify `Status: closed`.
-- [ ] 9.4 Run `python3 eyeseetea-docs/scripts/check_upgrade_docs.py --client simprints`. Verify only the expected noise remains.
-- [ ] 9.5 Run `npx openspec validate --specs --strict`. Verify 14/14 pass.
-- [ ] 9.6 Archive this change (`openspec/changes/upgrade-to-3-5-0/` → `openspec/changes/archive/<date>-upgrade-to-3-5-0/`). Verify `npx openspec list` no longer shows it as active.
-- [ ] 9.7 Review the CI setup of the forks (problems only, no design agreed; see `upgrade-3.5.0-notes.md` B10-B14): the two workflows (`ci.yml`, `eyeseetea-main.yml`) and their overlap, the Sonatype 429 fix that still has to go to `develop-eyeseetea`, B8 still missing in the baseline, the per-fork flavor line, and the rule that customization tests must not assume the Simprints flavor (candidate for `AGENTS-simprints.md`). Verify the decisions are recorded in the notes.
+- [x] 9.3 Close out `upgrade-3.5.0-notes.md`: progress, finalization section and any new reusable rule proposed for `conflict-rules.md`, such as the flavor-diff check. Verify `Status: closed`.
+- [x] 9.4 Run `python3 eyeseetea-docs/scripts/check_upgrade_docs.py --client simprints`. Verify only the expected noise remains.
+- [x] 9.5 Run `npx openspec validate --specs --strict`. Verify 14/14 pass.
+- [x] 9.6 Archive this change (`openspec/changes/upgrade-to-3-5-0/` → `openspec/changes/archive/<date>-upgrade-to-3-5-0/`). Verify `npx openspec list` no longer shows it as active.
+- [x] 9.7 Review the CI setup of the forks (problems only, no design agreed; see `upgrade-3.5.0-notes.md` B10-B14): the two workflows (`ci.yml`, `eyeseetea-main.yml`) and their overlap, the Sonatype 429 fix that still has to go to `develop-eyeseetea`, B8 still missing in the baseline, the per-fork flavor line, and the rule that customization tests must not assume the Simprints flavor (candidate for `AGENTS-simprints.md`). Verify the decisions are recorded in the notes.
 
 ## 10. Pull request
 
