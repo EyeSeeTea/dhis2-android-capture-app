@@ -569,4 +569,35 @@ class DashboardViewModel(
             )
         }
     }
+
+    // EyeSeeTea fix - Dashboard duplicated panel after rotating to landscape (Oslo ANDROAPP-7664, introduced 3.4.1)
+    // The items depend on the orientation but the ViewModel survives the rotation and
+    // navigationBarUIState keeps its upstream alive for 5 s, so onStart does not run again.
+    fun reloadNavigationBarItems() {
+        // Landscape has no DETAILS item: if the current items lack it, we come from landscape.
+        val comesFromLandscape =
+            _navigationBarUIState.value.items
+                .let { items -> items.isNotEmpty() && items.none { it.id == TEIDashboardItems.DETAILS } }
+        // The stale state would be composed first: drop DETAILS right away, then reload.
+        if (!isPortrait()) dropDetailsFromNavigationBar()
+        viewModelScope.launch {
+            loadNavigationBarItems()
+            if (isPortrait() && comesFromLandscape) onNavigationItemSelected(TEIDashboardItems.DETAILS)
+        }
+    }
+
+    private fun dropDetailsFromNavigationBar() {
+        _navigationBarUIState.update { state ->
+            val items = state.items.filter { it.id != TEIDashboardItems.DETAILS }
+            state.copy(
+                items = items,
+                selectedItem =
+                    if (state.selectedItem == TEIDashboardItems.DETAILS) {
+                        items.firstOrNull()?.id
+                    } else {
+                        state.selectedItem
+                    },
+            )
+        }
+    }
 }

@@ -217,6 +217,9 @@ class TeiDashboardMobileActivity :
         observeProgressBar()
         observeDashboardModel()
         setUpNavigationBar()
+        // EyeSeeTea fix - Dashboard duplicated panel after rotating to landscape (Oslo ANDROAPP-7664, introduced 3.4.1)
+        dashboardViewModel.reloadNavigationBarItems()
+        removeRestoredDetailsFragmentInLandscape()
         showLoadingProgress(false)
         setupMoreOptionsMenu()
     }
@@ -890,6 +893,20 @@ class TeiDashboardMobileActivity :
                     EnrollmentMenuItem.DELETE -> showDeleteTEIConfirmationDialog()
                     EnrollmentMenuItem.REMOVE -> showRemoveEnrollmentConfirmationDialog()
                 }
+            }
+        }
+    }
+
+    // EyeSeeTea fix - Dashboard duplicated panel after rotating to landscape (Oslo ANDROAPP-7664, introduced 3.4.1)
+    // The fragment manager restores the DETAILS fragment in fragmentContainer; in landscape the left
+    // column already shows the TEI data, so it would render twice until the navigation moves away.
+    private fun removeRestoredDetailsFragmentInLandscape() {
+        if (isLandscape()) {
+            supportFragmentManager.findFragmentByTag(TEIDashboardItems.DETAILS.name)?.let {
+                supportFragmentManager
+                    .beginTransaction()
+                    .remove(it)
+                    .commitNowAllowingStateLoss()
             }
         }
     }
