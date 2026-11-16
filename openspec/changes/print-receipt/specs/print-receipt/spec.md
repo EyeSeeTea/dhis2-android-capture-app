@@ -39,7 +39,14 @@ The system SHALL render the receipt as an image sized for the printer roll so th
 
 #### Scenario: Receipt fits the roll
 - **WHEN** a receipt is rendered
-- **THEN** its width matches the printable width of the printer roll
+- **THEN** its width matches the printable width of the 57 mm printer roll
+
+### Requirement: Receipt designed for 57 mm paper
+The system SHALL lay out the receipt for 57 mm wide thermal paper, both in the plain-text first version and in the bitmap version.
+
+#### Scenario: Plain-text lines fit the roll
+- **WHEN** a receipt is formatted as plain text
+- **THEN** no line is longer than the characters per line allowed by the 57 mm roll
 
 ### Requirement: One receipt per press, unlimited reprints
 The system SHALL print one receipt per press and SHALL allow printing the same event again any number of times once the previous print has finished.

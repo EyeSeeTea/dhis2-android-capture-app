@@ -59,11 +59,12 @@ Commit: one commit per behavior (test + minimal implementation). Do not start be
 - [x] 5.5b Replace `rationCardId` by the SPBH ID (`SPBH - Unique Identifier`, the ID printed on the ration card) in `Receipt`, `ReceiptMetadata`, `D2ReceiptRepository` and `D2ReceiptRepositoryTest`: the client dropped the separate Ration Card ID. Attribute UID `DjPrtej5I1x`, confirmed on 8380 (2026-11-11)
 - [x] 5.8b Adapt `ReceiptFormatter` (and its test) from the generic lines to the header and the items, as the plain-text format sent to the printer; then remove the generic `lines`
 - [ ] 5.8c Demo for Ramón: show him examples of the receipt as a video or image of the form plus how it would print, taken from the development printer log. In the plain-text log the logo position shows a `[SP LOGO]` placeholder and the signature position shows the signature as logged. Needs the development printer (`FakeReceiptPrinter`) to log the header, items, logo placeholder and signature position. Purpose: let Ramón and the client decide plain text vs bitmap with a concrete example
+- [ ] 5.8d Test: the plain-text lines fit the 57 mm roll (no line longer than the characters per line, long labels wrap). The width is to confirm from the RJ-2055WB specification and a test on the real printer font. Client data 2026-11-16: 57 mm thermal paper, 30 mm maximum outer diameter
 - [ ] 5.8 Implement `Receipt` (header, optional signature, item lines) and `D2ReceiptRepository` reading TEI attributes and event data values for `eventUid`. Header done with 5.5 (`Receipt.distributionName`/`rationCardId`/`beneficiaryName`, `ReceiptMetadata`, TEI attributes); item lines done with 5.6 (`Receipt.items`); the generic `lines` and `ReceiptLine` were removed with 5.8b; signature pending. The receipt rules (items by code `sp_DIST_*_GIVEN`, name from the `_DESC` sibling) stay in `D2ReceiptRepository`: they depend on the DHIS2 metadata, so they are not moved to the domain. The blank checks on values are defensive (DHIS2 does not store empty values); remove them if 8380 confirms that blank values never arrive
 
 ### Image (deferred: first version in plain text)
 The client prefers a first version in plain text and will decide, depending on the hours available, whether to move to a bitmap with the signature and the logo. Until then 5.9-5.12 are not scheduled, and the plain-text `ReceiptFormatter` stays as the way to send the receipt (see 5.8b).
-- [ ] 5.9 Test: the receipt is rendered as a bitmap of the printable width of the roll (about 384 dots)
+- [ ] 5.9 Test: the receipt is rendered as a bitmap of the printable width of the 57 mm roll (width to confirm from the RJ-2055WB specification; the earlier 384 dots assumed a 58 mm roll)
 - [ ] 5.10 Implement `ReceiptRenderer` (header, items, logo, signature)
 - [ ] 5.11 Test: the signature image is included when the event has one, and the receipt still prints when it has none (no signature: the receipt is printed anyway, confirmed 2026-11-11; deferred with the bitmap); implement signature reading through the SDK file resource
 - [ ] 5.12 Add the SP logo asset (deferred with the bitmap; logo file from the client)
@@ -80,7 +81,8 @@ The client prefers a first version in plain text and will decide, depending on t
 - [ ] Real Brother `ReceiptPrinter`: look among paired printers and connect (one per tablet), send the bitmap, report `NoPrinterConnected`/`PrintFailed`
   - Turn `PrintReceiptError.PrintFailed` into a class that carries the original cause (`PrintFailed(cause)`): as a singleton its stack trace is captured at class load.
 - [ ] Bluetooth permissions: `BLUETOOTH`/`BLUETOOTH_ADMIN` in the spIP manifest (check what `main` declares) and the runtime flow for `BLUETOOTH_CONNECT`/`BLUETOOTH_SCAN` on Android 12+ (flow testable on an API 31+ emulator; real behaviour needs a physical tablet)
-- [ ] Re-estimate once the Brother unit arrives (the September estimate assumed a Zebra and plain text)
+- [ ] Re-estimate once the Brother unit arrives (the September estimate assumed a Zebra and plain text); the paper is 57 mm wide
 - [x] Restrict the menu option to the Distribution stage of Beneficiary Hub (done with `isPrintReceiptAvailable`; the client confirmed the production UIDs are the same as on 8380)
 - [ ] Printer firmware/paper configuration identical across production printers (operational, with the client)
+- [ ] Test the generic "57 x 30 mm" rolls (local option) against the Brother Economy RD001U5V2 used for the first tests
 - [ ] Validate product texts with the client (`receipt_no_printer_connected`, `receipt_print_failed`)

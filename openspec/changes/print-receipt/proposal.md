@@ -2,7 +2,7 @@
 
 The SP IP programme distributes goods to households and hands the beneficiary a printed receipt of what was delivered. The receipt is printed from the **Distribution** event the user is viewing (Beneficiary Hub programme), offline, over Bluetooth, from the Android app. Staff who need another copy reprint it; there is no limit on reprints.
 
-The client confirmed the scope on 2026-11-04/06 (Ramón Jiménez): trigger, event selection, content, copies, printer model and the "Receipt Printed" flag. Printer model is the Brother RJ-2055WB (a unit will be sent to us). Until it arrives, the flow is exercised end to end with a development printer behind the `ReceiptPrinter` port.
+The client confirmed the scope on 2026-11-04/06 (Ramón Jiménez): trigger, event selection, content, copies, printer model and the "Receipt Printed" flag. Printer model is the Brother RJ-2055WB (a unit will be sent to us), printing on 57 mm wide thermal rolls (30 mm maximum outer diameter; Brother Economy RD001U5V2 for the first tests, generic "57 x 30 mm" rolls to be tested as a local option). The receipt is designed for 57 mm paper. Until it arrives, the flow is exercised end to end with a development printer behind the `ReceiptPrinter` port.
 
 ## What Changes
 
@@ -56,6 +56,7 @@ UIDs are for the test server; production UIDs must be confirmed before release. 
 - **Distribution point**: the Distribution stage has no data element for it. Provisional assumption: the name of the event's organisation unit. To confirm.
 - **Date & timestamp**: printing moment or the event's "Distribution date"? They differ on a reprint. To confirm.
 - **Empty signature**: print the receipt anyway (assumed) or block?
-- Logo file for the SP logo (black and white, at most 384 px wide for the 58 mm roll).
+- Logo file for the SP logo (black and white). Its maximum width depends on the printable width of the 57 mm roll, to confirm from the RJ-2055WB specification (the earlier 384 px figure assumed a 58 mm roll).
+- Printable width of the 57 mm paper and characters per line for the plain-text receipt (from the RJ-2055WB specification and a test on the real printer).
 - Production tablets' Android version and model (Ramón doubts it is Android 8; the test tablet is Android 8).
 - Production metadata UIDs and the final production server.
