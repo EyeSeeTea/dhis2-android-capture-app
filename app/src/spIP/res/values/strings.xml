@@ -4,6 +4,13 @@
     <string name="logo_text">"Samaritan's Purse International Projects"</string>
     <string name="logo_number"></string>
     <string name="open_details">%s Registration Details</string>
+    <string name="receipt_menu_print">Print receipt</string>
+    <string name="receipt_printing">Printing receipt…</string>
+    <string name="receipt_printed">Receipt printed</string>
+    <string name="receipt_no_receipt_available">There is nothing to print for this beneficiary. Complete an event and try again.</string>
+    <string name="receipt_no_printer_connected">No printer is connected. Connect a printer in the device Bluetooth settings and try again.</string>
+    <string name="receipt_print_failed">The receipt could not be printed. Check the printer and try again.</string>
+    <string name="receipt_error_accept">Accept</string>
     <string name="send_sms">Send Welcome SMS</string>
     <string name="sent_sms_successfully">The Welcome SMS was sent successfully</string>
     <string name="sent_sms_using_en_successfully">The translated Welcome SMS for %s was unavailable, so the English version was used. The Welcome SMS was sent successfully</string>    <string name="sent_sms_error">There was an error sending the Welcome SMS</string>
