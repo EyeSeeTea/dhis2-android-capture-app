@@ -30,7 +30,7 @@ class D2ReceiptRepository(
                         value = dataValue.userFriendlyValue(d2) ?: return@mapNotNull null,
                     )
                 }
-            val items = dataValues.mapNotNull { dataValue -> toItem(dataValue) }
+            val items = dataValues.mapNotNull { dataValue -> toItem(dataValue, dataValues) }
             val teiUid = trackedEntityInstanceUid(eventUid)
             val receipt = Receipt(
                 lines = lines,
@@ -45,16 +45,27 @@ class D2ReceiptRepository(
         }
 
     // An item given is a data element whose code is sp_DIST_<ITEM>_GIVEN; only the ones with a value are printed.
-    private fun toItem(dataValue: TrackedEntityDataValue): ReceiptItem? {
+    private fun toItem(dataValue: TrackedEntityDataValue, dataValues: List<TrackedEntityDataValue>): ReceiptItem? {
         if (dataValue.value().isNullOrBlank()) return null
         val dataElement = dataValue.dataElement()
             ?.let { d2.dataElementModule().dataElements().uid(it).blockingGet() }
             ?: return null
         if (dataElement.code()?.matches(ITEM_GIVEN_CODE) != true) return null
         return ReceiptItem(
-            label = dataElement.displayFormName() ?: dataElement.displayName() ?: dataElement.uid(),
+            label = assignedName(dataElement.code(), dataValues)
+                ?: dataElement.displayFormName() ?: dataElement.displayName() ?: dataElement.uid(),
             quantity = dataValue.userFriendlyValue(d2) ?: return null,
         )
+    }
+
+    // A free-text slot (sp_DIST_OTHER_FOOD_N_GIVEN) has its name in the sibling sp_DIST_OTHER_FOOD_N_DESC data element.
+    private fun assignedName(givenCode: String?, dataValues: List<TrackedEntityDataValue>): String? {
+        val descriptionCode = givenCode?.removeSuffix("_GIVEN")?.plus("_DESC") ?: return null
+        return dataValues.firstOrNull { dataValue ->
+            dataValue.dataElement()
+                ?.let { d2.dataElementModule().dataElements().uid(it).blockingGet() }
+                ?.code() == descriptionCode
+        }?.value()?.takeUnless { it.isBlank() }
     }
 
     private fun trackedEntityInstanceUid(eventUid: String): String? {

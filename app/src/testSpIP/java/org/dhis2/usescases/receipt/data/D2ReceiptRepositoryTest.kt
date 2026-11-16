@@ -63,9 +63,101 @@ class D2ReceiptRepositoryTest {
         )
     }
 
+    @Test
+    fun `an other food slot is listed with the name assigned in the event as its label`() = runTest {
+        givenAnEventWithDataValues(
+            eventUid = EVENT_UID,
+            dataValues = givenAnOtherSlot(kind = "FOOD", number = 1, description = "Dates", quantity = "3"),
+        )
+        val repository = givenAReceiptRepository()
+
+        val receipt = repository.getReceipt(EVENT_UID)
+
+        assertEquals(listOf(ReceiptItem(label = "Dates", quantity = "3")), receipt?.items)
+    }
+
+    @Test
+    fun `an other item slot is listed with the name assigned in the event as its label`() = runTest {
+        givenAnEventWithDataValues(
+            eventUid = EVENT_UID,
+            dataValues = givenAnOtherSlot(kind = "ITEM", number = 2, description = "Blankets", quantity = "4"),
+        )
+        val repository = givenAReceiptRepository()
+
+        val receipt = repository.getReceipt(EVENT_UID)
+
+        assertEquals(listOf(ReceiptItem(label = "Blankets", quantity = "4")), receipt?.items)
+    }
+
+    @Test
+    fun `each other slot takes the name of its own description`() = runTest {
+        givenAnEventWithDataValues(
+            eventUid = EVENT_UID,
+            dataValues = givenAnOtherSlot(kind = "FOOD", number = 1, description = "Dates", quantity = "3") +
+                givenAnOtherSlot(kind = "FOOD", number = 2, description = "Lentils", quantity = "5") +
+                givenAnOtherSlot(kind = "ITEM", number = 1, description = "Blankets", quantity = "4"),
+        )
+        val repository = givenAReceiptRepository()
+
+        val receipt = repository.getReceipt(EVENT_UID)
+
+        assertEquals(
+            listOf(
+                ReceiptItem(label = "Dates", quantity = "3"),
+                ReceiptItem(label = "Lentils", quantity = "5"),
+                ReceiptItem(label = "Blankets", quantity = "4"),
+            ),
+            receipt?.items,
+        )
+    }
+
+    @Test
+    fun `an other slot with a quantity but no description is listed with its generic label`() = runTest {
+        givenAnEventWithDataValues(
+            eventUid = EVENT_UID,
+            dataValues = givenAnOtherSlot(kind = "FOOD", number = 1, description = null, quantity = "3"),
+        )
+        val repository = givenAReceiptRepository()
+
+        val receipt = repository.getReceipt(EVENT_UID)
+
+        assertEquals(listOf(ReceiptItem(label = "Other food 1 given", quantity = "3")), receipt?.items)
+    }
+
+    @Test
+    fun `an other slot with a description but no quantity is omitted and its description is not listed as an item`() = runTest {
+        givenAnEventWithDataValues(
+            eventUid = EVENT_UID,
+            dataValues = listOf(givenADataValue(code = "sp_DIST_RICE_GIVEN", label = "Rice (kg) given", value = "5")) +
+                givenAnOtherSlot(kind = "FOOD", number = 1, description = "Dates", quantity = null),
+        )
+        val repository = givenAReceiptRepository()
+
+        val receipt = repository.getReceipt(EVENT_UID)
+
+        assertEquals(listOf(ReceiptItem(label = "Rice (kg) given", quantity = "5")), receipt?.items)
+    }
+
+    // DHIS2 does not store an empty value: a missing description or quantity is a data value that does not exist.
+    private fun givenAnOtherSlot(kind: String, number: Int, description: String?, quantity: String?): List<DataValueFixture> {
+        val prefix = "sp_DIST_OTHER_${kind}_$number"
+        val slot = kind.lowercase()
+        return listOfNotNull(
+            description?.let {
+                givenADataValue(code = "${prefix}_DESC", label = "Other $slot $number description", value = it, valueType = ValueType.TEXT)
+            },
+            quantity?.let { givenADataValue(code = "${prefix}_GIVEN", label = "Other $slot $number given", value = it) },
+        )
+    }
+
     private class DataValueFixture(val dataValue: TrackedEntityDataValue, val dataElement: DataElement)
 
-    private fun givenADataValue(code: String, label: String, value: String): DataValueFixture {
+    private fun givenADataValue(
+        code: String,
+        label: String,
+        value: String,
+        valueType: ValueType = ValueType.INTEGER_POSITIVE,
+    ): DataValueFixture {
         val dataElementUid = "DE_$code"
         return DataValueFixture(
             dataValue = TrackedEntityDataValue.builder().event(EVENT_UID).dataElement(dataElementUid).value(value).build(),
@@ -73,7 +165,7 @@ class D2ReceiptRepositoryTest {
                 .uid(dataElementUid)
                 .code(code)
                 .displayFormName(label)
-                .valueType(ValueType.INTEGER_POSITIVE)
+                .valueType(valueType)
                 .build(),
         )
     }
