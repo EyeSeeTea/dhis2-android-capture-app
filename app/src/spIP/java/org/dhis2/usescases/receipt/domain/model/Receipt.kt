@@ -1,9 +1,8 @@
 package org.dhis2.usescases.receipt.domain.model
 
-// Draft: the lines are expected to change once the client confirms the receipt layout.
+// Draft: the content is expected to change once the client confirms the receipt layout.
 // A header value is null when the event or the entity has no value for it.
 data class Receipt(
-    val lines: List<ReceiptLine>,
     val items: List<ReceiptItem> = emptyList(),
     val distributionName: String? = null,
     val spbhId: String? = null,

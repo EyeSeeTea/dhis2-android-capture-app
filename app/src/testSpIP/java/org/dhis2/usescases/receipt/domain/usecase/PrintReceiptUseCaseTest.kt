@@ -3,7 +3,7 @@ package org.dhis2.usescases.receipt.domain.usecase
 import kotlinx.coroutines.test.runTest
 import org.dhis2.usescases.receipt.domain.model.PrintReceiptError
 import org.dhis2.usescases.receipt.domain.model.Receipt
-import org.dhis2.usescases.receipt.domain.model.ReceiptLine
+import org.dhis2.usescases.receipt.domain.model.ReceiptItem
 import org.dhis2.usescases.receipt.domain.repository.ReceiptPrinter
 import org.dhis2.usescases.receipt.domain.repository.ReceiptRepository
 import org.eyeseetea.functional.Either
@@ -64,10 +64,8 @@ class PrintReceiptUseCaseTest {
 
     private suspend fun givenAReceiptForEvent(eventUid: String): Receipt {
         val receipt = Receipt(
-            lines = listOf(
-                ReceiptLine(label = "Distribution point", value = "Point A"),
-                ReceiptLine(label = "Household size", value = "5"),
-            ),
+            distributionName = "TEST Distribution 1",
+            items = listOf(ReceiptItem(label = "Rice (kg) given", quantity = "5")),
         )
         whenever(receiptRepository.getReceipt(eventUid)).thenReturn(receipt)
         return receipt

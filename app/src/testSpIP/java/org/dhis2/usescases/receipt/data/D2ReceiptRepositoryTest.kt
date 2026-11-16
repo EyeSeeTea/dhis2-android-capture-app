@@ -208,7 +208,7 @@ class D2ReceiptRepositoryTest {
         givenAnAttributeValue(BENEFICIARY_NAME_ATTRIBUTE_UID, beneficiaryName)
     }
 
-    // The repository still lists every data value of the event (generic lines, replaced by tasks 5.6-5.8).
+    // The repository reads the data values of the event to pick the items given: this event has none.
     private fun givenNoDataValuesToList(eventUid: String) {
         whenever(d2.trackedEntityModule().trackedEntityDataValues().byEvent()) doReturn mock()
         whenever(d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(eventUid)) doReturn mock()

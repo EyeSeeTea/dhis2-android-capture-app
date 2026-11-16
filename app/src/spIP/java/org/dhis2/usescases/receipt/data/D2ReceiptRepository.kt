@@ -5,7 +5,6 @@ import kotlinx.coroutines.withContext
 import org.dhis2.commons.bindings.userFriendlyValue
 import org.dhis2.usescases.receipt.domain.model.Receipt
 import org.dhis2.usescases.receipt.domain.model.ReceiptItem
-import org.dhis2.usescases.receipt.domain.model.ReceiptLine
 import org.dhis2.usescases.receipt.domain.repository.ReceiptRepository
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValue
@@ -20,20 +19,9 @@ class D2ReceiptRepository(
             val dataValues = d2.trackedEntityModule().trackedEntityDataValues()
                 .byEvent().eq(eventUid)
                 .blockingGet()
-            val lines = dataValues
-                .mapNotNull { dataValue ->
-                    val dataElementUid = dataValue.dataElement() ?: return@mapNotNull null
-                    val dataElement = d2.dataElementModule().dataElements()
-                        .uid(dataElementUid).blockingGet()
-                    ReceiptLine(
-                        label = dataElement?.displayFormName() ?: dataElement?.displayName() ?: dataElementUid,
-                        value = dataValue.userFriendlyValue(d2) ?: return@mapNotNull null,
-                    )
-                }
             val items = dataValues.mapNotNull { dataValue -> toItem(dataValue, dataValues) }
             val teiUid = trackedEntityInstanceUid(eventUid)
             val receipt = Receipt(
-                lines = lines,
                 items = items,
                 distributionName = d2.trackedEntityModule().trackedEntityDataValues()
                     .value(eventUid, metadata.distributionDataElementUid).blockingGet()
@@ -80,7 +68,7 @@ class D2ReceiptRepository(
         }
 
     private fun Receipt.isEmpty() =
-        lines.isEmpty() && items.isEmpty() && distributionName == null && spbhId == null && beneficiaryName == null
+        items.isEmpty() && distributionName == null && spbhId == null && beneficiaryName == null
 
     private companion object {
         val ITEM_GIVEN_CODE = Regex("sp_DIST_.+_GIVEN")
