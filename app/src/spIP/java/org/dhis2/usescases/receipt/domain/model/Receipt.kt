@@ -1,5 +1,7 @@
 package org.dhis2.usescases.receipt.domain.model
 
+import java.util.Date
+
 // Draft: the content is expected to change once the client confirms the receipt layout.
 // A header value is null when the event or the entity has no value for it.
 data class Receipt(
@@ -7,4 +9,7 @@ data class Receipt(
     val distributionName: String? = null,
     val spbhId: String? = null,
     val beneficiaryName: String? = null,
+    val distributionPoint: String? = null,
+    val distributionDate: Date? = null,
+    val printedOn: Date? = null,
 )

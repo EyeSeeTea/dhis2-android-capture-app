@@ -1,6 +1,7 @@
 package org.dhis2.usescases.receipt.data
 
 import kotlinx.coroutines.test.runTest
+import java.util.Date
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.common.ObjectWithUid
 import org.hisp.dhis.android.core.common.ValueType
@@ -8,6 +9,7 @@ import org.hisp.dhis.android.core.dataelement.DataElement
 import org.hisp.dhis.android.core.enrollment.Enrollment
 import org.hisp.dhis.android.core.event.Event
 import org.hisp.dhis.android.core.option.Option
+import org.hisp.dhis.android.core.organisationunit.OrganisationUnit
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttribute
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttributeValue
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValue
@@ -150,6 +152,29 @@ class D2ReceiptRepositoryTest {
         )
     }
 
+    @Test
+    fun `the receipt shows the name of the organisation unit of the event as the distribution point`() = runTest {
+        givenAnEventInOrgUnit(eventUid = EVENT_UID, orgUnitUid = "ORG_UNIT_UID", orgUnitName = "Gethy distribution point")
+        givenAnEventWithDataValues(eventUid = EVENT_UID, dataValues = emptyList())
+        val repository = givenAReceiptRepository()
+
+        val receipt = repository.getReceipt(EVENT_UID)
+
+        assertEquals("Gethy distribution point", receipt?.distributionPoint)
+    }
+
+    @Test
+    fun `the receipt shows the date of the event as the distribution date`() = runTest {
+        val eventDate = Date(1_763_251_200_000L)
+        givenAnEventOnDate(eventUid = EVENT_UID, eventDate = eventDate)
+        givenAnEventWithDataValues(eventUid = EVENT_UID, dataValues = emptyList())
+        val repository = givenAReceiptRepository()
+
+        val receipt = repository.getReceipt(EVENT_UID)
+
+        assertEquals(eventDate, receipt?.distributionDate)
+    }
+
     private class DataValueFixture(val dataValue: TrackedEntityDataValue, val dataElement: DataElement)
 
     private fun givenADataValue(
@@ -168,6 +193,18 @@ class D2ReceiptRepositoryTest {
                 .valueType(valueType)
                 .build(),
         )
+    }
+
+    private fun givenAnEventInOrgUnit(eventUid: String, orgUnitUid: String, orgUnitName: String) {
+        whenever(d2.eventModule().events().uid(eventUid).blockingGet()) doReturn
+            Event.builder().uid(eventUid).organisationUnit(orgUnitUid).build()
+        whenever(d2.organisationUnitModule().organisationUnits().uid(orgUnitUid).blockingGet()) doReturn
+            OrganisationUnit.builder().uid(orgUnitUid).displayName(orgUnitName).build()
+    }
+
+    private fun givenAnEventOnDate(eventUid: String, eventDate: Date) {
+        whenever(d2.eventModule().events().uid(eventUid).blockingGet()) doReturn
+            Event.builder().uid(eventUid).eventDate(eventDate).build()
     }
 
     private fun givenAnEventWithDataValues(eventUid: String, dataValues: List<DataValueFixture>) {

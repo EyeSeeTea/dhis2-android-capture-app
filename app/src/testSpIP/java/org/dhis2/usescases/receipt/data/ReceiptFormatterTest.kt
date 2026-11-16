@@ -4,6 +4,7 @@ import org.dhis2.usescases.receipt.domain.model.Receipt
 import org.dhis2.usescases.receipt.domain.model.ReceiptItem
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.text.SimpleDateFormat
 
 class ReceiptFormatterTest {
 
@@ -47,6 +48,51 @@ class ReceiptFormatterTest {
 
         assertEquals(
             listOf("Distribution: TEST Distribution 1", "", "Rice (kg) given: 5"),
+            formatted,
+        )
+    }
+
+    @Test
+    fun `the formatted receipt shows the distribution point in the header`() {
+        val receipt = Receipt(
+            distributionPoint = "Gethy distribution point",
+            items = listOf(ReceiptItem(label = "Rice (kg) given", quantity = "5")),
+        )
+
+        val formatted = ReceiptFormatter().format(receipt)
+
+        assertEquals(
+            listOf("Distribution point: Gethy distribution point", "", "Rice (kg) given: 5"),
+            formatted,
+        )
+    }
+
+    @Test
+    fun `the formatted receipt shows the distribution date as year, month and day`() {
+        val receipt = Receipt(
+            distributionDate = SimpleDateFormat("yyyy-MM-dd").parse("2026-11-16"),
+            items = listOf(ReceiptItem(label = "Rice (kg) given", quantity = "5")),
+        )
+
+        val formatted = ReceiptFormatter().format(receipt)
+
+        assertEquals(
+            listOf("Distribution date: 2026-11-16", "", "Rice (kg) given: 5"),
+            formatted,
+        )
+    }
+
+    @Test
+    fun `the formatted receipt shows the date and time of the print`() {
+        val receipt = Receipt(
+            printedOn = SimpleDateFormat("yyyy-MM-dd HH:mm").parse("2026-11-16 11:45"),
+            items = listOf(ReceiptItem(label = "Rice (kg) given", quantity = "5")),
+        )
+
+        val formatted = ReceiptFormatter().format(receipt)
+
+        assertEquals(
+            listOf("Receipt printed on: 2026-11-16 11:45", "", "Rice (kg) given: 5"),
             formatted,
         )
     }

@@ -12,6 +12,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import java.util.Date
 
 class PrintReceiptUseCaseTest {
 
@@ -21,12 +22,25 @@ class PrintReceiptUseCaseTest {
     @Test
     fun `printing a receipt sends it to the printer and succeeds`() = runTest {
         val receipt = givenAReceiptForEvent("EVENT_UID")
-        val useCase = givenAPrintReceiptUseCase()
+        val printTime = Date(1_000L)
+        val useCase = givenAPrintReceiptUseCase(now = { printTime })
 
         val result = useCase(eventUid = "EVENT_UID")
 
         assertEquals(Either.Right(Unit), result)
-        assertEquals(listOf(receipt), printer.printed)
+        assertEquals(listOf(receipt.copy(printedOn = printTime)), printer.printed)
+    }
+
+    @Test
+    fun `each print stamps the receipt with the time of that print so a reprint shows its own time`() = runTest {
+        givenAReceiptForEvent("EVENT_UID")
+        val printTimes = ArrayDeque(listOf(Date(1_000L), Date(2_000L)))
+        val useCase = givenAPrintReceiptUseCase(now = { printTimes.removeFirst() })
+
+        useCase(eventUid = "EVENT_UID")
+        useCase(eventUid = "EVENT_UID")
+
+        assertEquals(listOf(Date(1_000L), Date(2_000L)), printer.printed.map { it.printedOn })
     }
 
     @Test
@@ -83,7 +97,8 @@ class PrintReceiptUseCaseTest {
         printer.failWith(PrintReceiptError.PrintFailed)
     }
 
-    private fun givenAPrintReceiptUseCase() = PrintReceiptUseCase(receiptRepository, printer)
+    private fun givenAPrintReceiptUseCase(now: () -> Date = { Date(0L) }) =
+        PrintReceiptUseCase(receiptRepository, printer, now)
 
     private class FakePrinter : ReceiptPrinter {
         val printed = mutableListOf<Receipt>()

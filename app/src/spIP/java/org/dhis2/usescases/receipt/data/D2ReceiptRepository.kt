@@ -7,6 +7,7 @@ import org.dhis2.usescases.receipt.domain.model.Receipt
 import org.dhis2.usescases.receipt.domain.model.ReceiptItem
 import org.dhis2.usescases.receipt.domain.repository.ReceiptRepository
 import org.hisp.dhis.android.core.D2
+import org.hisp.dhis.android.core.event.Event
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValue
 
 class D2ReceiptRepository(
@@ -20,7 +21,8 @@ class D2ReceiptRepository(
                 .byEvent().eq(eventUid)
                 .blockingGet()
             val items = dataValues.mapNotNull { dataValue -> toItem(dataValue, dataValues) }
-            val teiUid = trackedEntityInstanceUid(eventUid)
+            val event = d2.eventModule().events().uid(eventUid).blockingGet()
+            val teiUid = trackedEntityInstanceUid(event)
             val receipt = Receipt(
                 items = items,
                 distributionName = d2.trackedEntityModule().trackedEntityDataValues()
@@ -28,6 +30,8 @@ class D2ReceiptRepository(
                     .userFriendlyValue(d2),
                 spbhId = attributeValue(teiUid, metadata.spbhIdAttributeUid),
                 beneficiaryName = attributeValue(teiUid, metadata.beneficiaryNameAttributeUid),
+                distributionPoint = distributionPoint(event),
+                distributionDate = event?.eventDate(),
             )
             receipt.takeUnless { it.isEmpty() }
         }
@@ -56,8 +60,14 @@ class D2ReceiptRepository(
         }?.value()?.takeUnless { it.isBlank() }
     }
 
-    private fun trackedEntityInstanceUid(eventUid: String): String? {
-        val enrollmentUid = d2.eventModule().events().uid(eventUid).blockingGet()?.enrollment() ?: return null
+    // The distribution point is the organisation unit of the event (to confirm with the client).
+    private fun distributionPoint(event: Event?): String? {
+        val orgUnitUid = event?.organisationUnit() ?: return null
+        return d2.organisationUnitModule().organisationUnits().uid(orgUnitUid).blockingGet()?.displayName()
+    }
+
+    private fun trackedEntityInstanceUid(event: Event?): String? {
+        val enrollmentUid = event?.enrollment() ?: return null
         return d2.enrollmentModule().enrollments().uid(enrollmentUid).blockingGet()?.trackedEntityInstance()
     }
 
@@ -68,7 +78,7 @@ class D2ReceiptRepository(
         }
 
     private fun Receipt.isEmpty() =
-        items.isEmpty() && distributionName == null && spbhId == null && beneficiaryName == null
+        items.isEmpty() && distributionName == null && spbhId == null && beneficiaryName == null && distributionPoint == null && distributionDate == null
 
     private companion object {
         val ITEM_GIVEN_CODE = Regex("sp_DIST_.+_GIVEN")
