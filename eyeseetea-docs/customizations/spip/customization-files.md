@@ -60,6 +60,7 @@ Main implementation points (Oslo files touched, each marked `// EyeSeeTea custom
 
 Supporting files in the same workflow (all new, flavor-only):
 - `app/src/spIP/java/org/dhis2/usescases/receipt/ReceiptServiceLocator.kt`
+- `app/src/spIP/java/org/dhis2/usescases/receipt/domain/model/GeographicalLocation.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/domain/model/PrintReceiptError.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/domain/model/Receipt.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/domain/model/ReceiptItem.kt`
