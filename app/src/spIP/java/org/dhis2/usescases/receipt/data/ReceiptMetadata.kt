@@ -5,6 +5,8 @@ data class ReceiptMetadata(
     val distributionDataElementUid: String,
     val spbhIdAttributeUid: String,
     val beneficiaryNameAttributeUid: String,
+    // Attributes of Geographical Location 1, 2 and 3, in level order.
+    val geographicalLocationAttributeUids: List<String>,
 ) {
     companion object {
         // SP Beneficiary Hub (same UIDs on the test server 8380 and in production).
@@ -12,6 +14,7 @@ data class ReceiptMetadata(
             distributionDataElementUid = "OQEWu6dpWYl",
             spbhIdAttributeUid = "DjPrtej5I1x",
             beneficiaryNameAttributeUid = "OehKwDX8asz",
+            geographicalLocationAttributeUids = listOf("lbkbogyOSwS", "UqBDyVDudDV", "uHbGxeMBkzK"),
         )
     }
 }

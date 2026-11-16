@@ -11,5 +11,6 @@ data class Receipt(
     val beneficiaryName: String? = null,
     val distributionPoint: String? = null,
     val distributionDate: Date? = null,
+    val geographicalLocations: List<GeographicalLocation> = emptyList(),
     val printedOn: Date? = null,
 )

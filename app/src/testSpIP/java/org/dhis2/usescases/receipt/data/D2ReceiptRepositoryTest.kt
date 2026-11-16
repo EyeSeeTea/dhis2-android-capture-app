@@ -13,6 +13,7 @@ import org.hisp.dhis.android.core.organisationunit.OrganisationUnit
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttribute
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttributeValue
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValue
+import org.dhis2.usescases.receipt.domain.model.GeographicalLocation
 import org.dhis2.usescases.receipt.domain.model.ReceiptItem
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -175,6 +176,47 @@ class D2ReceiptRepositoryTest {
         assertEquals(eventDate, receipt?.distributionDate)
     }
 
+    @Test
+    fun `the receipt shows the three geographical locations of the beneficiary in level order`() = runTest {
+        givenAnEventOfTrackedEntity(eventUid = EVENT_UID)
+        givenAnEventWithDataValues(eventUid = EVENT_UID, dataValues = emptyList())
+        givenAnAttributeValue(GEO_LEVEL_1_UID, "Gethy Region")
+        givenAnAttributeValue(GEO_LEVEL_2_UID, "North District")
+        givenAnAttributeValue(GEO_LEVEL_3_UID, "Hill Village")
+        val repository = givenAReceiptRepository()
+
+        val receipt = repository.getReceipt(EVENT_UID)
+
+        assertEquals(
+            listOf(
+                GeographicalLocation(level = 1, name = "Gethy Region"),
+                GeographicalLocation(level = 2, name = "North District"),
+                GeographicalLocation(level = 3, name = "Hill Village"),
+            ),
+            receipt?.geographicalLocations,
+        )
+    }
+
+    @Test
+    fun `a geographical location level the beneficiary does not have is left out and the others keep their level`() = runTest {
+        givenAnEventOfTrackedEntity(eventUid = EVENT_UID)
+        givenAnEventWithDataValues(eventUid = EVENT_UID, dataValues = emptyList())
+        givenAnAttributeValue(GEO_LEVEL_1_UID, "Gethy Region")
+        givenNoAttributeValue(GEO_LEVEL_2_UID)
+        givenAnAttributeValue(GEO_LEVEL_3_UID, "Hill Village")
+        val repository = givenAReceiptRepository()
+
+        val receipt = repository.getReceipt(EVENT_UID)
+
+        assertEquals(
+            listOf(
+                GeographicalLocation(level = 1, name = "Gethy Region"),
+                GeographicalLocation(level = 3, name = "Hill Village"),
+            ),
+            receipt?.geographicalLocations,
+        )
+    }
+
     private class DataValueFixture(val dataValue: TrackedEntityDataValue, val dataElement: DataElement)
 
     private fun givenADataValue(
@@ -207,6 +249,13 @@ class D2ReceiptRepositoryTest {
             Event.builder().uid(eventUid).eventDate(eventDate).build()
     }
 
+    private fun givenAnEventOfTrackedEntity(eventUid: String) {
+        whenever(d2.eventModule().events().uid(eventUid).blockingGet()) doReturn
+            Event.builder().uid(eventUid).enrollment(ENROLLMENT_UID).build()
+        whenever(d2.enrollmentModule().enrollments().uid(ENROLLMENT_UID).blockingGet()) doReturn
+            Enrollment.builder().uid(ENROLLMENT_UID).trackedEntityInstance(TEI_UID).build()
+    }
+
     private fun givenAnEventWithDataValues(eventUid: String, dataValues: List<DataValueFixture>) {
         whenever(d2.trackedEntityModule().trackedEntityDataValues().byEvent()) doReturn mock()
         whenever(d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(eventUid)) doReturn mock()
@@ -224,6 +273,7 @@ class D2ReceiptRepositoryTest {
                 distributionDataElementUid = DISTRIBUTION_DATA_ELEMENT_UID,
                 spbhIdAttributeUid = SPBH_ID_ATTRIBUTE_UID,
                 beneficiaryNameAttributeUid = BENEFICIARY_NAME_ATTRIBUTE_UID,
+                geographicalLocationAttributeUids = listOf(GEO_LEVEL_1_UID, GEO_LEVEL_2_UID, GEO_LEVEL_3_UID),
             ),
         )
 
@@ -299,6 +349,10 @@ class D2ReceiptRepositoryTest {
         ) doReturn Option.builder().uid("OPTION_UID").code(code).name(name).displayName(name).build()
     }
 
+    private fun givenNoAttributeValue(attributeUid: String) {
+        whenever(d2.trackedEntityModule().trackedEntityAttributeValues().value(attributeUid, TEI_UID).blockingGet()) doReturn null
+    }
+
     private fun givenAnAttributeValue(attributeUid: String, value: String) {
         whenever(
             d2.trackedEntityModule().trackedEntityAttributeValues().value(attributeUid, TEI_UID).blockingGet(),
@@ -319,5 +373,8 @@ class D2ReceiptRepositoryTest {
         const val DISTRIBUTION_OPTION_SET_UID = "DISTRIBUTION_OPTION_SET_UID"
         const val SPBH_ID_ATTRIBUTE_UID = "SPBH_ID_ATTRIBUTE_UID"
         const val BENEFICIARY_NAME_ATTRIBUTE_UID = "BENEFICIARY_NAME_ATTRIBUTE_UID"
+        const val GEO_LEVEL_1_UID = "GEO_LEVEL_1_UID"
+        const val GEO_LEVEL_2_UID = "GEO_LEVEL_2_UID"
+        const val GEO_LEVEL_3_UID = "GEO_LEVEL_3_UID"
     }
 }

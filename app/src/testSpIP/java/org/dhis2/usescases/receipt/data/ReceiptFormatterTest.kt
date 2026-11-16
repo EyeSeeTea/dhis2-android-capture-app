@@ -1,5 +1,6 @@
 package org.dhis2.usescases.receipt.data
 
+import org.dhis2.usescases.receipt.domain.model.GeographicalLocation
 import org.dhis2.usescases.receipt.domain.model.Receipt
 import org.dhis2.usescases.receipt.domain.model.ReceiptItem
 import org.junit.Assert.assertEquals
@@ -93,6 +94,29 @@ class ReceiptFormatterTest {
 
         assertEquals(
             listOf("Receipt printed on: 2026-11-16 11:45", "", "Rice (kg) given: 5"),
+            formatted,
+        )
+    }
+
+    @Test
+    fun `the formatted receipt shows each geographical location with its level`() {
+        val receipt = Receipt(
+            geographicalLocations = listOf(
+                GeographicalLocation(level = 1, name = "Gethy Region"),
+                GeographicalLocation(level = 3, name = "Hill Village"),
+            ),
+            items = listOf(ReceiptItem(label = "Rice (kg) given", quantity = "5")),
+        )
+
+        val formatted = ReceiptFormatter().format(receipt)
+
+        assertEquals(
+            listOf(
+                "Geographical Location 1: Gethy Region",
+                "Geographical Location 3: Hill Village",
+                "",
+                "Rice (kg) given: 5",
+            ),
             formatted,
         )
     }

@@ -3,6 +3,7 @@ package org.dhis2.usescases.receipt.data
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.dhis2.commons.bindings.userFriendlyValue
+import org.dhis2.usescases.receipt.domain.model.GeographicalLocation
 import org.dhis2.usescases.receipt.domain.model.Receipt
 import org.dhis2.usescases.receipt.domain.model.ReceiptItem
 import org.dhis2.usescases.receipt.domain.repository.ReceiptRepository
@@ -32,6 +33,7 @@ class D2ReceiptRepository(
                 beneficiaryName = attributeValue(teiUid, metadata.beneficiaryNameAttributeUid),
                 distributionPoint = distributionPoint(event),
                 distributionDate = event?.eventDate(),
+                geographicalLocations = geographicalLocations(teiUid),
             )
             receipt.takeUnless { it.isEmpty() }
         }
@@ -71,6 +73,12 @@ class D2ReceiptRepository(
         return d2.enrollmentModule().enrollments().uid(enrollmentUid).blockingGet()?.trackedEntityInstance()
     }
 
+    private fun geographicalLocations(teiUid: String?): List<GeographicalLocation> =
+        metadata.geographicalLocationAttributeUids.mapIndexedNotNull { index, attributeUid ->
+            attributeValue(teiUid, attributeUid)?.takeUnless { it.isBlank() }
+                ?.let { name -> GeographicalLocation(level = index + 1, name = name) }
+        }
+
     private fun attributeValue(teiUid: String?, attributeUid: String): String? =
         teiUid?.let {
             d2.trackedEntityModule().trackedEntityAttributeValues().value(attributeUid, it).blockingGet()
@@ -78,7 +86,7 @@ class D2ReceiptRepository(
         }
 
     private fun Receipt.isEmpty() =
-        items.isEmpty() && distributionName == null && spbhId == null && beneficiaryName == null && distributionPoint == null && distributionDate == null
+        items.isEmpty() && distributionName == null && spbhId == null && beneficiaryName == null && distributionPoint == null && distributionDate == null && geographicalLocations.isEmpty()
 
     private companion object {
         val ITEM_GIVEN_CODE = Regex("sp_DIST_.+_GIVEN")
