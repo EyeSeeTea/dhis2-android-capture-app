@@ -31,6 +31,7 @@ class ReceiptFormatterTest {
                 "",
                 "Rice (kg) given: 5",
                 "Dates: 3",
+                SIGNATURE_LINE,
             ),
             formatted,
         )
@@ -48,7 +49,7 @@ class ReceiptFormatterTest {
         val formatted = ReceiptFormatter().format(receipt)
 
         assertEquals(
-            listOf("Distribution: TEST Distribution 1", "", "Rice (kg) given: 5"),
+            listOf("Distribution: TEST Distribution 1", "", "Rice (kg) given: 5", SIGNATURE_LINE),
             formatted,
         )
     }
@@ -63,7 +64,7 @@ class ReceiptFormatterTest {
         val formatted = ReceiptFormatter().format(receipt)
 
         assertEquals(
-            listOf("Distribution point: Gethy distribution point", "", "Rice (kg) given: 5"),
+            listOf("Distribution point: Gethy distribution point", "", "Rice (kg) given: 5", SIGNATURE_LINE),
             formatted,
         )
     }
@@ -78,7 +79,7 @@ class ReceiptFormatterTest {
         val formatted = ReceiptFormatter().format(receipt)
 
         assertEquals(
-            listOf("Distribution date: 2026-11-16", "", "Rice (kg) given: 5"),
+            listOf("Distribution date: 2026-11-16", "", "Rice (kg) given: 5", SIGNATURE_LINE),
             formatted,
         )
     }
@@ -93,7 +94,7 @@ class ReceiptFormatterTest {
         val formatted = ReceiptFormatter().format(receipt)
 
         assertEquals(
-            listOf("Receipt printed on: 2026-11-16 11:45", "", "Rice (kg) given: 5"),
+            listOf("Receipt printed on: 2026-11-16 11:45", "", "Rice (kg) given: 5", SIGNATURE_LINE),
             formatted,
         )
     }
@@ -116,8 +117,28 @@ class ReceiptFormatterTest {
                 "Geographical Location 3: Hill Village",
                 "",
                 "Rice (kg) given: 5",
+                SIGNATURE_LINE,
             ),
             formatted,
         )
+    }
+
+    @Test
+    fun `the formatted receipt ends with a signature line for the beneficiary to sign by hand`() {
+        val receipt = Receipt(
+            distributionName = "TEST Distribution 1",
+            items = listOf(
+                ReceiptItem(label = "Rice (kg) given", quantity = "5"),
+                ReceiptItem(label = "Dates", quantity = "3"),
+            ),
+        )
+
+        val formatted = ReceiptFormatter().format(receipt)
+
+        assertEquals(SIGNATURE_LINE, formatted.last())
+    }
+
+    private companion object {
+        const val SIGNATURE_LINE = "Signature: ____________"
     }
 }
