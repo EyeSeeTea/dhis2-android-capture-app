@@ -68,7 +68,7 @@ Supporting files in the same workflow (all new, flavor-only):
 - `app/src/spIP/java/org/dhis2/usescases/receipt/domain/repository/ReceiptRepository.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/domain/usecase/PrintReceiptUseCase.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/data/D2ReceiptRepository.kt`
-- `app/src/spIP/java/org/dhis2/usescases/receipt/data/ReceiptMetadata.kt` (UIDs of the metadata the receipt reads; the production UIDs are to be confirmed)
+- `app/src/spIP/java/org/dhis2/usescases/receipt/data/ReceiptMetadata.kt` (UIDs of the metadata the receipt reads, including the "Receipt Printed" flag `FHRqcSyJxLr`; the production UIDs are to be confirmed)
 - `app/src/spIP/java/org/dhis2/usescases/receipt/data/FakeReceiptPrinter.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/data/ReceiptFormatter.kt`
 - `app/src/spIP/java/org/dhis2/usescases/receipt/presentation/ReceiptEventWiring.kt`
@@ -91,7 +91,7 @@ Technical note:
 - `Either.kt` and its test are not spIP code: they were added to `develop-eyeseetea` (`173334dbb`, technique T6 in `eyeseetea-docs/customization-techniques.md` there) and cherry-picked here because this branch cannot merge the baseline outside an upgrade. After the upgrade merge they are the same file; drop the cherry-picked copy if git reports a conflict.
 - The printer is a development fake: debug logs the receipt, release always reports no printer connected. The real Bluetooth printer (Brother RJ-2055WB) is pending the unit.
 - The menu option is offered only for events of the Distribution stage of SP Beneficiary Hub (`tCC0YnvF9SJ`, test server UID; production UID to confirm), see `isPrintReceiptAvailable`.
-- Files for the receipt content, the bitmap renderer and the "Receipt Printed" flag (tasks 5.5-5.13) are not listed yet: add them as they are built.
+- The receipt content and the "Receipt Printed" flag (tasks 5.5-5.13) live in the files above and add no new file: `Receipt` carries the print status, `ReceiptRepository.save` persists it and `D2ReceiptRepository` writes the flag data element `sp_DIST_RECEIPT_PRINTED` of the event (it is in no section of the form). The bitmap renderer (5.9-5.12) is deferred: list its files if it is built.
 
 ## 3. Shared drift still differing
 
