@@ -11,6 +11,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Date
+import kotlin.coroutines.cancellation.CancellationException
 
 class PrintReceiptUseCaseTest {
 
@@ -60,6 +61,17 @@ class PrintReceiptUseCaseTest {
         val result = useCase(eventUid = "EVENT_UID")
 
         assertEquals(Either.Right(Unit), result)
+    }
+
+    @Test
+    fun `a cancellation while saving the receipt as printed is not swallowed`() = runTest {
+        givenAReceiptForEvent("EVENT_UID")
+        receiptRepository.failSavingWith(CancellationException("The screen was closed"))
+        val useCase = givenAPrintReceiptUseCase()
+
+        val error = runCatching { useCase(eventUid = "EVENT_UID") }.exceptionOrNull()
+
+        assertTrue(error is CancellationException)
     }
 
     @Test

@@ -30,7 +30,7 @@ class ReceiptPrintHostTest {
     val composeRule = createComposeRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val receipt = Receipt(items = listOf(ReceiptItem(label = "Rice (kg) given", quantity = "5")))
+    private val receipt = Receipt(eventUid = EVENT_UID, items = listOf(ReceiptItem(label = "Rice (kg) given", quantity = "5")))
     private val receiptPrinter = GatedReceiptPrinter()
 
     @Test
