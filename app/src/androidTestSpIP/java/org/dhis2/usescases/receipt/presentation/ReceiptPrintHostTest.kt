@@ -45,7 +45,7 @@ class ReceiptPrintHostTest {
 
         composeRule.waitUntilDoesNotExist(hasText(context.getString(R.string.receipt_printing)))
         composeRule.onNodeWithText(context.getString(R.string.receipt_printed)).assertIsDisplayed()
-        assertEquals(listOf(receipt), receiptPrinter.printed)
+        assertEquals(listOf(receipt), receiptPrinter.printedWithoutPrintTime())
     }
 
     @Test
@@ -92,7 +92,7 @@ class ReceiptPrintHostTest {
         receiptPrinter.finishPrinting()
 
         composeRule.waitUntilExactlyOneExists(hasText(context.getString(R.string.receipt_printed)))
-        assertEquals(listOf(receipt), receiptPrinter.printed)
+        assertEquals(listOf(receipt), receiptPrinter.printedWithoutPrintTime())
     }
 
     private fun givenAReceiptPrintHost() {
@@ -115,6 +115,9 @@ class ReceiptPrintHostTest {
         private val gate = CompletableDeferred<Unit>()
         private var error: PrintReceiptError? = null
         val printed = mutableListOf<Receipt>()
+
+        // The use case stamps the print time, which the host tests do not control.
+        fun printedWithoutPrintTime(): List<Receipt> = printed.map { it.copy(printedOn = null) }
 
         fun finishPrinting() {
             gate.complete(Unit)
