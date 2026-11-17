@@ -84,21 +84,6 @@ class ReceiptPrintHostTest {
     }
 
     @Test
-    fun aNoReceiptAvailableErrorStaysOnScreenUntilItIsAcceptedAndNothingIsPrinted() {
-        val noReceiptAvailable = context.getString(R.string.receipt_no_receipt_available)
-        givenAReceiptPrintHost(repositoryReceipt = null)
-
-        composeRule.onNodeWithText(PRINT_BUTTON).performClick()
-
-        composeRule.waitUntilExactlyOneExists(hasText(noReceiptAvailable))
-
-        composeRule.onNodeWithText(context.getString(R.string.receipt_error_accept)).performClick()
-
-        composeRule.onNodeWithText(noReceiptAvailable).assertDoesNotExist()
-        assertTrue(receiptPrinter.printed.isEmpty())
-    }
-
-    @Test
     fun pressingPrintTwiceWhilePrintingPrintsOnlyOneReceipt() {
         givenAReceiptPrintHost()
 
@@ -110,9 +95,9 @@ class ReceiptPrintHostTest {
         assertEquals(listOf(receipt), receiptPrinter.printed)
     }
 
-    private fun givenAReceiptPrintHost(repositoryReceipt: Receipt? = receipt) {
+    private fun givenAReceiptPrintHost() {
         val receiptPrintViewModel = ReceiptPrintViewModel(
-            PrintReceiptUseCase(FakeReceiptRepository(repositoryReceipt), receiptPrinter),
+            PrintReceiptUseCase(FakeReceiptRepository(receipt), receiptPrinter),
         )
         composeRule.setContent {
             ReceiptPrintHost(receiptPrintViewModel)
@@ -120,8 +105,8 @@ class ReceiptPrintHostTest {
         }
     }
 
-    private class FakeReceiptRepository(private val receipt: Receipt?) : ReceiptRepository {
-        override suspend fun getReceipt(eventUid: String): Receipt? = receipt
+    private class FakeReceiptRepository(private val receipt: Receipt) : ReceiptRepository {
+        override suspend fun getReceipt(eventUid: String): Receipt = receipt
 
         override suspend fun save(receipt: Receipt) = Unit
     }

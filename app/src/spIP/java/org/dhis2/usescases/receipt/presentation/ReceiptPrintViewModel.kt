@@ -33,8 +33,6 @@ class ReceiptPrintViewModel(
         fold(
             fnL = { error ->
                 when (error) {
-                    PrintReceiptError.NoReceiptAvailable ->
-                        ReceiptPrintUiState.Finished(ReceiptPrintMessage.NoReceiptAvailable)
                     PrintReceiptError.NoPrinterConnected ->
                         ReceiptPrintUiState.Finished(ReceiptPrintMessage.NoPrinterConnected)
                     PrintReceiptError.PrintFailed ->

@@ -17,7 +17,6 @@ class PrintReceiptUseCase(
 ) {
     suspend operator fun invoke(eventUid: String): Either<PrintReceiptError, Unit> {
         val receipt = receiptRepository.getReceipt(eventUid)
-            ?: return Either.Left(PrintReceiptError.NoReceiptAvailable)
         // The time is stamped on every print, so a reprint shows its own time.
         val stamped = receipt.copy(printedOn = now())
         val result = receiptPrinter.print(stamped)

@@ -16,7 +16,7 @@ class D2ReceiptRepository(
     private val metadata: ReceiptMetadata,
 ) : ReceiptRepository {
 
-    override suspend fun getReceipt(eventUid: String): Receipt? =
+    override suspend fun getReceipt(eventUid: String): Receipt =
         withContext(Dispatchers.IO) {
             val dataValues = d2.trackedEntityModule().trackedEntityDataValues()
                 .byEvent().eq(eventUid)
@@ -24,7 +24,7 @@ class D2ReceiptRepository(
             val items = dataValues.mapNotNull { dataValue -> toItem(dataValue, dataValues) }
             val event = d2.eventModule().events().uid(eventUid).blockingGet()
             val teiUid = trackedEntityInstanceUid(event)
-            val receipt = Receipt(
+            Receipt(
                 eventUid = eventUid,
                 items = items,
                 distributionName = d2.trackedEntityModule().trackedEntityDataValues()
@@ -36,7 +36,6 @@ class D2ReceiptRepository(
                 distributionDate = event?.eventDate(),
                 geographicalLocations = geographicalLocations(teiUid),
             )
-            receipt.takeUnless { it.isEmpty() }
         }
 
     // The flag is TRUE_ONLY: it is only ever set, never cleared, so a receipt that was not printed writes nothing.
@@ -95,9 +94,6 @@ class D2ReceiptRepository(
             d2.trackedEntityModule().trackedEntityAttributeValues().value(attributeUid, it).blockingGet()
                 ?.userFriendlyValue(d2)
         }
-
-    private fun Receipt.isEmpty() =
-        items.isEmpty() && distributionName == null && spbhId == null && beneficiaryName == null && distributionPoint == null && distributionDate == null && geographicalLocations.isEmpty()
 
     private companion object {
         val ITEM_GIVEN_CODE = Regex("sp_DIST_.+_GIVEN")

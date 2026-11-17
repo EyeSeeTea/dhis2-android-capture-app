@@ -43,9 +43,9 @@ class D2ReceiptRepositoryTest {
 
         val receipt = repository.getReceipt(EVENT_UID)
 
-        assertEquals("TEST Distribution 1", receipt?.distributionName)
-        assertEquals("SPBH-0042", receipt?.spbhId)
-        assertEquals("Ana Perez", receipt?.beneficiaryName)
+        assertEquals("TEST Distribution 1", receipt.distributionName)
+        assertEquals("SPBH-0042", receipt.spbhId)
+        assertEquals("Ana Perez", receipt.beneficiaryName)
     }
 
     @Test
@@ -85,7 +85,7 @@ class D2ReceiptRepositoryTest {
 
         assertEquals(
             listOf(ReceiptItem(label = "Rice (kg) given", quantity = "5"), ReceiptItem(label = "Salt (kg) given", quantity = "2")),
-            receipt?.items,
+            receipt.items,
         )
     }
 
@@ -99,7 +99,7 @@ class D2ReceiptRepositoryTest {
 
         val receipt = repository.getReceipt(EVENT_UID)
 
-        assertEquals(listOf(ReceiptItem(label = "Dates", quantity = "3")), receipt?.items)
+        assertEquals(listOf(ReceiptItem(label = "Dates", quantity = "3")), receipt.items)
     }
 
     @Test
@@ -112,7 +112,7 @@ class D2ReceiptRepositoryTest {
 
         val receipt = repository.getReceipt(EVENT_UID)
 
-        assertEquals(listOf(ReceiptItem(label = "Blankets", quantity = "4")), receipt?.items)
+        assertEquals(listOf(ReceiptItem(label = "Blankets", quantity = "4")), receipt.items)
     }
 
     @Test
@@ -133,7 +133,7 @@ class D2ReceiptRepositoryTest {
                 ReceiptItem(label = "Lentils", quantity = "5"),
                 ReceiptItem(label = "Blankets", quantity = "4"),
             ),
-            receipt?.items,
+            receipt.items,
         )
     }
 
@@ -147,7 +147,7 @@ class D2ReceiptRepositoryTest {
 
         val receipt = repository.getReceipt(EVENT_UID)
 
-        assertEquals(listOf(ReceiptItem(label = "Other food 1 given", quantity = "3")), receipt?.items)
+        assertEquals(listOf(ReceiptItem(label = "Other food 1 given", quantity = "3")), receipt.items)
     }
 
     @Test
@@ -161,7 +161,7 @@ class D2ReceiptRepositoryTest {
 
         val receipt = repository.getReceipt(EVENT_UID)
 
-        assertEquals(listOf(ReceiptItem(label = "Rice (kg) given", quantity = "5")), receipt?.items)
+        assertEquals(listOf(ReceiptItem(label = "Rice (kg) given", quantity = "5")), receipt.items)
     }
 
     // DHIS2 does not store an empty value: a missing description or quantity is a data value that does not exist.
@@ -184,7 +184,7 @@ class D2ReceiptRepositoryTest {
 
         val receipt = repository.getReceipt(EVENT_UID)
 
-        assertEquals("Gethy distribution point", receipt?.distributionPoint)
+        assertEquals("Gethy distribution point", receipt.distributionPoint)
     }
 
     @Test
@@ -196,7 +196,7 @@ class D2ReceiptRepositoryTest {
 
         val receipt = repository.getReceipt(EVENT_UID)
 
-        assertEquals(eventDate, receipt?.distributionDate)
+        assertEquals(eventDate, receipt.distributionDate)
     }
 
     @Test
@@ -216,7 +216,7 @@ class D2ReceiptRepositoryTest {
                 GeographicalLocation(level = 2, name = "North District"),
                 GeographicalLocation(level = 3, name = "Hill Village"),
             ),
-            receipt?.geographicalLocations,
+            receipt.geographicalLocations,
         )
     }
 
@@ -236,7 +236,7 @@ class D2ReceiptRepositoryTest {
                 GeographicalLocation(level = 1, name = "Gethy Region"),
                 GeographicalLocation(level = 3, name = "Hill Village"),
             ),
-            receipt?.geographicalLocations,
+            receipt.geographicalLocations,
         )
     }
 

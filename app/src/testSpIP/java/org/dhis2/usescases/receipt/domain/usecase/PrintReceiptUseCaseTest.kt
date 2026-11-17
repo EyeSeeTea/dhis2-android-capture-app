@@ -107,16 +107,6 @@ class PrintReceiptUseCaseTest {
         assertEquals(Either.Left(PrintReceiptError.PrintFailed), result)
     }
 
-    @Test
-    fun `printing returns a no-receipt-available error and prints nothing when there is nothing to print`() = runTest {
-        val useCase = givenAPrintReceiptUseCase()
-
-        val result = useCase(eventUid = "EVENT_UID")
-
-        assertEquals(Either.Left(PrintReceiptError.NoReceiptAvailable), result)
-        assertTrue(printer.printed.isEmpty())
-    }
-
     private fun givenAReceiptForEvent(eventUid: String): Receipt {
         val receipt = Receipt(
             eventUid = eventUid,
@@ -151,7 +141,7 @@ class PrintReceiptUseCaseTest {
             receipts[receipt.eventUid] = receipt
         }
 
-        override suspend fun getReceipt(eventUid: String): Receipt? = receipts[eventUid]
+        override suspend fun getReceipt(eventUid: String): Receipt = receipts.getValue(eventUid)
 
         override suspend fun save(receipt: Receipt) {
             saveError?.let { throw it }
