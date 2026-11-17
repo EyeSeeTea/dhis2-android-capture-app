@@ -10,13 +10,11 @@ import org.eyeseetea.functional.Either
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
 import java.util.Date
 
 class PrintReceiptUseCaseTest {
 
-    private val receiptRepository: ReceiptRepository = mock()
+    private val receiptRepository = FakeReceiptRepository()
     private val printer = FakePrinter()
 
     @Test
@@ -44,6 +42,38 @@ class PrintReceiptUseCaseTest {
     }
 
     @Test
+    fun `a successful print saves the receipt as printed`() = runTest {
+        givenAReceiptForEvent("EVENT_UID")
+        val useCase = givenAPrintReceiptUseCase()
+
+        useCase(eventUid = "EVENT_UID")
+
+        assertEquals(listOf("EVENT_UID"), receiptRepository.saved.filter { it.printed }.map { it.eventUid })
+    }
+
+    @Test
+    fun `printing still succeeds when the receipt cannot be saved as printed`() = runTest {
+        givenAReceiptForEvent("EVENT_UID")
+        receiptRepository.failSavingWith(IllegalStateException("The event cannot be edited"))
+        val useCase = givenAPrintReceiptUseCase()
+
+        val result = useCase(eventUid = "EVENT_UID")
+
+        assertEquals(Either.Right(Unit), result)
+    }
+
+    @Test
+    fun `a failed print saves nothing`() = runTest {
+        givenAReceiptForEvent("EVENT_UID")
+        givenAPrinterThatFailsToPrint()
+        val useCase = givenAPrintReceiptUseCase()
+
+        useCase(eventUid = "EVENT_UID")
+
+        assertTrue(receiptRepository.saved.isEmpty())
+    }
+
+    @Test
     fun `printing returns a no-printer-connected error when no printer is connected`() = runTest {
         givenAReceiptForEvent("EVENT_UID")
         givenAPrinterWithoutConnection()
@@ -67,7 +97,6 @@ class PrintReceiptUseCaseTest {
 
     @Test
     fun `printing returns a no-receipt-available error and prints nothing when there is nothing to print`() = runTest {
-        givenNoReceiptForEvent("EVENT_UID")
         val useCase = givenAPrintReceiptUseCase()
 
         val result = useCase(eventUid = "EVENT_UID")
@@ -76,17 +105,14 @@ class PrintReceiptUseCaseTest {
         assertTrue(printer.printed.isEmpty())
     }
 
-    private suspend fun givenAReceiptForEvent(eventUid: String): Receipt {
+    private fun givenAReceiptForEvent(eventUid: String): Receipt {
         val receipt = Receipt(
+            eventUid = eventUid,
             distributionName = "TEST Distribution 1",
             items = listOf(ReceiptItem(label = "Rice (kg) given", quantity = "5")),
         )
-        whenever(receiptRepository.getReceipt(eventUid)).thenReturn(receipt)
+        receiptRepository.add(receipt)
         return receipt
-    }
-
-    private suspend fun givenNoReceiptForEvent(eventUid: String) {
-        whenever(receiptRepository.getReceipt(eventUid)).thenReturn(null)
     }
 
     private fun givenAPrinterWithoutConnection() {
@@ -99,6 +125,27 @@ class PrintReceiptUseCaseTest {
 
     private fun givenAPrintReceiptUseCase(now: () -> Date = { Date(0L) }) =
         PrintReceiptUseCase(receiptRepository, printer, now)
+
+    private class FakeReceiptRepository : ReceiptRepository {
+        private val receipts = mutableMapOf<String, Receipt>()
+        val saved = mutableListOf<Receipt>()
+        private var saveError: Throwable? = null
+
+        fun failSavingWith(error: Throwable) {
+            saveError = error
+        }
+
+        fun add(receipt: Receipt) {
+            receipts[receipt.eventUid] = receipt
+        }
+
+        override suspend fun getReceipt(eventUid: String): Receipt? = receipts[eventUid]
+
+        override suspend fun save(receipt: Receipt) {
+            saveError?.let { throw it }
+            saved.add(receipt)
+        }
+    }
 
     private class FakePrinter : ReceiptPrinter {
         val printed = mutableListOf<Receipt>()

@@ -14,12 +14,15 @@ import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttribute
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttributeValue
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValue
 import org.dhis2.usescases.receipt.domain.model.GeographicalLocation
+import org.dhis2.usescases.receipt.domain.model.Receipt
 import org.dhis2.usescases.receipt.domain.model.ReceiptItem
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 // The SDK is the outer boundary of this test: D2 is doubled, the repository and the Oslo value helpers run for real.
@@ -43,6 +46,26 @@ class D2ReceiptRepositoryTest {
         assertEquals("TEST Distribution 1", receipt?.distributionName)
         assertEquals("SPBH-0042", receipt?.spbhId)
         assertEquals("Ana Perez", receipt?.beneficiaryName)
+    }
+
+    @Test
+    fun `saving a printed receipt sets the Receipt Printed flag of its event`() = runTest {
+        val repository = givenAReceiptRepository()
+
+        repository.save(Receipt(eventUid = EVENT_UID).markAsPrinted())
+
+        verify(d2.trackedEntityModule().trackedEntityDataValues().value(EVENT_UID, PRINTED_FLAG_DATA_ELEMENT_UID))
+            .blockingSet("true")
+    }
+
+    @Test
+    fun `saving a receipt that was not printed does not set the Receipt Printed flag`() = runTest {
+        val repository = givenAReceiptRepository()
+
+        repository.save(Receipt(eventUid = EVENT_UID))
+
+        verify(d2.trackedEntityModule().trackedEntityDataValues().value(EVENT_UID, PRINTED_FLAG_DATA_ELEMENT_UID), never())
+            .blockingSet("true")
     }
 
     @Test
@@ -274,6 +297,7 @@ class D2ReceiptRepositoryTest {
                 spbhIdAttributeUid = SPBH_ID_ATTRIBUTE_UID,
                 beneficiaryNameAttributeUid = BENEFICIARY_NAME_ATTRIBUTE_UID,
                 geographicalLocationAttributeUids = listOf(GEO_LEVEL_1_UID, GEO_LEVEL_2_UID, GEO_LEVEL_3_UID),
+                printedFlagDataElementUid = PRINTED_FLAG_DATA_ELEMENT_UID,
             ),
         )
 
@@ -376,5 +400,6 @@ class D2ReceiptRepositoryTest {
         const val GEO_LEVEL_1_UID = "GEO_LEVEL_1_UID"
         const val GEO_LEVEL_2_UID = "GEO_LEVEL_2_UID"
         const val GEO_LEVEL_3_UID = "GEO_LEVEL_3_UID"
+        const val PRINTED_FLAG_DATA_ELEMENT_UID = "PRINTED_FLAG_DE_UID"
     }
 }

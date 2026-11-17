@@ -7,6 +7,8 @@ data class ReceiptMetadata(
     val beneficiaryNameAttributeUid: String,
     // Attributes of Geographical Location 1, 2 and 3, in level order.
     val geographicalLocationAttributeUids: List<String>,
+    // Data element "SPBH - DIST - Receipt Printed" (TRUE_ONLY, not in any section of the form).
+    val printedFlagDataElementUid: String,
 ) {
     companion object {
         // SP Beneficiary Hub (same UIDs on the test server 8380 and in production).
@@ -15,6 +17,7 @@ data class ReceiptMetadata(
             spbhIdAttributeUid = "DjPrtej5I1x",
             beneficiaryNameAttributeUid = "OehKwDX8asz",
             geographicalLocationAttributeUids = listOf("lbkbogyOSwS", "UqBDyVDudDV", "uHbGxeMBkzK"),
+            printedFlagDataElementUid = "FHRqcSyJxLr",
         )
     }
 }

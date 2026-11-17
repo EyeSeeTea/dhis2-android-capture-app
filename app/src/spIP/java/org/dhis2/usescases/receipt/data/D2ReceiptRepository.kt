@@ -25,6 +25,7 @@ class D2ReceiptRepository(
             val event = d2.eventModule().events().uid(eventUid).blockingGet()
             val teiUid = trackedEntityInstanceUid(event)
             val receipt = Receipt(
+                eventUid = eventUid,
                 items = items,
                 distributionName = d2.trackedEntityModule().trackedEntityDataValues()
                     .value(eventUid, metadata.distributionDataElementUid).blockingGet()
@@ -37,6 +38,16 @@ class D2ReceiptRepository(
             )
             receipt.takeUnless { it.isEmpty() }
         }
+
+    // The flag is TRUE_ONLY: it is only ever set, never cleared, so a receipt that was not printed writes nothing.
+    override suspend fun save(receipt: Receipt) {
+        if (!receipt.printed) return
+        withContext(Dispatchers.IO) {
+            d2.trackedEntityModule().trackedEntityDataValues()
+                .value(receipt.eventUid, metadata.printedFlagDataElementUid)
+                .blockingSet("true")
+        }
+    }
 
     // An item given is a data element whose code is sp_DIST_<ITEM>_GIVEN; only the ones with a value are printed.
     private fun toItem(dataValue: TrackedEntityDataValue, dataValues: List<TrackedEntityDataValue>): ReceiptItem? {

@@ -122,6 +122,8 @@ class ReceiptPrintHostTest {
 
     private class FakeReceiptRepository(private val receipt: Receipt?) : ReceiptRepository {
         override suspend fun getReceipt(eventUid: String): Receipt? = receipt
+
+        override suspend fun save(receipt: Receipt) = Unit
     }
 
     private class GatedReceiptPrinter : ReceiptPrinter {
