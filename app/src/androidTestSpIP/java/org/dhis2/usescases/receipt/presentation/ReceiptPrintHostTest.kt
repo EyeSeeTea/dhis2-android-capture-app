@@ -69,7 +69,7 @@ class ReceiptPrintHostTest {
     @Test
     fun aPrintFailedErrorIsShownInsteadOfTheNoPrinterConnectedOneWhenThePrinterFails() {
         val printFailed = context.getString(R.string.receipt_print_failed)
-        receiptPrinter.failWith(PrintReceiptError.PrintFailed)
+        receiptPrinter.failWith(PrintReceiptError.PrintFailed(IllegalStateException("The printer ran out of paper")))
         givenAReceiptPrintHost()
 
         composeRule.onNodeWithText(PRINT_BUTTON).performClick()

@@ -77,7 +77,7 @@ class PrintReceiptUseCaseTest {
     @Test
     fun `a failed print saves nothing`() = runTest {
         givenAReceiptForEvent("EVENT_UID")
-        givenAPrinterThatFailsToPrint()
+        givenAPrinterThatFailsToPrint(IllegalStateException("The printer ran out of paper"))
         val useCase = givenAPrintReceiptUseCase()
 
         useCase(eventUid = "EVENT_UID")
@@ -98,13 +98,14 @@ class PrintReceiptUseCaseTest {
 
     @Test
     fun `printing returns a print-failed error when the connected printer fails to print`() = runTest {
+        val cause = IllegalStateException("The printer ran out of paper")
         givenAReceiptForEvent("EVENT_UID")
-        givenAPrinterThatFailsToPrint()
+        givenAPrinterThatFailsToPrint(cause)
         val useCase = givenAPrintReceiptUseCase()
 
         val result = useCase(eventUid = "EVENT_UID")
 
-        assertEquals(Either.Left(PrintReceiptError.PrintFailed), result)
+        assertEquals(Either.Left(PrintReceiptError.PrintFailed(cause)), result)
     }
 
     private fun givenAReceiptForEvent(eventUid: String): Receipt {
@@ -121,8 +122,8 @@ class PrintReceiptUseCaseTest {
         printer.failWith(PrintReceiptError.NoPrinterConnected)
     }
 
-    private fun givenAPrinterThatFailsToPrint() {
-        printer.failWith(PrintReceiptError.PrintFailed)
+    private fun givenAPrinterThatFailsToPrint(cause: Throwable) {
+        printer.failWith(PrintReceiptError.PrintFailed(cause))
     }
 
     private fun givenAPrintReceiptUseCase(now: () -> Date = { Date(0L) }) =

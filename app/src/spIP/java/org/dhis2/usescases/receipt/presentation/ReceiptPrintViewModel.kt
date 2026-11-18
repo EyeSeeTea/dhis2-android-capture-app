@@ -9,6 +9,7 @@ import org.dhis2.mobile.commons.extensions.launchUseCase
 import org.dhis2.usescases.receipt.domain.model.PrintReceiptError
 import org.dhis2.usescases.receipt.domain.usecase.PrintReceiptUseCase
 import org.eyeseetea.functional.Either
+import timber.log.Timber
 
 class ReceiptPrintViewModel(
     private val printReceiptUseCase: PrintReceiptUseCase,
@@ -35,8 +36,10 @@ class ReceiptPrintViewModel(
                 when (error) {
                     PrintReceiptError.NoPrinterConnected ->
                         ReceiptPrintUiState.Finished(ReceiptPrintMessage.NoPrinterConnected)
-                    PrintReceiptError.PrintFailed ->
+                    is PrintReceiptError.PrintFailed -> {
+                        Timber.w(error.cause, "The receipt could not be printed")
                         ReceiptPrintUiState.Finished(ReceiptPrintMessage.PrintFailed)
+                    }
                 }
             },
             fnR = { ReceiptPrintUiState.Finished(ReceiptPrintMessage.Printed) },
