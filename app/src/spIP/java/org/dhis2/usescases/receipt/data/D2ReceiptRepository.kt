@@ -62,13 +62,15 @@ class D2ReceiptRepository(
         )
     }
 
-    // A free-text slot (sp_DIST_OTHER_FOOD_N_GIVEN) has its name in the sibling sp_DIST_OTHER_FOOD_N_DESC data element.
+    // A free-text slot (sp_DIST_OTHER_FOOD_N_GIVEN) has its name in the sibling sp_DIST_OTHER_FOOD_N_DESC data element;
+    // an unplanned item (sp_DIST_UNPLANNED_ITEM_N_GIVEN) has it in sp_DIST_UNPLANNED_ITEM_N_NAME.
     private fun assignedName(givenCode: String?, dataValues: List<TrackedEntityDataValue>): String? {
-        val descriptionCode = givenCode?.removeSuffix("_GIVEN")?.plus("_DESC") ?: return null
+        val slotCode = givenCode?.removeSuffix("_GIVEN") ?: return null
+        val nameCodes = setOf("${slotCode}_DESC", "${slotCode}_NAME")
         return dataValues.firstOrNull { dataValue ->
             dataValue.dataElement()
                 ?.let { d2.dataElementModule().dataElements().uid(it).blockingGet() }
-                ?.code() == descriptionCode
+                ?.code() in nameCodes
         }?.value()?.takeUnless { it.isBlank() }
     }
 

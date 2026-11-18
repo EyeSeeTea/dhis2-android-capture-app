@@ -116,6 +116,19 @@ class D2ReceiptRepositoryTest {
     }
 
     @Test
+    fun `an unplanned item is listed with the name typed in the event as its label`() = runTest {
+        givenAnEventWithDataValues(
+            eventUid = EVENT_UID,
+            dataValues = givenAnUnplannedItem(number = 1, name = "Blankets", quantity = "4"),
+        )
+        val repository = givenAReceiptRepository()
+
+        val receipt = repository.getReceipt(EVENT_UID)
+
+        assertEquals(listOf(ReceiptItem(label = "Blankets", quantity = "4")), receipt.items)
+    }
+
+    @Test
     fun `each other slot takes the name of its own description`() = runTest {
         givenAnEventWithDataValues(
             eventUid = EVENT_UID,
@@ -173,6 +186,15 @@ class D2ReceiptRepositoryTest {
                 givenADataValue(code = "${prefix}_DESC", label = "Other $slot $number description", value = it, valueType = ValueType.TEXT)
             },
             quantity?.let { givenADataValue(code = "${prefix}_GIVEN", label = "Other $slot $number given", value = it) },
+        )
+    }
+
+    // The user types the name of an unplanned item (formerly "Other item"); its code ends in _NAME, not _DESC.
+    private fun givenAnUnplannedItem(number: Int, name: String, quantity: String): List<DataValueFixture> {
+        val prefix = "sp_DIST_UNPLANNED_ITEM_$number"
+        return listOf(
+            givenADataValue(code = "${prefix}_NAME", label = "Unplanned item $number: name", value = name, valueType = ValueType.TEXT),
+            givenADataValue(code = "${prefix}_GIVEN", label = "Unplanned item $number: quantity given", value = quantity),
         )
     }
 
