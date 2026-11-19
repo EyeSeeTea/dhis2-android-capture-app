@@ -4,17 +4,23 @@ import org.dhis2.usescases.receipt.domain.model.PrintReceiptError
 import org.dhis2.usescases.receipt.domain.model.Receipt
 import org.dhis2.usescases.receipt.domain.repository.ReceiptPrinter
 import org.eyeseetea.functional.Either
+import kotlin.coroutines.cancellation.CancellationException
 
 class BluetoothReceiptPrinter(
     private val transport: PrinterTransport,
     private val formatter: ReceiptFormatter = ReceiptFormatter(),
 ) : ReceiptPrinter {
     override suspend fun print(receipt: Receipt): Either<PrintReceiptError, Unit> {
+        val lines = formatter.format(receipt)
         return try {
-            transport.send(formatter.format(receipt))
+            transport.send(lines)
             Either.Right(Unit)
         } catch (e: PrinterNotConnectedException) {
             Either.Left(PrintReceiptError.NoPrinterConnected)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (e: Exception) {
+            Either.Left(PrintReceiptError.PrintFailed(e))
         }
     }
 }

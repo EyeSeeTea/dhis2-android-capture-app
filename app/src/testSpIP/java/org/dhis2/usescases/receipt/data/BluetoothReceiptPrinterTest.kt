@@ -6,7 +6,9 @@ import org.dhis2.usescases.receipt.domain.model.Receipt
 import org.dhis2.usescases.receipt.domain.model.ReceiptItem
 import org.eyeseetea.functional.Either
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.coroutines.cancellation.CancellationException
 
 class BluetoothReceiptPrinterTest {
 
@@ -35,6 +37,27 @@ class BluetoothReceiptPrinterTest {
         val result = printer.print(Receipt(eventUid = "EVENT_UID"))
 
         assertEquals(Either.Left(PrintReceiptError.NoPrinterConnected), result)
+    }
+
+    @Test
+    fun `any other failure of the transport fails with print failed carrying its cause`() = runTest {
+        val cause = IllegalStateException("The printer ran out of paper")
+        transport.failWith(cause)
+        val printer = givenABluetoothReceiptPrinter()
+
+        val result = printer.print(Receipt(eventUid = "EVENT_UID"))
+
+        assertEquals(Either.Left(PrintReceiptError.PrintFailed(cause)), result)
+    }
+
+    @Test
+    fun `a cancellation while printing is not reported as a print failure`() = runTest {
+        transport.failWith(CancellationException("The screen was closed"))
+        val printer = givenABluetoothReceiptPrinter()
+
+        val error = runCatching { printer.print(Receipt(eventUid = "EVENT_UID")) }.exceptionOrNull()
+
+        assertTrue(error is CancellationException)
     }
 
     private fun givenABluetoothReceiptPrinter() = BluetoothReceiptPrinter(transport)
