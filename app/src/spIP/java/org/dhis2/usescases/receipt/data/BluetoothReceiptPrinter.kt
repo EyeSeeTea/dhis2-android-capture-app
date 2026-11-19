@@ -10,7 +10,11 @@ class BluetoothReceiptPrinter(
     private val formatter: ReceiptFormatter = ReceiptFormatter(),
 ) : ReceiptPrinter {
     override suspend fun print(receipt: Receipt): Either<PrintReceiptError, Unit> {
-        transport.send(formatter.format(receipt))
-        return Either.Right(Unit)
+        return try {
+            transport.send(formatter.format(receipt))
+            Either.Right(Unit)
+        } catch (e: PrinterNotConnectedException) {
+            Either.Left(PrintReceiptError.NoPrinterConnected)
+        }
     }
 }
