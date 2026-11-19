@@ -28,7 +28,11 @@ class ReceiptPrintViewModel(
 
     fun onPermissionResult(granted: Boolean) {
         val state = _uiState.value as? ReceiptPrintUiState.NeedsPermission ?: return
-        if (granted) print(state.eventUid)
+        if (granted) {
+            print(state.eventUid)
+        } else {
+            _uiState.value = ReceiptPrintUiState.Finished(ReceiptPrintMessage.PermissionDenied)
+        }
     }
 
     fun messageShown() {

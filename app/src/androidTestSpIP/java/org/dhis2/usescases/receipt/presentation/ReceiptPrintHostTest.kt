@@ -109,6 +109,22 @@ class ReceiptPrintHostTest {
         assertEquals(listOf(receipt), receiptPrinter.printedWithoutPrintTime())
     }
 
+    @Test
+    fun aDeniedPermissionShowsItsOwnMessageUntilItIsAcceptedAndNothingIsPrinted() {
+        val permissionDenied = context.getString(R.string.receipt_permission_denied)
+        receiptPrinter.requirePermission()
+        givenAReceiptPrintHostAskingForPermissionWith(FakePermissionRequester(grants = false))
+
+        composeRule.onNodeWithText(PRINT_BUTTON).performClick()
+
+        composeRule.waitUntilExactlyOneExists(hasText(permissionDenied))
+
+        composeRule.onNodeWithText(context.getString(R.string.receipt_error_accept)).performClick()
+
+        composeRule.onNodeWithText(permissionDenied).assertDoesNotExist()
+        assertTrue(receiptPrinter.printed.isEmpty())
+    }
+
     private fun givenAReceiptPrintHost() =givenAReceiptPrintHostAskingForPermissionWith(FakePermissionRequester(grants = true))
 
     private fun givenAReceiptPrintHostAskingForPermissionWith(permissionRequester: PermissionRequester) {

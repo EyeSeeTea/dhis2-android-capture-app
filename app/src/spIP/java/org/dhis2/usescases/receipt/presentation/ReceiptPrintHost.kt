@@ -102,5 +102,6 @@ private fun ReceiptPrintMessage.errorTextResId(): Int? =
     when (this) {
         ReceiptPrintMessage.Printed -> null
         ReceiptPrintMessage.NoPrinterConnected -> R.string.receipt_no_printer_connected
+        ReceiptPrintMessage.PermissionDenied -> R.string.receipt_permission_denied
         ReceiptPrintMessage.PrintFailed -> R.string.receipt_print_failed
     }
