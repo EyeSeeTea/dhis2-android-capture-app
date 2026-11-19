@@ -22,20 +22,26 @@ class ReceiptPrintViewModel(
         if (_uiState.value == ReceiptPrintUiState.Printing) return
         _uiState.value = ReceiptPrintUiState.Printing
         launchUseCase {
-            _uiState.value = printReceiptUseCase(eventUid).toUiState()
+            _uiState.value = printReceiptUseCase(eventUid).toUiState(eventUid)
         }
+    }
+
+    fun onPermissionResult(granted: Boolean) {
+        val state = _uiState.value as? ReceiptPrintUiState.NeedsPermission ?: return
+        if (granted) print(state.eventUid)
     }
 
     fun messageShown() {
         _uiState.update { if (it is ReceiptPrintUiState.Finished) ReceiptPrintUiState.Idle else it }
     }
 
-    private fun Either<PrintReceiptError, Unit>.toUiState(): ReceiptPrintUiState =
+    private fun Either<PrintReceiptError, Unit>.toUiState(eventUid: String): ReceiptPrintUiState =
         fold(
             fnL = { error ->
                 when (error) {
                     PrintReceiptError.NoPrinterConnected ->
                         ReceiptPrintUiState.Finished(ReceiptPrintMessage.NoPrinterConnected)
+                    PrintReceiptError.PermissionRequired -> ReceiptPrintUiState.NeedsPermission(eventUid)
                     is PrintReceiptError.PrintFailed -> {
                         Timber.w(error.cause, "The receipt could not be printed")
                         ReceiptPrintUiState.Finished(ReceiptPrintMessage.PrintFailed)

@@ -27,13 +27,14 @@ import org.hisp.dhis.mobile.ui.designsystem.component.ProgressIndicator
 import org.hisp.dhis.mobile.ui.designsystem.component.ProgressIndicatorType
 
 @Composable
-fun ReceiptPrintHost(viewModel: ReceiptPrintViewModel) {
+fun ReceiptPrintHost(viewModel: ReceiptPrintViewModel, permissionRequester: PermissionRequester) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     when (val state = uiState) {
         ReceiptPrintUiState.Idle -> Unit
         ReceiptPrintUiState.Printing -> PrintingDialog()
+        is ReceiptPrintUiState.NeedsPermission -> Unit
         is ReceiptPrintUiState.Finished ->
             state.message.errorTextResId()?.let { textResId ->
                 ErrorDialog(
@@ -41,6 +42,12 @@ fun ReceiptPrintHost(viewModel: ReceiptPrintViewModel) {
                     onAccept = viewModel::messageShown,
                 )
             }
+    }
+
+    LaunchedEffect(uiState) {
+        if (uiState is ReceiptPrintUiState.NeedsPermission) {
+            permissionRequester.request(viewModel::onPermissionResult)
+        }
     }
 
     val printedText = stringResource(R.string.receipt_printed)

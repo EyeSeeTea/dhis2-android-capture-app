@@ -8,6 +8,8 @@ import org.eyeseetea.functional.Either
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 import kotlin.coroutines.cancellation.CancellationException
 
 class BluetoothReceiptPrinterTest {
@@ -60,7 +62,23 @@ class BluetoothReceiptPrinterTest {
         assertTrue(error is CancellationException)
     }
 
-    private fun givenABluetoothReceiptPrinter() = BluetoothReceiptPrinter(transport)
+    @Test
+    fun `printing without the Bluetooth permission fails with permission required and sends nothing`() = runTest {
+        val printer = givenABluetoothReceiptPrinterWithoutThePermission()
+
+        val result = printer.print(Receipt(eventUid = "EVENT_UID"))
+
+        assertEquals(Either.Left(PrintReceiptError.PermissionRequired), result)
+        assertTrue(transport.sent.isEmpty())
+    }
+
+    private fun givenABluetoothReceiptPrinter() = BluetoothReceiptPrinter(transport, bluetoothPermission(granted = true))
+
+    private fun givenABluetoothReceiptPrinterWithoutThePermission() =
+        BluetoothReceiptPrinter(transport, bluetoothPermission(granted = false))
+
+    private fun bluetoothPermission(granted: Boolean) =
+        mock<BluetoothPermission> { on { isGranted() } doReturn granted }
 
     private class FakePrinterTransport : PrinterTransport {
         val sent = mutableListOf<List<String>>()

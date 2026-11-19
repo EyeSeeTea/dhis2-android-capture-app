@@ -95,13 +95,43 @@ class ReceiptPrintHostTest {
         assertEquals(listOf(receipt), receiptPrinter.printedWithoutPrintTime())
     }
 
-    private fun givenAReceiptPrintHost() {
+    @Test
+    fun printingWithoutThePermissionAsksForItAndPrintsOnceItIsGranted() {
+        receiptPrinter.requirePermission()
+        receiptPrinter.finishPrinting()
+        val permissionRequester = FakePermissionRequester(grants = true) { receiptPrinter.grantPermission() }
+        givenAReceiptPrintHostAskingForPermissionWith(permissionRequester)
+
+        composeRule.onNodeWithText(PRINT_BUTTON).performClick()
+
+        composeRule.waitUntil { permissionRequester.requests == 1 }
+        composeRule.waitUntilExactlyOneExists(hasText(context.getString(R.string.receipt_printed)))
+        assertEquals(listOf(receipt), receiptPrinter.printedWithoutPrintTime())
+    }
+
+    private fun givenAReceiptPrintHost() =givenAReceiptPrintHostAskingForPermissionWith(FakePermissionRequester(grants = true))
+
+    private fun givenAReceiptPrintHostAskingForPermissionWith(permissionRequester: PermissionRequester) {
         val receiptPrintViewModel = ReceiptPrintViewModel(
             PrintReceiptUseCase(FakeReceiptRepository(receipt), receiptPrinter),
         )
         composeRule.setContent {
-            ReceiptPrintHost(receiptPrintViewModel)
+            ReceiptPrintHost(receiptPrintViewModel, permissionRequester)
             Button(onClick = { receiptPrintViewModel.print(EVENT_UID) }) { Text(PRINT_BUTTON) }
+        }
+    }
+
+    private class FakePermissionRequester(
+        private val grants: Boolean,
+        private val onGranted: () -> Unit = {},
+    ) : PermissionRequester {
+        var requests = 0
+            private set
+
+        override fun request(onResult: (Boolean) -> Unit) {
+            requests++
+            if (grants) onGranted()
+            onResult(grants)
         }
     }
 
@@ -114,7 +144,16 @@ class ReceiptPrintHostTest {
     private class GatedReceiptPrinter : ReceiptPrinter {
         private val gate = CompletableDeferred<Unit>()
         private var error: PrintReceiptError? = null
+        private var permissionGranted = true
         val printed = mutableListOf<Receipt>()
+
+        fun requirePermission() {
+            permissionGranted = false
+        }
+
+        fun grantPermission() {
+            permissionGranted = true
+        }
 
         // The use case stamps the print time, which the host tests do not control.
         fun printedWithoutPrintTime(): List<Receipt> = printed.map { it.copy(printedOn = null) }
@@ -128,6 +167,7 @@ class ReceiptPrintHostTest {
         }
 
         override suspend fun print(receipt: Receipt): Either<PrintReceiptError, Unit> {
+            if (!permissionGranted) return Either.Left(PrintReceiptError.PermissionRequired)
             error?.let { return Either.Left(it) }
             gate.await()
             printed.add(receipt)

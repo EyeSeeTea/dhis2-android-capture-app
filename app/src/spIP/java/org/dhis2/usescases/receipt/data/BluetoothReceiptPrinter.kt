@@ -8,10 +8,12 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class BluetoothReceiptPrinter(
     private val transport: PrinterTransport,
+    private val permission: BluetoothPermission,
     private val formatter: ReceiptFormatter = ReceiptFormatter(),
 ) : ReceiptPrinter {
     override suspend fun print(receipt: Receipt): Either<PrintReceiptError, Unit> {
         val lines = formatter.format(receipt)
+        if (!permission.isGranted()) return Either.Left(PrintReceiptError.PermissionRequired)
         return try {
             transport.send(lines)
             Either.Right(Unit)

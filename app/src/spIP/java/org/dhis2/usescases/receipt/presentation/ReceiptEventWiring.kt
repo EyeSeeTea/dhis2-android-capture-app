@@ -28,7 +28,9 @@ fun MutableList<MenuItemData<EventCaptureMenuItem>>.addPrintReceiptMenuItem(labe
 fun mountReceiptPrintHost(activity: ComponentActivity) {
     activity.addContentView(
         ComposeView(activity).apply {
-            setContent { DHIS2Theme { ReceiptPrintHost(receiptPrintViewModel(activity)) } }
+            setContent {
+                DHIS2Theme { ReceiptPrintHost(receiptPrintViewModel(activity), rememberBluetoothPermissionRequester()) }
+            }
         },
         ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT),
     )
