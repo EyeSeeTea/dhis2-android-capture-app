@@ -53,6 +53,50 @@ Only customizations made going forward are documented as OpenSpec specs. The exi
 
 **Post-merge check hierarchy:** marker-count < symbol-scan < diff-scan with semantic filter < manual emulator test. Each level catches what the previous one misses. Manual test in emulator is the irreplaceable last-line safety net — automated checks miss runtime rendering bugs and casualties in files without `// EyeSeeTea customization` markers.
 
+## Development workflow
+
+Applies to customization work driven by an OpenSpec `tasks.md`. Execute the tasks by
+hand, one at a time; do not use `/opsx:apply`, so the design checkpoint is not skipped.
+
+**1. Design checkpoint (the user decides, before writing code).**
+List the behaviors to build, the boundaries involved, and the level each test runs at.
+Wait for approval.
+
+**2. Red → green → refactor per behavior, without pausing between steps.**
+- Write the test first and run it. It only counts as red if it fails for the expected
+  reason (an assertion, not a compilation error). If a stub is needed to compile, say so
+  in the summary.
+- Write the minimum code that makes it green. Build only what the current test reads.
+- Stop and ask only if: the red fails for another reason; a test passes without new
+  code; a design decision outside the approved plan appears; or more files are touched
+  than planned.
+
+**3. Tests check observable behavior.**
+- Assert on observable state or output (return values, emitted state, shown messages),
+  not on which collaborator was called. Do not use `verify()` on interactions.
+- Test at the level of the pillar that owns the behavior: the host
+  (`ReceiptPrintHostTest`) or the adapter (`BluetoothReceiptPrinterTest`). No unit tests
+  of ViewModels or other internal parts.
+- Doubles only at the outer boundary (our own ports such as `PrinterTransport`,
+  `BluetoothPermission`, `ReceiptRepository`, or the SDK). Pick the kind by its role:
+  - A **fake** when the test observes what the double received or stored (the text sent
+    to the printer, the saved receipt): assert on its state.
+  - A **stub** with the mocking library (`mockito-kotlin`: `mock` + `whenever`) when the
+    double only supplies data or a canned answer and the test does not observe it.
+- Name each test after the contract it verifies, not the mechanism.
+- Details of the Android framework or of external SDKs (permission registries,
+  Bluetooth, the Brother SDK) stay behind a port of ours. Tests never touch them; the
+  real adapter stays thin and is verified by hand on the emulator or the printer.
+
+**4. Commits.**
+- One commit per behavior, with a one-line message and no body.
+- Propose the commits together at the end of the unit of work and wait. Never commit
+  without the user's explicit authorization in that moment.
+- Before proposing, run the reviews required by the user's global instructions. Skip them
+  for trivial or docs-only commits and say so.
+- Run `./gradlew testSpIPDebugUnitTest` before proposing. If the host test changed, also
+  run it on the emulator (`connectedSpIPDebugAndroidTest`, class `ReceiptPrintHostTest`).
+
 ## Key documentation
 
 - `openspec/specs/` — functional specs (source of truth for what each customization does)
