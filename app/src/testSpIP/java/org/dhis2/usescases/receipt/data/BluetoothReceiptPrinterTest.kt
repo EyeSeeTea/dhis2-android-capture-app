@@ -14,6 +14,10 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class BluetoothReceiptPrinterTest {
 
+    private companion object {
+        val PRINTER = PairedDevice(name = "RJ-2055WB-1234", address = "00:11:22:33:44:55")
+    }
+
     private val transport = FakePrinterTransport()
 
     @Test
@@ -28,7 +32,7 @@ class BluetoothReceiptPrinterTest {
         val result = printer.print(receipt)
 
         assertEquals(Either.Right(Unit), result)
-        assertEquals(listOf(ReceiptFormatter().format(receipt)), transport.sent)
+        assertEquals(listOf(Sent(PRINTER.address, ReceiptFormatter().format(receipt))), transport.sent)
     }
 
     @Test
@@ -72,25 +76,30 @@ class BluetoothReceiptPrinterTest {
         assertTrue(transport.sent.isEmpty())
     }
 
-    private fun givenABluetoothReceiptPrinter() = BluetoothReceiptPrinter(transport, bluetoothPermission(granted = true))
+    private fun givenABluetoothReceiptPrinter() =
+        BluetoothReceiptPrinter(transport, bluetoothPermission(granted = true), pairedDevicesReader(PRINTER))
 
     private fun givenABluetoothReceiptPrinterWithoutThePermission() =
-        BluetoothReceiptPrinter(transport, bluetoothPermission(granted = false))
+        BluetoothReceiptPrinter(transport, bluetoothPermission(granted = false), pairedDevicesReader(PRINTER))
 
     private fun bluetoothPermission(granted: Boolean) =
         mock<BluetoothPermission> { on { isGranted() } doReturn granted }
 
+    private fun pairedDevicesReader(vararg devices: PairedDevice) = PairedDevicesReader { devices.toList() }
+
+    private data class Sent(val address: String, val lines: List<String>)
+
     private class FakePrinterTransport : PrinterTransport {
-        val sent = mutableListOf<List<String>>()
+        val sent = mutableListOf<Sent>()
         private var failure: Throwable? = null
 
         fun failWith(failure: Throwable) {
             this.failure = failure
         }
 
-        override suspend fun send(lines: List<String>) {
+        override suspend fun send(address: String, lines: List<String>) {
             failure?.let { throw it }
-            sent += lines
+            sent += Sent(address, lines)
         }
     }
 }
