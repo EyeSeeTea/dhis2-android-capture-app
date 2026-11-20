@@ -15,7 +15,7 @@ class BluetoothReceiptPrinter(
     override suspend fun print(receipt: Receipt): Either<PrintReceiptError, Unit> {
         val lines = formatter.format(receipt)
         if (!permission.isGranted()) return Either.Left(PrintReceiptError.PermissionRequired)
-        val printer = pairedDevicesReader.read().firstOrNull()
+        val printer = pairedDevicesReader.read().firstOrNull { it.name.startsWith(PRINTER_NAME_PREFIX) }
             ?: return Either.Left(PrintReceiptError.NoPrinterConnected)
         return try {
             transport.send(printer.address, lines)
@@ -29,3 +29,6 @@ class BluetoothReceiptPrinter(
         }
     }
 }
+
+// The Brother RJ-2055WB announces itself with a name that starts like this.
+private const val PRINTER_NAME_PREFIX = "RJ-"

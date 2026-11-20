@@ -86,6 +86,16 @@ class BluetoothReceiptPrinterTest {
         assertTrue(transport.sent.isEmpty())
     }
 
+    @Test
+    fun `other paired devices are ignored when looking for the printer`() = runTest {
+        val headphones = PairedDevice(name = "Headphones", address = "AA:BB:CC:DD:EE:FF")
+        val printer = givenABluetoothReceiptPrinterPairedWith(headphones, PRINTER)
+
+        printer.print(Receipt(eventUid = "EVENT_UID"))
+
+        assertEquals(listOf(PRINTER.address), transport.sent.map { it.address })
+    }
+
     private fun givenABluetoothReceiptPrinter() =
         BluetoothReceiptPrinter(transport, bluetoothPermission(granted = true), pairedDevicesReader(PRINTER))
 
