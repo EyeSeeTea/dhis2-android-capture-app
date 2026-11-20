@@ -15,7 +15,8 @@ class BluetoothReceiptPrinter(
     override suspend fun print(receipt: Receipt): Either<PrintReceiptError, Unit> {
         val lines = formatter.format(receipt)
         if (!permission.isGranted()) return Either.Left(PrintReceiptError.PermissionRequired)
-        val printer = pairedDevicesReader.read().first()
+        val printer = pairedDevicesReader.read().firstOrNull()
+            ?: return Either.Left(PrintReceiptError.NoPrinterConnected)
         return try {
             transport.send(printer.address, lines)
             Either.Right(Unit)

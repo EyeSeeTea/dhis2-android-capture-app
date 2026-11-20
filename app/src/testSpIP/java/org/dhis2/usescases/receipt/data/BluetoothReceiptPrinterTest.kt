@@ -76,8 +76,21 @@ class BluetoothReceiptPrinterTest {
         assertTrue(transport.sent.isEmpty())
     }
 
+    @Test
+    fun `printing with no paired printer fails with no printer connected and sends nothing`() = runTest {
+        val printer = givenABluetoothReceiptPrinterPairedWith()
+
+        val result = printer.print(Receipt(eventUid = "EVENT_UID"))
+
+        assertEquals(Either.Left(PrintReceiptError.NoPrinterConnected), result)
+        assertTrue(transport.sent.isEmpty())
+    }
+
     private fun givenABluetoothReceiptPrinter() =
         BluetoothReceiptPrinter(transport, bluetoothPermission(granted = true), pairedDevicesReader(PRINTER))
+
+    private fun givenABluetoothReceiptPrinterPairedWith(vararg devices: PairedDevice) =
+        BluetoothReceiptPrinter(transport, bluetoothPermission(granted = true), pairedDevicesReader(*devices))
 
     private fun givenABluetoothReceiptPrinterWithoutThePermission() =
         BluetoothReceiptPrinter(transport, bluetoothPermission(granted = false), pairedDevicesReader(PRINTER))
