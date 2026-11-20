@@ -96,6 +96,16 @@ class BluetoothReceiptPrinterTest {
         assertEquals(listOf(PRINTER.address), transport.sent.map { it.address })
     }
 
+    @Test
+    fun `the first paired printer is used when there are several`() = runTest {
+        val otherPrinter = PairedDevice(name = "RJ-2055WB-5678", address = "66:77:88:99:AA:BB")
+        val printer = givenABluetoothReceiptPrinterPairedWith(PRINTER, otherPrinter)
+
+        printer.print(Receipt(eventUid = "EVENT_UID"))
+
+        assertEquals(listOf(PRINTER.address), transport.sent.map { it.address })
+    }
+
     private fun givenABluetoothReceiptPrinter() =
         BluetoothReceiptPrinter(transport, bluetoothPermission(granted = true), pairedDevicesReader(PRINTER))
 
